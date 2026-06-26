@@ -1,0 +1,297 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.shell{display:flex;height:660px;border:0.5px solid var(--border);border-radius:12px;overflow:hidden;background:var(--surface-2)}
+.sidebar{width:196px;background:var(--surface-1);border-right:0.5px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.logo{padding:14px 16px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:8px}
+.logo-mark{width:28px;height:28px;border-radius:8px;background:#4F46E5;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:500}
+.logo-name{font-size:13px;font-weight:500;color:var(--text-primary)}
+.logo-role{font-size:10px;color:#4F46E5;background:#EEF2FF;padding:2px 6px;border-radius:4px;margin-left:auto}
+.nav{flex:1;padding:8px;overflow-y:auto}
+.ns{font-size:10px;color:var(--text-muted);padding:10px 8px 4px;text-transform:uppercase;letter-spacing:.6px}
+.ni{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:var(--radius);cursor:pointer;font-size:12px;color:var(--text-secondary);border:none;background:none;width:100%;text-align:left}
+.ni:hover{background:var(--surface-2);color:var(--text-primary)}
+.ni.active{background:#EEF2FF;color:#4F46E5;font-weight:500}
+.ni i{font-size:15px;width:16px}
+.badge{margin-left:auto;background:#FEE2E2;color:#DC2626;border-radius:99px;font-size:10px;padding:1px 6px;font-weight:500}
+.badge.b{background:#EEF2FF;color:#4F46E5}
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+.topbar{padding:12px 18px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:10px;background:var(--surface-2);flex-shrink:0}
+.topbar-title{font-size:14px;font-weight:500;color:var(--text-primary);flex:1}
+.av{width:28px;height:28px;border-radius:50%;background:#4F46E5;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0}
+.content{padding:16px;flex:1}
+.page{display:none;flex-direction:column;gap:14px}
+.page.active{display:flex}
+.g4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.mcard{background:var(--surface-1);border-radius:var(--radius);padding:12px}
+.mlabel{font-size:11px;color:var(--text-muted);margin-bottom:3px}
+.mval{font-size:20px;font-weight:500;color:var(--text-primary)}
+.msub{font-size:11px;color:var(--text-muted);margin-top:2px}
+.card{background:var(--surface-1);border:0.5px solid var(--border);border-radius:12px;padding:14px}
+.st{font-size:12px;font-weight:500;color:var(--text-primary);margin-bottom:8px}
+.row{display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--surface-1);border:0.5px solid var(--border);border-radius:var(--radius);margin-bottom:5px}
+.pill{font-size:10px;padding:2px 8px;border-radius:99px;font-weight:500}
+.pill.g{background:#D1FAE5;color:#065F46}
+.pill.y{background:#FEF3C7;color:#92400E}
+.pill.r{background:#FEE2E2;color:#991B1B}
+.pill.b{background:#EEF2FF;color:#3730A3}
+.pbar{height:5px;background:var(--border-strong);border-radius:99px;overflow:hidden;margin-top:4px}
+.pfill{height:100%;border-radius:99px}
+.tab-row{display:flex;gap:4px;margin-bottom:10px}
+.tab{padding:5px 10px;border-radius:var(--radius);font-size:11px;cursor:pointer;border:0.5px solid var(--border);background:var(--surface-1);color:var(--text-secondary);font-family:var(--font-sans)}
+.tab.active{background:#4F46E5;color:#fff;border-color:#4F46E5}
+.input-row{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.input-row label{font-size:11px;color:var(--text-secondary);font-weight:500}
+.input-row input,.input-row select,.input-row textarea{border:0.5px solid var(--border);border-radius:var(--radius);padding:7px 10px;font-size:12px;background:var(--surface-2);color:var(--text-primary);font-family:var(--font-sans);width:100%}
+.input-row textarea{min-height:60px;resize:vertical}
+.btn-p{background:#4F46E5;border:none;border-radius:var(--radius);color:#fff;font-size:12px;padding:8px 16px;cursor:pointer;font-family:var(--font-sans)}
+.btn-s{background:none;border:0.5px solid var(--border-strong);border-radius:var(--radius);color:var(--text-primary);font-size:12px;padding:7px 14px;cursor:pointer;font-family:var(--font-sans)}
+.ann-item{border-left:3px solid #4F46E5;border-radius:0;padding:8px 12px;background:var(--surface-1);border-top:0.5px solid var(--border);border-right:0.5px solid var(--border);border-bottom:0.5px solid var(--border);border-radius:0 var(--radius) var(--radius) 0;margin-bottom:6px}
+.pay-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border:0.5px solid var(--border);border-radius:var(--radius);margin-bottom:5px;background:var(--surface-1)}
+.att-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:6px}
+.att-cell{aspect-ratio:1;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:500}
+.att-cell.p{background:#D1FAE5;color:#065F46}
+.att-cell.a{background:#FEE2E2;color:#991B1B}
+.att-cell.l{background:#FEF3C7;color:#92400E}
+.att-cell.h{background:var(--surface-1);border:0.5px solid var(--border);color:var(--text-muted)}
+.grade-bar{height:8px;border-radius:99px;background:var(--border-strong);overflow:hidden;flex:1}
+.grade-fill{height:100%;border-radius:99px}
+</style>
+<h2 class="sr-only">Teacher dashboard — interactive admin panel for EnglishHub platform</h2>
+<div class="shell">
+  <div class="sidebar">
+    <div class="logo">
+      <div class="logo-mark">E</div>
+      <span class="logo-name">EnglishHub</span>
+      <span class="logo-role">Teacher</span>
+    </div>
+    <div class="nav">
+      <div class="ns">Overview</div>
+      <button class="ni active" onclick="show('overview',this)"><i class="ti ti-layout-dashboard" aria-hidden="true"></i>Overview</button>
+      <button class="ni" onclick="show('students',this)"><i class="ti ti-users" aria-hidden="true"></i>Students<span class="badge b">34</span></button>
+      <div class="ns">Content</div>
+      <button class="ni" onclick="show('lessons',this)"><i class="ti ti-book" aria-hidden="true"></i>Create lesson</button>
+      <button class="ni" onclick="show('quizzes',this)"><i class="ti ti-list-check" aria-hidden="true"></i>Create quiz</button>
+      <button class="ni" onclick="show('homework',this)"><i class="ti ti-writing" aria-hidden="true"></i>Grade homework<span class="badge">7</span></button>
+      <div class="ns">Classes</div>
+      <button class="ni" onclick="show('attendance',this)"><i class="ti ti-calendar-check" aria-hidden="true"></i>Attendance</button>
+      <button class="ni" onclick="show('schedule',this)"><i class="ti ti-video" aria-hidden="true"></i>Schedule class</button>
+      <div class="ns">Admin</div>
+      <button class="ni" onclick="show('announce',this)"><i class="ti ti-speakerphone" aria-hidden="true"></i>Announcements</button>
+      <button class="ni" onclick="show('payments',this)"><i class="ti ti-credit-card" aria-hidden="true"></i>Payments</button>
+      <button class="ni" onclick="show('events',this)"><i class="ti ti-calendar-event" aria-hidden="true"></i>Events</button>
+    </div>
+  </div>
+  <div class="main">
+    <div class="topbar">
+      <span class="topbar-title" id="ptitle">Overview</span>
+      <button class="btn-s" style="font-size:11px;padding:5px 10px"><i class="ti ti-bell" aria-hidden="true" style="font-size:13px;vertical-align:-2px"></i> Send announcement</button>
+      <div class="av">AT</div>
+    </div>
+    <div class="content">
+
+      <!-- OVERVIEW -->
+      <div class="page active" id="page-overview">
+        <div class="g4">
+          <div class="mcard"><div class="mlabel">Total students</div><div class="mval">34</div><div class="msub">+3 this month</div></div>
+          <div class="mcard"><div class="mlabel">Avg attendance</div><div class="mval">81%</div><div class="msub">Last 4 weeks</div></div>
+          <div class="mcard"><div class="mlabel">Homework pending</div><div class="mval">7</div><div class="msub">Needs grading</div></div>
+          <div class="mcard"><div class="mlabel">Revenue (Jun)</div><div class="mval">840K CFA</div><div class="msub">28 of 34 paid</div></div>
+        </div>
+        <div class="st">Students needing attention</div>
+        <div class="row"><div class="av" style="width:28px;height:28px;font-size:10px;background:#DC2626">OD</div><div style="flex:1"><div style="font-size:12px;font-weight:500;color:var(--text-primary)">Ousmane D.</div><div style="font-size:11px;color:var(--text-muted)">Missed 3 classes · No submissions last 2 weeks</div></div><span class="pill r">At risk</span></div>
+        <div class="row"><div class="av" style="width:28px;height:28px;font-size:10px;background:#D97706">NS</div><div style="flex:1"><div style="font-size:12px;font-weight:500;color:var(--text-primary)">Ndèye S.</div><div style="font-size:11px;color:var(--text-muted)">Quiz average 42% · Struggling with grammar</div></div><span class="pill y">Needs help</span></div>
+        <div class="row"><div class="av" style="width:28px;height:28px;font-size:10px;background:#059669">FD</div><div style="flex:1"><div style="font-size:12px;font-weight:500;color:var(--text-primary)">Fatou D.</div><div style="font-size:11px;color:var(--text-muted)">Top performer — ready for C1 assessment</div></div><span class="pill g">Ready to advance</span></div>
+        <div class="st">Today's schedule</div>
+        <div class="row"><i class="ti ti-video" aria-hidden="true" style="font-size:16px;color:#4F46E5"></i><div style="flex:1"><div style="font-size:12px;font-weight:500;color:var(--text-primary)">Live class — Conditionals</div><div style="font-size:11px;color:var(--text-muted)">10:00 AM · 18 students registered</div></div><button class="btn-p" style="font-size:11px;padding:5px 12px">Start class</button></div>
+        <div class="row"><i class="ti ti-message-check" aria-hidden="true" style="font-size:16px;color:#D97706"></i><div style="flex:1"><div style="font-size:12px;font-weight:500;color:var(--text-primary)">Grade speaking recordings</div><div style="font-size:11px;color:var(--text-muted)">12 new recordings waiting</div></div><span class="pill y">Pending</span></div>
+      </div>
+
+      <!-- STUDENTS -->
+      <div class="page" id="page-students">
+        <div class="tab-row">
+          <button class="tab active" onclick="stab(this,'all')">All students</button>
+          <button class="tab" onclick="stab(this,'progress')">Progress</button>
+          <button class="tab" onclick="stab(this,'profile')">Student profile</button>
+        </div>
+        <div id="stab-all">
+          <div class="row" style="background:var(--surface-1);font-size:11px;color:var(--text-muted);font-weight:500;border-radius:var(--radius) var(--radius) 0 0"><div style="width:140px">Name</div><div style="width:50px">Level</div><div style="width:60px;text-align:center">Attendance</div><div style="width:60px;text-align:center">XP</div><div style="flex:1">Last active</div><div style="width:70px">Status</div></div>
+          <div class="row" style="font-size:12px"><div style="width:140px;display:flex;align-items:center;gap:6px"><div class="av" style="width:22px;height:22px;font-size:9px;background:#4F46E5">MB</div>Mariama B.</div><div style="width:50px;color:var(--text-secondary)">B2</div><div style="width:60px;text-align:center;color:var(--text-primary)">94%</div><div style="width:60px;text-align:center;color:#4F46E5;font-weight:500">2340</div><div style="flex:1;color:var(--text-muted)">Today</div><span class="pill g">Active</span></div>
+          <div class="row" style="font-size:12px"><div style="width:140px;display:flex;align-items:center;gap:6px"><div class="av" style="width:22px;height:22px;font-size:9px;background:#059669">FD</div>Fatou D.</div><div style="width:50px;color:var(--text-secondary)">B2</div><div style="width:60px;text-align:center">89%</div><div style="width:60px;text-align:center;color:#4F46E5;font-weight:500">2105</div><div style="flex:1;color:var(--text-muted)">Yesterday</div><span class="pill g">Active</span></div>
+          <div class="row" style="font-size:12px"><div style="width:140px;display:flex;align-items:center;gap:6px"><div class="av" style="width:22px;height:22px;font-size:9px">AM</div>Aminata M.</div><div style="width:50px;color:var(--text-secondary)">B1</div><div style="width:60px;text-align:center">78%</div><div style="width:60px;text-align:center;color:#4F46E5;font-weight:500">1840</div><div style="flex:1;color:var(--text-muted)">Today</div><span class="pill g">Active</span></div>
+          <div class="row" style="font-size:12px"><div style="width:140px;display:flex;align-items:center;gap:6px"><div class="av" style="width:22px;height:22px;font-size:9px;background:#D97706">NS</div>Ndèye S.</div><div style="width:50px;color:var(--text-secondary)">A2</div><div style="width:60px;text-align:center">65%</div><div style="width:60px;text-align:center;color:#4F46E5;font-weight:500">740</div><div style="flex:1;color:var(--text-muted)">3 days ago</div><span class="pill y">Struggling</span></div>
+          <div class="row" style="font-size:12px"><div style="width:140px;display:flex;align-items:center;gap:6px"><div class="av" style="width:22px;height:22px;font-size:9px;background:#DC2626">OD</div>Ousmane D.</div><div style="width:50px;color:var(--text-secondary)">A2</div><div style="width:60px;text-align:center;color:#DC2626">41%</div><div style="width:60px;text-align:center;color:#4F46E5;font-weight:500">320</div><div style="flex:1;color:var(--text-muted)">2 weeks ago</div><span class="pill r">At risk</span></div>
+          <div class="row" style="font-size:12px"><div style="width:140px;display:flex;align-items:center;gap:6px"><div class="av" style="width:22px;height:22px;font-size:9px;background:#7C3AED">KD</div>Kofi D.</div><div style="width:50px;color:var(--text-secondary)">B1</div><div style="width:60px;text-align:center">83%</div><div style="width:60px;text-align:center;color:#4F46E5;font-weight:500">1980</div><div style="flex:1;color:var(--text-muted)">Today</div><span class="pill g">Active</span></div>
+        </div>
+        <div id="stab-progress" style="display:none">
+          <div class="st">Class average by skill</div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="font-size:12px;color:var(--text-secondary);width:100px">Grammar</span><div class="grade-bar"><div class="grade-fill" style="width:71%;background:#4F46E5"></div></div><span style="font-size:12px;font-weight:500;color:var(--text-primary);width:36px;text-align:right">71%</span></div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="font-size:12px;color:var(--text-secondary);width:100px">Vocabulary</span><div class="grade-bar"><div class="grade-fill" style="width:78%;background:#059669"></div></div><span style="font-size:12px;font-weight:500;color:var(--text-primary);width:36px;text-align:right">78%</span></div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="font-size:12px;color:var(--text-secondary);width:100px">Speaking</span><div class="grade-bar"><div class="grade-fill" style="width:63%;background:#D97706"></div></div><span style="font-size:12px;font-weight:500;color:var(--text-primary);width:36px;text-align:right">63%</span></div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="font-size:12px;color:var(--text-secondary);width:100px">Listening</span><div class="grade-bar"><div class="grade-fill" style="width:82%;background:#0F766E"></div></div><span style="font-size:12px;font-weight:500;color:var(--text-primary);width:36px;text-align:right">82%</span></div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="font-size:12px;color:var(--text-secondary);width:100px">Writing</span><div class="grade-bar"><div class="grade-fill" style="width:57%;background:#DC2626"></div></div><span style="font-size:12px;font-weight:500;color:var(--text-primary);width:36px;text-align:right">57%</span></div>
+          <div style="margin-top:4px;padding:10px 12px;background:#FFFBEB;border:0.5px solid #FDE68A;border-radius:var(--radius)"><span style="font-size:12px;color:#92400E"><i class="ti ti-bulb" aria-hidden="true" style="font-size:13px;vertical-align:-2px"></i> Writing is the weakest skill — consider adding a dedicated writing workshop this month.</span></div>
+        </div>
+        <div id="stab-profile" style="display:none">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+            <div class="av" style="width:44px;height:44px;font-size:15px">AM</div>
+            <div><div style="font-size:14px;font-weight:500;color:var(--text-primary)">Aminata M.</div><div style="font-size:11px;color:var(--text-muted)">B1 — Intermediate · Joined Jan 2025</div></div>
+            <button class="btn-s" style="margin-left:auto;font-size:11px">Send message</button>
+          </div>
+          <div class="g3" style="margin-bottom:12px">
+            <div class="mcard"><div class="mlabel">XP points</div><div class="mval">1,840</div></div>
+            <div class="mcard"><div class="mlabel">Streak</div><div class="mval">12 days</div></div>
+            <div class="mcard"><div class="mlabel">Attendance</div><div class="mval">78%</div></div>
+          </div>
+          <div class="st">Teacher notes</div>
+          <textarea style="width:100%;border:0.5px solid var(--border);border-radius:var(--radius);padding:8px 10px;font-size:12px;background:var(--surface-2);color:var(--text-primary);font-family:var(--font-sans);min-height:60px;resize:vertical">Good pronunciation, needs work on conditionals. Very engaged in class discussions.</textarea>
+          <div style="margin-top:8px;display:flex;gap:8px"><button class="btn-p" style="font-size:11px">Save notes</button><button class="btn-s" style="font-size:11px">View all submissions</button></div>
+        </div>
+      </div>
+
+      <!-- CREATE LESSON -->
+      <div class="page" id="page-lessons">
+        <div class="input-row"><label>Lesson title</label><input placeholder="Week 9 — Reported speech" /></div>
+        <div class="g2">
+          <div class="input-row"><label>Level</label><select><option>A1 — Beginner</option><option>A2 — Elementary</option><option selected>B1 — Intermediate</option><option>B2 — Upper intermediate</option></select></div>
+          <div class="input-row"><label>Lesson type</label><select><option>Grammar</option><option>Vocabulary</option><option>Reading</option><option>Listening</option><option>Writing</option></select></div>
+        </div>
+        <div class="input-row"><label>Grammar notes</label><textarea placeholder="Explain the grammar rule clearly with examples..."></textarea></div>
+        <div class="input-row"><label>Vocabulary list (one word per line)</label><textarea placeholder="report&#10;claim&#10;state&#10;mention&#10;suggest"></textarea></div>
+        <div class="input-row"><label>Reading material / text</label><textarea placeholder="Paste or write the reading passage here..."></textarea></div>
+        <div class="input-row"><label>Homework instructions</label><textarea placeholder="Write 5 sentences using reported speech about your week..."></textarea></div>
+        <div class="input-row"><label>Homework due date</label><input type="date" /></div>
+        <div style="display:flex;gap:8px"><button class="btn-p">Publish lesson</button><button class="btn-s">Save draft</button><button class="btn-s"><i class="ti ti-upload" aria-hidden="true" style="font-size:13px;vertical-align:-2px"></i> Upload PDF</button></div>
+      </div>
+
+      <!-- CREATE QUIZ -->
+      <div class="page" id="page-quizzes">
+        <div class="input-row"><label>Quiz title</label><input placeholder="Unit 9 — Reported speech quiz" /></div>
+        <div class="g2">
+          <div class="input-row"><label>Quiz type</label><select><option>Multiple choice</option><option>Fill in the blank</option><option>True / False</option><option>Matching</option></select></div>
+          <div class="input-row"><label>Time limit</label><select><option>No limit</option><option>10 minutes</option><option selected>15 minutes</option><option>20 minutes</option><option>30 minutes</option></select></div>
+        </div>
+        <div class="card" style="margin-bottom:4px">
+          <div style="font-size:12px;font-weight:500;color:var(--text-primary);margin-bottom:8px">Question 1</div>
+          <div class="input-row"><label>Question</label><input placeholder="She said she _____ very tired." /></div>
+          <div class="g2">
+            <div class="input-row"><label>Option A</label><input placeholder="is" /></div>
+            <div class="input-row"><label>Option B</label><input placeholder="was" /></div>
+            <div class="input-row"><label>Option C</label><input placeholder="were" /></div>
+            <div class="input-row"><label>Correct answer</label><select><option>A</option><option selected>B</option><option>C</option></select></div>
+          </div>
+        </div>
+        <button class="btn-s" style="font-size:11px;margin-bottom:8px"><i class="ti ti-plus" aria-hidden="true" style="font-size:13px;vertical-align:-2px"></i> Add question</button>
+        <div style="display:flex;gap:8px"><button class="btn-p">Publish quiz</button><button class="btn-s">Preview quiz</button></div>
+      </div>
+
+      <!-- GRADE HOMEWORK -->
+      <div class="page" id="page-homework">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">7 submissions waiting · Assignment: "Describe your morning routine"</div>
+        <div class="row"><div class="av" style="width:26px;height:26px;font-size:9px">AM</div><div style="flex:1"><div style="font-size:12px;font-weight:500;color:var(--text-primary)">Aminata M. — submitted 2h ago</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px;font-style:italic">"Every morning I wake up at 6am. I prepare my breakfast which is usually bread and café Touba. Then I take a shower and I get dressed for work..."</div></div><button class="btn-p" style="font-size:11px;margin-left:8px">Grade</button></div>
+        <div class="row"><div class="av" style="width:26px;height:26px;font-size:9px;background:#7C3AED">KD</div><div style="flex:1"><div style="font-size:12px;font-weight:500;color:var(--text-primary)">Kofi D. — submitted 4h ago</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px;font-style:italic">"In the morning I usually starts my day with prayer. After that I drink tea and reads the news on my phone..."</div></div><button class="btn-p" style="font-size:11px;margin-left:8px">Grade</button></div>
+        <div class="row"><div class="av" style="width:26px;height:26px;font-size:9px;background:#D97706">NS</div><div style="flex:1"><div style="font-size:12px;font-weight:500;color:var(--text-primary)">Ndèye S. — submitted yesterday</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px;font-style:italic">"My morning routine is very simple. I wake up, eat, go work. I like the morning because is quiet..."</div></div><button class="btn-p" style="font-size:11px;margin-left:8px">Grade</button></div>
+        <div class="card">
+          <div style="font-size:12px;font-weight:500;margin-bottom:8px">Grade: Aminata M.</div>
+          <div class="g2" style="margin-bottom:8px">
+            <div class="input-row"><label>Score</label><select><option>A — Excellent</option><option selected>B — Good</option><option>C — Satisfactory</option><option>D — Needs improvement</option></select></div>
+            <div class="input-row"><label>XP reward</label><input value="50" type="number" /></div>
+          </div>
+          <div class="input-row"><label>Teacher feedback</label><textarea placeholder="Good effort! Watch your use of articles (a/an/the). Your vocabulary is strong...">Good effort! Watch your use of articles. Try to write longer sentences — your vocabulary is strong, use it!</textarea></div>
+          <div style="display:flex;gap:8px;margin-top:4px"><button class="btn-p">Submit grade</button><button class="btn-s">Return for revision</button></div>
+        </div>
+      </div>
+
+      <!-- ATTENDANCE -->
+      <div class="page" id="page-attendance">
+        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">Class: B1 Intermediate · Week of June 23, 2026</div>
+        <div class="row" style="font-size:11px;color:var(--text-muted);font-weight:500"><div style="flex:1">Student</div><div style="width:28px;text-align:center">M</div><div style="width:28px;text-align:center">T</div><div style="width:28px;text-align:center">W</div><div style="width:28px;text-align:center">T</div><div style="width:28px;text-align:center">F</div><div style="width:60px;text-align:center">Total</div></div>
+        <div class="row" style="font-size:11px"><div style="flex:1;display:flex;align-items:center;gap:6px"><div class="av" style="width:20px;height:20px;font-size:8px">AM</div>Aminata M.</div><div class="att-cell p" style="width:28px">P</div><div class="att-cell p" style="width:28px">P</div><div class="att-cell p" style="width:28px">P</div><div class="att-cell a" style="width:28px">A</div><div class="att-cell h" style="width:28px">-</div><div style="width:60px;text-align:center;font-weight:500;color:var(--text-primary)">3/4</div></div>
+        <div class="row" style="font-size:11px"><div style="flex:1;display:flex;align-items:center;gap:6px"><div class="av" style="width:20px;height:20px;font-size:8px;background:#059669">FD</div>Fatou D.</div><div class="att-cell p" style="width:28px">P</div><div class="att-cell p" style="width:28px">P</div><div class="att-cell p" style="width:28px">P</div><div class="att-cell p" style="width:28px">P</div><div class="att-cell h" style="width:28px">-</div><div style="width:60px;text-align:center;font-weight:500;color:#059669">4/4</div></div>
+        <div class="row" style="font-size:11px"><div style="flex:1;display:flex;align-items:center;gap:6px"><div class="av" style="width:20px;height:20px;font-size:8px;background:#DC2626">OD</div>Ousmane D.</div><div class="att-cell a" style="width:28px">A</div><div class="att-cell a" style="width:28px">A</div><div class="att-cell l" style="width:28px">L</div><div class="att-cell a" style="width:28px">A</div><div class="att-cell h" style="width:28px">-</div><div style="width:60px;text-align:center;font-weight:500;color:#DC2626">0/4</div></div>
+        <div class="row" style="font-size:11px"><div style="flex:1;display:flex;align-items:center;gap:6px"><div class="av" style="width:20px;height:20px;font-size:8px;background:#D97706">NS</div>Ndèye S.</div><div class="att-cell p" style="width:28px">P</div><div class="att-cell l" style="width:28px">L</div><div class="att-cell p" style="width:28px">P</div><div class="att-cell a" style="width:28px">A</div><div class="att-cell h" style="width:28px">-</div><div style="width:60px;text-align:center;font-weight:500;color:#D97706">2/4</div></div>
+        <div style="display:flex;gap:10px;font-size:11px;color:var(--text-muted)"><span><span class="att-cell p" style="display:inline-flex;width:16px;height:16px;font-size:8px;vertical-align:middle;margin-right:4px">P</span>Present</span><span><span class="att-cell a" style="display:inline-flex;width:16px;height:16px;font-size:8px;vertical-align:middle;margin-right:4px">A</span>Absent</span><span><span class="att-cell l" style="display:inline-flex;width:16px;height:16px;font-size:8px;vertical-align:middle;margin-right:4px">L</span>Late</span></div>
+        <div style="display:flex;gap:8px"><button class="btn-p" style="font-size:11px">Mark today's class</button><button class="btn-s" style="font-size:11px">Export report</button></div>
+      </div>
+
+      <!-- SCHEDULE CLASS -->
+      <div class="page" id="page-schedule">
+        <div class="input-row"><label>Class title</label><input placeholder="B1 — Week 9 live class" /></div>
+        <div class="g2">
+          <div class="input-row"><label>Date</label><input type="date" /></div>
+          <div class="input-row"><label>Time</label><input type="time" value="10:00" /></div>
+          <div class="input-row"><label>Duration</label><select><option>30 minutes</option><option selected>45 minutes</option><option>60 minutes</option><option>90 minutes</option></select></div>
+          <div class="input-row"><label>Video platform</label><select><option selected>Jitsi Meet (built-in)</option><option>Google Meet</option><option>Zoom</option></select></div>
+        </div>
+        <div class="input-row"><label>Invite groups</label><select><option selected>B1 — All students (18)</option><option>Group A (6 students)</option><option>Group B (6 students)</option><option>Group C (6 students)</option></select></div>
+        <div class="input-row"><label>Class description / agenda</label><textarea placeholder="Today we'll practice reported speech with real-world examples and do a speaking activity in pairs..."></textarea></div>
+        <div style="padding:10px 12px;background:#EEF2FF;border:0.5px solid #C7D2FE;border-radius:var(--radius);font-size:12px;color:#3730A3;margin-bottom:4px"><i class="ti ti-info-circle" aria-hidden="true" style="font-size:13px;vertical-align:-2px"></i> A reminder will be sent to students 1 hour before the class.</div>
+        <div style="display:flex;gap:8px"><button class="btn-p">Schedule class</button><button class="btn-s">Save draft</button></div>
+      </div>
+
+      <!-- ANNOUNCEMENTS -->
+      <div class="page" id="page-announce">
+        <div class="input-row"><label>Title</label><input placeholder="Important update for all students" /></div>
+        <div class="g2">
+          <div class="input-row"><label>Send to</label><select><option>All students</option><option>B1 class only</option><option>B2 class only</option><option>A2 class only</option></select></div>
+          <div class="input-row"><label>Priority</label><select><option>Normal</option><option>Important</option><option>Urgent</option></select></div>
+        </div>
+        <div class="input-row"><label>Message</label><textarea placeholder="Dear students, reminder that this Friday's class is moved to 4pm due to a public holiday..."></textarea></div>
+        <div style="display:flex;gap:8px;margin-bottom:12px"><button class="btn-p">Send announcement</button><button class="btn-s">Preview</button></div>
+        <div class="st">Recent announcements</div>
+        <div class="ann-item"><div style="font-size:12px;font-weight:500;color:var(--text-primary)">New vocabulary game available</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">Sent Jun 20 · All students · 31/34 read</div></div>
+        <div class="ann-item"><div style="font-size:12px;font-weight:500;color:var(--text-primary)">Outdoor meetup — July 5 registration open</div><div style="font-size:11px;color:var(--text-muted);margin-top:2px">Sent Jun 18 · All students · 28/34 read</div></div>
+      </div>
+
+      <!-- PAYMENTS -->
+      <div class="page" id="page-payments">
+        <div class="g3">
+          <div class="mcard"><div class="mlabel">Collected (Jun)</div><div class="mval">840K</div><div class="msub">CFA</div></div>
+          <div class="mcard"><div class="mlabel">Pending</div><div class="mval">180K</div><div class="msub">6 students</div></div>
+          <div class="mcard"><div class="mlabel">Paid this month</div><div class="mval">28/34</div><div class="msub">students</div></div>
+        </div>
+        <div class="st">Pending payments</div>
+        <div class="pay-row"><div class="av" style="width:26px;height:26px;font-size:9px;background:#DC2626">OD</div><div style="flex:1"><div style="font-size:12px;font-weight:500;color:var(--text-primary)">Ousmane D.</div><div style="font-size:11px;color:var(--text-muted)">30,000 CFA · Due Jun 1 — 25 days overdue</div></div><button class="btn-s" style="font-size:11px">Send reminder</button><span class="pill r">Overdue</span></div>
+        <div class="pay-row"><div class="av" style="width:26px;height:26px;font-size:9px;background:#D97706">NS</div><div style="flex:1"><div style="font-size:12px;font-weight:500;color:var(--text-primary)">Ndèye S.</div><div style="font-size:11px;color:var(--text-muted)">30,000 CFA · Due Jun 15 — 11 days overdue</div></div><button class="btn-s" style="font-size:11px">Send reminder</button><span class="pill y">Late</span></div>
+        <div class="st" style="margin-top:4px">Recent payments</div>
+        <div class="pay-row"><div class="av" style="width:26px;height:26px;font-size:9px">AM</div><div style="flex:1"><div style="font-size:12px;color:var(--text-primary)">Aminata M. · 30,000 CFA</div><div style="font-size:11px;color:var(--text-muted)">Paid Jun 2 · Wave Mobile Money</div></div><span class="pill g">Paid</span></div>
+        <div class="pay-row"><div class="av" style="width:26px;height:26px;font-size:9px;background:#059669">FD</div><div style="flex:1"><div style="font-size:12px;color:var(--text-primary)">Fatou D. · 30,000 CFA</div><div style="font-size:11px;color:var(--text-muted)">Paid Jun 1 · Orange Money</div></div><span class="pill g">Paid</span></div>
+      </div>
+
+      <!-- EVENTS -->
+      <div class="page" id="page-events">
+        <div class="input-row"><label>Event name</label><input placeholder="Outdoor English meetup" /></div>
+        <div class="g2">
+          <div class="input-row"><label>Date</label><input type="date" /></div>
+          <div class="input-row"><label>Time</label><input type="time" value="10:00" /></div>
+          <div class="input-row"><label>Location / format</label><input placeholder="Plateau Independence garden" /></div>
+          <div class="input-row"><label>Max participants</label><input type="number" placeholder="30" /></div>
+        </div>
+        <div class="input-row"><label>Description</label><textarea placeholder="Join us for an outdoor English speaking session in the park..."></textarea></div>
+        <div style="display:flex;gap:8px"><button class="btn-p">Publish event</button><button class="btn-s">Save draft</button></div>
+        <div class="st">Upcoming events</div>
+        <div class="row"><i class="ti ti-calendar-event" aria-hidden="true" style="font-size:16px;color:#4F46E5"></i><div style="flex:1"><div style="font-size:12px;font-weight:500;color:var(--text-primary)">Outdoor English meetup — Jul 5</div><div style="font-size:11px;color:var(--text-muted)">14 registered · 28 spots</div></div><button class="btn-s" style="font-size:11px">View registrations</button></div>
+        <div class="row"><i class="ti ti-calendar-event" aria-hidden="true" style="font-size:16px;color:#D97706"></i><div style="flex:1"><div style="font-size:12px;font-weight:500;color:var(--text-primary)">Debate competition — Jul 12</div><div style="font-size:11px;color:var(--text-muted)">9 registered · 16 spots</div></div><button class="btn-s" style="font-size:11px">View registrations</button></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<script>
+const titles={overview:'Overview',students:'Students',lessons:'Create lesson',quizzes:'Create quiz',homework:'Grade homework',attendance:'Attendance',schedule:'Schedule class',announce:'Announcements',payments:'Payments',events:'Events'};
+function show(id,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.getElementById('ptitle').textContent=titles[id];
+  el.classList.add('active');
+}
+function stab(el,id){
+  document.querySelectorAll('#page-students .tab').forEach(t=>t.classList.remove('active'));
+  ['all','progress','profile'].forEach(k=>{const d=document.getElementById('stab-'+k);if(d)d.style.display='none';});
+  el.classList.add('active');
+  const t=document.getElementById('stab-'+id);if(t)t.style.display='block';
+}
+</script>

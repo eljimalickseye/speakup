@@ -1,0 +1,262 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans)}
+.shell{display:flex;height:620px;border:0.5px solid var(--border);border-radius:12px;overflow:hidden;background:var(--surface-2)}
+.sidebar{width:200px;background:var(--surface-1);border-right:0.5px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+.logo{padding:16px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:8px}
+.logo-mark{width:28px;height:28px;border-radius:8px;background:#4F46E5;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:500}
+.logo-name{font-size:14px;font-weight:500;color:var(--text-primary)}
+.nav{flex:1;padding:8px;overflow-y:auto}
+.nav-section{font-size:10px;color:var(--text-muted);padding:10px 8px 4px;text-transform:uppercase;letter-spacing:.6px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:var(--radius);cursor:pointer;font-size:13px;color:var(--text-secondary);border:none;background:none;width:100%;text-align:left;transition:background .15s}
+.nav-item:hover{background:var(--surface-2);color:var(--text-primary)}
+.nav-item.active{background:#EEF2FF;color:#4F46E5;font-weight:500}
+.nav-item i{font-size:16px;width:16px}
+.badge{margin-left:auto;background:#EEF2FF;color:#4F46E5;border-radius:99px;font-size:10px;padding:1px 6px;font-weight:500}
+.badge.red{background:#FEE2E2;color:#DC2626}
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+.topbar{padding:14px 20px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:12px;background:var(--surface-2)}
+.topbar-title{font-size:15px;font-weight:500;color:var(--text-primary);flex:1}
+.avatar{width:30px;height:30px;border-radius:50%;background:#4F46E5;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;flex-shrink:0}
+.content{padding:20px;flex:1}
+.page{display:none;flex-direction:column;gap:16px}
+.page.active{display:flex}
+.welcome{background:linear-gradient(135deg,#4F46E5,#7C3AED);border-radius:12px;padding:20px;color:#fff}
+.welcome h2{font-size:16px;font-weight:500;margin-bottom:4px}
+.welcome p{font-size:13px;opacity:.85}
+.welcome .cta{margin-top:12px;background:rgba(255,255,255,.2);border:0.5px solid rgba(255,255,255,.35);border-radius:var(--radius);padding:7px 14px;color:#fff;font-size:13px;cursor:pointer;font-family:var(--font-sans)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.card{background:var(--surface-1);border:0.5px solid var(--border);border-radius:12px;padding:14px}
+.card-label{font-size:11px;color:var(--text-muted);margin-bottom:4px}
+.card-value{font-size:22px;font-weight:500;color:var(--text-primary)}
+.card-sub{font-size:12px;color:var(--text-secondary);margin-top:2px}
+.section-title{font-size:13px;font-weight:500;color:var(--text-primary);margin-bottom:8px}
+.lesson-item{display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--surface-1);border:0.5px solid var(--border);border-radius:var(--radius);margin-bottom:6px;cursor:pointer}
+.lesson-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.lesson-icon.purple{background:#EEF2FF}
+.lesson-icon.teal{background:#E6FFFA}
+.lesson-icon.amber{background:#FFFBEB}
+.lesson-icon.red{background:#FEF2F2}
+.lesson-icon i{font-size:18px}
+.lesson-icon.purple i{color:#4F46E5}
+.lesson-icon.teal i{color:#0F766E}
+.lesson-icon.amber i{color:#D97706}
+.lesson-icon.red i{color:#DC2626}
+.lesson-info{flex:1}
+.lesson-title{font-size:13px;font-weight:500;color:var(--text-primary)}
+.lesson-meta{font-size:11px;color:var(--text-muted);margin-top:1px}
+.pill{font-size:10px;padding:2px 8px;border-radius:99px;font-weight:500}
+.pill.done{background:#D1FAE5;color:#065F46}
+.pill.new{background:#EEF2FF;color:#4F46E5}
+.pill.due{background:#FEE2E2;color:#991B1B}
+.progress-bar{height:6px;background:var(--border-strong);border-radius:99px;overflow:hidden;margin-top:6px}
+.progress-fill{height:100%;border-radius:99px;background:#4F46E5}
+.streak{display:flex;gap:4px;margin-bottom:4px}
+.streak-day{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500}
+.streak-day.done{background:#4F46E5;color:#fff}
+.streak-day.today{background:#EEF2FF;color:#4F46E5;border:1.5px solid #4F46E5}
+.streak-day.miss{background:var(--surface-1);color:var(--text-muted);border:0.5px solid var(--border)}
+.chat-area{background:var(--surface-1);border:0.5px solid var(--border);border-radius:12px;overflow:hidden}
+.chat-header{padding:10px 14px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:8px}
+.online-dot{width:8px;height:8px;border-radius:50%;background:#22C55E}
+.chat-messages{padding:12px;height:160px;overflow-y:auto;display:flex;flex-direction:column;gap:8px}
+.msg{max-width:75%;padding:8px 10px;border-radius:8px;font-size:12px;line-height:1.5}
+.msg.them{background:#EEF2FF;color:#3730A3;align-self:flex-start}
+.msg.me{background:#4F46E5;color:#fff;align-self:flex-end}
+.msg-name{font-size:10px;color:var(--text-muted);margin-bottom:2px}
+.chat-input{border-top:0.5px solid var(--border);padding:8px 12px;display:flex;gap:8px;align-items:center}
+.chat-input input{flex:1;border:0.5px solid var(--border);border-radius:var(--radius);padding:6px 10px;font-size:12px;background:var(--surface-2);color:var(--text-primary);font-family:var(--font-sans)}
+.send-btn{background:#4F46E5;border:none;border-radius:var(--radius);width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff}
+.leaderboard-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface-1);border:0.5px solid var(--border);border-radius:var(--radius);margin-bottom:5px}
+.rank{width:24px;font-size:13px;font-weight:500;color:var(--text-muted);text-align:center}
+.rank.gold{color:#D97706}
+.rank.silver{color:#9CA3AF}
+.rank.bronze{color:#92400E}
+.lb-name{flex:1;font-size:13px;color:var(--text-primary)}
+.lb-xp{font-size:12px;font-weight:500;color:#4F46E5}
+.event-card{background:var(--surface-1);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:6px;display:flex;gap:10px;align-items:flex-start}
+.event-date{text-align:center;width:36px;flex-shrink:0}
+.event-day{font-size:16px;font-weight:500;color:#4F46E5}
+.event-month{font-size:9px;color:var(--text-muted);text-transform:uppercase}
+.event-info{flex:1}
+.event-title{font-size:13px;font-weight:500;color:var(--text-primary)}
+.event-detail{font-size:11px;color:var(--text-muted);margin-top:2px}
+.event-reg{border:0.5px solid #4F46E5;background:none;border-radius:var(--radius);color:#4F46E5;font-size:11px;padding:4px 10px;cursor:pointer;font-family:var(--font-sans)}
+.challenge-box{background:var(--surface-1);border:0.5px solid var(--border-accent);border-radius:12px;padding:14px}
+.challenge-label{font-size:10px;font-weight:500;color:#4F46E5;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.challenge-prompt{font-size:14px;color:var(--text-primary);font-weight:500;margin-bottom:10px}
+.voice-btn{display:flex;align-items:center;gap:6px;background:#4F46E5;border:none;border-radius:var(--radius);color:#fff;font-size:12px;padding:8px 14px;cursor:pointer;font-family:var(--font-sans)}
+.word-box{background:#FFFBEB;border:0.5px solid #FDE68A;border-radius:12px;padding:14px}
+.word-title{font-size:18px;font-weight:500;color:#92400E}
+.word-pos{font-size:11px;color:#D97706;margin-bottom:6px}
+.word-def{font-size:12px;color:#78350F;line-height:1.6}
+.word-example{font-size:11px;color:#92400E;font-style:italic;margin-top:6px;padding-left:8px;border-left:2px solid #FCD34D}
+.tab-row{display:flex;gap:4px;margin-bottom:12px}
+.tab{padding:5px 12px;border-radius:var(--radius);font-size:12px;cursor:pointer;border:0.5px solid var(--border);background:var(--surface-1);color:var(--text-secondary);font-family:var(--font-sans)}
+.tab.active{background:#4F46E5;color:#fff;border-color:#4F46E5}
+</style>
+<h2 class="sr-only">English learning platform prototype — interactive navigation demo</h2>
+<div class="shell">
+  <div class="sidebar">
+    <div class="logo">
+      <div class="logo-mark">E</div>
+      <span class="logo-name">EnglishHub</span>
+    </div>
+    <div class="nav">
+      <div class="nav-section">Learn</div>
+      <button class="nav-item active" onclick="show('dashboard')"><i class="ti ti-layout-dashboard" aria-hidden="true"></i>Dashboard</button>
+      <button class="nav-item" onclick="show('lessons')"><i class="ti ti-book" aria-hidden="true"></i>Lessons<span class="badge">3</span></button>
+      <button class="nav-item" onclick="show('practice')"><i class="ti ti-microphone" aria-hidden="true"></i>Speaking</button>
+      <button class="nav-item" onclick="show('exercises')"><i class="ti ti-pencil" aria-hidden="true"></i>Exercises</button>
+      <div class="nav-section">Community</div>
+      <button class="nav-item" onclick="show('chat')"><i class="ti ti-messages" aria-hidden="true"></i>English Chat<span class="badge red">5</span></button>
+      <button class="nav-item" onclick="show('leaderboard')"><i class="ti ti-trophy" aria-hidden="true"></i>Leaderboard</button>
+      <button class="nav-item" onclick="show('events')"><i class="ti ti-calendar-event" aria-hidden="true"></i>Events</button>
+      <div class="nav-section">Classes</div>
+      <button class="nav-item" onclick="show('schedule')"><i class="ti ti-video" aria-hidden="true"></i>Live Classes</button>
+    </div>
+  </div>
+  <div class="main">
+    <div class="topbar">
+      <span class="topbar-title" id="page-title">Dashboard</span>
+      <i class="ti ti-bell" style="font-size:18px;color:var(--text-secondary)" aria-hidden="true"></i>
+      <div class="avatar">AM</div>
+    </div>
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div class="page active" id="page-dashboard">
+        <div class="welcome">
+          <h2>Good morning, Aminata!</h2>
+          <p>You have a live class in 2 hours. Today's challenge is waiting for you.</p>
+          <button class="cta">Join today's class →</button>
+        </div>
+        <div class="grid3">
+          <div class="card"><div class="card-label">XP points</div><div class="card-value">1,840</div><div class="card-sub">+120 this week</div></div>
+          <div class="card"><div class="card-label">Streak</div><div class="card-value">12 days 🔥</div><div class="card-sub">Keep it going!</div></div>
+          <div class="card"><div class="card-label">Fluency level</div><div class="card-value">B1</div><div class="card-sub">Intermediate</div></div>
+        </div>
+        <div>
+          <div class="section-title">Today's tasks</div>
+          <div class="lesson-item"><div class="lesson-icon purple"><i class="ti ti-book" aria-hidden="true"></i></div><div class="lesson-info"><div class="lesson-title">Week 8 — Conditional sentences</div><div class="lesson-meta">Grammar · 20 min</div><div class="progress-bar" style="margin-top:5px"><div class="progress-fill" style="width:60%"></div></div></div><span class="pill new">In progress</span></div>
+          <div class="lesson-item"><div class="lesson-icon teal"><i class="ti ti-microphone" aria-hidden="true"></i></div><div class="lesson-info"><div class="lesson-title">Daily speaking prompt</div><div class="lesson-meta">Describe your morning routine</div></div><span class="pill due">Due today</span></div>
+          <div class="lesson-item"><div class="lesson-icon amber"><i class="ti ti-pencil" aria-hidden="true"></i></div><div class="lesson-info"><div class="lesson-title">Vocabulary quiz — Unit 8</div><div class="lesson-meta">15 questions · 10 min</div></div><span class="pill done">Done</span></div>
+        </div>
+      </div>
+
+      <!-- LESSONS -->
+      <div class="page" id="page-lessons">
+        <div class="tab-row">
+          <button class="tab active">This week</button>
+          <button class="tab">Grammar notes</button>
+          <button class="tab">Vocabulary</button>
+          <button class="tab">Homework</button>
+        </div>
+        <div class="lesson-item"><div class="lesson-icon purple"><i class="ti ti-book" aria-hidden="true"></i></div><div class="lesson-info"><div class="lesson-title">Week 8 — Conditionals (if-clauses)</div><div class="lesson-meta">Grammar · Reading · 20 min</div><div class="progress-bar" style="margin-top:5px"><div class="progress-fill" style="width:60%"></div></div></div><span class="pill new">In progress</span></div>
+        <div class="lesson-item"><div class="lesson-icon amber"><i class="ti ti-file-text" aria-hidden="true"></i></div><div class="lesson-info"><div class="lesson-title">Week 7 — Past perfect tense</div><div class="lesson-meta">Grammar · Reading · 20 min</div></div><span class="pill done">Done</span></div>
+        <div class="lesson-item"><div class="lesson-icon teal"><i class="ti ti-headphones" aria-hidden="true"></i></div><div class="lesson-info"><div class="lesson-title">Listening — BBC podcast ep. 12</div><div class="lesson-meta">Listening exercise · 15 min</div></div><span class="pill done">Done</span></div>
+        <div class="lesson-item"><div class="lesson-icon red"><i class="ti ti-writing" aria-hidden="true"></i></div><div class="lesson-info"><div class="lesson-title">Writing homework — My future plans</div><div class="lesson-meta">150 words minimum · Due Friday</div></div><span class="pill due">Due soon</span></div>
+        <div class="lesson-item"><div class="lesson-icon purple"><i class="ti ti-book" aria-hidden="true"></i></div><div class="lesson-info"><div class="lesson-title">Week 9 preview — Reported speech</div><div class="lesson-meta">Unlocks next Monday</div></div><span class="pill" style="background:var(--surface-1);color:var(--text-muted);border:0.5px solid var(--border)">Locked</span></div>
+      </div>
+
+      <!-- SPEAKING PRACTICE -->
+      <div class="page" id="page-practice">
+        <div class="challenge-box">
+          <div class="challenge-label">Today's speaking challenge</div>
+          <div class="challenge-prompt">"Describe your favorite meal in English. What do you love about it?"</div>
+          <button class="voice-btn"><i class="ti ti-microphone" aria-hidden="true" style="font-size:14px"></i>Record my answer</button>
+        </div>
+        <div class="word-box">
+          <div class="word-pos">noun · /ˈkwɪzɪn/</div>
+          <div class="word-title">Cuisine</div>
+          <div class="word-def">A style or method of cooking, especially characteristic of a particular country, region, or establishment.</div>
+          <div class="word-example">"I love West African cuisine — the flavours are incredibly rich."</div>
+        </div>
+        <div>
+          <div class="section-title">Recent feedback from teacher</div>
+          <div class="lesson-item"><div class="lesson-icon teal"><i class="ti ti-message-check" aria-hidden="true"></i></div><div class="lesson-info"><div class="lesson-title">Week 7 recording reviewed</div><div class="lesson-meta">Good intonation! Work on 'th' sounds — try "think" and "through" more slowly.</div></div><span class="pill done">Reviewed</span></div>
+        </div>
+      </div>
+
+      <!-- EXERCISES -->
+      <div class="page" id="page-exercises">
+        <div class="grid2">
+          <div class="card" style="cursor:pointer"><div class="lesson-icon purple" style="margin-bottom:8px;width:36px;height:36px"><i class="ti ti-list-check" aria-hidden="true" style="font-size:18px;color:#4F46E5"></i></div><div class="card-label">Grammar quiz</div><div class="card-value" style="font-size:14px;color:var(--text-primary)">Conditionals</div><div class="card-sub">15 questions</div></div>
+          <div class="card" style="cursor:pointer"><div class="lesson-icon amber" style="margin-bottom:8px;width:36px;height:36px"><i class="ti ti-cards" aria-hidden="true" style="font-size:18px;color:#D97706"></i></div><div class="card-label">Vocabulary game</div><div class="card-value" style="font-size:14px;color:var(--text-primary)">Word match</div><div class="card-sub">Unit 8 — 20 cards</div></div>
+          <div class="card" style="cursor:pointer"><div class="lesson-icon teal" style="margin-bottom:8px;width:36px;height:36px"><i class="ti ti-headphones" aria-hidden="true" style="font-size:18px;color:#0F766E"></i></div><div class="card-label">Listening</div><div class="card-value" style="font-size:14px;color:var(--text-primary)">Comprehension</div><div class="card-sub">BBC podcast clip</div></div>
+          <div class="card" style="cursor:pointer"><div class="lesson-icon red" style="margin-bottom:8px;width:36px;height:36px"><i class="ti ti-writing" aria-hidden="true" style="font-size:18px;color:#DC2626"></i></div><div class="card-label">Writing</div><div class="card-value" style="font-size:14px;color:var(--text-primary)">Essay check</div><div class="card-sub">Submit your homework</div></div>
+        </div>
+        <div>
+          <div class="section-title">Weekly streak</div>
+          <div class="streak">
+            <div class="streak-day done">M</div><div class="streak-day done">T</div><div class="streak-day done">W</div><div class="streak-day done">T</div><div class="streak-day today">F</div><div class="streak-day miss">S</div><div class="streak-day miss">S</div>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted)">4 of 7 days done this week</div>
+        </div>
+      </div>
+
+      <!-- CHAT -->
+      <div class="page" id="page-chat">
+        <div class="tab-row">
+          <button class="tab active">General</button>
+          <button class="tab">Group A</button>
+          <button class="tab">Travel talk</button>
+          <button class="tab">Debate club</button>
+        </div>
+        <div style="font-size:11px;color:#4F46E5;background:#EEF2FF;padding:6px 10px;border-radius:var(--radius);margin-bottom:8px"><i class="ti ti-info-circle" aria-hidden="true" style="font-size:13px;vertical-align:-2px"></i> English only in this chat — practicing together makes you improve faster!</div>
+        <div class="chat-area">
+          <div class="chat-header"><div class="online-dot"></div><span style="font-size:13px;color:var(--text-primary)">General — 24 members online</span></div>
+          <div class="chat-messages">
+            <div><div class="msg-name">Moussa K.</div><div class="msg them">Has anyone tried the speaking challenge today? It's quite difficult for me.</div></div>
+            <div><div class="msg-name">Fatou D.</div><div class="msg them">Yes! I recorded mine this morning. The key is to speak slowly and clearly.</div></div>
+            <div><div class="msg me">I agree with Fatou. I also wrote down my ideas first before recording.</div></div>
+            <div><div class="msg-name">Ibrahim S.</div><div class="msg them">Great tip! I always get nervous when I see the recording button 😄</div></div>
+          </div>
+          <div class="chat-input"><input placeholder="Write in English…" /><button class="send-btn"><i class="ti ti-send" aria-hidden="true" style="font-size:14px"></i></button></div>
+        </div>
+      </div>
+
+      <!-- LEADERBOARD -->
+      <div class="page" id="page-leaderboard">
+        <div class="tab-row">
+          <button class="tab active">This week</button>
+          <button class="tab">All time</button>
+        </div>
+        <div class="leaderboard-item" style="border-color:#FDE68A;background:#FFFBEB"><div class="rank gold">1</div><div class="avatar" style="width:28px;height:28px;font-size:11px;background:#D97706">MB</div><div class="lb-name">Mariama B.</div><div class="lb-xp">2,340 XP</div></div>
+        <div class="leaderboard-item" style="border-color:#E5E7EB"><div class="rank silver">2</div><div class="avatar" style="width:28px;height:28px;font-size:11px;background:#6B7280">KD</div><div class="lb-name">Kofi D.</div><div class="lb-xp">2,105 XP</div></div>
+        <div class="leaderboard-item" style="border-color:#D97706;background:#FEF3C7"><div class="rank bronze">3</div><div class="avatar" style="width:28px;height:28px;font-size:11px;background:#92400E">FS</div><div class="lb-name">Fatoumata S.</div><div class="lb-xp">1,980 XP</div></div>
+        <div class="leaderboard-item"><div class="rank">4</div><div class="avatar" style="width:28px;height:28px;font-size:11px">IS</div><div class="lb-name">Ibrahim S.</div><div class="lb-xp">1,740 XP</div></div>
+        <div class="leaderboard-item" style="border-color:#4F46E5"><div class="rank" style="color:#4F46E5;font-weight:600">5</div><div class="avatar" style="width:28px;height:28px;font-size:11px">AM</div><div class="lb-name">You — Aminata M.</div><div class="lb-xp">1,840 XP</div></div>
+        <div class="leaderboard-item"><div class="rank">6</div><div class="avatar" style="width:28px;height:28px;font-size:11px;background:#059669">MK</div><div class="lb-name">Moussa K.</div><div class="lb-xp">1,620 XP</div></div>
+      </div>
+
+      <!-- EVENTS -->
+      <div class="page" id="page-events">
+        <div class="event-card"><div class="event-date"><div class="event-day">5</div><div class="event-month">Jul</div></div><div class="event-info"><div class="event-title">Outdoor English Meetup</div><div class="event-detail">Plateau Independence garden · 10:00 AM · 28 spots left</div></div><button class="event-reg">Register</button></div>
+        <div class="event-card"><div class="event-date"><div class="event-day">12</div><div class="event-month">Jul</div></div><div class="event-info"><div class="event-title">Debate competition</div><div class="event-detail">"Social media does more harm than good" · Online · 16 spots</div></div><button class="event-reg">Register</button></div>
+        <div class="event-card"><div class="event-date"><div class="event-day">19</div><div class="event-month">Jul</div></div><div class="event-info"><div class="event-title">Public speaking contest</div><div class="event-detail">2-minute prepared speech · Prizes for top 3</div></div><button class="event-reg">Register</button></div>
+        <div class="event-card"><div class="event-date"><div class="event-day">2</div><div class="event-month">Aug</div></div><div class="event-info"><div class="event-title">Beach Day — English picnic</div><div class="event-detail">Plage des Mamelles · English-only conversations all day</div></div><button class="event-reg">Register</button></div>
+      </div>
+
+      <!-- SCHEDULE -->
+      <div class="page" id="page-schedule">
+        <div class="lesson-item" style="background:#EEF2FF;border-color:#C7D2FE"><div class="lesson-icon purple"><i class="ti ti-video" aria-hidden="true"></i></div><div class="lesson-info"><div class="lesson-title">Live class — Conditionals in context</div><div class="lesson-meta">Today · 10:00 AM · 45 min · 18 students</div></div><button style="background:#4F46E5;border:none;border-radius:var(--radius);color:#fff;font-size:11px;padding:5px 12px;cursor:pointer;font-family:var(--font-sans)">Join now</button></div>
+        <div class="lesson-item"><div class="lesson-icon teal"><i class="ti ti-video" aria-hidden="true"></i></div><div class="lesson-info"><div class="lesson-title">Speaking clinic — Small group</div><div class="lesson-meta">Wednesday · 6:00 PM · 30 min · 6 students</div></div><span class="pill" style="background:#EEF2FF;color:#4F46E5;border:none">Registered</span></div>
+        <div class="lesson-item"><div class="lesson-icon amber"><i class="ti ti-video" aria-hidden="true"></i></div><div class="lesson-info"><div class="lesson-title">Business English — Group B</div><div class="lesson-meta">Friday · 5:00 PM · 60 min · 12 students</div></div><button style="background:none;border:0.5px solid #4F46E5;border-radius:var(--radius);color:#4F46E5;font-size:11px;padding:5px 12px;cursor:pointer;font-family:var(--font-sans)">Register</button></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+<script>
+const titles={dashboard:'Dashboard',lessons:'Lessons',practice:'Speaking practice',exercises:'Exercises',chat:'English chat',leaderboard:'Leaderboard',events:'Events',schedule:'Live classes'};
+function show(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.getElementById('page-title').textContent=titles[id];
+  event.currentTarget.classList.add('active');
+}
+</script>
