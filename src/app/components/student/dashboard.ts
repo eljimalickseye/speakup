@@ -15,7 +15,16 @@ import { DialogService } from '../../services/dialog.service';
           <div style="display:flex; justify-content:space-between; align-items:center; gap:20px; flex-wrap:wrap">
             <div style="flex:1; min-width:250px">
               <span class="badge" style="background:#4F46E5; color:white; font-size:10px; font-weight:700; padding:2px 8px; border-radius:20px; text-transform:uppercase">Level Assessment</span>
-              <h3 style="font-size:16px; font-weight:800; color:#1F2937; margin:6px 0 0 0">Determine your starting English Level! 🚀</h3>
+              <div style="display:flex; align-items:center; gap:8px; margin-top:6px">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
+                  <path d="M4.5 16.5c-1.5 1.25-2.5 3.5-2.5 3.5s2.25-1 3.5-2.5" />
+                  <path d="M12 9 9 12" />
+                  <path d="M13 18H9.3a1.5 1.5 0 0 1-1-.4l-2.4-2.4a1.5 1.5 0 0 1-.4-1V11c0-2 2-4 4-4h2" />
+                  <path d="M12 9c2-2 4-2 6 0s2 4 0 6l-3 3" />
+                  <path d="M19 5c1.5 1.5 1.5 3.5 0 5s-3.5 1.5-5 0-1.5-3.5 0-5 3.5-1.5 5 0z" />
+                </svg>
+                <h3 style="font-size:16px; font-weight:800; color:#1F2937; margin:0">Determine your starting English Level!</h3>
+              </div>
               <p style="font-size:12.5px; color:#4B5563; margin:4px 0 0 0">
                 Take this quick 5-question test to evaluate your level (A1, A2, B1, B2) and unlock matching lessons!
               </p>
@@ -31,12 +40,17 @@ import { DialogService } from '../../services/dialog.service';
               <div class="card" style="width:100%; max-width:550px; background:#FFF; border-radius:12px; padding:24px; box-shadow:0 10px 25px rgba(0,0,0,0.25)">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px">
                   <h3 style="font-size:16px; font-weight:700; color:#4F46E5; margin:0">Level Placement Test</h3>
-                  <span style="font-size:12px; color:var(--text-muted)">Question {{ currentQuestionIndex() + 1 }} of {{ placementQuestions().length }}</span>
+                  <div style="display:flex; align-items:center; gap:12px">
+                    <span style="font-size:12px; color:var(--text-muted)">Question {{ currentQuestionIndex() + 1 }} of {{ placementQuestions().length }}</span>
+                    <button (click)="showPlacementTest.set(false)" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:16px; line-height:1; padding:4px; display:flex; align-items:center; justify-content:center">
+                      <i class="ti ti-x"></i>
+                    </button>
+                  </div>
                 </div>
 
                 <!-- Progress Bar -->
                 <div style="width:100%; height:6px; background:#E5E7EB; border-radius:3px; margin-bottom:20px; overflow:hidden">
-                  <div [style.width.%]="((currentQuestionIndex() + 1) / placementQuestions().length) * 100" style="height:100%; background:#4F46E5; transition:width 0.3s"></div>
+                  <div [style.width.%]="((currentQuestionIndex() + 1) / (placementQuestions().length || 1)) * 100" style="height:100%; background:#4F46E5; transition:width 0.3s"></div>
                 </div>
 
                 <!-- Question Body -->
@@ -63,7 +77,7 @@ import { DialogService } from '../../services/dialog.service';
                   @if (currentQuestionIndex() < placementQuestions().length - 1) {
                     <button class="btn-p" style="background:#4F46E5; border-color:#4F46E5" [disabled]="!selectedAnswers()[currentQuestionIndex()]" (click)="nextQuestion()">Next</button>
                   } @else {
-                    <button class="btn-p" style="background:#10B981; border-color:#10B981" [disabled]="!selectedAnswers()[currentQuestionIndex()]" (click)="submitPlacementTest()">Submit Test</button>
+                    <button class="btn-p" style="background:#10B981; border-color:#10B981" [disabled]="!selectedAnswers()[currentQuestionIndex()] || placementQuestions().length === 0" (click)="submitPlacementTest()">Submit Test</button>
                   }
                 </div>
               </div>

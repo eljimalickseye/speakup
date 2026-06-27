@@ -369,6 +369,46 @@ export class DatabaseService {
     onSnapshot(collection(this.firestore, 'quizzes'), (snap) => {
       const quizzes: Quiz[] = [];
       snap.forEach(doc => quizzes.push(doc.data() as Quiz));
+      
+      const hasPlacement = quizzes.some(q => q.id === 'placement-test');
+      if (!hasPlacement) {
+        const ptQuiz: Quiz = {
+          id: 'placement-test',
+          title: 'English Level Placement Test',
+          type: 'Multiple Choice',
+          timeLimit: 'No limit',
+          questions: [
+            {
+              question: 'Choose the correct form: She ___ to school every day.',
+              options: ['go', 'goes', 'going'],
+              correctOption: 'B'
+            },
+            {
+              question: 'Identify the correct preposition: I am interested ___ learning English.',
+              options: ['in', 'at', 'on'],
+              correctOption: 'A'
+            },
+            {
+              question: 'Which sentence is grammatically correct?',
+              options: ['If it rains, we will stay home.', 'If it will rain, we stay home.', 'If it rains, we would stay home.'],
+              correctOption: 'A'
+            },
+            {
+              question: 'Complete the sentence: By the time the movie ended, we ___ all the popcorn.',
+              options: ['eat', 'have eaten', 'had eaten'],
+              correctOption: 'C'
+            },
+            {
+              question: 'What is the opposite of the word "generous"?',
+              options: ['stingy', 'kind', 'polite'],
+              correctOption: 'A'
+            }
+          ]
+        };
+        quizzes.unshift(ptQuiz);
+        // Write to Firestore in background
+        setDoc(doc(this.firestore, 'quizzes', 'placement-test'), ptQuiz).catch(e => console.warn(e));
+      }
       this.quizzes$.next(quizzes);
     });
 
