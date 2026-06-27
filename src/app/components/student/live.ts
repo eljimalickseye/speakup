@@ -772,6 +772,7 @@ export class StudentLiveClassesComponent {
         this.selectedClass.set(fresh || null);
       }
     });
+    this.db.observeActiveJitsiCall().subscribe(c => this.activeMeeting.set(c));
     this.db.observeCurrentUser().subscribe(u => this.currentUser.set(u));
   }
 
@@ -790,10 +791,10 @@ export class StudentLiveClassesComponent {
   }
 
   joinClass(c: LiveClass) {
-    this.activeMeeting.set(c);
+    this.db.setActiveJitsiCall(c);
   }
 
   exitMeeting() {
-    this.activeMeeting.set(null);
+    this.db.setActiveJitsiCall(null);
   }
 }

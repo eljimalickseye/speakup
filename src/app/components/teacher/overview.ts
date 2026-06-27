@@ -149,6 +149,10 @@ export class TeacherOverviewComponent {
   @Output() navigateToTab = new EventEmitter<string>();
 
   constructor() {
+    this.db.observeActiveJitsiCall().subscribe(c => {
+      this.activeMeeting.set(c);
+    });
+
     this.db.observeCurrentUser().subscribe(user => {
       this.teacherProfile.set(user);
     });
@@ -254,7 +258,7 @@ export class TeacherOverviewComponent {
 
   startClass(c: LiveClass) {
     this.db.updateClassStatus(c.id, 'active');
-    this.activeMeeting.set(c);
+    this.db.setActiveJitsiCall({ ...c, status: 'active' });
   }
 
   endClass() {
@@ -262,11 +266,11 @@ export class TeacherOverviewComponent {
     if (c) {
       this.db.updateClassStatus(c.id, 'completed');
     }
-    this.activeMeeting.set(null);
+    this.db.setActiveJitsiCall(null);
   }
 
   exitMeeting() {
-    this.activeMeeting.set(null);
+    this.db.setActiveJitsiCall(null);
   }
 
   goToHomework() {

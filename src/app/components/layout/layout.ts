@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { DatabaseService, UserProfile, LiveClass, Submission, Announcement } from '../../services/database.service';
 import { DialogService } from '../../services/dialog.service';
 import { FormsModule } from '@angular/forms';
+import { JitsiMeet } from '../jitsi-meet/jitsi-meet';
 
 // Subcomponents imports
 import { StudentDashboardComponent } from '../student/dashboard';
@@ -32,6 +33,7 @@ import { TeacherEventsComponent } from '../teacher/events';
   imports: [
     CommonModule,
     FormsModule,
+    JitsiMeet,
     StudentDashboardComponent,
     StudentLessonsComponent,
     StudentSpeakingComponent,
@@ -345,7 +347,7 @@ import { TeacherEventsComponent } from '../teacher/events';
 
             </div>
             <div class="modal-actions" style="border-top:1px solid var(--border-weak); padding-top:12px; margin-top:12px">
-              <button class="btn-s" (click)="closeProfileEditor()">Cancel</button>
+            <button class="btn-s" (click)="closeProfileEditor()">Cancel</button>
               <button class="btn-p" (click)="saveProfileSettings()">Save Settings</button>
             </div>
           </div>
@@ -358,6 +360,43 @@ import { TeacherEventsComponent } from '../teacher/events';
           <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7a2 2 0 0 0-2-2H3a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V7Z"/><path d="M12 9v6"/><path d="M9 12h6"/></svg>
           <span>Activer le Live</span>
         </button>
+      }
+
+      <!-- GLOBAL JITSI MEET fullscreen OVERLAY -->
+      @if (activeJitsiCall(); as call) {
+        <div style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:#0B0F19; z-index:9999; display:flex; flex-direction:column">
+          <!-- Jitsi Header with controls -->
+          <div style="background:#111827; padding:12px 24px; border-bottom:1px solid #1F2937; display:flex; justify-content:space-between; align-items:center; color:white">
+            <div style="display:flex; align-items:center; gap:8px">
+              <span style="width:10px; height:10px; border-radius:50%; background:#EF4444; animation: pulse-live 1.5s infinite"></span>
+              <span style="font-weight:700; font-size:14px">{{ call.title }} — Live Room</span>
+            </div>
+            <div style="display:flex; gap:8px">
+              @if (currentUser()?.role === 'teacher') {
+                <button class="btn-s" style="background:#EF4444; border-color:#EF4444; color:white; font-size:11px; padding:6px 12px; border-radius:6px; font-weight:700" (click)="endLiveCall()">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:4px"><path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3A19.5 19.5 0 0 1 4.54 10.6 19.79 19.79 0 0 1 1.54 2 2 2 0 0 1 3.52 0h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.5 7.91a16 16 0 0 0 3.18 5.4Z"/><line x1="23" y1="1" x2="1" y2="23"/></svg>
+                  <span>End Call for All</span>
+                </button>
+              } @else {
+                <button class="btn-s" style="border-color:#374151; color:#9CA3AF; font-size:11px; padding:6px 12px; border-radius:6px; font-weight:700" (click)="exitLiveCall()">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:4px"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                  <span>Exit Call</span>
+                </button>
+              }
+            </div>
+          </div>
+          <!-- Jitsi Meet Component viewport -->
+          <div style="flex:1; background:#000; position:relative">
+            <app-jitsi-meet
+              [roomName]="call.jitsiRoom"
+              [isTeacher]="currentUser()?.role === 'teacher'"
+              [userName]="currentUser()?.name || 'User'"
+              [userEmail]="currentUser()?.role === 'teacher' ? 'teacher@speakup.com' : 'student@speakup.com'"
+              (onMeetingLeave)="exitLiveCall()"
+              (onMeetingEnd)="endLiveCall()">
+            </app-jitsi-meet>
+          </div>
+        </div>
       }
     </div>
   `,
@@ -481,6 +520,10 @@ export class LayoutComponent {
   private lastActiveClassId: string | null = null;
 
   constructor() {
+    this.db.observeActiveJitsiCall().subscribe(c => {
+      this.activeJitsiCall.set(c);
+    });
+
     this.db.observeCurrentUser().subscribe(user => {
       // Clear last known state on user change to prevent toast duplicate triggers
       this.lastSubmissions = null;
@@ -742,15 +785,34 @@ export class LayoutComponent {
     }
   }
 
+  activeJitsiCall = signal<LiveClass | null>(null);
+
+  joinLiveCall(c: LiveClass) {
+    this.db.setActiveJitsiCall(c);
+  }
+
+  exitLiveCall() {
+    this.db.setActiveJitsiCall(null);
+  }
+
+  async endLiveCall() {
+    const c = this.activeJitsiCall();
+    if (c) {
+      await this.db.updateClassStatus(c.id, 'completed');
+    }
+    this.db.setActiveJitsiCall(null);
+  }
+
   async triggerInstantLive() {
     this.dialogService.confirm(
       'Start Instant Live Class',
-      'Would you like to start a live meeting session instantly and notify students?',
+      'Would you like to start a live meeting session instantly?',
       async () => {
         try {
-          await this.db.startInstantLiveClass();
-          this.setTab('overview');
-          this.dialogService.alert('Live Session Started', 'Instant Live Class is now active! Students can join from their dashboards.', 'success');
+          const created = await this.db.startInstantLiveClass();
+          if (created) {
+            this.joinLiveCall(created);
+          }
         } catch (e: any) {
           this.dialogService.alert('Failed to Start Live', e.message || 'Error occurred starting live session.', 'info');
         }

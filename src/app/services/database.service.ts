@@ -164,6 +164,7 @@ export class DatabaseService {
   
   // Current user state
   private currentUser$ = new BehaviorSubject<UserProfile | null>(null);
+  private activeJitsiCall$ = new BehaviorSubject<LiveClass | null>(null);
 
   constructor() {
     const voiceChatLocal = localStorage.getItem('speak_voice_chat_enabled') !== 'false';
@@ -1031,6 +1032,8 @@ export class DatabaseService {
 
   // --- LIVE CLASS OPERATIONS ---
   observeSchedules(): Observable<LiveClass[]> { return this.schedules$.asObservable(); }
+  observeActiveJitsiCall(): Observable<LiveClass | null> { return this.activeJitsiCall$.asObservable(); }
+  setActiveJitsiCall(c: LiveClass | null) { this.activeJitsiCall$.next(c); }
 
   async scheduleClass(c: Omit<LiveClass, 'id' | 'status' | 'jitsiRoom'>, status: 'waiting' | 'active' = 'waiting') {
     const roomSuffix = Math.random().toString(36).substring(2, 9);
@@ -1053,6 +1056,7 @@ export class DatabaseService {
         console.warn(e);
       }
     }
+    return newClass;
   }
 
   async updateClassStatus(classId: string, status: 'waiting' | 'active' | 'completed') {
@@ -1091,7 +1095,7 @@ export class DatabaseService {
   async startInstantLiveClass() {
     const todayStr = new Date().toISOString().split('T')[0];
     const timeStr = new Date().toTimeString().split(' ')[0].substring(0, 5);
-    await this.scheduleClass({
+    return await this.scheduleClass({
       title: 'Instant Live Class',
       description: 'Join our live practice session with the teacher now!',
       date: todayStr,

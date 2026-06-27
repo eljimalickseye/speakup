@@ -351,52 +351,33 @@ export class TeacherScheduleComponent {
       duration: this.duration,
       group: this.group,
       description: this.description
-    }, 'active');
-
-    this.dialogService.alert(
-      'Live Started', 
-      'Live Class started instantly! Redirecting to Overview dashboard to host Jitsi Meet.', 
-      'success', 
-      () => {
-        this.navigateToTab.emit('overview');
+    }, 'active').then(created => {
+      if (created) {
+        this.db.setActiveJitsiCall(created);
       }
-    );
+    });
     this.resetForm();
   }
 
   // --- Actions inside calendar preview ---
   startLiveNow(c: LiveClass) {
     this.db.updateClassStatus(c.id, 'active');
-    this.dialogService.alert(
-      'Live Started', 
-      'Live Class activated! Redirecting to Overview dashboard to host the Jitsi videobridge.', 
-      'success', 
-      () => {
-        this.navigateToTab.emit('overview');
-      }
-    );
+    this.db.setActiveJitsiCall({ ...c, status: 'active' });
   }
 
   startAndJoinClass(c: LiveClass) {
     if (c.status === 'waiting') {
       this.db.updateClassStatus(c.id, 'active');
-      this.dialogService.alert(
-        'Live Started', 
-        'Live Class activated! Redirecting to Overview dashboard to host the Jitsi videobridge.', 
-        'success', 
-        () => {
-          this.navigateToTab.emit('overview');
-        }
-      );
+      this.db.setActiveJitsiCall({ ...c, status: 'active' });
     } else if (c.status === 'active') {
-      this.navigateToTab.emit('overview');
+      this.db.setActiveJitsiCall(c);
     } else {
       this.dialogService.alert('Session Completed', 'This live session is already completed.', 'info');
     }
   }
 
   joinActiveLive(c: LiveClass) {
-    this.navigateToTab.emit('overview');
+    this.db.setActiveJitsiCall(c);
   }
 
   endLiveClass(c: LiveClass) {
