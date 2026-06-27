@@ -9,102 +9,24 @@ import { DialogService } from '../../services/dialog.service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="page">
-      <!-- Tabs (This week, All time) -->
-      <div class="tab-row" style="margin-bottom: 24px">
-        <button class="tab" [class.active]="selectedTab() === 'week'" (click)="selectedTab.set('week')">
-          <i class="ti ti-calendar-stats"></i> Weekly Sprint
-        </button>
-        <button class="tab" [class.active]="selectedTab() === 'all'" (click)="selectedTab.set('all')">
-          <i class="ti ti-world"></i> Hall of Fame (All Time)
-        </button>
-      </div>
-
-      <!-- REWARDS POTENTIELS BANNER (Visible for students) -->
-      @if (currentUser()?.role === 'student') {
-        <div class="card" style="background:linear-gradient(135deg, #FFF7ED 0%, #FEF3C7 100%); border:2px solid #FDE68A; margin-bottom:20px; padding:16px; border-radius:12px">
-          <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px">
-            <span style="font-size:24px">🎁</span>
-            <h3 style="margin:0; font-size:15px; font-weight:700; color:#92400E">Récompenses du Mois</h3>
-          </div>
-          <p style="font-size:12px; color:#B45309; margin:0 0 12px 0">
-            Accumulez des points XP pour gagner ces cadeaux exceptionnels !
-          </p>
-
-          <!-- Rewards Grid -->
-          <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:10px">
-            @for (reward of rewards(); track reward.id) {
-              <div style="background:#FFF; border:1px solid #FDE68A; border-radius:10px; padding:14px; position:relative; transition:all 0.2s; cursor:default" class="reward-card">
-                @if (reward.assignedTo) {
-                  <div style="position:absolute; top:-6px; right:-6px; background:#10B981; color:white; font-size:9px; font-weight:700; padding:2px 8px; border-radius:10px">
-                    🏆 Gagné
-                  </div>
-                }
-                
-                <div style="display:flex; flex-direction:column; gap:4px">
-                  <div style="display:flex; justify-content:space-between; align-items:center">
-                    <span style="font-size:14px; font-weight:700; color:#1F2937">{{ reward.title }}</span>
-                    <span style="font-size:10px; font-weight:700; background:#FEF3C7; color:#D97706; padding:2px 8px; border-radius:8px; white-space:nowrap">{{ reward.xpThreshold }} XP</span>
-                  </div>
-                  
-                  <p style="font-size:11px; color:#6B7280; margin:2px 0">{{ reward.description }}</p>
-
-                  @if (reward.assignedTo) {
-                    <div style="font-size:11px; font-weight:600; color:#065F46; margin-top:4px">
-                      🎉 Gagné par {{ reward.assignedName }}
-                    </div>
-                  } @else {
-                    <!-- XP Progress Bar -->
-                    <div style="margin-top:6px">
-                      <div style="display:flex; justify-content:space-between; font-size:9px; color:#6B7280; margin-bottom:2px">
-                        <span>Votre progression</span>
-                        <span>{{ currentUser()?.xp || 0 }} / {{ reward.xpThreshold }} XP</span>
-                      </div>
-                      <div style="width:100%; height:8px; background:#F3F4F6; border-radius:4px; overflow:hidden">
-                        <div [style.width.%]="getPercent(currentUser()?.xp || 0, reward.xpThreshold)" style="height:100%; background:linear-gradient(90deg, #FBBF24, #F59E0B); border-radius:4px; transition:width 0.3s"></div>
-                      </div>
-                      @if ((currentUser()?.xp || 0) >= reward.xpThreshold) {
-                        <div style="font-size:10px; font-weight:700; color:#059669; margin-top:4px">
-                          ✅ Objectif atteint ! Le professeur peut vous attribuer ce prix.
-                        </div>
-                      } @else {
-                        <div style="font-size:9px; color:#9CA3AF; margin-top:2px">
-                          Plus que {{ reward.xpThreshold - (currentUser()?.xp || 0) }} XP requis
-                        </div>
-                      }
-                    </div>
-                  }
-                </div>
-              </div>
-            }
-          </div>
-
-          <!-- Rewards Stats -->
-          <div style="display:flex; gap:16px; margin-top:14px; flex-wrap:wrap; border-top:1px solid #FDE68A; padding-top:12px">
-            <div style="flex:1; min-width:120px; display:flex; align-items:center; gap:8px; background:#FFF; padding:8px 12px; border-radius:8px; border:1px solid #FEF3C7">
-              <span style="font-size:20px">💰</span>
-              <div>
-                <div style="font-size:9px; color:#6B7280; font-weight:600">Votre XP</div>
-                <div style="font-size:16px; font-weight:700; color:#8B5CF6">{{ currentUser()?.xp || 0 }} XP</div>
-              </div>
-            </div>
-            <div style="flex:1; min-width:120px; display:flex; align-items:center; gap:8px; background:#FFF; padding:8px 12px; border-radius:8px; border:1px solid #FEF3C7">
-              <span style="font-size:20px">🎯</span>
-              <div>
-                <div style="font-size:9px; color:#6B7280; font-weight:600">Prochain palier</div>
-                <div style="font-size:16px; font-weight:700; color:#10B981">{{ nextRewardXp() }} XP</div>
-              </div>
-            </div>
-            <div style="flex:1; min-width:120px; display:flex; align-items:center; gap:8px; background:#FFF; padding:8px 12px; border-radius:8px; border:1px solid #FEF3C7">
-              <span style="font-size:20px">🏆</span>
-              <div>
-                <div style="font-size:9px; color:#6B7280; font-weight:600">Gains potentiels</div>
-                <div style="font-size:16px; font-weight:700; color:#D97706">{{ unclaimedRewards() }} récompenses</div>
-              </div>
-            </div>
-          </div>
+    <div class="page" style="animation: fadeIn 0.25s">
+      <!-- Leaderboard Header with Sprint selector and Rewards Info Button -->
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:24px; flex-wrap:wrap">
+        <div class="tab-row" style="margin-bottom:0">
+          <button class="tab" [class.active]="selectedTab() === 'week'" (click)="selectedTab.set('week')">
+            <i class="ti ti-calendar-stats"></i> Weekly Sprint
+          </button>
+          <button class="tab" [class.active]="selectedTab() === 'all'" (click)="selectedTab.set('all')">
+            <i class="ti ti-world"></i> Hall of Fame (All Time)
+          </button>
         </div>
-      }
+
+        @if (currentUser()?.role === 'student') {
+          <button class="btn-s" style="border-color:#D97706; color:#D97706; font-size:12px; font-weight:700; display:flex; align-items:center; gap:6px; padding:8px 16px" (click)="showRewardsModal.set(true)">
+            🎁 Lots à gagner
+          </button>
+        }
+      </div>
 
       <!-- TOP 3 PODIUM WIDGET -->
       @if (getTop3().length > 0) {
@@ -176,7 +98,6 @@ import { DialogService } from '../../services/dialog.service';
         </div>
       }
 
-      <!-- LEADERBOARD LIST & REWARDS SPLIT GRID -->
       <div style="display:flex; gap:24px; flex-wrap:wrap; margin-top:20px">
         <!-- Left Column: Rankings List -->
         <div style="flex:2; min-width:300px">
@@ -223,15 +144,19 @@ import { DialogService } from '../../services/dialog.service';
         @if (currentUser()?.role === 'teacher') {
           <div style="flex:1.2; min-width:290px">
             <div class="card" style="background:#FFFDF5; border:1px solid #FEF3C7; padding:18px; border-radius:12px; box-shadow:0 4px 12px rgba(251, 191, 36, 0.08); margin-top:0">
-              <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px">
-                <i class="ti ti-gift" style="font-size:24px; color:#D97706"></i>
-                <h3 style="margin:0; font-size:15px; font-weight:700; color:#92400E">Monthly Rewards / Cadeaux</h3>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
+                <div style="display:flex; align-items:center; gap:8px">
+                  <i class="ti ti-gift" style="font-size:24px; color:#D97706"></i>
+                  <h3 style="margin:0; font-size:15px; font-weight:700; color:#92400E">Monthly Rewards / Cadeaux</h3>
+                </div>
               </div>
               
               <div style="display:flex; flex-direction:column; gap:12px">
                 @for (reward of rewards(); track reward.id) {
-                  <div style="background:#FFF; border:1px solid #FEF3C7; padding:12px; border-radius:8px">
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px">
+                  <div style="background:#FFF; border:1px solid #FEF3C7; padding:12px; border-radius:8px; position:relative">
+                    <button (click)="deleteReward(reward.id)" style="position:absolute; top:8px; right:8px; background:none; border:none; cursor:pointer; font-size:13px; color:#EF4444" title="Supprimer la récompense">🗑️</button>
+                    
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px; padding-right:20px">
                       <span style="font-size:13px; font-weight:700; color:#1F2937">{{ reward.title }}</span>
                       <span style="font-size:10px; font-weight:700; background:#FEF3C7; color:#B45309; padding:2px 6px; border-radius:10px">{{ reward.xpThreshold }} XP</span>
                     </div>
@@ -245,7 +170,10 @@ import { DialogService } from '../../services/dialog.service';
                       <select (change)="assignRewardToStudent(reward.id, $event)" style="font-size:11px; padding:4px; background:#FFF; border:1px solid #D1D5DB; border-radius:4px; flex:1">
                         <option value="">-- Attribuer à... --</option>
                         @for (student of allStudents(); track student.id) {
-                          <option [value]="student.id" [selected]="reward.assignedTo === student.id">{{ student.name }} ({{ student.xp }} XP)</option>
+                          <option [value]="student.id" [selected]="reward.assignedTo === student.id">
+                            {{ student.name }} ({{ student.xp }} XP)
+                            {{ student.xp >= reward.xpThreshold ? '✅ Éligible' : '❌ XP insuffisant' }}
+                          </option>
                         }
                       </select>
                       @if (reward.assignedTo) {
@@ -253,34 +181,122 @@ import { DialogService } from '../../services/dialog.service';
                       }
                     </div>
                   </div>
+                } @empty {
+                  <div style="text-align:center; padding:20px; font-size:11px; color:var(--text-muted)">Aucune récompense créée.</div>
                 }
               </div>
 
-              @if (currentUser()?.role === 'teacher') {
-                <div style="margin-top:16px; border-top:1px solid #FEF3C7; padding-top:16px">
-                  @if (!showAddRewardForm()) {
-                    <button (click)="showAddRewardForm.set(true)" style="background:#4F46E5; color:white; border:none; font-size:11px; font-weight:700; width:100%; padding:8px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 9v6"/><path d="M9 12h6"/></svg>
-                      <span>Créer une Récompense</span>
-                    </button>
-                  } @else {
-                    <div style="background:#FFF; border:1px solid #E5E7EB; padding:10px; border-radius:8px; display:flex; flex-direction:column; gap:8px">
-                      <div style="font-size:11px; font-weight:700; color:#374151">Nouvelle Récompense</div>
-                      <input type="text" [(ngModel)]="newRewardTitle" placeholder="Titre (ex: Ticket de Cinéma)" style="font-size:11px; padding:6px; border:1px solid #D1D5DB; border-radius:4px" />
-                      <input type="text" [(ngModel)]="newRewardDesc" placeholder="Description (ex: Place Pathé Dakar)" style="font-size:11px; padding:6px; border:1px solid #D1D5DB; border-radius:4px" />
-                      <input type="number" [(ngModel)]="newRewardXp" placeholder="Seuil XP (ex: 300)" style="font-size:11px; padding:6px; border:1px solid #D1D5DB; border-radius:4px" />
-                      <div style="display:flex; gap:6px">
-                        <button (click)="createNewReward()" style="background:#10B981; color:white; border:none; font-size:10px; font-weight:700; padding:6px; border-radius:4px; cursor:pointer; flex:1">Créer</button>
-                        <button (click)="showAddRewardForm.set(false)" style="background:#EF4444; color:white; border:none; font-size:10px; font-weight:700; padding:6px; border-radius:4px; cursor:pointer; flex:1">Annuler</button>
-                      </div>
+              <div style="margin-top:16px; border-top:1px solid #FEF3C7; padding-top:16px">
+                @if (!showAddRewardForm()) {
+                  <button (click)="showAddRewardForm.set(true)" style="background:#4F46E5; color:white; border:none; font-size:11px; font-weight:700; width:100%; padding:8px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 9v6"/><path d="M9 12h6"/></svg>
+                    <span>Créer une Récompense</span>
+                  </button>
+                } @else {
+                  <div style="background:#FFF; border:1px solid #E5E7EB; padding:10px; border-radius:8px; display:flex; flex-direction:column; gap:8px">
+                    <div style="font-size:11px; font-weight:700; color:#374151">Nouvelle Récompense</div>
+                    <input type="text" [(ngModel)]="newRewardTitle" placeholder="Titre (ex: Ticket de Cinéma)" style="font-size:11px; padding:6px; border:1px solid #D1D5DB; border-radius:4px" />
+                    <input type="text" [(ngModel)]="newRewardDesc" placeholder="Description (ex: Place Pathé Dakar)" style="font-size:11px; padding:6px; border:1px solid #D1D5DB; border-radius:4px" />
+                    <input type="number" [(ngModel)]="newRewardXp" placeholder="Seuil XP (ex: 300)" style="font-size:11px; padding:6px; border:1px solid #D1D5DB; border-radius:4px" />
+                    <div style="display:flex; gap:6px">
+                      <button (click)="createNewReward()" style="background:#10B981; color:white; border:none; font-size:10px; font-weight:700; padding:6px; border-radius:4px; cursor:pointer; flex:1">Créer</button>
+                      <button (click)="showAddRewardForm.set(false)" style="background:#EF4444; color:white; border:none; font-size:10px; font-weight:700; padding:6px; border-radius:4px; cursor:pointer; flex:1">Annuler</button>
                     </div>
-                  }
-                </div>
-              }
+                  </div>
+                }
+              </div>
             </div>
           </div>
         }
       </div>
+
+      <!-- STUDENT REWARDS MODAL -->
+      @if (showRewardsModal()) {
+        <div style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:999; display:flex; align-items:center; justify-content:center; padding:16px">
+          <div class="card" style="width:100%; max-width:600px; padding:24px; border-radius:12px; background:white; box-shadow:0 10px 25px rgba(0,0,0,0.15); animation: scaleUp 0.25s ease-out; margin:0">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-weak); padding-bottom:12px; margin-bottom:16px">
+              <h3 style="margin:0; font-size:16px; font-weight:700; color:#D97706; display:flex; align-items:center; gap:8px">
+                <span>🎁 Lots & Récompenses Mensuelles</span>
+              </h3>
+              <button (click)="showRewardsModal.set(false)" style="background:none; border:none; font-size:20px; cursor:pointer; color:var(--text-muted)">×</button>
+            </div>
+
+            <p style="font-size:12px; color:var(--text-secondary); margin-bottom:18px">
+              Accumulez des points XP pour gagner ces cadeaux exceptionnels ! Les prix vous seront remis directement par le professeur une fois les paliers atteints.
+            </p>
+
+            <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:12px; max-height:350px; overflow-y:auto; padding-right:4px; margin-bottom:20px">
+              @for (reward of rewards(); track reward.id) {
+                <div style="background:var(--surface-2); border:1px solid var(--border-weak); border-radius:8px; padding:12px; position:relative" class="reward-card">
+                  @if (reward.assignedTo) {
+                    <div style="position:absolute; top:-6px; right:-6px; background:#10B981; color:white; font-size:8px; font-weight:700; padding:2px 6px; border-radius:10px">
+                      🏆 Gagné
+                    </div>
+                  }
+                  
+                  <div style="display:flex; flex-direction:column; gap:4px">
+                    <div style="display:flex; justify-content:space-between; align-items:center">
+                      <span style="font-size:13px; font-weight:700; color:var(--text-primary)">{{ reward.title }}</span>
+                      <span style="font-size:9.5px; font-weight:700; background:#FEF3C7; color:#D97706; padding:1px 6px; border-radius:6px; white-space:nowrap">{{ reward.xpThreshold }} XP</span>
+                    </div>
+                    
+                    <p style="font-size:10.5px; color:var(--text-secondary); margin:2px 0 6px 0; line-height:1.3">{{ reward.description }}</p>
+
+                    @if (reward.assignedTo) {
+                      <div style="font-size:10px; font-weight:600; color:#065F46; margin-top:4px">
+                        🎉 Gagné par {{ reward.assignedName }}
+                      </div>
+                    } @else {
+                      <div style="margin-top:4px">
+                        <div style="display:flex; justify-content:space-between; font-size:8.5px; color:var(--text-muted); margin-bottom:2px">
+                          <span>Votre progression</span>
+                          <span>{{ currentUser()?.xp || 0 }} / {{ reward.xpThreshold }} XP</span>
+                        </div>
+                        <div style="width:100%; height:6px; background:var(--surface-3); border-radius:3px; overflow:hidden">
+                          <div [style.width.%]="getPercent(currentUser()?.xp || 0, reward.xpThreshold)" style="height:100%; background:linear-gradient(90deg, #FBBF24, #F59E0B); border-radius:3px; transition:width 0.3s"></div>
+                        </div>
+                        @if ((currentUser()?.xp || 0) >= reward.xpThreshold) {
+                          <div style="font-size:9px; font-weight:700; color:#059669; margin-top:4px">
+                            ✅ Objectif atteint ! Éligible à l'attribution.
+                          </div>
+                        } @else {
+                          <div style="font-size:8.5px; color:var(--text-muted); margin-top:2px">
+                            Plus que {{ reward.xpThreshold - (currentUser()?.xp || 0) }} XP requis
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+
+            <div style="display:flex; gap:12px; flex-wrap:wrap; border-top:1px solid var(--border-weak); padding-top:14px">
+              <div style="flex:1; min-width:100px; display:flex; align-items:center; gap:6px; background:var(--surface-2); padding:6px 10px; border-radius:6px">
+                <span style="font-size:16px">💰</span>
+                <div>
+                  <div style="font-size:8px; color:var(--text-muted); font-weight:600">Votre XP</div>
+                  <div style="font-size:12px; font-weight:700; color:#8B5CF6">{{ currentUser()?.xp || 0 }} XP</div>
+                </div>
+              </div>
+              <div style="flex:1; min-width:100px; display:flex; align-items:center; gap:6px; background:var(--surface-2); padding:6px 10px; border-radius:6px">
+                <span style="font-size:16px">🎯</span>
+                <div>
+                  <div style="font-size:8px; color:var(--text-muted); font-weight:600">Prochain palier</div>
+                  <div style="font-size:12px; font-weight:700; color:#10B981">{{ nextRewardXp() }} XP</div>
+                </div>
+              </div>
+              <div style="flex:1; min-width:100px; display:flex; align-items:center; gap:6px; background:var(--surface-2); padding:6px 10px; border-radius:6px">
+                <span style="font-size:16px">🏆</span>
+                <div>
+                  <div style="font-size:8px; color:var(--text-muted); font-weight:600">Gains potentiels</div>
+                  <div style="font-size:12px; font-weight:700; color:#D97706">{{ unclaimedRewards() }} récompenses</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
     </div>
   `,
   styles: [`
@@ -417,6 +433,7 @@ export class StudentLeaderboardComponent {
 
   selectedTab = signal<'week' | 'all'>('all');
   showAddRewardForm = signal<boolean>(false);
+  showRewardsModal = signal<boolean>(false);
   newRewardTitle = '';
   newRewardDesc = '';
   newRewardXp = 0;
@@ -512,5 +529,20 @@ export class StudentLeaderboardComponent {
     this.newRewardXp = 0;
     this.showAddRewardForm.set(false);
     this.dialogService.alert('Créée', 'Récompense ajoutée avec succès !', 'success');
+  }
+
+  deleteReward(rewardId: string) {
+    this.dialogService.show({
+      title: 'Supprimer la Récompense',
+      message: 'Voulez-vous vraiment supprimer définitivement cette récompense ?',
+      type: 'confirm',
+      confirmText: 'Supprimer',
+      cancelText: 'Annuler',
+      onConfirm: () => {
+        this.db.deleteReward(rewardId).then(() => {
+          this.dialogService.alert('Succès', 'Récompense supprimée avec succès.', 'success');
+        });
+      }
+    });
   }
 }

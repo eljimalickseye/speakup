@@ -1470,6 +1470,20 @@ export class DatabaseService {
     });
   }
 
+  async deleteReward(rewardId: string) {
+    const list = this.rewards$.value.filter(r => r.id !== rewardId);
+    this.rewards$.next(list);
+    this.saveLocal('speak_rewards', list);
+
+    if (this.useFirebase) {
+      try {
+        await deleteDoc(doc(this.firestore, 'rewards', rewardId));
+      } catch (e) {
+        console.warn('Firestore delete reward failed:', e);
+      }
+    }
+  }
+
   // --- REGISTRATION REQUESTS OPERATIONS ---
   observeRegistrationRequests(): Observable<RegistrationRequest[]> {
     return this.registrationRequests$.asObservable();
