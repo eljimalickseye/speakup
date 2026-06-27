@@ -12,6 +12,7 @@ import { StudentChatComponent } from '../student/chat';
 import { StudentLeaderboardComponent } from '../student/leaderboard';
 import { StudentEventsComponent } from '../student/events';
 import { StudentLiveClassesComponent } from '../student/live';
+import { StudentAnnouncementsComponent } from '../student/announcements';
 
 import { TeacherOverviewComponent } from '../teacher/overview';
 import { TeacherStudentsComponent } from '../teacher/students';
@@ -37,6 +38,7 @@ import { TeacherEventsComponent } from '../teacher/events';
     StudentLeaderboardComponent,
     StudentEventsComponent,
     StudentLiveClassesComponent,
+    StudentAnnouncementsComponent,
     TeacherOverviewComponent,
     TeacherStudentsComponent,
     TeacherLessonsComponent,
@@ -89,6 +91,12 @@ import { TeacherEventsComponent } from '../teacher/events';
             </button>
             <button class="nav-item" [class.active]="activeTab === 'events'" (click)="setTab('events')">
               <i class="ti ti-calendar-event" aria-hidden="true"></i>Events
+            </button>
+            <button class="nav-item" [class.active]="activeTab === 'announcements'" (click)="setTab('announcements')">
+              <i class="ti ti-volume" aria-hidden="true"></i>Announcements
+              @if (unreadAnnouncementsCount() > 0) {
+                <span class="badge red" style="background:#EF4444; color:white; margin-left:auto">{{ unreadAnnouncementsCount() }}</span>
+              }
             </button>
             
             <div class="nav-section">Classes</div>
@@ -186,6 +194,8 @@ import { TeacherEventsComponent } from '../teacher/events';
               <app-student-leaderboard></app-student-leaderboard>
             } @else if (activeTab === 'events') {
               <app-student-events></app-student-events>
+            } @else if (activeTab === 'announcements') {
+              <app-student-announcements></app-student-announcements>
             } @else if (activeTab === 'live-classes') {
               <app-student-live></app-student-live>
             }
@@ -369,6 +379,7 @@ export class LayoutComponent {
   lessonsCount = signal<number>(0);
   pendingHomeworkCount = signal<number>(0);
   activeClassAvailable = signal<boolean>(false);
+  unreadAnnouncementsCount = signal<number>(0);
 
   // Toasts state
   toasts = signal<{
@@ -413,14 +424,24 @@ export class LayoutComponent {
 
     this.db.observeAnnouncements().subscribe(list => {
       const user = this.currentUser();
-      if (!user || user.role !== 'student') return;
+      if (!user || user.role !== 'student') {
+        this.unreadAnnouncementsCount.set(0);
+        return;
+      }
 
-      // Find any unread announcement targeting this student
-      const unread = list.find(ann => 
-        (ann.sendTo === 'all' || ann.sendTo === user.level) && 
+      // Calculate unread announcements count
+      const unreadFiltered = list.filter(ann => 
+        (ann.sendTo === 'all' || 
+         ann.sendTo === 'All students' || 
+         ann.sendTo === user.level || 
+         ann.sendTo === `${user.level} class only` || 
+         ann.sendTo.toLowerCase().includes(user.level.toLowerCase())) && 
         !ann.readBy.includes(user.id)
       );
+      this.unreadAnnouncementsCount.set(unreadFiltered.length);
 
+      // Find any unread announcement targeting this student to trigger popup modal
+      const unread = unreadFiltered[0];
       if (unread) {
         // Pop open a modal alert
         this.dialogService.alert(

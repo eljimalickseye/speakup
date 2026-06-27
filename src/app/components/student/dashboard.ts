@@ -200,7 +200,11 @@ export class StudentDashboardComponent {
     this.db.observeAnnouncements().subscribe(list => {
       // Filter announcements targeting this student or everyone
       const filtered = list.filter(ann => 
-        ann.sendTo === 'all' || ann.sendTo === user.level
+        ann.sendTo === 'all' || 
+        ann.sendTo === 'All students' || 
+        ann.sendTo === user.level || 
+        ann.sendTo === `${user.level} class only` || 
+        ann.sendTo.toLowerCase().includes(user.level.toLowerCase())
       );
       this.announcements.set(filtered.sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
     });
