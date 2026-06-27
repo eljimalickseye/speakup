@@ -1541,7 +1541,7 @@ export class DatabaseService {
   }
 
   getGeminiApiKey(): string | null {
-    return localStorage.getItem('speak_gemini_api_key');
+    return localStorage.getItem('speak_gemini_api_key') || 'AIzaSyBdPuo__e2rAhMSC4QhZqdw-KmwWhndSOs';
   }
 
   setGeminiApiKey(key: string) {
