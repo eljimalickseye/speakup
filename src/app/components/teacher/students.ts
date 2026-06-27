@@ -1,7 +1,7 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { DatabaseService, UserProfile, Attendance } from '../../services/database.service';
+import { DatabaseService, UserProfile, RegistrationRequest, Attendance } from '../../services/database.service';
 import { DialogService } from '../../services/dialog.service';
 
 @Component({
@@ -13,6 +13,12 @@ import { DialogService } from '../../services/dialog.service';
       <div class="tab-row">
         <button class="tab" [class.active]="activeTab() === 'all'" (click)="activeTab.set('all')">All students</button>
         <button class="tab" [class.active]="activeTab() === 'progress'" (click)="activeTab.set('progress')">Skill Progress</button>
+        <button class="tab" [class.active]="activeTab() === 'requests'" (click)="activeTab.set('requests')">
+          Demandes d'inscription
+          @if (pendingRequestsCount() > 0) {
+            <span class="badge" style="background:#EF4444; color:white; padding:2px 8px; border-radius:12px; font-size:10px; margin-left:4px">{{ pendingRequestsCount() }}</span>
+          }
+        </button>
         <button class="tab" [class.active]="activeTab() === 'profile'" (click)="activeTab.set('profile')">
           Student profile {{ selectedStudent() ? ' (' + selectedStudent()!.name + ')' : '' }}
         </button>
@@ -150,6 +156,48 @@ import { DialogService } from '../../services/dialog.service';
         </div>
       }
 
+      <!-- PENDING REGISTRATION REQUESTS -->
+      @if (activeTab() === 'requests') {
+        <div class="card" style="margin-top:20px; border:1px solid var(--border-weak); padding:20px; border-radius:12px; animation: fadeIn 0.25s">
+          <h3 style="margin-top:0; font-size:15px; color:#4F46E5; font-weight:700; margin-bottom:12px">
+            Demandes d'inscription en attente
+          </h3>
+          <p style="font-size:12px; color:var(--text-secondary); margin-bottom:20px">
+            Ces personnes ont soumis une demande d'inscription. Vous pouvez les valider pour créer leur compte ou rejeter leur demande.
+          </p>
+
+          <div style="display:flex; flex-direction:column; gap:10px">
+            @for (req of pendingRequests(); track req.id) {
+              <div style="background:var(--surface-1); border:1px solid var(--border-weak); padding:16px; border-radius:8px; display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap">
+                <div>
+                  <div style="display:flex; align-items:center; gap:8px">
+                    <span style="font-weight:700; font-size:14px; color:var(--text-primary)">{{ req.name }}</span>
+                    @if (getFlagUrl(req.countryFlag)) {
+                      <img [src]="getFlagUrl(req.countryFlag)" style="width: 16px; height: 12px; object-fit: contain" alt="flag">
+                    }
+                  </div>
+                  <div style="font-size:11px; color:var(--text-secondary); margin-top:4px">
+                    Niveau demandé : <span style="font-weight:700; color:#4F46E5">{{ req.level }}</span> · Date de demande : {{ req.requestedAt }}
+                  </div>
+                </div>
+                <div style="display:flex; gap:8px">
+                  <button class="btn-p" style="background:#10B981; border-color:#10B981; font-size:11px; padding:6px 12px" (click)="approveRequest(req.id, req.name)">
+                    <i class="ti ti-check"></i> Valider
+                  </button>
+                  <button class="btn-s" style="border-color:#EF4444; color:#EF4444; font-size:11px; padding:6px 12px" (click)="rejectRequest(req.id, req.name)">
+                    <i class="ti ti-x"></i> Rejeter
+                  </button>
+                </div>
+              </div>
+            } @empty {
+              <div style="text-align:center; padding:30px; font-size:12px; color:var(--text-muted); border:1px dashed var(--border-strong); border-radius:8px">
+                Aucune demande d'inscription en attente.
+              </div>
+            }
+          </div>
+        </div>
+      }
+
       <!-- PROFILE DETAIL VIEW -->
       @if (activeTab() === 'profile') {
         <div class="card">
@@ -251,6 +299,10 @@ export class TeacherStudentsComponent {
   selectedStudent = signal<UserProfile | null>(null);
   attendance = signal<Attendance[]>([]);
   
+  registrationRequests = signal<RegistrationRequest[]>([]);
+  pendingRequests = computed(() => this.registrationRequests().filter(r => r.status === 'pending'));
+  pendingRequestsCount = computed(() => this.pendingRequests().length);
+
   teacherNotes = '';
 
   newStudentName = '';
@@ -260,6 +312,10 @@ export class TeacherStudentsComponent {
   newStudentMonthlyFee = 7000;
 
   constructor() {
+    this.db.observeRegistrationRequests().subscribe(list => {
+      this.registrationRequests.set(list);
+    });
+
     this.db.observeUsers().subscribe(list => {
       this.students.set(list.filter(u => u.role === 'student'));
       
@@ -374,5 +430,36 @@ export class TeacherStudentsComponent {
       this.newStudentRegFee = 10000;
       this.newStudentMonthlyFee = 7000;
     });
+  }
+
+  approveRequest(requestId: string, name: string) {
+    this.db.approveRegistrationRequest(requestId).then(() => {
+      this.dialogService.alert('Demande Validée', `Le compte de ${name} a été créé avec succès !`, 'success');
+    });
+  }
+
+  rejectRequest(requestId: string, name: string) {
+    this.db.rejectRegistrationRequest(requestId).then(() => {
+      this.dialogService.alert('Demande Rejetée', `La demande de ${name} a été rejetée.`, 'info');
+    });
+  }
+
+  getFlagUrl(flag: string | undefined): string {
+    if (!flag) return '';
+    const clean = flag.trim().toUpperCase();
+    let code = clean;
+    if (clean.length > 2) {
+      try {
+        const codePoints = Array.from(clean).map(c => c.codePointAt(0) || 0);
+        if (codePoints.length >= 2 && codePoints[0] >= 127397 && codePoints[0] <= 127423) {
+          code = String.fromCharCode(
+            codePoints[0] - 127397,
+            codePoints[1] - 127397
+          );
+        }
+      } catch(e) {}
+    }
+    if (code.length !== 2) return '';
+    return `https://flagcdn.com/w20/${code.toLowerCase()}.png`;
   }
 }

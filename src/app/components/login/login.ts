@@ -1,11 +1,13 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { DatabaseService, UserProfile } from '../../services/database.service';
+import { DialogService } from '../../services/dialog.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   template: `
     <div class="login-screen">
       <!-- Ambient animated glowing orbs -->
@@ -13,22 +15,24 @@ import { DatabaseService, UserProfile } from '../../services/database.service';
       <div class="orb orb-2"></div>
       <div class="orb orb-3"></div>
 
-      <div class="login-card">
+      <div class="login-card" style="position:relative">
         <div style="display:flex; justify-content:center; margin-bottom:12px">
           <img src="logo.png" style="width:36px; height:36px; object-fit:contain; border-radius:8px" alt="logo">
         </div>
-        <h2 class="login-title">SpeakUp</h2>
+        <h2 class="login-title" (click)="onTitleClick()" style="cursor:pointer; user-select:none" title="Click 5 times for teacher mode">SpeakUp</h2>
         <p class="login-sub">SpeakUp English Platform — Authentication</p>
         
         <!-- Role Tabs -->
-        <div class="tab-row" style="margin-bottom: 20px; justify-content: center">
-          <button class="tab" [class.active]="activeRole() === 'student'" (click)="setRole('student')">
-            <i class="ti ti-school"></i> Student Login
-          </button>
-          <button class="tab" [class.active]="activeRole() === 'teacher'" (click)="setRole('teacher')">
-            <i class="ti ti-briefcase"></i> Teacher Login
-          </button>
-        </div>
+        @if (showTeacherTab()) {
+          <div class="tab-row" style="margin-bottom: 20px; justify-content: center">
+            <button class="tab" [class.active]="activeRole() === 'student'" (click)="setRole('student')">
+              <i class="ti ti-school"></i> Student Login
+            </button>
+            <button class="tab" [class.active]="activeRole() === 'teacher'" (click)="setRole('teacher')">
+              <i class="ti ti-briefcase"></i> Teacher Login
+            </button>
+          </div>
+        }
         
         <!-- Profile List Selector -->
         <div style="margin-bottom:18px">
@@ -82,16 +86,91 @@ import { DatabaseService, UserProfile } from '../../services/database.service';
         <button class="google-btn" (click)="signInWithGoogle()">
           <i class="ti ti-brand-google" style="font-size:16px"></i> Sign In with Google
         </button>
+
+        <button class="btn-s" style="width: 100%; border-color: #4F46E5; color: #4F46E5; margin-top: 12px; font-size: 13px" (click)="isRequestModalOpen.set(true)">
+          <i class="ti ti-user-plus"></i> Faire une demande d'inscription
+        </button>
+
+        <!-- Hidden Developer Switch Trigger -->
+        <div (click)="showTeacherTab.set(true)" style="position:absolute; bottom:8px; right:8px; font-size:11px; color:var(--text-muted); cursor:pointer; opacity:0.1; transition:opacity 0.2s" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.1" title="Teacher Access Mode">
+          🔑
+        </div>
       </div>
+
+      <!-- REGISTRATION REQUEST MODAL -->
+      @if (isRequestModalOpen()) {
+        <div style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.5); z-index:999; display:flex; align-items:center; justify-content:center">
+          <div class="card" style="width:100%; max-width:400px; padding:24px; border-radius:12px; background:white; box-shadow:0 10px 25px rgba(0,0,0,0.1); animation: scaleUp 0.25s ease-out; margin:0">
+            <h3 style="margin-top:0; font-size:16px; font-weight:700; color:#4F46E5; display:flex; align-items:center; gap:8px">
+              <i class="ti ti-user-plus"></i>
+              <span>Demande d'inscription</span>
+            </h3>
+            <p style="font-size:12px; color:var(--text-secondary); margin-bottom:18px">
+              Remplissez ce formulaire pour envoyer votre demande d'inscription aux professeurs de SpeakUp.
+            </p>
+
+            <div class="input-row" style="margin-bottom:12px">
+              <label style="font-weight:600; font-size:12px; color:var(--text-primary)">Nom complet</label>
+              <input type="text" [(ngModel)]="requestName" placeholder="Ex: Awa Ndiaye" style="width:100%; padding:8px; border:1px solid #D1D5DB; border-radius:6px; font-size:13px; background:#FFF" />
+            </div>
+
+            <div class="input-row" style="margin-bottom:12px">
+              <label style="font-weight:600; font-size:12px; color:var(--text-primary)">Niveau d'anglais souhaité / Rôle</label>
+              <select [(ngModel)]="requestLevel" style="width:100%; padding:8px; border:1px solid #D1D5DB; border-radius:6px; font-size:13px; background:#FFF">
+                <option value="A1">A1 — Débutant</option>
+                <option value="A2">A2 — Élémentaire</option>
+                <option value="B1">B1 — Intermédiaire</option>
+                <option value="B2">B2 — Intermédiaire Supérieur</option>
+                <option value="Guest">Guest / Invité (Accès libre)</option>
+              </select>
+            </div>
+
+            <div class="input-row" style="margin-bottom:20px">
+              <label style="font-weight:600; font-size:12px; color:var(--text-primary)">Pays d'origine</label>
+              <select [(ngModel)]="requestCountry" style="width:100%; padding:8px; border:1px solid #D1D5DB; border-radius:6px; font-size:13px; background:#FFF">
+                <option value="🇸🇳">Sénégal 🇸🇳</option>
+                <option value="🇳🇬">Nigeria 🇳🇬</option>
+                <option value="🇷🇼">Rwanda 🇷🇼</option>
+                <option value="🇧🇯">Bénin 🇧🇯</option>
+                <option value="🇨🇮">Côte d'Ivoire 🇨🇮</option>
+                <option value="🇨🇲">Cameroun 🇨🇲</option>
+                <option value="🇹🇬">Togo 🇹🇬</option>
+                <option value="🇲🇱">Mali 🇲🇱</option>
+                <option value="🇬🇳">Guinée 🇬🇳</option>
+                <option value="🇳🇪">Niger 🇳🇪</option>
+                <option value="🇫🇷">France 🇫🇷</option>
+              </select>
+            </div>
+
+            <div style="display:flex; gap:10px">
+              <button class="btn-p" style="flex:1" (click)="submitRequest()">
+                Envoyer
+              </button>
+              <button class="btn-s" style="flex:1" (click)="closeRequestModal()">
+                Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      }
     </div>
   `
 })
 export class LoginComponent {
   private db = inject(DatabaseService);
+  public dialogService = inject(DialogService);
 
   activeRole = signal<'student' | 'teacher'>('student');
   selectedUserId = signal<string | null>(null);
   allUsers = signal<UserProfile[]>([]);
+
+  showTeacherTab = signal<boolean>(false);
+  titleClicks = 0;
+
+  isRequestModalOpen = signal<boolean>(false);
+  requestName = '';
+  requestLevel = 'B1';
+  requestCountry = '🇸🇳';
 
   constructor() {
     this.db.observeUsers().subscribe(list => {
@@ -154,5 +233,38 @@ export class LoginComponent {
     } catch (err: any) {
       console.error('Google Sign-In failed:', err);
     }
+  }
+
+  onTitleClick() {
+    this.titleClicks++;
+    if (this.titleClicks >= 5) {
+      this.showTeacherTab.set(true);
+    }
+  }
+
+  submitRequest() {
+    if (!this.requestName.trim()) {
+      this.dialogService.alert('Erreur', 'Veuillez saisir votre nom complet.', 'info');
+      return;
+    }
+    this.db.submitRegistrationRequest(
+      this.requestName,
+      this.requestLevel,
+      this.requestCountry
+    ).then(() => {
+      this.dialogService.alert(
+        'Demande Envoyée 🎉',
+        `Votre demande d'inscription pour "${this.requestName}" (${this.requestLevel}) a bien été enregistrée.\nUn enseignant validera votre accès très prochainement.`,
+        'success'
+      );
+      this.closeRequestModal();
+    });
+  }
+
+  closeRequestModal() {
+    this.isRequestModalOpen.set(false);
+    this.requestName = '';
+    this.requestLevel = 'B1';
+    this.requestCountry = '🇸🇳';
   }
 }

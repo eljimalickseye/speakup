@@ -42,6 +42,15 @@ export interface LeaderboardReward {
   acknowledged?: boolean;
 }
 
+export interface RegistrationRequest {
+  id: string;
+  name: string;
+  level: string;
+  countryFlag: string;
+  requestedAt: string;
+  status: 'pending' | 'approved' | 'rejected';
+}
+
 export interface Lesson {
   id: string;
   title: string;
@@ -170,6 +179,7 @@ export class DatabaseService {
   private payments$ = new BehaviorSubject<Payment[]>([]);
   private events$ = new BehaviorSubject<EventItem[]>([]);
   private rewards$ = new BehaviorSubject<LeaderboardReward[]>([]);
+  private registrationRequests$ = new BehaviorSubject<RegistrationRequest[]>([]);
   private voiceChatEnabled$ = new BehaviorSubject<boolean>(true);
   private channels$ = new BehaviorSubject<ChatChannel[]>([]);
   
@@ -209,9 +219,11 @@ export class DatabaseService {
 
   // Initial Mock Data Setup
   private initializeData() {
-    // 1. Users (Clean slate: Teacher only)
+    // 1. Users (Pre-established 3 teachers)
     const defaultUsers: UserProfile[] = [
-      { id: 'teacher', name: 'AT - Teacher', role: 'teacher', level: 'C2', xp: 0, streak: 0, lastActive: 'Today', avatar: 'AT' }
+      { id: 'teacher', name: 'AT - Teacher', role: 'teacher', level: 'C2', xp: 0, streak: 0, lastActive: 'Today', avatar: 'AT' },
+      { id: 'teacher-2', name: 'MJ - Teacher Marie', role: 'teacher', level: 'C2', xp: 0, streak: 0, lastActive: 'Today', avatar: 'MJ' },
+      { id: 'teacher-3', name: 'KS - Teacher Karim', role: 'teacher', level: 'C2', xp: 0, streak: 0, lastActive: 'Today', avatar: 'KS' }
     ];
 
     // 2. Lessons (Empty by default)
@@ -256,6 +268,13 @@ export class DatabaseService {
     };
 
     const users = getLocal('speak_users', defaultUsers);
+    defaultUsers.forEach(t => {
+      if (!users.some((u: any) => u.id === t.id)) {
+        users.push(t);
+      }
+    });
+    localStorage.setItem('speak_users', JSON.stringify(users));
+
     users.forEach((u: UserProfile) => {
       if (u.countryFlag && u.countryFlag.trim().length === 2) {
         u.countryFlag = this.countryCodeToEmoji(u.countryFlag);
@@ -313,7 +332,9 @@ export class DatabaseService {
       { id: 'reward-3', title: 'Voyage Week-end', description: 'Un séjour de 2 jours à Saly Portudal tout compris.', xpThreshold: 2000, assignedTo: null, assignedName: null, acknowledged: false }
     ];
     const rewards = getLocal('speak_rewards', defaultRewards);
-    this.rewards$.next(rewards);
+    const defaultRequests: RegistrationRequest[] = [];
+    const requests = getLocal('speak_registration_requests', defaultRequests);
+    this.registrationRequests$.next(requests);
 
     this.users$.next(users);
     this.lessons$.next(lessons);
@@ -520,6 +541,13 @@ export class DatabaseService {
       const list: LeaderboardReward[] = [];
       snap.forEach(doc => list.push(doc.data() as LeaderboardReward));
       this.rewards$.next(list);
+    });
+
+    // 12. Subscribe to Registration Requests
+    onSnapshot(collection(this.firestore, 'registration_requests'), (snap) => {
+      const list: RegistrationRequest[] = [];
+      snap.forEach(doc => list.push(doc.data() as RegistrationRequest));
+      this.registrationRequests$.next(list);
     });
 
     // 11. Subscribe to Channels
@@ -1370,6 +1398,83 @@ export class DatabaseService {
       assignedName: studentName,
       acknowledged: false
     });
+  }
+
+  // --- REGISTRATION REQUESTS OPERATIONS ---
+  observeRegistrationRequests(): Observable<RegistrationRequest[]> {
+    return this.registrationRequests$.asObservable();
+  }
+
+  async submitRegistrationRequest(name: string, level: string, countryFlag: string) {
+    const newRequest: RegistrationRequest = {
+      id: 'req-' + Date.now(),
+      name,
+      level,
+      countryFlag,
+      requestedAt: new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }),
+      status: 'pending'
+    };
+
+    const list = [newRequest, ...this.registrationRequests$.value];
+    this.registrationRequests$.next(list);
+    this.saveLocal('speak_registration_requests', list);
+
+    if (this.useFirebase) {
+      try {
+        await setDoc(doc(this.firestore, 'registration_requests', newRequest.id), newRequest);
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+  }
+
+  async approveRegistrationRequest(requestId: string) {
+    const list = [...this.registrationRequests$.value];
+    const idx = list.findIndex(r => r.id === requestId);
+    if (idx !== -1) {
+      const req = list[idx];
+      const updated: RegistrationRequest = { ...req, status: 'approved' };
+      list[idx] = updated;
+      this.registrationRequests$.next(list);
+      this.saveLocal('speak_registration_requests', list);
+
+      if (this.useFirebase) {
+        try {
+          await updateDoc(doc(this.firestore, 'registration_requests', requestId), { status: 'approved' });
+        } catch (e) {
+          console.warn(e);
+        }
+      }
+
+      // Automatically create the student profile!
+      const isGuest = req.level === 'Guest';
+      await this.addStudent(
+        req.name,
+        req.level,
+        req.countryFlag,
+        isGuest ? 0 : 10000,
+        isGuest ? 0 : 7000
+      );
+    }
+  }
+
+  async rejectRegistrationRequest(requestId: string) {
+    const list = [...this.registrationRequests$.value];
+    const idx = list.findIndex(r => r.id === requestId);
+    if (idx !== -1) {
+      const updated: RegistrationRequest = { ...list[idx], status: 'rejected' };
+      list[idx] = updated;
+      this.registrationRequests$.next(list);
+      this.saveLocal('speak_registration_requests', list);
+
+      if (this.useFirebase) {
+        try {
+          await updateDoc(doc(this.firestore, 'registration_requests', requestId), { status: 'rejected' });
+        } catch (e) {
+          console.warn(e);
+        }
+      }
+    }
   }
 
   // --- REAL-TIME CHAT OPERATIONS ---
