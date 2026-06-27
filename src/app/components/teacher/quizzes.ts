@@ -31,6 +31,7 @@ interface QuestionDraft {
               <option value="Multiple Choice">Multiple choice</option>
               <option value="Fill in the blank">Fill in the blank</option>
               <option value="True / False">True / False</option>
+              <option value="Oral Practice">Oral / Speaking Practice</option>
             </select>
           </div>
           <div class="input-row">
@@ -70,29 +71,31 @@ interface QuestionDraft {
                 <input type="text" [(ngModel)]="q.question" placeholder="e.g. Which word means 'penser'?" />
               </div>
 
-              <div class="g3">
-                <div class="input-row">
-                  <label>Option A</label>
-                  <input type="text" [(ngModel)]="q.options[0]" placeholder="e.g. think" />
+              @if (type !== 'Oral Practice') {
+                <div class="g3">
+                  <div class="input-row">
+                    <label>Option A</label>
+                    <input type="text" [(ngModel)]="q.options[0]" placeholder="e.g. think" />
+                  </div>
+                  <div class="input-row">
+                    <label>Option B</label>
+                    <input type="text" [(ngModel)]="q.options[1]" placeholder="e.g. read" />
+                  </div>
+                  <div class="input-row">
+                    <label>Option C</label>
+                    <input type="text" [(ngModel)]="q.options[2]" placeholder="e.g. write" />
+                  </div>
                 </div>
-                <div class="input-row">
-                  <label>Option B</label>
-                  <input type="text" [(ngModel)]="q.options[1]" placeholder="e.g. read" />
-                </div>
-                <div class="input-row">
-                  <label>Option C</label>
-                  <input type="text" [(ngModel)]="q.options[2]" placeholder="e.g. write" />
-                </div>
-              </div>
 
-              <div class="input-row" style="width:50%">
-                <label>Correct Option</label>
-                <select [(ngModel)]="q.correctOption">
-                  <option value="A">A</option>
-                  <option value="B">B</option>
-                  <option value="C">C</option>
-                </select>
-              </div>
+                <div class="input-row" style="width:50%">
+                  <label>Correct Option</label>
+                  <select [(ngModel)]="q.correctOption">
+                    <option value="A">A</option>
+                    <option value="B">B</option>
+                    <option value="C">C</option>
+                  </select>
+                </div>
+              }
             </div>
           }
         </div>
@@ -181,6 +184,9 @@ export class TeacherQuizzesComponent {
 
   isValid() {
     if (!this.title.trim()) return false;
+    if (this.type === 'Oral Practice') {
+      return this.questions.every(q => q.question.trim().length > 0);
+    }
     return this.questions.every(q => q.question.trim() && q.options[0].trim() && q.options[1].trim() && q.options[2].trim());
   }
 
@@ -205,8 +211,8 @@ export class TeacherQuizzesComponent {
       timeLimit: this.timeLimit,
       questions: this.questions.map(q => ({
         question: q.question,
-        options: q.options.filter(o => o.trim().length > 0),
-        correctOption: q.correctOption
+        options: this.type === 'Oral Practice' ? [] : q.options.filter(o => o.trim().length > 0),
+        correctOption: this.type === 'Oral Practice' ? 'A' : q.correctOption
       }))
     };
 
