@@ -1,11 +1,12 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { DatabaseService, UserProfile } from '../../services/database.service';
+import { FormsModule } from '@angular/forms';
+import { DatabaseService, UserProfile, LeaderboardReward } from '../../services/database.service';
 
 @Component({
   selector: 'app-student-leaderboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   template: `
     <div class="page">
       <!-- Tabs (This week, All time) -->
@@ -89,48 +90,144 @@ import { DatabaseService, UserProfile } from '../../services/database.service';
         </div>
       }
 
-      <!-- LEADERBOARD LIST ROWS -->
-      <div class="leaderboard-list" style="animation: fadeIn 0.25s">
-        @for (user of getListUsers(); track user.id; let idx = $index) {
-          <!-- Rank index starts at 4 -->
-          <div class="leaderboard-item" 
-               [class.is-me]="user.id === currentUserId()">
-            
-            <!-- Rank display -->
-            <div class="rank">
-              {{ idx + 4 }}
-            </div>
-            
-            <!-- Avatar -->
-            <div style="position:relative">
-              <div class="avatar" style="width:30px; height:30px; font-size:13px; flex-shrink:0">
-                {{ user.avatar }}
+      <!-- LEADERBOARD LIST & REWARDS SPLIT GRID -->
+      <div style="display:flex; gap:24px; flex-wrap:wrap; margin-top:20px">
+        <!-- Left Column: Rankings List -->
+        <div style="flex:2; min-width:300px">
+          <div class="leaderboard-list" style="animation: fadeIn 0.25s">
+            @for (user of getListUsers(); track user.id; let idx = $index) {
+              <!-- Rank index starts at 4 -->
+              <div class="leaderboard-item" 
+                   [class.is-me]="user.id === currentUserId()">
+                
+                <!-- Rank display -->
+                <div class="rank">
+                  {{ idx + 4 }}
+                </div>
+                
+                <!-- Avatar -->
+                <div style="position:relative">
+                  <div class="avatar" style="width:30px; height:30px; font-size:13px; flex-shrink:0">
+                    {{ user.avatar }}
+                  </div>
+                  @if (db.isUserOnline(user)) {
+                    <span style="position:absolute; bottom:-2px; right:-2px; width:8px; height:8px; border-radius:50%; background:#10B981; border:2px solid white"></span>
+                  }
+                </div>
+
+                <!-- Name -->
+                <div class="lb-name" style="display:flex; align-items:center; gap:6px; flex:1">
+                  <span style="font-weight:600">{{ user.id === currentUserId() ? 'You — ' : '' }}{{ user.name }}</span>
+                  @if (getFlagUrl(user.countryFlag)) {
+                    <img [src]="getFlagUrl(user.countryFlag)" style="width: 14px; height: 10px; object-fit: contain; border-radius: 1px" alt="flag">
+                  }
+                </div>
+
+                <!-- XP -->
+                <div class="lb-xp" style="font-weight: 700; color:#4F46E5">
+                  {{ getXPDisplay(user) | number }} XP
+                </div>
               </div>
-              @if (db.isUserOnline(user)) {
-                <span style="position:absolute; bottom:-2px; right:-2px; width:8px; height:8px; border-radius:50%; background:#10B981; border:2px solid white"></span>
+            } @empty {
+              @if (getListUsers().length === 0 && getTop3().length === 0) {
+                <div style="text-align:center; padding:30px; font-size:12px; color:var(--text-muted)">
+                  No students recorded yet.
+                </div>
               }
-            </div>
-
-            <!-- Name -->
-            <div class="lb-name" style="display:flex; align-items:center; gap:6px; flex:1">
-              <span style="font-weight:600">{{ user.id === currentUserId() ? 'You — ' : '' }}{{ user.name }}</span>
-              @if (getFlagUrl(user.countryFlag)) {
-                <img [src]="getFlagUrl(user.countryFlag)" style="width: 14px; height: 10px; object-fit: contain; border-radius: 1px" alt="flag">
-              }
-            </div>
-
-            <!-- XP -->
-            <div class="lb-xp" style="font-weight: 700; color:#4F46E5">
-              {{ getXPDisplay(user) | number }} XP
-            </div>
+            }
           </div>
-        } @empty {
-          @if (getListUsers().length === 0 && getTop3().length === 0) {
-            <div style="text-align:center; padding:30px; font-size:12px; color:var(--text-muted)">
-              No students recorded yet.
+        </div>
+
+        <!-- Right Column: Rewards Panel -->
+        <div style="flex:1.2; min-width:290px">
+          <div class="card" style="background:#FFFDF5; border:1px solid #FEF3C7; padding:18px; border-radius:12px; box-shadow:0 4px 12px rgba(251, 191, 36, 0.08); margin-top:0">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px">
+              <i class="ti ti-gift" style="font-size:24px; color:#D97706"></i>
+              <h3 style="margin:0; font-size:15px; font-weight:700; color:#92400E">Monthly Rewards / Cadeaux</h3>
             </div>
-          }
-        }
+            <p style="font-size:11px; color:#B45309; margin-top:0; margin-bottom:16px; line-height:1.4">
+              Accumulez des points XP pour remporter ces cadeaux ! Les prix sont attribués par le professeur.
+            </p>
+
+            <!-- Rewards Cards -->
+            <div style="display:flex; flex-direction:column; gap:12px">
+              @for (reward of rewards(); track reward.id) {
+                <div style="background:#FFF; border:1px solid #FEF3C7; padding:12px; border-radius:8px; box-shadow:0 2px 4px rgba(0,0,0,0.01); position:relative">
+                  <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px">
+                    <span style="font-size:13px; font-weight:700; color:#1F2937">{{ reward.title }}</span>
+                    <span style="font-size:10px; font-weight:700; background:#FEF3C7; color:#B45309; padding:2px 6px; border-radius:10px">{{ reward.xpThreshold }} XP</span>
+                  </div>
+                  <p style="font-size:11px; color:#4B5563; margin:0; line-height:1.3">{{ reward.description }}</p>
+
+                  <!-- Assignment status -->
+                  <div style="margin-top:8px; border-top:1px dashed #FEF3C7; padding-top:8px">
+                    @if (reward.assignedTo) {
+                      <div style="display:flex; align-items:center; gap:4px">
+                        <span style="font-size:11px; font-weight:700; color:#10B981; display:flex; align-items:center; gap:3px">
+                          🏆 Gagné par {{ reward.assignedName }} !
+                        </span>
+                      </div>
+                    } @else {
+                      <div>
+                        @if (currentUser() && currentUser()?.role === 'student') {
+                          <div style="display:flex; justify-content:space-between; font-size:9px; color:#6B7280; margin-bottom:4px">
+                            <span>Votre XP :</span>
+                            <span>{{ currentUser()?.xp || 0 }} / {{ reward.xpThreshold }} XP</span>
+                          </div>
+                          <div style="width:100%; height:6px; background:#F3F4F6; border-radius:3px; overflow:hidden">
+                            <div [style.width.%]="getPercent(currentUser()?.xp || 0, reward.xpThreshold)" style="height:100%; background:#FBBF24; border-radius:3px"></div>
+                          </div>
+                        } @else {
+                          <span style="font-size:10px; color:#B45309; font-weight:600">En jeu / Claimable</span>
+                        }
+                      </div>
+                    }
+
+                    <!-- Teacher Assign Actions -->
+                    @if (currentUser()?.role === 'teacher') {
+                      <div style="display:flex; align-items:center; gap:6px; margin-top:8px">
+                        <select (change)="assignRewardToStudent(reward.id, $event)" style="font-size:11px; padding:4px; background:#FFF; border:1px solid #D1D5DB; border-radius:4px; flex:1">
+                          <option value="">-- Attribuer à... --</option>
+                          @for (student of allStudents(); track student.id) {
+                            <option [value]="student.id" [selected]="reward.assignedTo === student.id">{{ student.name }}</option>
+                          }
+                        </select>
+                        @if (reward.assignedTo) {
+                          <button (click)="unassignReward(reward.id)" style="background:#EF4444; border:none; color:white; font-size:10px; padding:4px 8px; border-radius:4px; cursor:pointer" title="Retirer l'attribution">
+                            Retirer
+                          </button>
+                        }
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+
+            <!-- Teacher Add Reward Button & Panel -->
+            @if (currentUser()?.role === 'teacher') {
+              <div style="margin-top:16px; border-top:1px solid #FEF3C7; padding-top:16px">
+                @if (!showAddRewardForm()) {
+                  <button (click)="showAddRewardForm.set(true)" style="background:#4F46E5; color:white; border:none; font-size:11px; font-weight:700; width:100%; padding:8px; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:4px">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 9v6"/><path d="M9 12h6"/></svg>
+                    <span>Créer une Récompense</span>
+                  </button>
+                } @else {
+                  <div style="background:#FFF; border:1px solid #E5E7EB; padding:10px; border-radius:8px; display:flex; flex-direction:column; gap:8px">
+                    <div style="font-size:11px; font-weight:700; color:#374151">Nouvelle Récompense</div>
+                    <input type="text" [(ngModel)]="newRewardTitle" placeholder="Titre (ex: Ticket de Cinéma)" style="font-size:11px; padding:6px; border:1px solid #D1D5DB; border-radius:4px" />
+                    <input type="text" [(ngModel)]="newRewardDesc" placeholder="Description (ex: Place Pathé Dakar)" style="font-size:11px; padding:6px; border:1px solid #D1D5DB; border-radius:4px" />
+                    <input type="number" [(ngModel)]="newRewardXp" placeholder="Seuil XP (ex: 300)" style="font-size:11px; padding:6px; border:1px solid #D1D5DB; border-radius:4px" />
+                    <div style="display:flex; gap:6px">
+                      <button (click)="createNewReward()" style="background:#10B981; color:white; border:none; font-size:10px; font-weight:700; padding:6px; border-radius:4px; cursor:pointer; flex:1">Créer</button>
+                      <button (click)="showAddRewardForm.set(false)" style="background:#EF4444; color:white; border:none; font-size:10px; font-weight:700; padding:6px; border-radius:4px; cursor:pointer; flex:1">Annuler</button>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
       </div>
     </div>
   `,
@@ -312,6 +409,14 @@ export class StudentLeaderboardComponent {
   users = signal<UserProfile[]>([]);
   currentUser = signal<UserProfile | null>(null);
 
+  rewards = signal<LeaderboardReward[]>([]);
+  allStudents = signal<UserProfile[]>([]);
+  showAddRewardForm = signal<boolean>(false);
+
+  newRewardTitle = '';
+  newRewardDesc = '';
+  newRewardXp = 300;
+
   // Tab filter: 'week' Sprint vs 'all' Time
   selectedTab = signal<'week' | 'all'>('week');
 
@@ -344,8 +449,12 @@ export class StudentLeaderboardComponent {
   constructor() {
     this.db.observeUsers().subscribe(list => {
       this.users.set(list.filter(u => u.role === 'student'));
+      this.allStudents.set(list.filter(u => u.role === 'student'));
     });
     this.db.observeCurrentUser().subscribe(u => this.currentUser.set(u));
+    this.db.observeRewards().subscribe(list => {
+      this.rewards.set(list.sort((a, b) => a.xpThreshold - b.xpThreshold));
+    });
   }
 
   getXPDisplay(user: UserProfile): number {
@@ -376,5 +485,41 @@ export class StudentLeaderboardComponent {
 
   currentUserId() {
     return this.currentUser()?.id || '';
+  }
+
+  getPercent(xp: number, threshold: number): number {
+    if (threshold <= 0) return 100;
+    const pct = (xp / threshold) * 100;
+    return Math.min(Math.max(Math.round(pct), 0), 100);
+  }
+
+  async createNewReward() {
+    if (!this.newRewardTitle.trim() || !this.newRewardDesc.trim()) return;
+    await this.db.addReward({
+      title: this.newRewardTitle,
+      description: this.newRewardDesc,
+      xpThreshold: Number(this.newRewardXp) || 300
+    });
+    this.newRewardTitle = '';
+    this.newRewardDesc = '';
+    this.newRewardXp = 300;
+    this.showAddRewardForm.set(false);
+  }
+
+  assignRewardToStudent(rewardId: string, event: Event) {
+    const select = event.target as HTMLSelectElement;
+    const studentId = select.value;
+    if (!studentId) {
+      this.db.assignReward(rewardId, null, null);
+      return;
+    }
+    const student = this.allStudents().find(s => s.id === studentId);
+    if (student) {
+      this.db.assignReward(rewardId, studentId, student.name);
+    }
+  }
+
+  unassignReward(rewardId: string) {
+    this.db.assignReward(rewardId, null, null);
   }
 }

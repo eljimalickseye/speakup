@@ -32,6 +32,16 @@ export interface UserProfile {
   description?: string;
 }
 
+export interface LeaderboardReward {
+  id: string;
+  title: string;
+  description: string;
+  xpThreshold: number;
+  assignedTo?: string | null;
+  assignedName?: string | null;
+  acknowledged?: boolean;
+}
+
 export interface Lesson {
   id: string;
   title: string;
@@ -159,6 +169,7 @@ export class DatabaseService {
   private announcements$ = new BehaviorSubject<Announcement[]>([]);
   private payments$ = new BehaviorSubject<Payment[]>([]);
   private events$ = new BehaviorSubject<EventItem[]>([]);
+  private rewards$ = new BehaviorSubject<LeaderboardReward[]>([]);
   private voiceChatEnabled$ = new BehaviorSubject<boolean>(true);
   private channels$ = new BehaviorSubject<ChatChannel[]>([]);
   
@@ -296,6 +307,14 @@ export class DatabaseService {
     const events = getLocal('speak_events', defaultEvents);
     const channels = getLocal('speak_channels', defaultChannels);
 
+    const defaultRewards: LeaderboardReward[] = [
+      { id: 'reward-1', title: 'Ticket de Cinéma', description: 'Une place de cinéma gratuite au Pathé Dakar.', xpThreshold: 300, assignedTo: null, assignedName: null, acknowledged: false },
+      { id: 'reward-2', title: 'Bon d\'achat Auchan', description: 'Un bon d\'achat de 15,000 CFA utilisable à Auchan.', xpThreshold: 800, assignedTo: null, assignedName: null, acknowledged: false },
+      { id: 'reward-3', title: 'Voyage Week-end', description: 'Un séjour de 2 jours à Saly Portudal tout compris.', xpThreshold: 2000, assignedTo: null, assignedName: null, acknowledged: false }
+    ];
+    const rewards = getLocal('speak_rewards', defaultRewards);
+    this.rewards$.next(rewards);
+
     this.users$.next(users);
     this.lessons$.next(lessons);
     this.quizzes$.next(quizzes);
@@ -360,6 +379,10 @@ export class DatabaseService {
         // Write events
         for (const ev of this.events$.value) {
           await setDoc(doc(this.firestore, 'events', ev.id), ev);
+        }
+        // Write rewards
+        for (const reward of this.rewards$.value) {
+          await setDoc(doc(this.firestore, 'rewards', reward.id), reward);
         }
 
         console.log('Firestore seeded successfully.');
@@ -490,6 +513,13 @@ export class DatabaseService {
       const events: EventItem[] = [];
       snap.forEach(doc => events.push(doc.data() as EventItem));
       this.events$.next(events);
+    });
+
+    // 10. Subscribe to Rewards
+    onSnapshot(collection(this.firestore, 'rewards'), (snap) => {
+      const list: LeaderboardReward[] = [];
+      snap.forEach(doc => list.push(doc.data() as LeaderboardReward));
+      this.rewards$.next(list);
     });
 
     // 11. Subscribe to Channels
@@ -1288,6 +1318,58 @@ export class DatabaseService {
         console.warn(e);
       }
     }
+  }
+
+  // --- REWARDS OPERATIONS ---
+  observeRewards(): Observable<LeaderboardReward[]> { return this.rewards$.asObservable(); }
+
+  async addReward(r: Omit<LeaderboardReward, 'id' | 'assignedTo' | 'assignedName' | 'acknowledged'>) {
+    const newReward: LeaderboardReward = {
+      ...r,
+      id: 'reward-' + Date.now(),
+      assignedTo: null,
+      assignedName: null,
+      acknowledged: false
+    };
+
+    const list = [newReward, ...this.rewards$.value];
+    this.rewards$.next(list);
+    this.saveLocal('speak_rewards', list);
+
+    if (this.useFirebase) {
+      try {
+        await setDoc(doc(this.firestore, 'rewards', newReward.id), newReward);
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+  }
+
+  async updateReward(rewardId: string, updates: Partial<LeaderboardReward>) {
+    const list = [...this.rewards$.value];
+    const idx = list.findIndex(r => r.id === rewardId);
+    if (idx !== -1) {
+      const updated = { ...list[idx], ...updates };
+      list[idx] = updated;
+      this.rewards$.next(list);
+      this.saveLocal('speak_rewards', list);
+
+      if (this.useFirebase) {
+        try {
+          await updateDoc(doc(this.firestore, 'rewards', rewardId), updates as any);
+        } catch (e) {
+          console.warn(e);
+        }
+      }
+    }
+  }
+
+  async assignReward(rewardId: string, studentId: string | null, studentName: string | null) {
+    await this.updateReward(rewardId, {
+      assignedTo: studentId,
+      assignedName: studentName,
+      acknowledged: false
+    });
   }
 
   // --- REAL-TIME CHAT OPERATIONS ---

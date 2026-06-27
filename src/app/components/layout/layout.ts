@@ -125,6 +125,9 @@ import { TeacherEventsComponent } from '../teacher/events';
             <button class="ni" [class.active]="activeTab === 'chat'" (click)="setTab('chat')">
               <i class="ti ti-messages" aria-hidden="true"></i>English Chat
             </button>
+            <button class="ni" [class.active]="activeTab === 'leaderboard'" (click)="setTab('leaderboard')">
+              <i class="ti ti-trophy" aria-hidden="true"></i>Leaderboard & Rewards
+            </button>
             <button class="ni" [class.active]="activeTab === 'students'" (click)="setTab('students')">
               <i class="ti ti-users" aria-hidden="true"></i>Students
             </button>
@@ -571,7 +574,7 @@ export class LayoutComponent {
       if (user) {
         this.currentUser.set(user);
         // Sync active tab for roles
-        if (user.role === 'teacher' && ['dashboard', 'lessons', 'speaking', 'exercises', 'leaderboard', 'events', 'live-classes'].includes(this.activeTab)) {
+        if (user.role === 'teacher' && ['dashboard', 'lessons', 'speaking', 'exercises', 'events', 'live-classes'].includes(this.activeTab)) {
           this.setTab('overview');
         } else if (user.role === 'student' && ['overview', 'students', 'create-lesson', 'create-quiz', 'grade-homework', 'attendance', 'schedule-class', 'announcements', 'payments', 'teacher-events'].includes(this.activeTab)) {
           this.setTab('dashboard');
@@ -667,6 +670,21 @@ export class LayoutComponent {
           });
         }
         this.lastActiveClassId = activeClass ? activeClass.id : null;
+      }
+    });
+
+    this.db.observeRewards().subscribe(list => {
+      const user = this.currentUser();
+      if (!user) return;
+      
+      const unacknowledgedReward = list.find(r => r.assignedTo === user.id && !r.acknowledged);
+      if (unacknowledgedReward) {
+        this.db.updateReward(unacknowledgedReward.id, { acknowledged: true });
+        this.dialogService.alert(
+          '🏆 Félicitations !',
+          `Vous avez remporté la récompense : "${unacknowledgedReward.title}" !\n\n${unacknowledgedReward.description}\n\nContinuez à accumuler des points XP pour remporter d'autres prix !`,
+          'success'
+        );
       }
     });
   }

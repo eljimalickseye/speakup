@@ -79,6 +79,7 @@ import { DialogService } from '../../services/dialog.service';
                 <option value="A2">A2 — Elementary</option>
                 <option value="B1">B1 — Intermediate</option>
                 <option value="B2">B2 — Upper Intermediate</option>
+                <option value="Guest">Guest / Invité (No Fees)</option>
               </select>
             </div>
             <div class="input-row">
@@ -352,14 +353,21 @@ export class TeacherStudentsComponent {
 
   addStudent() {
     if (!this.newStudentName.trim()) return;
+    const isGuest = this.newStudentLevel === 'Guest';
     this.db.addStudent(
       this.newStudentName, 
       this.newStudentLevel, 
       this.newStudentCountry, 
-      Number(this.newStudentRegFee), 
-      Number(this.newStudentMonthlyFee)
+      isGuest ? 0 : Number(this.newStudentRegFee), 
+      isGuest ? 0 : Number(this.newStudentMonthlyFee)
     ).then(() => {
-      this.dialogService.alert('Student Created', `Student account for ${this.newStudentName} created successfully! Payment records initialized.`, 'success');
+      this.dialogService.alert(
+        isGuest ? 'Guest Invited' : 'Student Created', 
+        isGuest 
+          ? `Guest account for ${this.newStudentName} created successfully! They can log in to participate in chat rooms and live calls.`
+          : `Student account for ${this.newStudentName} created successfully! Payment records initialized.`, 
+        'success'
+      );
       this.newStudentName = '';
       this.newStudentLevel = 'B1';
       this.newStudentCountry = '🇸🇳';
