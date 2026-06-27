@@ -259,6 +259,8 @@ import { TeacherUserManagementComponent } from '../teacher/user-management';
               <app-teacher-events></app-teacher-events>
             } @else if (activeTab === 'chat') {
               <app-student-chat></app-student-chat>
+            } @else if (activeTab === 'leaderboard') {
+              <app-student-leaderboard></app-student-leaderboard>
             } @else if (activeTab === 'user-management') {
               <app-teacher-user-management></app-teacher-user-management>
             }
