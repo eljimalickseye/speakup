@@ -99,6 +99,22 @@ import { DialogService } from '../../services/dialog.service';
                 "{{ c.description }}"
               </p>
 
+              <!-- Google Meet Style Link Box -->
+              <div style="background:#FAF5FF; border:1px solid #E9D5FF; border-radius:8px; padding:12px; margin-bottom:12px; margin-top:8px">
+                <div style="font-size:11px; font-weight:700; color:#7E22CE; display:flex; align-items:center; gap:4px">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                  <span>Meeting Link (Google Meet style)</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px; flex-wrap:wrap; gap:8px">
+                  <a (click)="startAndJoinClass(c)" style="font-size:12px; font-weight:600; color:#4F46E5; text-decoration:underline; cursor:pointer; font-family:monospace">
+                    https://meet.google.com/spk-{{ c.jitsiRoom.toLowerCase().slice(-10) }}
+                  </a>
+                  <span class="badge" [style.background]="c.status === 'active' ? '#EF4444' : '#E5E7EB'" [style.color]="c.status === 'active' ? 'white' : '#4B5563'" style="font-size:9px">
+                    {{ c.status === 'active' ? 'Live Now' : 'Click Link to Start Live' }}
+                  </span>
+                </div>
+              </div>
+
               <div style="display:flex; gap:10px; border-top:1px solid var(--border-weak); padding-top:12px; margin-top:4px">
                 @if (c.status === 'waiting') {
                   <button class="btn-p" style="background:#EF4444; border-color:#EF4444" (click)="startLiveNow(c)">
@@ -359,6 +375,24 @@ export class TeacherScheduleComponent {
         this.navigateToTab.emit('overview');
       }
     );
+  }
+
+  startAndJoinClass(c: LiveClass) {
+    if (c.status === 'waiting') {
+      this.db.updateClassStatus(c.id, 'active');
+      this.dialogService.alert(
+        'Live Started', 
+        'Live Class activated! Redirecting to Overview dashboard to host the Jitsi videobridge.', 
+        'success', 
+        () => {
+          this.navigateToTab.emit('overview');
+        }
+      );
+    } else if (c.status === 'active') {
+      this.navigateToTab.emit('overview');
+    } else {
+      this.dialogService.alert('Session Completed', 'This live session is already completed.', 'info');
+    }
   }
 
   joinActiveLive(c: LiveClass) {
