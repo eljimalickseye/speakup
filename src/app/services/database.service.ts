@@ -77,6 +77,18 @@ export interface Ebook {
   createdAt: string;
 }
 
+export interface AbuseReport {
+  id: string;
+  reportedUserId: string;
+  reportedUserName: string;
+  reporterUserId: string;
+  reporterUserName: string;
+  reason: string;
+  details: string;
+  createdAt: string;
+  status: 'pending' | 'resolved';
+}
+
 export interface Lesson {
   id: string;
   title: string;
@@ -210,6 +222,7 @@ export class DatabaseService {
   private dictionary$ = new BehaviorSubject<DictionaryWord[]>([]);
   private channels$ = new BehaviorSubject<ChatChannel[]>([]);
   private ebooks$ = new BehaviorSubject<Ebook[]>([]);
+  private reports$ = new BehaviorSubject<AbuseReport[]>([]);
   
   // Current user state
   private currentUser$ = new BehaviorSubject<UserProfile | null>(null);
@@ -394,6 +407,10 @@ export class DatabaseService {
     ];
     const ebooks = getLocal('speak_ebooks', defaultEbooks);
     this.ebooks$.next(ebooks);
+
+    const defaultReports: AbuseReport[] = [];
+    const reports = getLocal('speak_reports', defaultReports);
+    this.reports$.next(reports);
 
     this.users$.next(users);
     this.lessons$.next(lessons);
@@ -621,6 +638,13 @@ export class DatabaseService {
       const list: Ebook[] = [];
       snap.forEach(doc => list.push(doc.data() as Ebook));
       this.ebooks$.next(list);
+    });
+
+    // 15. Subscribe to Abuse Reports
+    onSnapshot(collection(this.firestore, 'reports'), (snap) => {
+      const list: AbuseReport[] = [];
+      snap.forEach(doc => list.push(doc.data() as AbuseReport));
+      this.reports$.next(list);
     });
 
     // 11. Subscribe to Channels
@@ -1662,6 +1686,60 @@ export class DatabaseService {
         await deleteDoc(doc(this.firestore, 'ebooks', ebookId));
       } catch (e) {
         console.warn('Firestore delete ebook failed:', e);
+      }
+    }
+  }
+
+  // --- ABUSE REPORTS OPERATIONS ---
+  observeReports(): Observable<AbuseReport[]> {
+    return this.reports$.asObservable();
+  }
+
+  async addReport(rep: Omit<AbuseReport, 'id' | 'createdAt' | 'status'>) {
+    const newReport: AbuseReport = {
+      ...rep,
+      id: 'rep-' + Date.now(),
+      createdAt: new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }),
+      status: 'pending'
+    };
+
+    const list = [newReport, ...this.reports$.value];
+    this.reports$.next(list);
+    this.saveLocal('speak_reports', list);
+
+    if (this.useFirebase) {
+      try {
+        await setDoc(doc(this.firestore, 'reports', newReport.id), newReport);
+      } catch (e) {
+        console.warn('Firestore add report failed:', e);
+      }
+    }
+  }
+
+  async resolveReport(reportId: string) {
+    const list = this.reports$.value.map(r => r.id === reportId ? { ...r, status: 'resolved' as const } : r);
+    this.reports$.next(list);
+    this.saveLocal('speak_reports', list);
+
+    if (this.useFirebase) {
+      try {
+        await setDoc(doc(this.firestore, 'reports', reportId), { status: 'resolved' }, { merge: true });
+      } catch (e) {
+        console.warn('Firestore resolve report failed:', e);
+      }
+    }
+  }
+
+  async deleteReport(reportId: string) {
+    const list = this.reports$.value.filter(r => r.id !== reportId);
+    this.reports$.next(list);
+    this.saveLocal('speak_reports', list);
+
+    if (this.useFirebase) {
+      try {
+        await deleteDoc(doc(this.firestore, 'reports', reportId));
+      } catch (e) {
+        console.warn('Firestore delete report failed:', e);
       }
     }
   }

@@ -21,12 +21,14 @@ interface ChatMember {
   imports: [CommonModule, FormsModule],
   template: `
     <div class="page" style="padding:0">
-      <!-- Top banner info -->
-      <div style="font-size:12px; color:#4F46E5; background:#EEF2FF; padding:10px 16px; border-bottom:1px solid var(--border-weak); display:flex; align-items:center; gap:6px">
+      <div style="font-size:12px; color:#4F46E5; background:#EEF2FF; padding:10px 16px; border-bottom:1px solid var(--border-weak); display:flex; align-items:center; gap:6px; flex-wrap:wrap">
         <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
         </svg>
-        Only English in this chat — practicing helps you improve faster!
+        <span>Only English in this chat — practicing helps you improve faster!</span>
+        <button (click)="showSecurityPolicy.set(true)" style="background:none; border:none; color:#4F46E5; text-decoration:underline; font-weight:700; cursor:pointer; margin-left:auto; font-size:11px">
+          🛡️ Charte de sécurité & conduite
+        </button>
       </div>
 
       <!-- Main Slack-style Grid Layout -->
@@ -195,6 +197,18 @@ interface ChatMember {
                         (click)="awardStudentXP(msg.senderId, msg.senderName)">
                         <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                        </svg>
+                      </button>
+                    }
+
+                    @if (msg.senderId !== currentUserId()) {
+                      <button 
+                        class="delete-msg-btn"
+                        style="color:#EF4444; margin-right:8px"
+                        title="Signaler ce message pour abus"
+                        (click)="openReportModal(msg)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
                         </svg>
                       </button>
                     }
@@ -407,6 +421,105 @@ interface ChatMember {
                   </div>
                 </div>
               }
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Security Policy / Code of Conduct Modal -->
+      @if (showSecurityPolicy()) {
+        <div style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.65); display:flex; justify-content:center; align-items:center; z-index:99999; padding:16px">
+          <div class="card" style="width:100%; max-width:520px; background:#FFF; border-radius:12px; padding:24px; box-shadow:0 10px 25px rgba(0,0,0,0.25); margin:0; max-height:90vh; overflow-y:auto">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; border-bottom:1px solid var(--border-weak); padding-bottom:12px">
+              <h3 style="font-size:16px; font-weight:800; color:#4F46E5; margin:0; display:flex; align-items:center; gap:6px">
+                🛡️ Charte de Sécurité & Conduite
+              </h3>
+              <button (click)="showSecurityPolicy.set(false)" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:22px; font-weight:700; line-height:1; padding:4px">
+                ×
+              </button>
+            </div>
+
+            <div style="font-size:13px; color:var(--text-secondary); line-height:1.6; display:flex; flex-direction:column; gap:12px">
+              <p style="margin:0; font-weight:700; color:var(--text-primary)">
+                Bienvenue sur SpeakUp ! Pour que notre espace d'échange reste un lieu d'apprentissage sûr, bienveillant et productif, chaque utilisateur s'engage à respecter les règles suivantes :
+              </p>
+              
+              <div style="background:#FFFEEF; border-left:4px solid #D97706; padding:10px 12px; border-radius:4px">
+                <strong style="color:#B45309">🗣️ Parler Uniquement en Anglais :</strong>
+                <p style="margin:2px 0 0 0; font-size:12.5px">
+                  Tous les messages textuels et vocaux dans le chat principal doivent être rédigés en anglais. C'est le meilleur moyen de progresser rapidement ensemble !
+                </p>
+              </div>
+
+              <div style="background:#F0FDF4; border-left:4px solid #10B981; padding:10px 12px; border-radius:4px">
+                <strong style="color:#047857">🤝 Respect & Bienveillance :</strong>
+                <p style="margin:2px 0 0 0; font-size:12.5px">
+                  Soyez courtois, encourageant et respectueux envers les autres étudiants. Les moqueries sur le niveau de langue ou les erreurs de grammaire sont formellement interdites.
+                </p>
+              </div>
+
+              <div style="background:#FEE2E2; border-left:4px solid #EF4444; padding:10px 12px; border-radius:4px">
+                <strong style="color:#B91C1C">🚫 Tolérance Zéro pour les Abus :</strong>
+                <p style="margin:2px 0 0 0; font-size:12.5px">
+                  Le harcèlement, les injures, les propos discriminatoires, sexistes, à caractère sexuel ou menaçants entraîneront un bannissement définitif immédiat de la plateforme par l'équipe enseignante.
+                </p>
+              </div>
+
+              <div style="background:#EEF2FF; border-left:4px solid #4F46E5; padding:10px 12px; border-radius:4px">
+                <strong style="color:#4338CA">⚠️ Système de Signalement :</strong>
+                <p style="margin:2px 0 0 0; font-size:12.5px">
+                  Si vous constatez un comportement inapproprié ou un abus, cliquez sur l'icône de triangle de danger (⚠️) à côté du message de l'utilisateur pour le signaler instantanément aux professeurs.
+                </p>
+              </div>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; margin-top:20px; border-top:1px solid var(--border-weak); padding-top:12px">
+              <button class="btn-p" (click)="showSecurityPolicy.set(false)" style="height:38px; font-size:12px; padding:0 24px; background:#4F46E5; border-color:#4F46E5; font-weight:700">
+                J'ai compris & J'accepte 👍
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Report Abuse Modal -->
+      @if (showReportModal() && reportingMessage()) {
+        <div style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.65); display:flex; justify-content:center; align-items:center; z-index:99999; padding:16px">
+          <div class="card" style="width:100%; max-width:480px; background:#FFF; border-radius:12px; padding:20px; box-shadow:0 10px 25px rgba(0,0,0,0.25); margin:0">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px">
+              <h3 style="font-size:15px; font-weight:700; color:#EF4444; margin:0; display:flex; align-items:center; gap:6px">
+                ⚠️ Signaler un comportement inapproprié
+              </h3>
+              <button (click)="closeReportModal()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:18px; font-weight:700; line-height:1; padding:4px">
+                ×
+              </button>
+            </div>
+
+            <div style="background:#FFF5F5; border:1px solid #FED7D7; padding:10px; border-radius:6px; margin-bottom:14px">
+              <p style="font-size:11px; color:#C53030; margin:0; font-weight:700">Utilisateur signalé :</p>
+              <p style="font-size:13px; color:#2D3748; margin:2px 0 0 0; font-weight:700">{{ reportingMessage()?.senderName }}</p>
+              <p style="font-size:11px; color:#718096; margin:6px 0 0 0; font-style:italic">Message : "{{ reportingMessage()?.content }}"</p>
+            </div>
+
+            <div class="input-row" style="margin-bottom:12px">
+              <label class="form-lbl" style="font-size:11px; margin-bottom:4px; display:block; font-weight:700">Raison du signalement</label>
+              <select [(ngModel)]="reportReason" class="form-select" style="height:36px; font-size:12px; width:100%; border:1px solid var(--border); border-radius:6px; padding:0 10px; background:var(--surface-1); color:var(--text-primary)">
+                <option value="Harcèlement ou intimidation">Harcèlement ou intimidation (Harassment)</option>
+                <option value="Propos offensants ou haineux">Propos offensants ou haineux (Hate Speech)</option>
+                <option value="Pas d'anglais dans le chat">Pas d'anglais dans le chat (Not using English)</option>
+                <option value="Spam ou liens suspects">Spam ou liens suspects (Spam)</option>
+                <option value="Autre">Autre (Other)</option>
+              </select>
+            </div>
+
+            <div class="input-row" style="margin-bottom:12px">
+              <label class="form-lbl" style="font-size:11px; margin-bottom:4px; display:block; font-weight:700">Détails ou explications additionnels (Optionnel)</label>
+              <textarea [(ngModel)]="reportDetails" placeholder="Veuillez décrire brièvement ce qui s'est passé..." rows="3" class="form-input" style="font-size:12px; width:100%; padding:8px 10px; border:1px solid var(--border); border-radius:6px; background:var(--surface-1); color:var(--text-primary)"></textarea>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:20px; border-top:1px solid var(--border-weak); padding-top:12px">
+              <button class="btn-s" (click)="closeReportModal()" style="height:36px; font-size:12px; padding:0 14px">Annuler</button>
+              <button class="btn-p" (click)="submitReport()" style="height:36px; font-size:12px; padding:0 16px; background:#EF4444; border-color:#EF4444; font-weight:700; color:white">Envoyer le Signalement</button>
             </div>
           </div>
         </div>
@@ -969,6 +1082,13 @@ export class StudentChatComponent implements OnDestroy {
   newChanSelectedStudents = signal<string[]>([]);
   showMembersMobile = signal<boolean>(false);
   
+  // Safety & abuse reporting signals
+  showSecurityPolicy = signal<boolean>(false);
+  showReportModal = signal<boolean>(false);
+  reportingMessage = signal<ChatMessage | null>(null);
+  reportReason = 'Harcèlement ou intimidation';
+  reportDetails = '';
+  
   studentList = computed(() => {
     return this.dbUsers().filter(u => u.role === 'student');
   });
@@ -1076,6 +1196,38 @@ export class StudentChatComponent implements OnDestroy {
     this.newChanIsPrivate = false;
     this.newChanSelectedStudents.set([]);
     this.showCreateChanModal.set(false);
+  }
+
+  openReportModal(msg: ChatMessage) {
+    this.reportingMessage.set(msg);
+    this.reportReason = 'Harcèlement ou intimidation';
+    this.reportDetails = '';
+    this.showReportModal.set(true);
+  }
+
+  closeReportModal() {
+    this.showReportModal.set(false);
+    this.reportingMessage.set(null);
+  }
+
+  submitReport() {
+    const msg = this.reportingMessage();
+    if (!msg) return;
+
+    const currentUserName = this.currentUser?.name || 'Étudiant';
+    const reportData = {
+      reportedUserId: msg.senderId,
+      reportedUserName: msg.senderName,
+      reporterUserId: this.currentUserId(),
+      reporterUserName: currentUserName,
+      reason: this.reportReason,
+      details: this.reportDetails.trim() || `Signalement lié au message : "${msg.content}"`
+    };
+
+    this.db.addReport(reportData).then(() => {
+      this.dialogService.alert('Signalement Envoyé', 'Merci pour votre signalement. L\'équipe enseignante va examiner ce comportement très rapidement.', 'success');
+      this.closeReportModal();
+    });
   }
 
   removeChannel(chan: ChatChannel) {
