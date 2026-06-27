@@ -1539,4 +1539,66 @@ export class DatabaseService {
       }
     }
   }
+
+  getGeminiApiKey(): string | null {
+    return localStorage.getItem('speak_gemini_api_key');
+  }
+
+  setGeminiApiKey(key: string) {
+    if (key) {
+      localStorage.setItem('speak_gemini_api_key', key.trim());
+    } else {
+      localStorage.removeItem('speak_gemini_api_key');
+    }
+  }
+
+  async callGemini(systemInstruction: string, promptText: string): Promise<string> {
+    const apiKey = this.getGeminiApiKey();
+    if (!apiKey) {
+      throw new Error('MISSING_API_KEY');
+    }
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              { text: `${systemInstruction}\n\nUser Input:\n${promptText}` }
+            ]
+          }
+        ],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 1200
+        }
+      })
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData?.error?.message || `HTTP error! Status: ${response.status}`);
+    }
+
+    const resData = await response.json();
+    let text = resData?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) {
+      throw new Error('Empty response from Gemini.');
+    }
+    // Strip markdown code block wrappers if any (e.g. ```json ... ```)
+    text = text.trim();
+    if (text.startsWith('```')) {
+      const firstNewLine = text.indexOf('\n');
+      const lastBackticks = text.lastIndexOf('```');
+      if (firstNewLine !== -1 && lastBackticks !== -1 && lastBackticks > firstNewLine) {
+        text = text.substring(firstNewLine + 1, lastBackticks).trim();
+      }
+    }
+    return text;
+  }
 }

@@ -87,8 +87,9 @@ interface QuestionDraft {
         <div style="margin-top:16px">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
             <strong style="font-size:13px; color:var(--text-primary)">Quiz Questions</strong>
-            <button class="btn-s" style="font-size:11px; padding:4px 10px" (click)="addQuestionDraft()">
-              <i class="ti ti-plus"></i> Add Question
+            <button class="btn-s" style="font-size:11px; padding:4px 10px; display:flex; align-items:center; gap:4px" (click)="addQuestionDraft()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span>Add Question</span>
             </button>
           </div>
 
@@ -189,8 +190,9 @@ interface QuestionDraft {
                 Type: {{ quiz.type }} · Limit: {{ quiz.timeLimit }} · Questions: {{ quiz.questions.length }}
               </div>
             </div>
-            <button class="btn-s" style="font-size:11px; padding:4px 10px; border-color:#4F46E5; color:#4F46E5" (click)="editQuiz(quiz)">
-              <i class="ti ti-edit"></i> Edit
+            <button class="btn-s" style="font-size:11px; padding:4px 10px; border-color:#4F46E5; color:#4F46E5; display:flex; align-items:center; gap:4px" (click)="editQuiz(quiz)">
+              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+              <span>Edit</span>
             </button>
           </div>
         }
@@ -390,79 +392,54 @@ export class TeacherQuizzesComponent {
     ];
   }
 
-  generateQuizWithAI() {
+  async generateQuizWithAI() {
     if (!this.aiTopic.trim()) return;
+
+    if (!this.db.getGeminiApiKey()) {
+      const key = prompt('Google Gemini API Key is required to run real AI features.\nPlease enter your Gemini API Key (get a free key from https://aistudio.google.com/):');
+      if (key && key.trim()) {
+        this.db.setGeminiApiKey(key);
+      } else {
+        return;
+      }
+    }
+
     this.aiLoading.set(true);
 
-    setTimeout(() => {
-      const topic = this.aiTopic.trim();
-      let genQuestions: QuestionDraft[] = [];
-
-      if (this.type === 'Oral Practice') {
-        genQuestions = [
-          {
-            question: `Explain your personal opinions or experiences regarding "${topic}". Speak clearly for 45 seconds.`,
-            options: ['', '', ''],
-            correctOption: 'A'
-          },
-          {
-            question: `What do you think is the biggest advantage and disadvantage of "${topic}"?`,
-            options: ['', '', ''],
-            correctOption: 'A'
-          }
-        ];
-      } else if (this.type === 'True / False') {
-        genQuestions = [
-          {
-            question: `Is the concept of "${topic}" generally considered beneficial for modern communication?`,
-            options: ['True', 'False', ''],
-            correctOption: 'A'
-          },
-          {
-            question: `Does "${topic}" have zero impact on professional career development?`,
-            options: ['True', 'False', ''],
-            correctOption: 'B'
-          }
-        ];
-      } else if (this.type === 'Fill in the blank') {
-        genQuestions = [
-          {
-            question: `To master the grammar of _________ (topic: ${topic}), one must practice speaking daily.`,
-            options: [topic, 'writing', 'reading'],
-            correctOption: 'A'
-          },
-          {
-            question: `A key vocabulary word related to "${topic}" is _________ (choose the best matching term).`,
-            options: ['essential', 'bad', 'nothing'],
-            correctOption: 'A'
-          }
-        ];
-      } else {
-        // Multiple Choice
-        genQuestions = [
-          {
-            question: `Which of the following best defines the main concept of "${topic}"?`,
-            options: [`The essential practice of ${topic}`, `A minor aspect of writing`, `A type of irregular conjugation`],
-            correctOption: 'A'
-          },
-          {
-            question: `What is the most common mistake students make when studying "${topic}"?`,
-            options: [`Lack of consistent oral practice`, `Using too many adjectives`, `Ignoring punctuation marks`],
-            correctOption: 'A'
-          },
-          {
-            question: `Complete the sentence: "To become fluent in discussions about ${topic}, you should ______."`,
-            options: [`practice with dynamic flashcards and native speakers`, `read grammar tables without speaking`, `translate every word literally`],
-            correctOption: 'A'
-          }
-        ];
+    const systemInstruction = `You are the SpeakUp Teacher Quiz Assistant. Generate questions for a quiz based on the user's topic.
+    Generate a JSON array of questions matching this format:
+    [
+      {
+        "question": "Question text...",
+        "options": ["Option A", "Option B", "Option C"],
+        "correctOption": "A"
       }
+    ]
+    Rules:
+    - For "Multiple Choice", return 3 options and correctOption ("A", "B", or "C").
+    - For "True / False", return 2 options: ["True", "False"] and correctOption ("A" or "B").
+    - For "Fill in the blank", return 3 options and correctOption ("A", "B" or "C").
+    - For "Oral Practice", return empty options ["", "", ""] and correctOption "A".
+    Do not wrap the response in markdown code blocks. Return ONLY the JSON array.`;
 
-      this.title = `AI Generated Quiz: ${topic}`;
-      this.questions = genQuestions;
-      this.aiLoading.set(false);
+    const promptText = `Topic: "${this.aiTopic.trim()}"\nQuiz Type: "${this.type}"`;
+
+    try {
+      const res = await this.db.callGemini(systemInstruction, promptText);
+      const data = JSON.parse(res);
+      this.questions = data;
+      this.title = `AI Generated Quiz: ${this.aiTopic.trim()}`;
       this.aiTopic = '';
-      this.dialogService.alert('AI Quiz Generated', `Successfully generated ${genQuestions.length} custom questions on "${topic}"!`, 'success');
-    }, 1500);
+      this.dialogService.alert('AI Quiz Generated', `Successfully generated ${data.length} custom questions!`, 'success');
+    } catch(e: any) {
+      console.error(e);
+      if (e.message === 'MISSING_API_KEY') {
+        this.dialogService.alert('API Key Required', 'Please configure your Gemini API Key.', 'info');
+      } else {
+        this.dialogService.alert('AI Generation Failed', e.message || 'Error occurred while contacting Gemini API.', 'info');
+      }
+    } finally {
+      this.aiLoading.set(false);
+    }
   }
 }

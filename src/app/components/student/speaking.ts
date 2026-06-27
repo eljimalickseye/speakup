@@ -1,6 +1,7 @@
 import { Component, inject, signal, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DatabaseService, Submission } from '../../services/database.service';
+import { DialogService } from '../../services/dialog.service';
 
 interface SpeakingPrompt {
   id: string;
@@ -228,6 +229,7 @@ interface SpeakingPrompt {
 })
 export class StudentSpeakingComponent implements OnDestroy {
   private db = inject(DatabaseService);
+  private dialogService = inject(DialogService);
 
   @ViewChild('waveCanvas') waveCanvas!: ElementRef<HTMLCanvasElement>;
 
@@ -507,57 +509,45 @@ export class StudentSpeakingComponent implements OnDestroy {
     this.isSubmitted.set(true);
   }
 
-  analyzeWithAICoach() {
+  async analyzeWithAICoach() {
+    if (!this.db.getGeminiApiKey()) {
+      const key = prompt('Google Gemini API Key is required to run real AI features.\nPlease enter your Gemini API Key (get a free key from https://aistudio.google.com/):');
+      if (key && key.trim()) {
+        this.db.setGeminiApiKey(key);
+      } else {
+        return;
+      }
+    }
+    
     this.aiLoading.set(true);
     this.aiFeedback.set(null);
 
-    setTimeout(() => {
-      const lvl = this.selectedLevel();
-      let fb = {
-        score: '84%',
-        transcript: '',
-        pronunciation: '',
-        grammar: '',
-        fluency: ''
-      };
+    const systemInstruction = `You are the SpeakUp AI Speaking Coach. Analyze the student's spoken transcription and return a JSON object with this exact structure:
+    {
+      "score": "85%",
+      "transcript": "Transcribed text of user's reply...",
+      "pronunciation": "Pronunciation tips (stress, phonemes)...",
+      "grammar": "Grammar suggestions...",
+      "fluency": "Fluency and pacing advice..."
+    }
+    Do not wrap the response in markdown code blocks. Return ONLY the JSON object.`;
 
-      if (lvl === 'A1') {
-        fb = {
-          score: '86%',
-          transcript: 'Hello! My name is Alex, I am twenty-five years old. I live in Dakar, Senegal. I like learning English.',
-          pronunciation: 'Good articulation. Pay special attention to the word "nationality" (make sure to stress the third syllable: na-tio-NAL-i-ty).',
-          grammar: 'Good structure! You successfully used the present simple tense. To improve, try adding more details about your job or studies.',
-          fluency: 'Excellent flow. Very minor hesitation.'
-        };
-      } else if (lvl === 'A2') {
-        fb = {
-          score: '82%',
-          transcript: "Usually, I wake up at seven o'clock. First, I drink coffee and eat breakfast. After that, I go to work by bus. In the evening, I cook dinner and read a book.",
-          pronunciation: 'Clear speech. Watch out for the word "o\'clock" - ensure the "o" is short and the stress is on "clock".',
-          grammar: 'Solid routine description. You used sequencing words like "First" and "After that" correctly. Try to use more frequency adverbs (e.g. "usually", "sometimes", "rarely").',
-          fluency: 'Good speed, keep practicing to reduce pauses between activities.'
-        };
-      } else if (lvl === 'B1') {
-        fb = {
-          score: '88%',
-          transcript: 'My favorite hobby is playing football. I have been playing football for five years with my friends. It helps me to relax because it is active and we have fun.',
-          pronunciation: 'Very natural accent. Make sure to pronounce the "h" in "hobby" clearly (avoid dropping the h-sound).',
-          grammar: 'Great use of the present perfect continuous ("have been playing"). Try to avoid repeating the word "football" too much by using pronouns (like "it" or "this sport").',
-          fluency: 'Fluent delivery with natural pacing and expression.'
-        };
+    const promptText = `The student is answering the speaking prompt: "${this.activePrompt().text}" at level "${this.selectedLevel()}". Give them a constructive evaluation.`;
+
+    try {
+      const res = await this.db.callGemini(systemInstruction, promptText);
+      const data = JSON.parse(res);
+      this.aiFeedback.set(data);
+    } catch(e: any) {
+      console.error(e);
+      if (e.message === 'MISSING_API_KEY') {
+        this.dialogService.alert('API Key Required', 'Please configure your Gemini API Key.', 'info');
       } else {
-        fb = {
-          score: '92%',
-          transcript: 'On the one hand, technology has many benefits. For instance, it allows us to communicate instantly with people worldwide. However, a major drawback is that we spend too much time on screens, which can lead to social isolation. In my opinion, we must find a healthy balance.',
-          pronunciation: 'Advanced articulation. Be careful with the word "advantages" - make sure the second syllable "van" is stressed.',
-          grammar: 'Excellent advanced transitions ("On the one hand", "For instance", "However"). Very rich sentence structure.',
-          fluency: 'Superb sentence pacing, clear linking sounds between words.'
-        };
+        this.dialogService.alert('AI Evaluation Failed', e.message || 'Error occurred while contacting Gemini API.', 'info');
       }
-
-      this.aiFeedback.set(fb);
+    } finally {
       this.aiLoading.set(false);
-    }, 1500);
+    }
   }
 
   private cleanUpAudioContext() {

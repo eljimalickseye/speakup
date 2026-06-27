@@ -233,9 +233,9 @@ import { DialogService } from '../../services/dialog.service';
 
                 <!-- Action buttons -->
                 <div style="display:flex; gap:12px; margin-top:20px; border-top:1px solid var(--border-weak); padding-top:16px">
-                  <button class="btn-p" (click)="submitGrade()" style="flex:1; height:42px; font-weight:600">
-                    <i class="ti ti-check" aria-hidden="true" style="margin-right:6px"></i> 
-                    {{ sub.graded ? 'Update Grade' : 'Submit Grade & Reward XP' }}
+                  <button class="btn-p" (click)="submitGrade()" style="flex:1; height:42px; font-weight:600; display:flex; align-items:center; justify-content:center; gap:6px">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    <span>{{ sub.graded ? 'Update Grade' : 'Submit Grade & Reward XP' }}</span>
                   </button>
                   <button class="btn-s" (click)="selectedSub.set(null)" style="height:42px; padding:0 20px">
                     Cancel
@@ -711,43 +711,47 @@ export class TeacherHomeworkComponent {
     }
   }
 
-  draftAIFeedback(sub: Submission) {
+  async draftAIFeedback(sub: Submission) {
+    if (!this.db.getGeminiApiKey()) {
+      const key = prompt('Google Gemini API Key is required to run real AI features.\nPlease enter your Gemini API Key (get a free key from https://aistudio.google.com/):');
+      if (key && key.trim()) {
+        this.db.setGeminiApiKey(key);
+      } else {
+        return;
+      }
+    }
+
     this.aiLoading.set(true);
 
-    setTimeout(() => {
-      let feedbackText = '';
-      let grade = 'B — Good';
-      let xp = 30;
+    const systemInstruction = `You are the SpeakUp Teacher AI Assistant. Analyze the student's homework submission and draft a helpful, constructive review. Recommend a score (A, B, C, or D) and an XP reward (10 to 100).
+    Return a JSON object with this exact structure:
+    {
+      "feedback": "Constructive comments addressing their errors...",
+      "grade": "B — Good",
+      "xp": 30
+    }
+    Note: The grade value MUST be exactly one of: "A — Excellent", "B — Good", "C — Satisfactory", "D — Needs improvement".
+    Do not wrap the response in markdown code blocks. Return ONLY the JSON object.`;
 
-      if (sub.type === 'text') {
-        const wordCount = sub.content.split(/\s+/).filter(w => w.length > 0).length;
-        const textLower = sub.content.toLowerCase();
+    const promptText = `Lesson Title: "${sub.lessonTitle}"\nHomework Format: "${sub.type}"\nStudent Submission: "${sub.content}"`;
 
-        if (wordCount < 10) {
-          grade = 'D — Needs improvement';
-          xp = 10;
-          feedbackText = `Great effort, but the answer is too short (${wordCount} words). Try to expand your thoughts with examples. For example, explain *why* or *how* you do these activities. Check your spelling and sentence capitalizations.`;
-        } else if (textLower.includes('because') || textLower.includes('however') || textLower.includes('therefore')) {
-          grade = 'A — Excellent';
-          xp = 50;
-          feedbackText = `Outstanding response! You have used advanced English connector words correctly ("${textLower.includes('because') ? 'because' : ''} ${textLower.includes('however') ? 'however' : ''}"). The sentence structure is solid, vocabulary is varied, and flow is natural. Keep up this high standard!`;
-        } else {
-          grade = 'B — Good';
-          xp = 30;
-          feedbackText = `Good vocabulary and clear sentence structure. To reach the next level, try using transition words like "First", "Secondly", or "Moreover" to link your ideas together smoothly. Correct any minor syntax spacing errors.`;
-        }
-      } else {
-        grade = 'B — Good';
-        xp = 35;
-        feedbackText = `Oral Speech Feedback:\n- Pronunciation: Good clarity and natural word stress. Pronounce word endings (-ed, -s) more clearly.\n- Fluency: Natural pacing. Try to reduce hesitation pauses between sentences.\n- Grammar: Correct subject-verb agreements. Nice job!`;
-      }
-
-      this.gradeFeedback = feedbackText;
-      this.gradeScore = grade;
-      this.gradeXp = xp;
-      this.aiLoading.set(false);
+    try {
+      const res = await this.db.callGemini(systemInstruction, promptText);
+      const data = JSON.parse(res);
+      this.gradeFeedback = data.feedback;
+      this.gradeScore = data.grade || 'B — Good';
+      this.gradeXp = data.xp || 30;
       this.dialogService.alert('AI Draft Created', 'AI has drafted feedback, assigned a suggested grade, and set the XP reward!', 'success');
-    }, 1200);
+    } catch(e: any) {
+      console.error(e);
+      if (e.message === 'MISSING_API_KEY') {
+        this.dialogService.alert('API Key Required', 'Please configure your Gemini API Key.', 'info');
+      } else {
+        this.dialogService.alert('AI Draft Failed', e.message || 'Error occurred while contacting Gemini API.', 'info');
+      }
+    } finally {
+      this.aiLoading.set(false);
+    }
   }
 
   submitGrade() {
