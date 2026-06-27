@@ -184,6 +184,16 @@ export class DatabaseService {
     if (this.useFirebase) {
       this.clearOldMockMessagesOnce();
     }
+
+    // Start periodic presence heartbeat pings (every 20 seconds)
+    setInterval(() => {
+      this.pingPresence();
+    }, 20000);
+
+    // Initial ping on start
+    setTimeout(() => {
+      this.pingPresence();
+    }, 1500);
   }
 
   // Initial Mock Data Setup
@@ -1618,5 +1628,48 @@ export class DatabaseService {
       }
     }
     return text;
+  }
+
+  async pingPresence() {
+    const active = this.currentUser$.value;
+    if (!active) return;
+    try {
+      const nowStr = new Date().toISOString();
+      await this.updateCurrentUserProfile({ lastActive: nowStr });
+    } catch (e) {
+      console.warn('Failed to ping presence:', e);
+    }
+  }
+
+  isUserOnline(user: UserProfile): boolean {
+    if (!user.lastActive) return false;
+    if (user.lastActive === 'Never' || user.lastActive === 'Today') return false;
+    try {
+      const lastActiveDate = new Date(user.lastActive);
+      const diffMs = Date.now() - lastActiveDate.getTime();
+      return diffMs < 45000;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  formatLastActive(lastActive: string): string {
+    if (!lastActive) return 'Never';
+    if (lastActive === 'Never' || lastActive === 'Today') return lastActive;
+    try {
+      const date = new Date(lastActive);
+      const diffSeconds = Math.floor((Date.now() - date.getTime()) / 1000);
+      if (diffSeconds < 0) return 'Just now';
+      if (diffSeconds < 45) return 'Online';
+      if (diffSeconds < 60) return '1m ago';
+      const diffMinutes = Math.floor(diffSeconds / 60);
+      if (diffMinutes < 60) return `${diffMinutes}m ago`;
+      const diffHours = Math.floor(diffMinutes / 60);
+      if (diffHours < 24) return `${diffHours}h ago`;
+      const diffDays = Math.floor(diffHours / 24);
+      return `${diffDays}d ago`;
+    } catch (e) {
+      return 'Never';
+    }
   }
 }

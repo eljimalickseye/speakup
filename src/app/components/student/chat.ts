@@ -1108,7 +1108,7 @@ export class StudentChatComponent implements OnDestroy {
         avatar: u.avatar || (u.role === 'teacher' ? '👩‍🏫' : '👤'),
         level: u.level,
         role: u.role,
-        online: true,
+        online: this.db.isUserOnline(u),
         countryFlag: u.countryFlag
       }));
   }

@@ -102,8 +102,13 @@ import { DatabaseService, UserProfile } from '../../services/database.service';
             </div>
             
             <!-- Avatar -->
-            <div class="avatar" style="width:30px; height:30px; font-size:13px; flex-shrink:0">
-              {{ user.avatar }}
+            <div style="position:relative">
+              <div class="avatar" style="width:30px; height:30px; font-size:13px; flex-shrink:0">
+                {{ user.avatar }}
+              </div>
+              @if (db.isUserOnline(user)) {
+                <span style="position:absolute; bottom:-2px; right:-2px; width:8px; height:8px; border-radius:50%; background:#10B981; border:2px solid white"></span>
+              }
             </div>
 
             <!-- Name -->
@@ -303,7 +308,7 @@ import { DatabaseService, UserProfile } from '../../services/database.service';
   `]
 })
 export class StudentLeaderboardComponent {
-  private db = inject(DatabaseService);
+  public db = inject(DatabaseService);
   users = signal<UserProfile[]>([]);
   currentUser = signal<UserProfile | null>(null);
 

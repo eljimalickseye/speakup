@@ -36,15 +36,20 @@ import { DialogService } from '../../services/dialog.service';
           @for (student of students(); track student.id) {
             <div class="row" style="align-items:center; border-bottom:1px solid var(--border-weak); padding:8px 0">
               <div style="width:160px; display:flex; align-items:center; gap:8px">
-                <div class="avatar" style="width:24px; height:24px; font-size:9px">
-                  {{ student.avatar || student.name.slice(0,2).toUpperCase() }}
+                <div style="position:relative">
+                  <div class="avatar" style="width:24px; height:24px; font-size:9px">
+                    {{ student.avatar || student.name.slice(0,2).toUpperCase() }}
+                  </div>
+                  @if (db.isUserOnline(student)) {
+                    <span style="position:absolute; bottom:-2px; right:-2px; width:8px; height:8px; border-radius:50%; background:#10B981; border:2.5px solid white"></span>
+                  }
                 </div>
                 <span style="font-size:12px; font-weight:600; color:var(--text-primary)">{{ student.name }}</span>
               </div>
               <div style="width:60px; font-size:12px">{{ student.level }}</div>
               <div style="width:80px; text-align:center; font-size:12px">{{ getAttendancePercentage(student.id) }}%</div>
               <div style="width:80px; text-align:center; font-size:12px; font-weight:700; color:#4F46E5">{{ student.xp }} XP</div>
-              <div style="flex:1; font-size:11px; color:var(--text-secondary)">{{ student.lastActive || 'Never' }}</div>
+              <div style="flex:1; font-size:11px; color:var(--text-secondary)">{{ db.formatLastActive(student.lastActive) }}</div>
               <div style="width:80px">
                 <span [class]="getStatusClass(student)">
                   {{ getStudentStatus(student) }}
@@ -237,7 +242,7 @@ import { DialogService } from '../../services/dialog.service';
   `
 })
 export class TeacherStudentsComponent {
-  private db = inject(DatabaseService);
+  public db = inject(DatabaseService);
   private dialogService = inject(DialogService);
 
   activeTab = signal<string>('all');
