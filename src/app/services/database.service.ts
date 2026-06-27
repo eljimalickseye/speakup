@@ -66,6 +66,17 @@ export interface DictionaryWord {
   savedAt: string;
 }
 
+export interface Ebook {
+  id: string;
+  title: string;
+  author: string;
+  level: string;
+  description: string;
+  coverEmoji: string;
+  content: string;
+  createdAt: string;
+}
+
 export interface Lesson {
   id: string;
   title: string;
@@ -198,6 +209,7 @@ export class DatabaseService {
   private voiceChatEnabled$ = new BehaviorSubject<boolean>(true);
   private dictionary$ = new BehaviorSubject<DictionaryWord[]>([]);
   private channels$ = new BehaviorSubject<ChatChannel[]>([]);
+  private ebooks$ = new BehaviorSubject<Ebook[]>([]);
   
   // Current user state
   private currentUser$ = new BehaviorSubject<UserProfile | null>(null);
@@ -376,6 +388,12 @@ export class DatabaseService {
     ];
     const dictWords = getLocal('speak_dictionary', defaultDictWords);
     this.dictionary$.next(dictWords);
+
+    const defaultEbooks: Ebook[] = [
+      { id: 'eb-1', title: 'Les Clés de la Prononciation', author: 'Teacher', level: 'Beginner', description: 'Un guide d\'introduction simple pour maîtriser la phonétique et l\'accent anglais.', coverEmoji: '📘', content: 'Chapitre 1 : Les Sons Fondamentaux\nLa prononciation anglaise repose sur des sons distincts. Par exemple, le son "th" n\'existe pas en français. Pour le prononcer, placez votre langue entre vos dents...\n\nChapitre 2 : L\'Accent tonique\nContrairement au français où chaque syllabe a un poids égal, l\'anglais est une langue accentuée. Une syllabe par mot est prononcée plus fort et plus longuement. Ne pas respecter l\'accent tonique rend la compréhension difficile pour un anglophone natif.', createdAt: new Date().toISOString() }
+    ];
+    const ebooks = getLocal('speak_ebooks', defaultEbooks);
+    this.ebooks$.next(ebooks);
 
     this.users$.next(users);
     this.lessons$.next(lessons);
@@ -596,6 +614,13 @@ export class DatabaseService {
       const list: DictionaryWord[] = [];
       snap.forEach(doc => list.push(doc.data() as DictionaryWord));
       this.dictionary$.next(list);
+    });
+
+    // 14. Subscribe to Ebooks
+    onSnapshot(collection(this.firestore, 'ebooks'), (snap) => {
+      const list: Ebook[] = [];
+      snap.forEach(doc => list.push(doc.data() as Ebook));
+      this.ebooks$.next(list);
     });
 
     // 11. Subscribe to Channels
@@ -1598,6 +1623,45 @@ export class DatabaseService {
         await deleteDoc(doc(this.firestore, 'dictionary', wordId));
       } catch (e) {
         console.warn(e);
+      }
+    }
+  }
+
+  // --- EBOOKS OPERATIONS ---
+  observeEbooks(): Observable<Ebook[]> {
+    return this.ebooks$.asObservable();
+  }
+
+  async addEbook(eb: Omit<Ebook, 'id' | 'createdAt'>) {
+    const newEbook: Ebook = {
+      ...eb,
+      id: 'eb-' + Date.now(),
+      createdAt: new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
+    };
+
+    const list = [newEbook, ...this.ebooks$.value];
+    this.ebooks$.next(list);
+    this.saveLocal('speak_ebooks', list);
+
+    if (this.useFirebase) {
+      try {
+        await setDoc(doc(this.firestore, 'ebooks', newEbook.id), newEbook);
+      } catch (e) {
+        console.warn('Firestore add ebook failed:', e);
+      }
+    }
+  }
+
+  async deleteEbook(ebookId: string) {
+    const list = this.ebooks$.value.filter(b => b.id !== ebookId);
+    this.ebooks$.next(list);
+    this.saveLocal('speak_ebooks', list);
+
+    if (this.useFirebase) {
+      try {
+        await deleteDoc(doc(this.firestore, 'ebooks', ebookId));
+      } catch (e) {
+        console.warn('Firestore delete ebook failed:', e);
       }
     }
   }

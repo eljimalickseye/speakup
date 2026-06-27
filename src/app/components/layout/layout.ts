@@ -16,6 +16,8 @@ import { StudentEventsComponent } from '../student/events';
 import { StudentLiveClassesComponent } from '../student/live';
 import { StudentAnnouncementsComponent } from '../student/announcements';
 import { StudentDictionaryComponent } from '../student/dictionary';
+import { StudentEbooksComponent } from '../student/ebooks';
+import { TeacherEbooksComponent } from '../teacher/ebooks';
 
 import { TeacherOverviewComponent } from '../teacher/overview';
 import { TeacherStudentsComponent } from '../teacher/students';
@@ -46,6 +48,8 @@ import { TeacherUserManagementComponent } from '../teacher/user-management';
     StudentLiveClassesComponent,
     StudentAnnouncementsComponent,
     StudentDictionaryComponent,
+    StudentEbooksComponent,
+    TeacherEbooksComponent,
     TeacherOverviewComponent,
     TeacherStudentsComponent,
     TeacherLessonsComponent,
@@ -94,6 +98,9 @@ import { TeacherUserManagementComponent } from '../teacher/user-management';
             </button>
             <button class="nav-item" [class.active]="activeTab === 'dictionary'" (click)="setTab('dictionary')">
               <i class="ti ti-bookmarks" aria-hidden="true"></i>Dictionary
+            </button>
+            <button class="nav-item" [class.active]="activeTab === 'ebooks'" (click)="setTab('ebooks')">
+              <i class="ti ti-book" aria-hidden="true"></i>Bibliothèque (Ebooks)
             </button>
             
             <div class="nav-section">Community</div>
@@ -151,6 +158,9 @@ import { TeacherUserManagementComponent } from '../teacher/user-management';
               @if (pendingHomeworkCount() > 0) {
                 <span class="badge" style="background:#FEE2E2; color:#DC2626">{{ pendingHomeworkCount() }}</span>
               }
+            </button>
+            <button class="ni" [class.active]="activeTab === 'ebooks'" (click)="setTab('ebooks')">
+              <i class="ti ti-notebook" aria-hidden="true"></i>Gérer les Ebooks
             </button>
             
             <div class="ns">Classes</div>
@@ -222,6 +232,8 @@ import { TeacherUserManagementComponent } from '../teacher/user-management';
               <app-student-exercises></app-student-exercises>
             } @else if (activeTab === 'dictionary') {
               <app-student-dictionary></app-student-dictionary>
+            } @else if (activeTab === 'ebooks') {
+              <app-student-ebooks></app-student-ebooks>
             } @else if (activeTab === 'chat') {
               <app-student-chat></app-student-chat>
             } @else if (activeTab === 'leaderboard') {
@@ -247,6 +259,8 @@ import { TeacherUserManagementComponent } from '../teacher/user-management';
               <app-teacher-quizzes></app-teacher-quizzes>
             } @else if (activeTab === 'grade-homework') {
               <app-teacher-homework></app-teacher-homework>
+            } @else if (activeTab === 'ebooks') {
+              <app-teacher-ebooks></app-teacher-ebooks>
             } @else if (activeTab === 'attendance') {
               <app-teacher-attendance></app-teacher-attendance>
             } @else if (activeTab === 'schedule-class') {
