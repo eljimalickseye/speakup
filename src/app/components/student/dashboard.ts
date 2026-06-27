@@ -1,6 +1,7 @@
 import { Component, Output, EventEmitter, inject, signal } from '@angular/core';
 import { DatabaseService, UserProfile, Lesson, Quiz, Announcement } from '../../services/database.service';
 import { CommonModule } from '@angular/common';
+import { DialogService } from '../../services/dialog.service';
 
 @Component({
   selector: 'app-student-dashboard',
@@ -8,6 +9,69 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule],
   template: `
     <div class="page">
+      <!-- PLACEMENT TEST ALERT & MODAL -->
+      @if (!currentUser()?.placementTestTaken) {
+        <div class="card" style="background: linear-gradient(135deg, #FAF5FF 0%, #E8FFF5 100%); border: 1.5px solid #8B5CF6; margin-bottom: 20px; padding: 20px; border-radius: 12px">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:20px; flex-wrap:wrap">
+            <div style="flex:1; min-width:250px">
+              <span class="badge" style="background:#8B5CF6; color:white; font-size:10px; font-weight:700; padding:2px 8px; border-radius:20px; text-transform:uppercase">Level Assessment</span>
+              <h3 style="font-size:16px; font-weight:800; color:#1F2937; margin:6px 0 0 0">Determine your starting English Level! 🚀</h3>
+              <p style="font-size:12.5px; color:#4B5563; margin:4px 0 0 0">
+                Take this quick 5-question test to evaluate your level (A1, A2, B1, B2) and unlock matching lessons!
+              </p>
+            </div>
+            <button class="btn-p" style="background:#8B5CF6; border-color:#8B5CF6; font-size:12px; padding:8px 16px; border-radius:8px" (click)="startPlacementTest()">
+              Start Test Now
+            </button>
+          </div>
+
+          <!-- Active Test Modal Dialog -->
+          @if (showPlacementTest()) {
+            <div style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.65); display:flex; justify-content:center; align-items:center; z-index:99999; padding:16px">
+              <div class="card" style="width:100%; max-width:550px; background:#FFF; border-radius:12px; padding:24px; box-shadow:0 10px 25px rgba(0,0,0,0.25)">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px">
+                  <h3 style="font-size:16px; font-weight:700; color:#8B5CF6; margin:0">Level Placement Test</h3>
+                  <span style="font-size:12px; color:var(--text-muted)">Question {{ currentQuestionIndex() + 1 }} of {{ placementQuestions().length }}</span>
+                </div>
+
+                <!-- Progress Bar -->
+                <div style="width:100%; height:6px; background:#E5E7EB; border-radius:3px; margin-bottom:20px; overflow:hidden">
+                  <div [style.width.%]="((currentQuestionIndex() + 1) / placementQuestions().length) * 100" style="height:100%; background:#8B5CF6; transition:width 0.3s"></div>
+                </div>
+
+                <!-- Question Body -->
+                @if (placementQuestions()[currentQuestionIndex()]; as q) {
+                  <p style="font-size:14px; font-weight:600; color:#1F2937; margin-bottom:16px; line-height:1.4">{{ q.question }}</p>
+                  
+                  <div style="display:flex; flex-direction:column; gap:10px">
+                    @for (opt of q.options; track opt; let oIdx = $index) {
+                      <button 
+                        class="row" 
+                        [style.background]="selectedAnswers()[currentQuestionIndex()] === getOptionLetter(oIdx) ? '#F5F3FF' : '#FFF'"
+                        [style.border-color]="selectedAnswers()[currentQuestionIndex()] === getOptionLetter(oIdx) ? '#8B5CF6' : 'var(--border)'"
+                        style="text-align:left; cursor:pointer; font-weight:500; font-size:13px; margin:0; padding:12px; border-radius:8px; display:block; width:100%"
+                        (click)="selectAnswer(getOptionLetter(oIdx))">
+                        <strong style="color:#8B5CF6; margin-right:6px">{{ getOptionLetter(oIdx) }}.</strong> {{ opt }}
+                      </button>
+                    }
+                  </div>
+                }
+
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:24px; border-top:1px solid var(--border-weak); padding-top:16px">
+                  <button class="btn-s" [disabled]="currentQuestionIndex() === 0" (click)="prevQuestion()">Previous</button>
+                  
+                  @if (currentQuestionIndex() < placementQuestions().length - 1) {
+                    <button class="btn-p" style="background:#8B5CF6; border-color:#8B5CF6" [disabled]="!selectedAnswers()[currentQuestionIndex()]" (click)="nextQuestion()">Next</button>
+                  } @else {
+                    <button class="btn-p" style="background:#10B981; border-color:#10B981" [disabled]="!selectedAnswers()[currentQuestionIndex()]" (click)="submitPlacementTest()">Submit Test</button>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+
       <!-- Welcome Banner -->
       <div class="welcome" style="display:flex; justify-content:space-between; align-items:center; gap:20px; flex-wrap:wrap">
         <div style="flex:1; min-width:250px">
@@ -162,12 +226,19 @@ import { CommonModule } from '@angular/common';
 })
 export class StudentDashboardComponent {
   private db = inject(DatabaseService);
+  private dialogService = inject(DialogService);
   currentUser = signal<UserProfile | null>(null);
 
   lessons = signal<Lesson[]>([]);
   quizzes = signal<Quiz[]>([]);
   announcements = signal<Announcement[]>([]);
   allUsers = signal<UserProfile[]>([]);
+
+  // Placement Test State
+  placementQuestions = signal<any[]>([]);
+  showPlacementTest = signal<boolean>(false);
+  currentQuestionIndex = signal<number>(0);
+  selectedAnswers = signal<{ [key: number]: string }>({});
 
   @Output() navigateToTab = new EventEmitter<string>();
 
@@ -187,6 +258,10 @@ export class StudentDashboardComponent {
 
     this.db.observeQuizzes().subscribe(list => {
       this.quizzes.set(list);
+      const pt = list.find(q => q.id === 'placement-test');
+      if (pt) {
+        this.placementQuestions.set(pt.questions);
+      }
     });
 
     this.db.observeAnnouncements().subscribe(() => {
@@ -263,5 +338,70 @@ export class StudentDashboardComponent {
 
   onTaskClick(tabName: string) {
     this.navigateToTab.emit(tabName);
+  }
+
+  // Placement Test Helper Methods
+  startPlacementTest() {
+    this.showPlacementTest.set(true);
+    this.currentQuestionIndex.set(0);
+    this.selectedAnswers.set({});
+  }
+
+  getOptionLetter(idx: number): string {
+    return ['A', 'B', 'C'][idx] || 'A';
+  }
+
+  selectAnswer(letter: string) {
+    this.selectedAnswers.set({
+      ...this.selectedAnswers(),
+      [this.currentQuestionIndex()]: letter
+    });
+  }
+
+  nextQuestion() {
+    if (this.currentQuestionIndex() < this.placementQuestions().length - 1) {
+      this.currentQuestionIndex.set(this.currentQuestionIndex() + 1);
+    }
+  }
+
+  prevQuestion() {
+    if (this.currentQuestionIndex() > 0) {
+      this.currentQuestionIndex.set(this.currentQuestionIndex() - 1);
+    }
+  }
+
+  submitPlacementTest() {
+    const questions = this.placementQuestions();
+    const answers = this.selectedAnswers();
+    let correctCount = 0;
+    
+    questions.forEach((q, idx) => {
+      if (answers[idx] === q.correctOption) {
+        correctCount++;
+      }
+    });
+
+    const totalQuestions = questions.length;
+    const scorePct = (correctCount / totalQuestions) * 100;
+    
+    // Calculate level based on score percentage
+    let calculatedLevel = 'A1';
+    if (scorePct >= 80) calculatedLevel = 'B2';
+    else if (scorePct >= 60) calculatedLevel = 'B1';
+    else if (scorePct >= 40) calculatedLevel = 'A2';
+    
+    // Update user profile
+    this.db.updateCurrentUserProfile({
+      placementTestTaken: true,
+      placementTestScore: scorePct,
+      level: calculatedLevel
+    });
+
+    this.showPlacementTest.set(false);
+    this.dialogService.alert(
+      'Assessment Complete! 🎉', 
+      `Congratulations! You got ${correctCount}/${totalQuestions} answers correct. Your assigned starting level is ${calculatedLevel} — ${this.getLevelName(calculatedLevel)}!`, 
+      'success'
+    );
   }
 }

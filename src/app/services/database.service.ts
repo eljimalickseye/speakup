@@ -26,6 +26,8 @@ export interface UserProfile {
   registeredAt?: string;
   registrationFee?: number;
   monthlyFee?: number;
+  placementTestTaken?: boolean;
+  placementTestScore?: number;
 }
 
 export interface Lesson {
@@ -214,6 +216,42 @@ export class DatabaseService {
     });
     const lessons = getLocal('speak_lessons', defaultLessons);
     const quizzes = getLocal('speak_quizzes', defaultQuizzes);
+    if (!quizzes.some((q: any) => q.id === 'placement-test')) {
+      quizzes.unshift({
+        id: 'placement-test',
+        title: 'English Level Placement Test',
+        type: 'Multiple Choice',
+        timeLimit: 'No limit',
+        questions: [
+          {
+            question: 'Choose the correct form: She ___ to school every day.',
+            options: ['go', 'goes', 'going'],
+            correctOption: 'B'
+          },
+          {
+            question: 'Identify the correct preposition: I am interested ___ learning English.',
+            options: ['in', 'at', 'on'],
+            correctOption: 'A'
+          },
+          {
+            question: 'Which sentence is grammatically correct?',
+            options: ['If it rains, we will stay home.', 'If it will rain, we stay home.', 'If it rains, we would stay home.'],
+            correctOption: 'A'
+          },
+          {
+            question: 'Complete the sentence: By the time the movie ended, we ___ all the popcorn.',
+            options: ['eat', 'have eaten', 'had eaten'],
+            correctOption: 'C'
+          },
+          {
+            question: 'What is the opposite of the word "generous"?',
+            options: ['stingy', 'kind', 'polite'],
+            correctOption: 'A'
+          }
+        ]
+      });
+      localStorage.setItem('speak_quizzes', JSON.stringify(quizzes));
+    }
     const submissions = getLocal('speak_submissions', defaultSubmissions);
     const attendance = getLocal('speak_attendance', defaultAttendance);
     const schedules = getLocal('speak_schedules', defaultLiveClasses);

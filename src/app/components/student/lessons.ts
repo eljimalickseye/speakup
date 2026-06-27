@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { DatabaseService, Lesson, Submission } from '../../services/database.service';
+import { DatabaseService, Lesson, Submission, UserProfile } from '../../services/database.service';
 
 @Component({
   selector: 'app-student-lessons',
@@ -13,7 +13,7 @@ import { DatabaseService, Lesson, Submission } from '../../services/database.ser
         <!-- LESSONS LIST VIEW -->
         <div class="tab-row">
           <button class="tab" [class.active]="activeTab() === 'all'" (click)="activeTab.set('all')">All Lessons</button>
-          <button class="tab" [class.active]="activeTab() === 'B1'" (click)="activeTab.set('B1')">My Level (B1)</button>
+          <button class="tab" [class.active]="activeTab() === 'level'" (click)="activeTab.set('level')">My Level ({{ currentUser()?.level || 'B1' }})</button>
         </div>
 
         <div class="lessons-list">
@@ -118,6 +118,7 @@ export class StudentLessonsComponent {
   detailTab = signal<string>('content');
   lessons = signal<Lesson[]>([]);
   submissions = signal<Submission[]>([]);
+  currentUser = signal<UserProfile | null>(null);
   
   selectedLesson = signal<Lesson | null>(null);
   homeworkContent = '';
@@ -125,12 +126,14 @@ export class StudentLessonsComponent {
   constructor() {
     this.db.observeLessons().subscribe(list => this.lessons.set(list));
     this.db.observeSubmissions().subscribe(list => this.submissions.set(list));
+    this.db.observeCurrentUser().subscribe(u => this.currentUser.set(u));
   }
 
   filteredLessons() {
     const list = this.lessons();
-    if (this.activeTab() === 'B1') {
-      return list.filter(l => l.level === 'B1');
+    if (this.activeTab() === 'level') {
+      const level = this.currentUser()?.level || 'B1';
+      return list.filter(l => l.level === level);
     }
     return list;
   }
