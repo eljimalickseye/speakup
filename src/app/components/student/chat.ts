@@ -10,7 +10,7 @@ interface ChatMember {
   name: string;
   avatar: string;
   level: string;
-  role: 'student' | 'teacher';
+  role: 'student' | 'teacher' | 'guest';
   online: boolean;
   countryFlag?: string;
 }

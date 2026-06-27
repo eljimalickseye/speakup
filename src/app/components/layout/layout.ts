@@ -15,6 +15,7 @@ import { StudentLeaderboardComponent } from '../student/leaderboard';
 import { StudentEventsComponent } from '../student/events';
 import { StudentLiveClassesComponent } from '../student/live';
 import { StudentAnnouncementsComponent } from '../student/announcements';
+import { StudentDictionaryComponent } from '../student/dictionary';
 
 import { TeacherOverviewComponent } from '../teacher/overview';
 import { TeacherStudentsComponent } from '../teacher/students';
@@ -26,6 +27,7 @@ import { TeacherScheduleComponent } from '../teacher/schedule';
 import { TeacherAnnouncementsComponent } from '../teacher/announcements';
 import { TeacherPaymentsComponent } from '../teacher/payments';
 import { TeacherEventsComponent } from '../teacher/events';
+import { TeacherUserManagementComponent } from '../teacher/user-management';
 
 @Component({
   selector: 'app-layout',
@@ -43,6 +45,7 @@ import { TeacherEventsComponent } from '../teacher/events';
     StudentEventsComponent,
     StudentLiveClassesComponent,
     StudentAnnouncementsComponent,
+    StudentDictionaryComponent,
     TeacherOverviewComponent,
     TeacherStudentsComponent,
     TeacherLessonsComponent,
@@ -52,7 +55,8 @@ import { TeacherEventsComponent } from '../teacher/events';
     TeacherScheduleComponent,
     TeacherAnnouncementsComponent,
     TeacherPaymentsComponent,
-    TeacherEventsComponent
+    TeacherEventsComponent,
+    TeacherUserManagementComponent
   ],
   template: `
     <div class="shell" [class.sidebar-open]="isSidebarOpen()">
@@ -87,6 +91,9 @@ import { TeacherEventsComponent } from '../teacher/events';
             </button>
             <button class="nav-item" [class.active]="activeTab === 'exercises'" (click)="setTab('exercises')">
               <i class="ti ti-pencil" aria-hidden="true"></i>Exercises
+            </button>
+            <button class="nav-item" [class.active]="activeTab === 'dictionary'" (click)="setTab('dictionary')">
+              <i class="ti ti-bookmarks" aria-hidden="true"></i>Dictionary
             </button>
             
             <div class="nav-section">Community</div>
@@ -164,6 +171,9 @@ import { TeacherEventsComponent } from '../teacher/events';
             <button class="ni" [class.active]="activeTab === 'teacher-events'" (click)="setTab('teacher-events')">
               <i class="ti ti-calendar-event" aria-hidden="true"></i>Events
             </button>
+            <button class="ni" [class.active]="activeTab === 'user-management'" (click)="setTab('user-management')">
+              <i class="ti ti-users" aria-hidden="true"></i>User Management
+            </button>
           }
         </div>
       </div>
@@ -210,6 +220,8 @@ import { TeacherEventsComponent } from '../teacher/events';
               <app-student-speaking></app-student-speaking>
             } @else if (activeTab === 'exercises') {
               <app-student-exercises></app-student-exercises>
+            } @else if (activeTab === 'dictionary') {
+              <app-student-dictionary></app-student-dictionary>
             } @else if (activeTab === 'chat') {
               <app-student-chat></app-student-chat>
             } @else if (activeTab === 'leaderboard') {
@@ -247,6 +259,8 @@ import { TeacherEventsComponent } from '../teacher/events';
               <app-teacher-events></app-teacher-events>
             } @else if (activeTab === 'chat') {
               <app-student-chat></app-student-chat>
+            } @else if (activeTab === 'user-management') {
+              <app-teacher-user-management></app-teacher-user-management>
             }
           }
         </div>
@@ -333,6 +347,19 @@ import { TeacherEventsComponent } from '../teacher/events';
                 <div class="input-row">
                   <label>Professional Description / Biography</label>
                   <textarea [(ngModel)]="profileDescription" rows="3" placeholder="Tell students about your qualifications, teaching methodology or office hours..." style="width:100%; border:1px solid var(--border); border-radius:6px; padding:10px; font-size:12px; line-height:1.5; background:var(--surface-1); color:var(--text-primary)"></textarea>
+                </div>
+                <div class="input-row" style="background:#FFF7ED; border:1px solid #FED7AA; padding:12px; border-radius:8px">
+                  <label style="color:#C2410C; font-weight:700; display:flex; align-items:center; gap:4px">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    <span>Login Page Settings</span>
+                  </label>
+                  <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin-top:6px; font-size:12px; font-weight:600; color:var(--text-primary)">
+                    <input type="checkbox" [checked]="hideTeacherLogin()" (change)="toggleHideTeacherLogin()" />
+                    <span>Hide Teacher Login tabs on login page</span>
+                  </label>
+                  <div style="font-size:10px; color:#6B7280; margin-top:4px; line-height:1.4">
+                    When checked, students will only see "Student Login". Teachers can show it again via this settings.
+                  </div>
                 </div>
               }
 
@@ -803,6 +830,7 @@ export class LayoutComponent {
   profileAvatar = '';
   profileDescription = '';
   profileGeminiKey = '';
+  hideTeacherLogin = signal<boolean>(localStorage.getItem('speak_hide_teacher_login') === 'true');
 
   openProfileEditor() {
     const user = this.currentUser();
@@ -816,6 +844,12 @@ export class LayoutComponent {
 
   closeProfileEditor() {
     this.isProfileModalOpen.set(false);
+  }
+
+  toggleHideTeacherLogin() {
+    const newState = !this.hideTeacherLogin();
+    this.hideTeacherLogin.set(newState);
+    localStorage.setItem('speak_hide_teacher_login', newState ? 'true' : 'false');
   }
 
   async saveProfileSettings() {

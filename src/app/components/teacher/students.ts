@@ -270,6 +270,61 @@ import { DialogService } from '../../services/dialog.service';
                 </div>
               </div>
 
+              <!-- Account Security & Guest Credentials -->
+              <div class="card" style="margin-top:16px; margin-bottom:16px; border: 1px dashed var(--border-weak); background:var(--surface-1); padding:16px; border-radius:8px">
+                <h4 style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:12px; display:flex; align-items:center; gap:6px; margin-top:0">
+                  <i class="ti ti-shield-lock" style="color:#EF4444"></i>
+                  <span>Sécurité du compte & Identifiants</span>
+                </h4>
+                
+                <div style="display:flex; flex-direction:column; gap:12px">
+                  <!-- Block / Unblock control -->
+                  <div style="display:flex; align-items:center; justify-content:space-between; background:var(--surface-2); padding:10px; border-radius:6px">
+                    <div>
+                      <span style="font-weight:600; font-size:12px; color:var(--text-primary)">Statut d'accès</span>
+                      <p style="font-size:10px; color:var(--text-secondary); margin:2px 0 0 0">
+                        {{ student.blocked ? 'Ce compte est actuellement bloqué et ne peut pas se connecter.' : 'Ce compte est actif.' }}
+                      </p>
+                    </div>
+                    <button class="btn-s" [style.border-color]="student.blocked ? '#10B981' : '#EF4444'" [style.color]="student.blocked ? '#10B981' : '#EF4444'" style="font-size:11px; padding:6px 12px; font-weight:700" (click)="toggleBlockUser(student)">
+                      {{ student.blocked ? 'Activer / Débloquer' : 'Bloquer le compte' }}
+                    </button>
+                  </div>
+
+                  <!-- Guest credentials controls -->
+                  <div style="background:var(--surface-2); padding:12px; border-radius:6px">
+                    <span style="font-weight:600; font-size:12px; color:var(--text-primary); display:block; margin-bottom:10px">Identifiants de connexion (Username / Code)</span>
+                    
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:12px">
+                      <div class="input-row" style="margin-bottom:0">
+                        <label style="font-weight:600; font-size:10px; color:var(--text-primary)">Identifiant (Username)</label>
+                        <input type="text" [value]="student.username || ''" (change)="updateUserCredential(student.id, 'username', $event)" placeholder="Ex: awandiaye" style="background:#FFF; padding:6px; font-size:11px; border-radius:4px" />
+                      </div>
+                      <div class="input-row" style="margin-bottom:0">
+                        <label style="font-weight:600; font-size:10px; color:var(--text-primary)">Code d'accès (Password)</label>
+                        <input type="text" [value]="student.password || ''" (change)="updateUserCredential(student.id, 'password', $event)" placeholder="Ex: 1234" style="background:#FFF; padding:6px; font-size:11px; border-radius:4px" />
+                      </div>
+                    </div>
+
+                    <!-- Actions for Guest credentials -->
+                    @if (student.username && student.password) {
+                      <div style="margin-top:12px; display:flex; gap:8px">
+                        <button class="btn-s" style="padding:6px 12px; font-size:11px; flex:1; display:flex; align-items:center; justify-content:center; gap:6px" (click)="copyLoginCredentials(student)">
+                          <i class="ti ti-copy"></i> Copier les identifiants
+                        </button>
+                        <button class="btn-p" style="padding:6px 12px; font-size:11px; flex:1; display:flex; align-items:center; justify-content:center; gap:6px; background:#4F46E5" (click)="copyLoginLink(student)">
+                          <i class="ti ti-link"></i> Copier le lien d'accès direct
+                        </button>
+                      </div>
+                    } @else {
+                      <div style="margin-top:10px; font-size:10px; color:var(--text-muted); text-align:center">
+                        Saisissez un identifiant et un code d'accès pour activer la connexion directe sans compte Google.
+                      </div>
+                    }
+                  </div>
+                </div>
+              </div>
+
               <div class="input-row">
                 <label for="studentNotes">Teacher Notes & Action Plan (Private)</label>
                 <textarea id="studentNotes" [(ngModel)]="teacherNotes" rows="4" placeholder="Write internal observations, notes on pronunciation, etc..."></textarea>
@@ -317,7 +372,7 @@ export class TeacherStudentsComponent {
     });
 
     this.db.observeUsers().subscribe(list => {
-      this.students.set(list.filter(u => u.role === 'student'));
+      this.students.set(list.filter(u => u.role === 'student' || u.role === 'guest'));
       
       // Update selected student reference if users list updates
       const active = this.selectedStudent();
@@ -416,14 +471,20 @@ export class TeacherStudentsComponent {
       this.newStudentCountry, 
       isGuest ? 0 : Number(this.newStudentRegFee), 
       isGuest ? 0 : Number(this.newStudentMonthlyFee)
-    ).then(() => {
-      this.dialogService.alert(
-        isGuest ? 'Guest Invited' : 'Student Created', 
-        isGuest 
-          ? `Guest account for ${this.newStudentName} created successfully! They can log in to participate in chat rooms and live calls.`
-          : `Student account for ${this.newStudentName} created successfully! Payment records initialized.`, 
-        'success'
-      );
+    ).then((newUser) => {
+      if (isGuest && newUser) {
+        this.dialogService.alert(
+          'Guest Account Created 🎉',
+          `Compte invité créé pour ${this.newStudentName} !\nUsername : ${newUser.username}\nCode d'accès : ${newUser.password}\n\nVous pouvez copier son lien direct depuis son profil.`,
+          'success'
+        );
+      } else {
+        this.dialogService.alert(
+          'Student Created', 
+          `Student account for ${this.newStudentName} created successfully! Payment records initialized.`, 
+          'success'
+        );
+      }
       this.newStudentName = '';
       this.newStudentLevel = 'B1';
       this.newStudentCountry = '🇸🇳';
@@ -433,14 +494,58 @@ export class TeacherStudentsComponent {
   }
 
   approveRequest(requestId: string, name: string) {
-    this.db.approveRegistrationRequest(requestId).then(() => {
-      this.dialogService.alert('Demande Validée', `Le compte de ${name} a été créé avec succès !`, 'success');
+    this.db.approveRegistrationRequest(requestId).then((newUser) => {
+      if (newUser && newUser.role === 'guest') {
+        this.dialogService.alert(
+          'Demande Validée (Invité) 🎉',
+          `Le compte invité de ${name} a été créé avec succès !\nUsername : ${newUser.username}\nCode d'accès : ${newUser.password}\n\nVous pouvez copier son lien direct depuis son profil.`,
+          'success'
+        );
+      } else {
+        this.dialogService.alert('Demande Validée', `Le compte de ${name} a été créé avec succès !`, 'success');
+      }
     });
   }
 
   rejectRequest(requestId: string, name: string) {
     this.db.rejectRegistrationRequest(requestId).then(() => {
       this.dialogService.alert('Demande Rejetée', `La demande de ${name} a été rejetée.`, 'info');
+    });
+  }
+
+  toggleBlockUser(student: UserProfile) {
+    const newVal = !student.blocked;
+    this.db.updateUserProfile(student.id, { blocked: newVal }).then(() => {
+      this.dialogService.alert(
+        newVal ? 'Compte Bloqué 🚫' : 'Compte Activé ✅',
+        `Le compte de ${student.name} a été ${newVal ? 'bloqué' : 'débloqué'} avec succès.`,
+        'success'
+      );
+    });
+  }
+
+  updateUserCredential(studentId: string, property: string, event: Event) {
+    const input = event.target as HTMLInputElement;
+    const value = input.value.trim();
+    this.db.updateUserProfile(studentId, { [property]: value }).then(() => {
+      const active = this.selectedStudent();
+      if (active && active.id === studentId) {
+        this.selectedStudent.set({ ...active, [property]: value });
+      }
+    });
+  }
+
+  copyLoginCredentials(student: UserProfile) {
+    const text = `Identifiants SpeakUp pour ${student.name} :\nIdentifiant : ${student.username}\nCode d'accès : ${student.password}\nLien : ${window.location.origin}/#/guest-login`;
+    navigator.clipboard.writeText(text).then(() => {
+      this.dialogService.alert('Copié !', 'Les identifiants de connexion ont été copiés dans le presse-papiers.', 'success');
+    });
+  }
+
+  copyLoginLink(student: UserProfile) {
+    const link = `${window.location.origin}/#/guest-login?u=${encodeURIComponent(student.username || '')}&p=${encodeURIComponent(student.password || '')}`;
+    navigator.clipboard.writeText(link).then(() => {
+      this.dialogService.alert('Lien Copié !', 'Le lien d\'accès direct a été copié. Le visiteur pourra se connecter en un clic !', 'success');
     });
   }
 

@@ -12,7 +12,7 @@ import { getAuth, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 export interface UserProfile {
   id: string;
   name: string;
-  role: 'student' | 'teacher';
+  role: 'student' | 'teacher' | 'guest';
   level: string;
   xp: number;
   streak: number;
@@ -30,6 +30,9 @@ export interface UserProfile {
   placementTestScore?: number;
   voiceChatAllowed?: boolean;
   description?: string;
+  username?: string;
+  password?: string;
+  blocked?: boolean;
 }
 
 export interface LeaderboardReward {
@@ -49,6 +52,18 @@ export interface RegistrationRequest {
   countryFlag: string;
   requestedAt: string;
   status: 'pending' | 'approved' | 'rejected';
+}
+
+export interface DictionaryWord {
+  id: string;
+  word: string;
+  translation: string;
+  definition: string;
+  partOfSpeech: string;
+  phonetic?: string;
+  contexts: string[];
+  userId: string;
+  savedAt: string;
 }
 
 export interface Lesson {
@@ -181,6 +196,7 @@ export class DatabaseService {
   private rewards$ = new BehaviorSubject<LeaderboardReward[]>([]);
   private registrationRequests$ = new BehaviorSubject<RegistrationRequest[]>([]);
   private voiceChatEnabled$ = new BehaviorSubject<boolean>(true);
+  private dictionary$ = new BehaviorSubject<DictionaryWord[]>([]);
   private channels$ = new BehaviorSubject<ChatChannel[]>([]);
   
   // Current user state
@@ -329,12 +345,37 @@ export class DatabaseService {
     const defaultRewards: LeaderboardReward[] = [
       { id: 'reward-1', title: 'Ticket de Cinéma', description: 'Une place de cinéma gratuite au Pathé Dakar.', xpThreshold: 300, assignedTo: null, assignedName: null, acknowledged: false },
       { id: 'reward-2', title: 'Bon d\'achat Auchan', description: 'Un bon d\'achat de 15,000 CFA utilisable à Auchan.', xpThreshold: 800, assignedTo: null, assignedName: null, acknowledged: false },
-      { id: 'reward-3', title: 'Voyage Week-end', description: 'Un séjour de 2 jours à Saly Portudal tout compris.', xpThreshold: 2000, assignedTo: null, assignedName: null, acknowledged: false }
+      { id: 'reward-3', title: 'Voyage Week-end', description: 'Un séjour de 2 jours à Saly Portudal tout compris.', xpThreshold: 2000, assignedTo: null, assignedName: null, acknowledged: false },
+      { id: 'reward-4', title: 'Cours Particulier', description: '30 minutes de coaching individuel avec un professeur.', xpThreshold: 1500, assignedTo: null, assignedName: null, acknowledged: false },
+      { id: 'reward-5', title: 'Abonnement Premium', description: '1 mois d\'accès premium à toutes les fonctionnalités.', xpThreshold: 5000, assignedTo: null, assignedName: null, acknowledged: false },
     ];
     const rewards = getLocal('speak_rewards', defaultRewards);
+    
+    // Ensure all default rewards exist in localStorage
+    let currentRewards = getLocal('speak_rewards', defaultRewards);
+    for (const dReward of defaultRewards) {
+      if (!currentRewards.some((r: any) => r.id === dReward.id)) {
+        currentRewards.push(dReward);
+      }
+    }
+    localStorage.setItem('speak_rewards', JSON.stringify(currentRewards));
+    const finalRewards = currentRewards;
+    
+    // Force rewards into the observable
+    this.rewards$.next(finalRewards);
+    console.log('Rewards loaded:', finalRewards.length, finalRewards);
     const defaultRequests: RegistrationRequest[] = [];
     const requests = getLocal('speak_registration_requests', defaultRequests);
     this.registrationRequests$.next(requests);
+    
+    // Ensure rewards are properly loaded
+    this.rewards$.next(finalRewards);
+
+    const defaultDictWords: DictionaryWord[] = [
+      { id: 'w-1', word: 'Resilience', partOfSpeech: 'noun', translation: 'Résilience', definition: 'The capacity to recover quickly from difficulties; toughness.', phonetic: '/rɪˈzɪl.jəns/', contexts: ['1. Her resilience helped her overcome the academic challenge. (Sa résilience l\'a aidée à surmonter le défi académique.)'], userId: 'student', savedAt: new Date().toISOString() }
+    ];
+    const dictWords = getLocal('speak_dictionary', defaultDictWords);
+    this.dictionary$.next(dictWords);
 
     this.users$.next(users);
     this.lessons$.next(lessons);
@@ -550,6 +591,13 @@ export class DatabaseService {
       this.registrationRequests$.next(list);
     });
 
+    // 13. Subscribe to Dictionary Words
+    onSnapshot(collection(this.firestore, 'dictionary'), (snap) => {
+      const list: DictionaryWord[] = [];
+      snap.forEach(doc => list.push(doc.data() as DictionaryWord));
+      this.dictionary$.next(list);
+    });
+
     // 11. Subscribe to Channels
     onSnapshot(collection(this.firestore, 'channels'), (snap) => {
       const list: ChatChannel[] = [];
@@ -704,13 +752,31 @@ export class DatabaseService {
     }
   }
 
+  async deleteUser(userId: string) {
+    const list = this.users$.value.filter(u => u.id !== userId);
+    this.users$.next(list);
+    this.saveLocal('speak_users', list);
+
+    if (this.useFirebase) {
+      try {
+        await deleteDoc(doc(this.firestore, 'users', userId));
+      } catch (e) {
+        console.warn('Firestore delete user failed:', e);
+      }
+    }
+  }
+
   async addStudent(name: string, level: string, countryFlag: string = '', registrationFee: number = 10000, monthlyFee: number = 7000) {
     const id = name.toLowerCase().replace(/[^a-z0-9]/g, '') + '-' + Date.now().toString().slice(-4);
     const avatar = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    const isGuest = level === 'Guest';
+    const generatedUsername = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const generatedPassword = Math.floor(1000 + Math.random() * 9000).toString();
+
     const newStudent: UserProfile = {
       id,
       name,
-      role: 'student',
+      role: isGuest ? 'guest' : 'student',
       level,
       xp: 0,
       streak: 0,
@@ -719,7 +785,10 @@ export class DatabaseService {
       countryFlag,
       registrationFee,
       monthlyFee,
-      registeredAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+      registeredAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      username: isGuest ? generatedUsername : undefined,
+      password: isGuest ? generatedPassword : undefined,
+      blocked: false
     };
 
     // Add to users
@@ -773,6 +842,7 @@ export class DatabaseService {
         console.warn('Firebase add student failed, working in local mode.', e);
       }
     }
+    return newStudent;
   }
 
   async resetDatabase() {
@@ -1428,7 +1498,7 @@ export class DatabaseService {
     }
   }
 
-  async approveRegistrationRequest(requestId: string) {
+  async approveRegistrationRequest(requestId: string): Promise<UserProfile | null> {
     const list = [...this.registrationRequests$.value];
     const idx = list.findIndex(r => r.id === requestId);
     if (idx !== -1) {
@@ -1448,14 +1518,16 @@ export class DatabaseService {
 
       // Automatically create the student profile!
       const isGuest = req.level === 'Guest';
-      await this.addStudent(
+      const user = await this.addStudent(
         req.name,
         req.level,
         req.countryFlag,
         isGuest ? 0 : 10000,
         isGuest ? 0 : 7000
       );
+      return user;
     }
+    return null;
   }
 
   async rejectRegistrationRequest(requestId: string) {
@@ -1473,6 +1545,45 @@ export class DatabaseService {
         } catch (e) {
           console.warn(e);
         }
+      }
+    }
+  }
+
+  // --- DICTIONARY OPERATIONS ---
+  observeDictionary(): Observable<DictionaryWord[]> {
+    return this.dictionary$.asObservable();
+  }
+
+  async addWordToDictionary(word: Omit<DictionaryWord, 'id' | 'savedAt'>) {
+    const newWord: DictionaryWord = {
+      ...word,
+      id: 'w-' + Date.now(),
+      savedAt: new Date().toISOString()
+    };
+
+    const list = [newWord, ...this.dictionary$.value];
+    this.dictionary$.next(list);
+    this.saveLocal('speak_dictionary', list);
+
+    if (this.useFirebase) {
+      try {
+        await setDoc(doc(this.firestore, 'dictionary', newWord.id), newWord);
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+  }
+
+  async deleteWordFromDictionary(wordId: string) {
+    const list = this.dictionary$.value.filter(w => w.id !== wordId);
+    this.dictionary$.next(list);
+    this.saveLocal('speak_dictionary', list);
+
+    if (this.useFirebase) {
+      try {
+        await deleteDoc(doc(this.firestore, 'dictionary', wordId));
+      } catch (e) {
+        console.warn(e);
       }
     }
   }

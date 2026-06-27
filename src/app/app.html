@@ -1,5 +1,7 @@
 @if (currentUser()) {
   <app-layout></app-layout>
+} @else if (isGuestLogin()) {
+  <app-guest-login></app-guest-login>
 } @else {
   <app-login></app-login>
 }

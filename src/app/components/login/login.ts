@@ -22,17 +22,17 @@ import { DialogService } from '../../services/dialog.service';
         <h2 class="login-title" (click)="onTitleClick()" style="cursor:pointer; user-select:none" title="Click 5 times for teacher mode">SpeakUp</h2>
         <p class="login-sub">SpeakUp English Platform — Authentication</p>
         
-        <!-- Role Tabs -->
-        @if (showTeacherTab()) {
-          <div class="tab-row" style="margin-bottom: 20px; justify-content: center">
-            <button class="tab" [class.active]="activeRole() === 'student'" (click)="setRole('student')">
-              <i class="ti ti-school"></i> Student Login
-            </button>
+        <!-- Role Tabs - Teacher can hide via settings -->
+        <div class="tab-row" style="margin-bottom: 20px; justify-content: center">
+          <button class="tab" [class.active]="activeRole() === 'student'" (click)="setRole('student')">
+            <i class="ti ti-school"></i> Student Login
+          </button>
+          @if (showTeacherTab()) {
             <button class="tab" [class.active]="activeRole() === 'teacher'" (click)="setRole('teacher')">
               <i class="ti ti-briefcase"></i> Teacher Login
             </button>
-          </div>
-        }
+          }
+        </div>
         
         <!-- Profile List Selector -->
         <div style="margin-bottom:18px">
@@ -87,14 +87,15 @@ import { DialogService } from '../../services/dialog.service';
           <i class="ti ti-brand-google" style="font-size:16px"></i> Sign In with Google
         </button>
 
+        <button class="btn-s" style="width: 100%; border-color: #10B981; color: #065F46; margin-top: 12px; font-size: 13px; background:#F0FDF4" (click)="guestLogin()">
+          <i class="ti ti-user" style="font-size:14px"></i> Guest Login (Username/Password)
+        </button>
+
         <button class="btn-s" style="width: 100%; border-color: #4F46E5; color: #4F46E5; margin-top: 12px; font-size: 13px" (click)="isRequestModalOpen.set(true)">
           <i class="ti ti-user-plus"></i> Faire une demande d'inscription
         </button>
 
-        <!-- Hidden Developer Switch Trigger -->
-        <div (click)="showTeacherTab.set(true)" style="position:absolute; bottom:8px; right:8px; font-size:11px; color:var(--text-muted); cursor:pointer; opacity:0.1; transition:opacity 0.2s" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.1" title="Teacher Access Mode">
-          🔑
-        </div>
+        <!-- Teacher login visibility controlled by teacher profile settings only -->
       </div>
 
       <!-- REGISTRATION REQUEST MODAL -->
@@ -164,8 +165,8 @@ export class LoginComponent {
   selectedUserId = signal<string | null>(null);
   allUsers = signal<UserProfile[]>([]);
 
-  showTeacherTab = signal<boolean>(false);
-  titleClicks = 0;
+  showTeacherTab = signal<boolean>(true);
+  titleClicks = 5; // Already activated by default
 
   isRequestModalOpen = signal<boolean>(false);
   requestName = '';
@@ -235,11 +236,13 @@ export class LoginComponent {
     }
   }
 
+  guestLogin() {
+    // Navigate to guest login page
+    window.location.hash = '#/guest-login';
+  }
+
   onTitleClick() {
-    this.titleClicks++;
-    if (this.titleClicks >= 5) {
-      this.showTeacherTab.set(true);
-    }
+    // No longer used
   }
 
   submitRequest() {
