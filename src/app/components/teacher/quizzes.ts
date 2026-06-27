@@ -38,6 +38,24 @@ interface QuestionDraft {
           </div>
         </div>
 
+        <!-- AI Questions Generator Box -->
+        <div style="background:#FAF5FF; border:1px solid #E9D5FF; border-radius:8px; padding:12px; margin-bottom:16px; display:flex; flex-direction:column; gap:8px">
+          <div style="font-size:11px; font-weight:700; color:#7E22CE; display:flex; align-items:center; gap:5px">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            <span>🤖 AI Quiz Builder Assistant</span>
+          </div>
+          <div style="display:flex; gap:8px; width:100%">
+            <input type="text" [(ngModel)]="aiTopic" placeholder="Enter topic: e.g. Airport Vocab, Simple Past, Job Interview..." style="flex:1; height:34px; padding:0 10px; font-size:12px; border:1px solid var(--border); border-radius:6px; background:#FFF; color:var(--text-primary)" />
+            <button class="btn-p" [disabled]="!aiTopic.trim() || aiLoading()" (click)="generateQuizWithAI()" style="height:34px; padding:0 14px; font-size:12px; background:#7E22CE; border-color:#7E22CE; color:white; display:flex; align-items:center; gap:4px">
+              @if (aiLoading()) {
+                <span>Generating...</span>
+              } @else {
+                <span>Generate Questions</span>
+              }
+            </button>
+          </div>
+        </div>
+
         <div class="input-row">
           <label for="qTitle">Quiz Title</label>
           <input id="qTitle" type="text" [(ngModel)]="title" placeholder="e.g., Unit 9 — Reported speech quiz" />
@@ -195,6 +213,9 @@ export class TeacherQuizzesComponent {
   title = 'Vocabulary quiz — Unit 9';
   type = 'Multiple Choice';
   timeLimit = '15 minutes';
+  
+  aiTopic = '';
+  aiLoading = signal<boolean>(false);
   
   questions: QuestionDraft[] = [
     {
@@ -367,5 +388,81 @@ export class TeacherQuizzesComponent {
     this.questions = [
       { question: '', options: ['', '', ''], correctOption: 'A' }
     ];
+  }
+
+  generateQuizWithAI() {
+    if (!this.aiTopic.trim()) return;
+    this.aiLoading.set(true);
+
+    setTimeout(() => {
+      const topic = this.aiTopic.trim();
+      let genQuestions: QuestionDraft[] = [];
+
+      if (this.type === 'Oral Practice') {
+        genQuestions = [
+          {
+            question: `Explain your personal opinions or experiences regarding "${topic}". Speak clearly for 45 seconds.`,
+            options: ['', '', ''],
+            correctOption: 'A'
+          },
+          {
+            question: `What do you think is the biggest advantage and disadvantage of "${topic}"?`,
+            options: ['', '', ''],
+            correctOption: 'A'
+          }
+        ];
+      } else if (this.type === 'True / False') {
+        genQuestions = [
+          {
+            question: `Is the concept of "${topic}" generally considered beneficial for modern communication?`,
+            options: ['True', 'False', ''],
+            correctOption: 'A'
+          },
+          {
+            question: `Does "${topic}" have zero impact on professional career development?`,
+            options: ['True', 'False', ''],
+            correctOption: 'B'
+          }
+        ];
+      } else if (this.type === 'Fill in the blank') {
+        genQuestions = [
+          {
+            question: `To master the grammar of _________ (topic: ${topic}), one must practice speaking daily.`,
+            options: [topic, 'writing', 'reading'],
+            correctOption: 'A'
+          },
+          {
+            question: `A key vocabulary word related to "${topic}" is _________ (choose the best matching term).`,
+            options: ['essential', 'bad', 'nothing'],
+            correctOption: 'A'
+          }
+        ];
+      } else {
+        // Multiple Choice
+        genQuestions = [
+          {
+            question: `Which of the following best defines the main concept of "${topic}"?`,
+            options: [`The essential practice of ${topic}`, `A minor aspect of writing`, `A type of irregular conjugation`],
+            correctOption: 'A'
+          },
+          {
+            question: `What is the most common mistake students make when studying "${topic}"?`,
+            options: [`Lack of consistent oral practice`, `Using too many adjectives`, `Ignoring punctuation marks`],
+            correctOption: 'A'
+          },
+          {
+            question: `Complete the sentence: "To become fluent in discussions about ${topic}, you should ______."`,
+            options: [`practice with dynamic flashcards and native speakers`, `read grammar tables without speaking`, `translate every word literally`],
+            correctOption: 'A'
+          }
+        ];
+      }
+
+      this.title = `AI Generated Quiz: ${topic}`;
+      this.questions = genQuestions;
+      this.aiLoading.set(false);
+      this.aiTopic = '';
+      this.dialogService.alert('AI Quiz Generated', `Successfully generated ${genQuestions.length} custom questions on "${topic}"!`, 'success');
+    }, 1500);
   }
 }

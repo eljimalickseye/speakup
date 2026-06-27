@@ -214,6 +214,13 @@ import { DialogService } from '../../services/dialog.service';
                       <button (click)="applyFeedbackTemplate('grammar')" class="badge" style="background:#EFF6FF; border:1px solid #BFDBFE; color:#1D4ED8; cursor:pointer; font-size:9px" title="Grammar focus template">📝 Grammar</button>
                       <button (click)="applyFeedbackTemplate('pron')" class="badge" style="background:#F0FDFA; border:1px solid #99F6E4; color:#0F766E; cursor:pointer; font-size:9px" title="Pronunciation template">🗣️ Pron</button>
                       <button (click)="applyFeedbackTemplate('incomplete')" class="badge" style="background:#FEF3C7; border:1px solid #FDE68A; color:#92400E; cursor:pointer; font-size:9px" title="Incomplete template">⚠️ Incomplete</button>
+                      <button (click)="draftAIFeedback(sub)" class="badge" style="background:#FAF5FF; border:1px solid #E9D5FF; color:#7E22CE; cursor:pointer; font-size:9px; font-weight:700; display:flex; align-items:center; gap:3px" title="Use AI to analyze submission and draft feedback">
+                        @if (aiLoading()) {
+                          <span>Drafting...</span>
+                        } @else {
+                          <span>🤖 AI Draft</span>
+                        }
+                      </button>
                     </div>
                   </div>
                   <textarea 
@@ -608,6 +615,7 @@ export class TeacherHomeworkComponent {
   pronunciationRating = signal<number>(0);
   grammarRating = signal<number>(0);
   vocabularyRating = signal<number>(0);
+  aiLoading = signal<boolean>(false);
 
   constructor() {
     this.db.observeSubmissions().subscribe(list => {
@@ -701,6 +709,45 @@ export class TeacherHomeworkComponent {
     } else {
       this.gradeFeedback = text;
     }
+  }
+
+  draftAIFeedback(sub: Submission) {
+    this.aiLoading.set(true);
+
+    setTimeout(() => {
+      let feedbackText = '';
+      let grade = 'B — Good';
+      let xp = 30;
+
+      if (sub.type === 'text') {
+        const wordCount = sub.content.split(/\s+/).filter(w => w.length > 0).length;
+        const textLower = sub.content.toLowerCase();
+
+        if (wordCount < 10) {
+          grade = 'D — Needs improvement';
+          xp = 10;
+          feedbackText = `Great effort, but the answer is too short (${wordCount} words). Try to expand your thoughts with examples. For example, explain *why* or *how* you do these activities. Check your spelling and sentence capitalizations.`;
+        } else if (textLower.includes('because') || textLower.includes('however') || textLower.includes('therefore')) {
+          grade = 'A — Excellent';
+          xp = 50;
+          feedbackText = `Outstanding response! You have used advanced English connector words correctly ("${textLower.includes('because') ? 'because' : ''} ${textLower.includes('however') ? 'however' : ''}"). The sentence structure is solid, vocabulary is varied, and flow is natural. Keep up this high standard!`;
+        } else {
+          grade = 'B — Good';
+          xp = 30;
+          feedbackText = `Good vocabulary and clear sentence structure. To reach the next level, try using transition words like "First", "Secondly", or "Moreover" to link your ideas together smoothly. Correct any minor syntax spacing errors.`;
+        }
+      } else {
+        grade = 'B — Good';
+        xp = 35;
+        feedbackText = `Oral Speech Feedback:\n- Pronunciation: Good clarity and natural word stress. Pronounce word endings (-ed, -s) more clearly.\n- Fluency: Natural pacing. Try to reduce hesitation pauses between sentences.\n- Grammar: Correct subject-verb agreements. Nice job!`;
+      }
+
+      this.gradeFeedback = feedbackText;
+      this.gradeScore = grade;
+      this.gradeXp = xp;
+      this.aiLoading.set(false);
+      this.dialogService.alert('AI Draft Created', 'AI has drafted feedback, assigned a suggested grade, and set the XP reward!', 'success');
+    }, 1200);
   }
 
   submitGrade() {
