@@ -77,12 +77,62 @@ interface SpeakingPrompt {
                     Delete
                   </button>
                 </div>
-                <button class="btn-p" style="align-self: flex-start; display:flex; align-items:center; gap:6px; padding:8px 16px; border-radius:8px" (click)="submitSpeakingAnswer()" [disabled]="isSubmitted()">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-                  </svg>
-                  {{ isSubmitted() ? 'Submitted Successfully!' : 'Submit Recording to Teacher' }}
-                </button>
+                <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:4px">
+                  <button class="btn-p" style="display:flex; align-items:center; gap:6px; padding:8px 16px; border-radius:8px" (click)="submitSpeakingAnswer()" [disabled]="isSubmitted()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                    </svg>
+                    {{ isSubmitted() ? 'Submitted Successfully!' : 'Submit to Teacher' }}
+                  </button>
+
+                  <button class="btn-s" style="display:flex; align-items:center; gap:6px; padding:8px 16px; border-radius:8px; border-color:#10B981; color:#10B981" (click)="analyzeWithAICoach()" [disabled]="aiLoading() || isSubmitted()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polygon points="5 3 19 12 5 21 5 3"/>
+                    </svg>
+                    {{ aiLoading() ? 'AI Coach is analyzing...' : 'Get Instant AI Feedback' }}
+                  </button>
+                </div>
+
+                @if (aiLoading()) {
+                  <div style="background:#F0FDF4; border:1px dashed #4ADE80; border-radius:8px; padding:12px; margin-top:10px; text-align:center">
+                    <div style="font-size:12px; font-weight:700; color:#166534">AI Language Coach is analyzing your speech...</div>
+                    <div style="font-size:11px; color:#15803d; margin-top:2px">Evaluating pronunciation, accent, grammar check, and sentence rhythm.</div>
+                  </div>
+                }
+
+                @if (aiFeedback(); as fb) {
+                  <div class="card" style="background:#FFF; border:1px solid #10B981; border-radius:10px; padding:14px; margin-top:12px; box-shadow:0 4px 6px -1px rgba(16, 185, 129, 0.1); margin-bottom:0">
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #E8F5E9; padding-bottom:8px; margin-bottom:10px">
+                      <span style="font-weight:800; color:#065F46; font-size:12px; display:flex; align-items:center; gap:6px">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>
+                        AI COACH SPEECH REVIEW
+                      </span>
+                      <span style="font-size:11px; font-weight:700; background:#D1FAE5; color:#065F46; padding:2px 8px; border-radius:10px">
+                        Score: {{ fb.score }}
+                      </span>
+                    </div>
+
+                    <div style="font-size:12px; margin-bottom:8px">
+                      <strong style="color:var(--text-primary)">Speech Transcript draft:</strong>
+                      <p style="color:var(--text-secondary); margin:4px 0; font-style:italic; font-size:12.5px; line-height:1.4">"{{ fb.transcript }}"</p>
+                    </div>
+
+                    <div style="display:flex; flex-direction:column; gap:8px; font-size:11.5px">
+                      <div>
+                        <strong style="color:#0D9488">Pronunciation Tip:</strong>
+                        <p style="color:var(--text-secondary); margin:2px 0">{{ fb.pronunciation }}</p>
+                      </div>
+                      <div>
+                        <strong style="color:#4F46E5">Grammar feedback:</strong>
+                        <p style="color:var(--text-secondary); margin:2px 0">{{ fb.grammar }}</p>
+                      </div>
+                      <div>
+                        <strong style="color:#D97706">Fluency & Flow:</strong>
+                        <p style="color:var(--text-secondary); margin:2px 0">{{ fb.fluency }}</p>
+                      </div>
+                    </div>
+                  </div>
+                }
               </div>
             }
           </div>
@@ -220,6 +270,10 @@ export class StudentSpeakingComponent implements OnDestroy {
   recordTimer = signal<number>(0);
   audioUrl = signal<string | null>(null);
   isSubmitted = signal<boolean>(false);
+  
+  // AI Coach properties
+  aiLoading = signal<boolean>(false);
+  aiFeedback = signal<any | null>(null);
   
   private mediaRecorder: MediaRecorder | null = null;
   private audioChunks: Blob[] = [];
@@ -442,6 +496,8 @@ export class StudentSpeakingComponent implements OnDestroy {
     this.recorderState.set('idle');
     this.audioUrl.set(null);
     this.isSubmitted.set(false);
+    this.aiFeedback.set(null);
+    this.aiLoading.set(false);
   }
 
   submitSpeakingAnswer() {
@@ -449,6 +505,59 @@ export class StudentSpeakingComponent implements OnDestroy {
     const prompt = this.activePrompt();
     this.db.submitHomework('speaking-' + prompt.id, 'Speaking: ' + prompt.text, 'audio', this.audioUrl() || 'simulated-audio-data');
     this.isSubmitted.set(true);
+  }
+
+  analyzeWithAICoach() {
+    this.aiLoading.set(true);
+    this.aiFeedback.set(null);
+
+    setTimeout(() => {
+      const lvl = this.selectedLevel();
+      let fb = {
+        score: '84%',
+        transcript: '',
+        pronunciation: '',
+        grammar: '',
+        fluency: ''
+      };
+
+      if (lvl === 'A1') {
+        fb = {
+          score: '86%',
+          transcript: 'Hello! My name is Alex, I am twenty-five years old. I live in Dakar, Senegal. I like learning English.',
+          pronunciation: 'Good articulation. Pay special attention to the word "nationality" (make sure to stress the third syllable: na-tio-NAL-i-ty).',
+          grammar: 'Good structure! You successfully used the present simple tense. To improve, try adding more details about your job or studies.',
+          fluency: 'Excellent flow. Very minor hesitation.'
+        };
+      } else if (lvl === 'A2') {
+        fb = {
+          score: '82%',
+          transcript: "Usually, I wake up at seven o'clock. First, I drink coffee and eat breakfast. After that, I go to work by bus. In the evening, I cook dinner and read a book.",
+          pronunciation: 'Clear speech. Watch out for the word "o\'clock" - ensure the "o" is short and the stress is on "clock".',
+          grammar: 'Solid routine description. You used sequencing words like "First" and "After that" correctly. Try to use more frequency adverbs (e.g. "usually", "sometimes", "rarely").',
+          fluency: 'Good speed, keep practicing to reduce pauses between activities.'
+        };
+      } else if (lvl === 'B1') {
+        fb = {
+          score: '88%',
+          transcript: 'My favorite hobby is playing football. I have been playing football for five years with my friends. It helps me to relax because it is active and we have fun.',
+          pronunciation: 'Very natural accent. Make sure to pronounce the "h" in "hobby" clearly (avoid dropping the h-sound).',
+          grammar: 'Great use of the present perfect continuous ("have been playing"). Try to avoid repeating the word "football" too much by using pronouns (like "it" or "this sport").',
+          fluency: 'Fluent delivery with natural pacing and expression.'
+        };
+      } else {
+        fb = {
+          score: '92%',
+          transcript: 'On the one hand, technology has many benefits. For instance, it allows us to communicate instantly with people worldwide. However, a major drawback is that we spend too much time on screens, which can lead to social isolation. In my opinion, we must find a healthy balance.',
+          pronunciation: 'Advanced articulation. Be careful with the word "advantages" - make sure the second syllable "van" is stressed.',
+          grammar: 'Excellent advanced transitions ("On the one hand", "For instance", "However"). Very rich sentence structure.',
+          fluency: 'Superb sentence pacing, clear linking sounds between words.'
+        };
+      }
+
+      this.aiFeedback.set(fb);
+      this.aiLoading.set(false);
+    }, 1500);
   }
 
   private cleanUpAudioContext() {

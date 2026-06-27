@@ -9,6 +9,7 @@ interface MatchCard {
   type: 'english' | 'french';
   selected: boolean;
   matched: boolean;
+  error?: boolean;
 }
 
 @Component({
@@ -30,7 +31,7 @@ interface MatchCard {
         <div class="grid2" style="margin-bottom: 24px">
           
           <!-- Vocabulary game (Built-in) -->
-          <div class="card" style="cursor:pointer; display:flex; flex-direction:column; justify-content:space-between; margin:0" (click)="startExercise('game')">
+          <div class="card exercise-card game-card" (click)="startExercise('game')">
             <div>
               <div class="lesson-icon amber" style="margin-bottom:12px; width:40px; height:40px; border-radius:10px; background:#FFFBEB; border:1px solid #FDE68A; display:flex; align-items:center; justify-content:center">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -51,7 +52,7 @@ interface MatchCard {
 
           <!-- Dynamic Quizzes uploaded by teachers -->
           @for (quiz of quizzes(); track quiz.id) {
-            <div class="card" style="cursor:pointer; display:flex; flex-direction:column; justify-content:space-between; margin:0" (click)="startQuiz(quiz)">
+            <div class="card exercise-card" [class.oral-card]="quiz.type === 'Oral Practice'" (click)="startQuiz(quiz)">
               <div>
                 <div class="lesson-icon" [style.background]="getQuizThemeBg(quiz.type)" [style.border]="'1px solid ' + getQuizThemeBorder(quiz.type)" style="margin-bottom:12px; width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center">
                   @if (quiz.type === 'Oral Practice') {
@@ -96,11 +97,33 @@ interface MatchCard {
             </svg>
             <span>Practice Streak</span>
           </div>
-          <div class="card" style="background:#FFF8F1; border:1px solid #FFE4D6; display:flex; align-items:center; gap:16px; padding:16px 20px; border-radius:12px; margin-bottom: 0">
-            <div style="font-size:32px">🔥</div>
-            <div>
-              <div style="font-size:18px; font-weight:700; color:#D97706">{{ currentUser()?.streak || 0 }} Days Streak</div>
-              <div style="font-size:12px; color:var(--text-secondary)">Practice every day to keep your streak alive and earn extra XP!</div>
+          <div class="card" style="background:#FFF8F1; border:1px solid #FFE4D6; padding:16px 20px; border-radius:12px; margin-bottom: 0; display:flex; flex-direction:column; gap:14px">
+            <div style="display:flex; align-items:center; gap:16px">
+              <div style="font-size:32px; animation: bounce-streak 1.5s infinite">🔥</div>
+              <div>
+                <div style="font-size:18px; font-weight:700; color:#D97706">{{ currentUser()?.streak || 0 }} Days Streak</div>
+                <div style="font-size:12px; color:var(--text-secondary)">Practice every day to keep your streak alive and earn extra XP!</div>
+              </div>
+            </div>
+            
+            <!-- Horizontal 7-Day Tracker -->
+            <div style="display:flex; justify-content:space-between; align-items:center; width:100%; border-top:1px solid #FFE4D6; padding-top:12px; margin-top:4px">
+              @for (day of getWeeklyTrackerDays(); track day.name) {
+                <div style="display:flex; flex-direction:column; align-items:center; gap:6px; flex:1">
+                  <span style="font-size:9px; font-weight:700; color:#B45309; text-transform:uppercase">{{ day.name }}</span>
+                  <div 
+                    [style.background]="day.completed ? 'linear-gradient(135deg, #F59E0B, #D97706)' : '#FFF'"
+                    [style.border-color]="day.completed ? '#D97706' : '#E2E8F0'"
+                    [style.color]="day.completed ? '#FFF' : '#94A3B8'"
+                    style="width:28px; height:28px; border-radius:50%; border:2px solid; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; box-shadow: 0 2px 4px rgba(0,0,0,0.02)">
+                    @if (day.completed) {
+                      <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    } @else {
+                      {{ day.letter }}
+                    }
+                  </div>
+                </div>
+              }
             </div>
           </div>
         </div>
@@ -210,10 +233,9 @@ interface MatchCard {
                     <!-- STANDARD MULTIPLE CHOICE OPTIONS -->
                     <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:20px">
                       @for (opt of quiz.questions[currentQuestionIdx()].options; track opt; let idx = $index) {
-                        <button class="ni" 
+                        <button class="quiz-option-btn" 
                                 [class.active]="selectedOption() === getOptionLetter(idx)"
-                                (click)="selectedOption.set(getOptionLetter(idx))" 
-                                style="border: 1px solid var(--border); background:var(--surface-1); padding:12px; border-radius:8px; text-align: left; cursor:pointer; font-weight:500; font-size:13px">
+                                (click)="selectedOption.set(getOptionLetter(idx))">
                           <span style="font-weight:700; color:#4F46E5; margin-right:8px">{{ getOptionLetter(idx) }}.</span> {{ opt }}
                         </button>
                       }
@@ -279,15 +301,20 @@ interface MatchCard {
                 <!-- Cards Grid -->
                 <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:12px; margin-bottom:20px">
                   @for (card of gameCards(); track card.id) {
-                    <button class="card" 
-                            [class.active]="card.selected"
-                            [style.opacity]="card.matched ? 0.35 : 1"
+                    <button class="vocab-match-card" 
+                            [class.selected]="card.selected"
+                            [class.matched]="card.matched"
+                            [class.error]="card.error"
                             [style.pointer-events]="card.matched ? 'none' : 'auto'"
-                            [style.border-color]="card.selected ? '#D97706' : 'var(--border)'"
-                            [style.background]="card.selected ? '#FEF3C7' : 'var(--surface-1)'"
-                            (click)="selectCard(card)"
-                            style="padding:14px; text-align:center; font-weight:600; display:flex; align-items:center; justify-content:center; min-height:55px; margin:0; cursor:pointer; border-radius:8px">
-                      {{ card.text }}
+                            (click)="selectCard(card)">
+                      <div style="display:flex; align-items:center; gap:6px; justify-content:center">
+                        @if (card.matched) {
+                          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        } @else if (card.error) {
+                          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        }
+                        <span>{{ card.text }}</span>
+                      </div>
                     </button>
                   }
                 </div>
@@ -333,6 +360,119 @@ interface MatchCard {
       70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
       100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
     }
+
+    .exercise-card {
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      margin: 0;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid var(--border-weak);
+    }
+    
+    .exercise-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 20px -8px rgba(79, 70, 229, 0.12);
+      border-color: #4F46E5;
+    }
+    
+    .exercise-card.game-card:hover {
+      box-shadow: 0 12px 20px -8px rgba(217, 119, 6, 0.15);
+      border-color: #D97706;
+    }
+    
+    .exercise-card.oral-card:hover {
+      box-shadow: 0 12px 20px -8px rgba(13, 148, 136, 0.15);
+      border-color: #0D9488;
+    }
+
+    .quiz-option-btn {
+      width: 100%;
+      border: 1px solid var(--border);
+      background: var(--surface-1);
+      padding: 12px 16px;
+      border-radius: 8px;
+      text-align: left;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 13px;
+      color: var(--text-primary);
+      transition: all 0.2s ease-in-out;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .quiz-option-btn:hover {
+      background: var(--surface-2);
+      border-color: #4F46E5;
+      transform: translateX(4px);
+    }
+    
+    .quiz-option-btn.active {
+      background: #EFF6FF;
+      border-color: #4F46E5;
+      color: #1E40AF;
+      box-shadow: 0 4px 10px rgba(79, 70, 229, 0.08);
+    }
+
+    .vocab-match-card {
+      border: 1px solid var(--border);
+      background: var(--surface-1);
+      color: var(--text-primary);
+      padding: 14px;
+      text-align: center;
+      font-weight: 600;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 55px;
+      margin: 0;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: all 0.2s ease-in-out;
+    }
+    
+    .vocab-match-card:hover:not(.matched) {
+      transform: translateY(-2px);
+      border-color: #D97706;
+      box-shadow: 0 4px 10px rgba(217, 119, 6, 0.08);
+    }
+    
+    .vocab-match-card.selected {
+      background: #FEF3C7;
+      border-color: #D97706;
+      color: #92400E;
+      transform: translateY(-2px);
+    }
+    
+    .vocab-match-card.matched {
+      background: #DCFCE7;
+      border-color: #86EFAC;
+      color: #166534;
+      opacity: 0.8;
+      cursor: not-allowed;
+    }
+    
+    .vocab-match-card.error {
+      background: #FEE2E2;
+      border-color: #FCA5A5;
+      color: #991B1B;
+      animation: shake 0.4s ease-in-out;
+    }
+    
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-4px); }
+      75% { transform: translateX(4px); }
+    }
+
+    @keyframes bounce-streak {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
   `]
 })
 export class StudentExercisesComponent {
@@ -367,6 +507,29 @@ export class StudentExercisesComponent {
   constructor() {
     this.db.observeQuizzes().subscribe(list => this.quizzes.set(list));
     this.db.observeCurrentUser().subscribe(u => this.currentUser.set(u));
+  }
+
+  getWeeklyTrackerDays() {
+    const days = [
+      { name: 'Mon', letter: 'M', completed: false },
+      { name: 'Tue', letter: 'T', completed: false },
+      { name: 'Wed', letter: 'W', completed: false },
+      { name: 'Thu', letter: 'T', completed: false },
+      { name: 'Fri', letter: 'F', completed: false },
+      { name: 'Sat', letter: 'S', completed: false },
+      { name: 'Sun', letter: 'S', completed: false }
+    ];
+    
+    const streak = this.currentUser()?.streak || 0;
+    const todayIndex = (new Date().getDay() + 6) % 7; // 0 = Mon, 6 = Sun
+    for (let i = 0; i < 7; i++) {
+      if (i === todayIndex) {
+        days[i].completed = true;
+      } else if (i < todayIndex && todayIndex - i < streak) {
+        days[i].completed = true;
+      }
+    }
+    return days;
   }
 
   getQuizThemeBg(type: string): string {
@@ -626,17 +789,21 @@ export class StudentExercisesComponent {
           }
         } else {
           card.selected = true;
+          const c1 = list.find(c => c.id === activeSelected.id);
+          const c2 = list.find(c => c.id === card.id);
+          if (c1) c1.error = true;
+          if (c2) c2.error = true;
           this.gameCards.set(list);
           
           setTimeout(() => {
             const listReset = [...this.gameCards()];
-            const c1 = listReset.find(c => c.id === activeSelected.id);
-            const c2 = listReset.find(c => c.id === card.id);
-            if (c1) c1.selected = false;
-            if (c2) c2.selected = false;
+            const rc1 = listReset.find(c => c.id === activeSelected.id);
+            const rc2 = listReset.find(c => c.id === card.id);
+            if (rc1) { rc1.selected = false; rc1.error = false; }
+            if (rc2) { rc2.selected = false; rc2.error = false; }
             this.selectedCard.set(null);
             this.gameCards.set(listReset);
-          }, 400);
+          }, 600);
         }
       }
     }

@@ -15,7 +15,7 @@ import { DatabaseService, UserProfile } from '../../services/database.service';
 
       <div class="login-card">
         <div style="display:flex; justify-content:center; margin-bottom:12px">
-          <div class="logo-mark" style="width:36px; height:36px; font-size:18px; border-radius:10px">S</div>
+          <img src="logo.png" style="width:36px; height:36px; object-fit:contain; border-radius:8px" alt="logo">
         </div>
         <h2 class="login-title">SpeakUp</h2>
         <p class="login-sub">SpeakUp English Platform — Authentication</p>

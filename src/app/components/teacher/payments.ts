@@ -1,12 +1,13 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { DatabaseService, Payment, UserProfile } from '../../services/database.service';
 import { DialogService } from '../../services/dialog.service';
 
 @Component({
   selector: 'app-teacher-payments',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   template: `
     <div class="page">
       <!-- FINANCIAL INDICATORS -->
@@ -25,6 +26,44 @@ import { DialogService } from '../../services/dialog.service';
           <div class="mlabel">Paid Ratio</div>
           <div class="mval">{{ paidCount() }}/{{ totalCount() }}</div>
           <div class="msub">Cohort ratio</div>
+        </div>
+      </div>
+
+      <!-- ISSUE NEW INVOICE CARD -->
+      <div class="card" style="margin-top:16px">
+        <h3 class="st" style="font-size:15px; margin-bottom:12px; color:#4F46E5">
+          <i class="ti ti-receipt" style="margin-right:6px"></i> Issue New Invoice
+        </h3>
+        
+        <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end">
+          <div class="input-row" style="flex:1; min-width:180px; margin-bottom:0">
+            <label for="invStudent" class="form-lbl" style="font-size:11px">Student</label>
+            <select id="invStudent" [(ngModel)]="invoiceStudentId" class="form-select" style="height:38px; font-size:12px; width:100%; border:1px solid var(--border); border-radius:6px; padding:0 10px; background:var(--surface-1); color:var(--text-primary)">
+              <option value="">-- Select Student --</option>
+              @for (user of studentUsers(); track user.id) {
+                <option [value]="user.id">{{ user.name }} ({{ user.level }})</option>
+              }
+            </select>
+          </div>
+
+          <div class="input-row" style="flex:1.5; min-width:200px; margin-bottom:0">
+            <label for="invDesc" class="form-lbl" style="font-size:11px">Invoice Details</label>
+            <input id="invDesc" type="text" [(ngModel)]="invoiceDescription" placeholder="e.g., Monthly tuition - July" class="form-input" style="height:38px; font-size:12px; width:100%; border:1px solid var(--border); border-radius:6px; padding:0 10px; background:var(--surface-1); color:var(--text-primary)" />
+          </div>
+
+          <div class="input-row" style="flex:1; min-width:130px; margin-bottom:0">
+            <label for="invAmount" class="form-lbl" style="font-size:11px">Amount (CFA)</label>
+            <input id="invAmount" type="number" [(ngModel)]="invoiceAmount" class="form-input" style="height:38px; font-size:12px; width:100%; border:1px solid var(--border); border-radius:6px; padding:0 10px; background:var(--surface-1); color:var(--text-primary)" />
+          </div>
+
+          <div class="input-row" style="flex:1; min-width:130px; margin-bottom:0">
+            <label for="invDue" class="form-lbl" style="font-size:11px">Due Date</label>
+            <input id="invDue" type="date" [(ngModel)]="invoiceDueDate" class="form-input" style="height:38px; font-size:12px; width:100%; border:1px solid var(--border); border-radius:6px; padding:0 10px; background:var(--surface-1); color:var(--text-primary)" />
+          </div>
+
+          <button class="btn-p" [disabled]="!invoiceStudentId || !invoiceDescription || !invoiceAmount" (click)="issueInvoice()" style="height:38px; padding:0 20px; font-size:12px; font-weight:600">
+            Issue Invoice
+          </button>
         </div>
       </div>
 
@@ -73,6 +112,9 @@ import { DialogService } from '../../services/dialog.service';
                     <button class="btn-s" style="padding:4px 8px; font-size:11px" (click)="sendReminder(pay.studentName)">
                       Ping
                     </button>
+                    <button class="btn-s" style="padding:4px 8px; font-size:11px; background:#FEE2E2; border-color:#FCA5A5; color:#DC2626" (click)="deleteInvoice(pay)" title="Delete Invoice">
+                      Delete
+                    </button>
                   </td>
                 </tr>
               }
@@ -113,14 +155,17 @@ import { DialogService } from '../../services/dialog.service';
                     {{ pay.description || 'Mensualité' }}
                   </td>
                   <td style="padding:8px">
-                    <span style="background:#E0F2FE; color:#0369A1; padding:2px 6px; border-radius:4px; font-size:10px">
+                    <span class="payment-method-badge" [class.wave]="pay.method === 'Wave'" [class.orange]="pay.method === 'Orange Money'" [class.cash]="pay.method === 'Cash/Card'">
                       {{ pay.method }}
                     </span>
                   </td>
                   <td style="padding:8px; font-weight:700; color:#059669">{{ pay.amount }}</td>
                   <td style="padding:8px; color:var(--text-secondary)">{{ pay.paidAt || 'Just Now' }}</td>
-                  <td style="padding:8px; text-align:right">
+                  <td style="padding:8px; text-align:right; display:flex; justify-content:flex-end; align-items:center; gap:6px">
                     <span class="badge" style="background:#D1FAE5; color:#065F46">Paid</span>
+                    <button class="btn-s" style="padding:4px 8px; font-size:11px; background:#FEE2E2; border-color:#FCA5A5; color:#DC2626" (click)="deleteInvoice(pay)" title="Delete Invoice">
+                      Delete
+                    </button>
                   </td>
                 </tr>
               }
@@ -129,7 +174,32 @@ import { DialogService } from '../../services/dialog.service';
         }
       </div>
     </div>
-  `
+  `,
+  styles: [`
+    .payment-method-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 600;
+      background: #F3F4F6;
+      color: #4B5563;
+    }
+    .payment-method-badge.wave {
+      background: #DBEAFE;
+      color: #1D4ED8;
+    }
+    .payment-method-badge.orange {
+      background: #FFEDD5;
+      color: #EA580C;
+    }
+    .payment-method-badge.cash {
+      background: #F3F4F6;
+      color: #4B5563;
+    }
+  `]
 })
 export class TeacherPaymentsComponent {
   private db = inject(DatabaseService);
@@ -148,6 +218,22 @@ export class TeacherPaymentsComponent {
   totalCount = signal<number>(34);
 
   usersList = signal<UserProfile[]>([]);
+
+  // Invoicing states
+  invoiceStudentId = '';
+  invoiceDescription = 'Mensualité';
+  invoiceAmount = 30000;
+  invoiceDueDate = this.getDefaultDueDate();
+  
+  studentUsers = computed(() => {
+    return this.usersList().filter(u => u.role === 'student');
+  });
+
+  getDefaultDueDate(): string {
+    const d = new Date();
+    d.setDate(d.getDate() + 15);
+    return d.toISOString().split('T')[0];
+  }
 
   constructor() {
     this.db.observeUsers().subscribe(list => {
@@ -198,26 +284,65 @@ export class TeacherPaymentsComponent {
     return 'ST';
   }
 
+  getMethodIcon(method?: string): string {
+    return '';
+  }
+
   sendReminder(studentName: string) {
     this.dialogService.alert('Reminder Sent', `Payment reminder notification sent to ${studentName}!`, 'success');
   }
 
   markAsPaid(pay: Payment) {
-    this.dialogService.show({
-      title: 'Payment Method',
-      message: `Select the payment method used by ${pay.studentName}:`,
-      type: 'confirm',
-      confirmText: 'Wave Mobile Money',
-      cancelText: 'Orange Money',
-      onConfirm: () => {
-        const method = 'Wave Mobile Money';
+    this.dialogService.showPaymentMethod({
+      studentName: pay.studentName,
+      onWave: () => {
+        const method = 'Wave';
         this.db.updatePaymentStatus(pay.id, 'Paid', method);
         this.dialogService.alert('Success', `Payment of ${pay.amount} for ${pay.studentName} marked as Paid via ${method}.`, 'success');
       },
-      onCancel: () => {
+      onOrangeMoney: () => {
         const method = 'Orange Money';
         this.db.updatePaymentStatus(pay.id, 'Paid', method);
         this.dialogService.alert('Success', `Payment of ${pay.amount} for ${pay.studentName} marked as Paid via ${method}.`, 'success');
+      }
+    });
+  }
+
+  issueInvoice() {
+    if (!this.invoiceStudentId) return;
+    
+    const student = this.usersList().find(u => u.id === this.invoiceStudentId);
+    if (!student) return;
+
+    const formattedAmount = Number(this.invoiceAmount).toLocaleString('fr-FR') + ' CFA';
+    this.db.addPayment({
+      studentId: this.invoiceStudentId,
+      studentName: student.name,
+      amount: formattedAmount,
+      description: this.invoiceDescription,
+      status: 'Late',
+      dueDate: this.invoiceDueDate
+    });
+
+    this.dialogService.alert('Success', `Invoice of ${formattedAmount} issued successfully for ${student.name}!`, 'success');
+    
+    // Reset form fields
+    this.invoiceStudentId = '';
+    this.invoiceDescription = 'Mensualité';
+    this.invoiceAmount = 30000;
+    this.invoiceDueDate = this.getDefaultDueDate();
+  }
+
+  deleteInvoice(pay: Payment) {
+    this.dialogService.show({
+      title: 'Confirm Deletion',
+      message: `Are you sure you want to delete the invoice of ${pay.amount} for ${pay.studentName}?`,
+      type: 'confirm',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      onConfirm: () => {
+        this.db.deletePayment(pay.id);
+        this.dialogService.alert('Deleted', 'Invoice deleted successfully!', 'success');
       }
     });
   }

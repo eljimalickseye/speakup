@@ -28,6 +28,7 @@ export interface UserProfile {
   monthlyFee?: number;
   placementTestTaken?: boolean;
   placementTestScore?: number;
+  voiceChatAllowed?: boolean;
 }
 
 export interface Lesson {
@@ -127,6 +128,17 @@ export interface ChatMessage {
   senderName: string;
   content: string;
   timestamp: string;
+  type?: 'text' | 'audio';
+  audioUrl?: string;
+}
+
+export interface ChatChannel {
+  id: string;
+  name: string;
+  createdById?: string;
+  createdByRole?: string;
+  members?: string[];
+  isPrivate?: boolean;
 }
 
 @Injectable({
@@ -146,11 +158,16 @@ export class DatabaseService {
   private announcements$ = new BehaviorSubject<Announcement[]>([]);
   private payments$ = new BehaviorSubject<Payment[]>([]);
   private events$ = new BehaviorSubject<EventItem[]>([]);
+  private voiceChatEnabled$ = new BehaviorSubject<boolean>(true);
+  private channels$ = new BehaviorSubject<ChatChannel[]>([]);
   
   // Current user state
   private currentUser$ = new BehaviorSubject<UserProfile | null>(null);
 
   constructor() {
+    const voiceChatLocal = localStorage.getItem('speak_voice_chat_enabled') !== 'false';
+    this.voiceChatEnabled$.next(voiceChatLocal);
+
     try {
       const app = initializeApp(environment.firebaseConfig);
       this.firestore = getFirestore(app);
@@ -197,6 +214,13 @@ export class DatabaseService {
 
     // 9. Events (Empty by default)
     const defaultEvents: EventItem[] = [];
+
+    const defaultChannels: ChatChannel[] = [
+      { id: 'general', name: 'general' },
+      { id: 'group-a', name: 'study-group-a' },
+      { id: 'travel', name: 'travel-dialogue' },
+      { id: 'debate', name: 'debate-club' }
+    ];
 
     // Read or write from LocalStorage
     const getLocal = (key: string, defaults: any) => {
@@ -258,6 +282,7 @@ export class DatabaseService {
     const announcements = getLocal('speak_announcements', defaultAnnouncements);
     const payments = getLocal('speak_payments', defaultPayments);
     const events = getLocal('speak_events', defaultEvents);
+    const channels = getLocal('speak_channels', defaultChannels);
 
     this.users$.next(users);
     this.lessons$.next(lessons);
@@ -268,6 +293,7 @@ export class DatabaseService {
     this.announcements$.next(announcements);
     this.payments$.next(payments);
     this.events$.next(events);
+    this.channels$.next(channels);
 
     // Set Default User (teacher)
     const savedUserId = localStorage.getItem('speak_current_user_id') || 'teacher';
@@ -453,6 +479,23 @@ export class DatabaseService {
       snap.forEach(doc => events.push(doc.data() as EventItem));
       this.events$.next(events);
     });
+
+    // 11. Subscribe to Channels
+    onSnapshot(collection(this.firestore, 'channels'), (snap) => {
+      const list: ChatChannel[] = [];
+      snap.forEach(doc => list.push(doc.data() as ChatChannel));
+      if (list.length > 0) {
+        this.channels$.next(list);
+      }
+    });
+
+    // 10. Subscribe to Settings
+    onSnapshot(doc(this.firestore, 'settings', 'voice_chat'), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        this.voiceChatEnabled$.next(!!data['enabled']);
+      }
+    });
   }
 
   // --- LOCAL WRITE HELPERS ---
@@ -503,19 +546,6 @@ export class DatabaseService {
       
       this.setCurrentUser(uid);
       
-      if (desiredRole === 'student') {
-        const newPayment: Payment = {
-          id: 'pay-' + uid,
-          studentId: uid,
-          studentName: newProfile.name,
-          amount: '30,000 CFA',
-          status: 'Late',
-          dueDate: '2026-06-30'
-        };
-        const payments = [...this.payments$.value, newPayment];
-        this.payments$.next(payments);
-        this.saveLocal('speak_payments', payments);
-      }
       return newProfile;
     }
     
@@ -551,18 +581,6 @@ export class DatabaseService {
       
       await setDoc(doc(this.firestore, 'users', id), newProfile);
       this.setCurrentUser(id);
-      
-      if (desiredRole === 'student') {
-        const newPayment: Payment = {
-          id: 'pay-' + id,
-          studentId: id,
-          studentName: name,
-          amount: '30,000 CFA',
-          status: 'Late',
-          dueDate: '2026-06-30'
-        };
-        await setDoc(doc(this.firestore, 'payments', newPayment.id), newPayment);
-      }
       
       return newProfile;
     }
@@ -1148,6 +1166,40 @@ export class DatabaseService {
     }
   }
 
+  async addPayment(pay: Omit<Payment, 'id'>) {
+    const id = 'pay-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6);
+    const newPayment: Payment = {
+      ...pay,
+      id
+    };
+    
+    const list = [...this.payments$.value, newPayment];
+    this.payments$.next(list);
+    this.saveLocal('speak_payments', list);
+
+    if (this.useFirebase) {
+      try {
+        await setDoc(doc(this.firestore, 'payments', id), newPayment);
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+  }
+
+  async deletePayment(payId: string) {
+    const list = this.payments$.value.filter(p => p.id !== payId);
+    this.payments$.next(list);
+    this.saveLocal('speak_payments', list);
+
+    if (this.useFirebase) {
+      try {
+        await deleteDoc(doc(this.firestore, 'payments', payId));
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+  }
+
   // --- EVENTS OPERATIONS ---
   observeEvents(): Observable<EventItem[]> { return this.events$.asObservable(); }
 
@@ -1231,7 +1283,9 @@ export class DatabaseService {
               senderId: data['senderId'],
               senderName: data['senderName'],
               content: data['content'],
-              timestamp: data['timestamp']
+              timestamp: data['timestamp'],
+              type: data['type'] || 'text',
+              audioUrl: data['audioUrl']
             });
           });
           chatSubject.next(messages);
@@ -1257,20 +1311,31 @@ export class DatabaseService {
       localStorage.setItem(key, JSON.stringify(defaults));
       subject.next(defaults);
     } else {
-      subject.next(JSON.parse(data));
+      const parsed = JSON.parse(data);
+      const sanitized = parsed.map((m: any) => ({
+        ...m,
+        id: m.id || 'msg_' + new Date(m.timestamp).getTime() + '_' + Math.random().toString(36).substring(2, 9)
+      }));
+      subject.next(sanitized);
     }
   }
 
-  async sendChatMessage(channelId: string, content: string) {
+  async sendChatMessage(channelId: string, content: string, type: 'text' | 'audio' = 'text', audioUrl?: string) {
     const active = this.currentUser$.value;
     if (!active) return;
 
     const newMessage: ChatMessage = {
+      id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9),
       senderId: active.id,
       senderName: active.name,
       content,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      type
     };
+
+    if (audioUrl) {
+      newMessage.audioUrl = audioUrl;
+    }
 
     if (this.useFirebase) {
       try {
@@ -1288,13 +1353,32 @@ export class DatabaseService {
     const messages = data ? JSON.parse(data) : [];
     messages.push(newMessage);
     localStorage.setItem(key, JSON.stringify(messages));
-    
-    // Force trigger subjects in local mode by re-reading chats
-    // This is handled by creating local event notifications or simple polls, 
-    // but in our app we trigger a local reload by writing to standard subjects
-    // if needed. Since we subscribe to observeChatMessages, we can dispatch events.
-    // To keep it simple, dispatch a custom window event to trigger reloads of chat component
     window.dispatchEvent(new CustomEvent('local-chat-update', { detail: { channelId } }));
+  }
+
+  async deleteChatMessage(channelId: string, messageId: string) {
+    if (this.useFirebase) {
+      try {
+        const msgDocRef = doc(this.firestore, 'chat', channelId, 'messages', messageId);
+        await deleteDoc(msgDocRef);
+        return;
+      } catch (e) {
+        console.warn('Firestore delete message failed. Falling back to local.', e);
+      }
+    }
+
+    const key = `speak_chat_${channelId}`;
+    const data = localStorage.getItem(key);
+    if (data) {
+      const messages: ChatMessage[] = JSON.parse(data);
+      const sanitized = messages.map((m: any) => ({
+        ...m,
+        id: m.id || 'msg_' + new Date(m.timestamp).getTime() + '_' + Math.random().toString(36).substring(2, 9)
+      }));
+      const filtered = sanitized.filter(m => m.id !== messageId);
+      localStorage.setItem(key, JSON.stringify(filtered));
+      window.dispatchEvent(new CustomEvent('local-chat-update', { detail: { channelId } }));
+    }
   }
 
   async sendSimulatedChatMessage(channelId: string, senderName: string, content: string, senderId: string = 'simulated') {
@@ -1322,6 +1406,49 @@ export class DatabaseService {
     messagesList.push(newMessage);
     localStorage.setItem(key, JSON.stringify(messagesList));
     window.dispatchEvent(new CustomEvent('local-chat-update', { detail: { channelId } }));
+  }
+
+  observeChannels(): Observable<ChatChannel[]> {
+    return this.channels$.asObservable();
+  }
+
+  async addChannel(name: string, isPrivate: boolean = false, members: string[] = []) {
+    const cleanName = name.toLowerCase().trim().replace(/[^a-z0-9-_]/g, '-');
+    const id = 'chan-' + Date.now();
+    const newChan: ChatChannel = {
+      id,
+      name: cleanName,
+      createdById: this.currentUser$.value?.id || 'teacher',
+      createdByRole: this.currentUser$.value?.role || 'teacher',
+      isPrivate,
+      members
+    };
+
+    const list = [...this.channels$.value, newChan];
+    this.channels$.next(list);
+    this.saveLocal('speak_channels', list);
+
+    if (this.useFirebase) {
+      try {
+        await setDoc(doc(this.firestore, 'channels', id), newChan);
+      } catch (e) {
+        console.warn('Firestore add channel failed.', e);
+      }
+    }
+  }
+
+  async deleteChannel(id: string) {
+    const list = this.channels$.value.filter(c => c.id !== id);
+    this.channels$.next(list);
+    this.saveLocal('speak_channels', list);
+
+    if (this.useFirebase) {
+      try {
+        await deleteDoc(doc(this.firestore, 'channels', id));
+      } catch (e) {
+        console.warn('Firestore delete channel failed.', e);
+      }
+    }
   }
 
   countryCodeToEmoji(code: string): string {
@@ -1393,6 +1520,23 @@ export class DatabaseService {
       }
     } catch (e) {
       console.warn('Failed to clear old mock messages:', e);
+    }
+  }
+
+  observeVoiceChatEnabled(): Observable<boolean> {
+    return this.voiceChatEnabled$.asObservable();
+  }
+
+  async setVoiceChatEnabled(enabled: boolean) {
+    this.voiceChatEnabled$.next(enabled);
+    localStorage.setItem('speak_voice_chat_enabled', enabled ? 'true' : 'false');
+    
+    if (this.useFirebase) {
+      try {
+        await setDoc(doc(this.firestore, 'settings', 'voice_chat'), { enabled });
+      } catch (e) {
+        console.warn(e);
+      }
     }
   }
 }

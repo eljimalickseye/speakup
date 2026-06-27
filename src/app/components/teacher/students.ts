@@ -185,26 +185,33 @@ import { DialogService } from '../../services/dialog.service';
                 </div>
               </div>
 
-              <!-- Billing & Tuition Settings -->
+              <!-- Billing & Permission Settings -->
               <div class="card" style="margin-top:0; margin-bottom:16px; border: 1px dashed var(--border-weak); background:var(--surface-1); padding:16px; border-radius:8px">
                 <h4 style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:12px; display:flex; align-items:center; gap:6px; margin-top:0">
                   <i class="ti ti-credit-card" style="color:#4F46E5"></i>
-                  <span>Billing & Tuition Settings</span>
+                  <span>Billing & Permission Settings</span>
                 </h4>
-                <div class="g2" style="display:flex; gap:12px; flex-wrap:wrap">
-                  <div class="input-row" style="flex:1; min-width:140px; margin-bottom:0">
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:12px">
+                  <div class="input-row" style="margin-bottom:0">
                     <label style="font-weight:600; font-size:11px">Registration Fee</label>
                     <select [value]="student.registrationFee ?? 10000" (change)="updateStudentFee(student.id, 'registrationFee', $event)" style="background:#FFF; padding:6px; font-size:11px">
                       <option [value]="10000">10,000 CFA (Regular)</option>
                       <option [value]="0">0 CFA (Waived / Promo)</option>
                     </select>
                   </div>
-                  <div class="input-row" style="flex:1; min-width:140px; margin-bottom:0">
+                  <div class="input-row" style="margin-bottom:0">
                     <label style="font-weight:600; font-size:11px">Monthly Tuition</label>
                     <select [value]="student.monthlyFee ?? 7000" (change)="updateStudentFee(student.id, 'monthlyFee', $event)" style="background:#FFF; padding:6px; font-size:11px">
                       <option [value]="7000">7,000 CFA (Regular)</option>
                       <option [value]="5000">5,000 CFA (Promo)</option>
                     </select>
+                  </div>
+                  <div class="input-row" style="margin-bottom:0; display:flex; flex-direction:column; justify-content:center">
+                    <label style="font-weight:600; font-size:11px; margin-bottom:6px">Chat Messaging</label>
+                    <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:11px; font-weight:600; color:#0D9488">
+                      <input type="checkbox" [checked]="student.voiceChatAllowed ?? false" (change)="updateStudentPermission(student.id, 'voiceChatAllowed', $event)" style="cursor:pointer" />
+                      <span>Allow Voice Messages</span>
+                    </label>
                   </div>
                 </div>
               </div>
@@ -329,6 +336,13 @@ export class TeacherStudentsComponent {
     const value = parseInt(select.value, 10);
     this.db.updateUserProfile(studentId, { [field]: value });
     this.dialogService.alert('Billing Updated', `Student's ${field === 'registrationFee' ? 'registration fee' : 'monthly tuition'} has been updated to ${value.toLocaleString()} CFA!`, 'success');
+  }
+
+  updateStudentPermission(studentId: string, property: string, event: Event) {
+    const target = event.target as HTMLInputElement;
+    const value = target.checked;
+    this.db.updateUserProfile(studentId, { [property]: value });
+    this.dialogService.alert('Permission Updated', `Student voice chat permissions updated!`, 'success');
   }
 
   addStudent() {

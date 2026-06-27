@@ -1,7 +1,8 @@
-import { Component, inject, signal, OnDestroy, ViewChild, ElementRef } from '@angular/core';
+import { Component, inject, signal, computed, OnDestroy, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { DatabaseService, ChatMessage, UserProfile } from '../../services/database.service';
+import { DatabaseService, ChatMessage, UserProfile, ChatChannel } from '../../services/database.service';
+import { DialogService } from '../../services/dialog.service';
 import { Subscription } from 'rxjs';
 
 interface ChatMember {
@@ -22,7 +23,9 @@ interface ChatMember {
     <div class="page" style="padding:0">
       <!-- Top banner info -->
       <div style="font-size:12px; color:#4F46E5; background:#EEF2FF; padding:10px 16px; border-bottom:1px solid var(--border-weak); display:flex; align-items:center; gap:6px">
-        <i class="ti ti-info-circle" aria-hidden="true" style="font-size:16px"></i> 
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+        </svg>
         Only English in this chat — practicing helps you improve faster!
       </div>
 
@@ -31,20 +34,36 @@ interface ChatMember {
         
         <!-- Left Side Pane: Channel list -->
         <div class="chat-channels-pane">
-          <div class="pane-title">CHANNELS</div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
+            <div class="pane-title" style="margin-bottom:0">CHANNELS</div>
+            
+            <!-- Create room button (Teacher only) -->
+            @if (isTeacher()) {
+              <button (click)="showCreateChanModal.set(true)" style="background:none; border:none; cursor:pointer; color:#4F46E5; display:flex; align-items:center" title="Create Chat Room">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              </button>
+            }
+          </div>
+          
           <div class="channel-list">
-            <button class="channel-btn" [class.active]="activeChannel() === 'general'" (click)="switchChannel('general')">
-              <span class="hashtag">#</span> general
-            </button>
-            <button class="channel-btn" [class.active]="activeChannel() === 'group-a'" (click)="switchChannel('group-a')">
-              <span class="hashtag">#</span> study-group-a
-            </button>
-            <button class="channel-btn" [class.active]="activeChannel() === 'travel'" (click)="switchChannel('travel')">
-              <span class="hashtag">#</span> travel-talk
-            </button>
-            <button class="channel-btn" [class.active]="activeChannel() === 'debate'" (click)="switchChannel('debate')">
-              <span class="hashtag">#</span> debate-club
-            </button>
+            @for (chan of visibleChannels(); track chan.id) {
+              <div style="display:flex; justify-content:space-between; align-items:center; width:100%; gap:4px">
+                <button class="channel-btn" style="flex:1; text-align:left; overflow:hidden; text-overflow:ellipsis" [class.active]="activeChannel() === chan.id" (click)="switchChannel(chan.id)">
+                  <span class="hashtag">#</span> {{ chan.name }}
+                  @if (chan.isPrivate) {
+                    <span style="font-size:9px; opacity:0.6; margin-left:4px" title="Private Room">🔒</span>
+                  }
+                  @if (unreadCounts()[chan.id] > 0) {
+                    <span class="unread-badge">{{ unreadCounts()[chan.id] }}</span>
+                  }
+                </button>
+                @if (isTeacher() && chan.id !== 'general' && chan.id !== 'group-a' && chan.id !== 'travel' && chan.id !== 'debate') {
+                  <button (click)="removeChannel(chan)" style="background:none; border:none; cursor:pointer; color:#EF4444; padding:4px 6px; font-weight:700; font-size:12px" title="Delete Channel">
+                    ×
+                  </button>
+                }
+              </div>
+            }
           </div>
         </div>
 
@@ -53,11 +72,32 @@ interface ChatMember {
           <div class="chat-messages-header">
             <div style="display:flex; align-items:center; gap:6px">
               <span class="hashtag" style="font-size:16px; font-weight:700; color:#4F46E5">#</span>
-              <span style="font-size:14px; font-weight:700; color:var(--text-primary)">{{ getChannelLabel() }}</span>
+              <span class="hide-mobile" style="font-size:14px; font-weight:700; color:var(--text-primary); white-space:nowrap">{{ getChannelLabel() }}</span>
+              <select class="show-mobile-inline channel-select-dropdown" [value]="activeChannel()" (change)="onChannelSelectChange($event)">
+                @for (chan of visibleChannels(); track chan.id) {
+                  <option [value]="chan.id"># {{ chan.name }} {{ chan.isPrivate ? '(🔒)' : '' }}</option>
+                }
+              </select>
             </div>
-            <span style="font-size:11px; color:var(--text-muted)">
-              {{ getActiveOnlineCount() }} members online
-            </span>
+            
+            <div style="display:flex; align-items:center; gap:12px">
+              <span class="hide-mobile" style="font-size:11.5px; color:var(--text-muted)">
+                {{ getActiveOnlineCount() }} members online
+              </span>
+
+              <!-- Student indicator showing personal voice chat status -->
+              @if (!isTeacher()) {
+                <span [style.color]="isVoiceChatAllowed() ? '#0D9488' : '#6B7280'" style="font-size:11px; font-weight:600; display:flex; align-items:center; gap:5px; background:var(--surface-2); padding:3px 8px; border-radius:20px; border:1px solid var(--border-weak)">
+                  @if (isVoiceChatAllowed()) {
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:#0D9488"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+                    <span>Voice: Allowed</span>
+                  } @else {
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:#9CA3AF"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    <span>Voice: Locked</span>
+                  }
+                </span>
+              }
+            </div>
           </div>
 
           <div class="chat-scroll-container" #scrollContainer>
@@ -76,7 +116,7 @@ interface ChatMember {
                         <img [src]="getFlagUrl(getSenderFlag(msg))" style="width: 14px; height: 10px; object-fit: contain; border-radius: 1px" alt="flag">
                       }
                     </span>
-                    @if (msg.senderId === 'teacher-sarah' || msg.senderId === 'teacher-emily') {
+                    @if (msg.senderId === 'teacher' || msg.senderId === 'teacher-sarah') {
                       <span class="role-badge teacher">Teacher</span>
                     } @else if (msg.senderId !== currentUserId()) {
                       <span class="role-badge student">Student</span>
@@ -84,32 +124,145 @@ interface ChatMember {
                     <span class="msg-time">{{ msg.timestamp | date:'shortTime' }}</span>
                   </div>
 
-                  <div class="message-bubble" [class.me]="msg.senderId === currentUserId()">
-                    {{ msg.content }}
+                  <div style="display:flex; align-items:center; gap:8px" [style.flex-direction]="msg.senderId === currentUserId() ? 'row-reverse' : 'row'">
+                    <div class="message-bubble" [class.me]="msg.senderId === currentUserId()" [class.audio-msg]="msg.type === 'audio'">
+                      @if (msg.type === 'audio') {
+                        <!-- Voice Message Player -->
+                        <div style="display:flex; flex-direction:column; gap:2px; padding:0; min-width:180px">
+                          <div style="display:flex; align-items:center; gap:6px">
+                            <button 
+                              style="width:28px; height:28px; border-radius:50%; border:none; color:white; display:flex; align-items:center; justify-content:center; cursor:pointer; transition: background 0.2s; flex-shrink:0" 
+                              [style.background]="playingMessageId() === msg.id ? '#EF4444' : '#4F46E5'"
+                              (click)="playChatMessageAudio(msg)">
+                              @if (playingMessageId() === msg.id) {
+                                <!-- Stop Square Icon -->
+                                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="5" width="14" height="14" rx="1"/></svg>
+                              } @else {
+                                <!-- Play Icon -->
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                  <polygon points="5 3 19 12 5 21 5 3"/>
+                                </svg>
+                              }
+                            </button>
+
+                            <!-- Wave Visualizer vibration animation -->
+                            <div style="display:flex; align-items:center; gap:2.5px; height:14px; margin:0 2px">
+                              <div class="voice-wave-bar" [class.playing]="playingMessageId() === msg.id" style="height:4px; animation-delay: 0.1s"></div>
+                              <div class="voice-wave-bar" [class.playing]="playingMessageId() === msg.id" style="height:9px; animation-delay: 0.3s"></div>
+                              <div class="voice-wave-bar" [class.playing]="playingMessageId() === msg.id" style="height:6px; animation-delay: 0.2s"></div>
+                              <div class="voice-wave-bar" [class.playing]="playingMessageId() === msg.id" style="height:12px; animation-delay: 0.5s"></div>
+                              <div class="voice-wave-bar" [class.playing]="playingMessageId() === msg.id" style="height:8px; animation-delay: 0.4s"></div>
+                              <div class="voice-wave-bar" [class.playing]="playingMessageId() === msg.id" style="height:4px; animation-delay: 0.15s"></div>
+                              <div class="voice-wave-bar" [class.playing]="playingMessageId() === msg.id" style="height:10px; animation-delay: 0.35s"></div>
+                              <div class="voice-wave-bar" [class.playing]="playingMessageId() === msg.id" style="height:7px; animation-delay: 0.25s"></div>
+                            </div>
+
+                            <span style="font-size:9.5px; opacity:0.8; font-weight:700; display:inline-flex; align-items:center; gap:2.5px; flex-shrink:0">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+                              Voice Note
+                            </span>
+                          </div>
+
+                          <!-- Spoken text transcription context -->
+                          <div class="audio-transcript">
+                            "{{ msg.content }}"
+                          </div>
+                        </div>
+                      } @else {
+                        {{ msg.content }}
+                      }
+                    </div>
+
+                    @if (isTeacher() && msg.senderId !== currentUserId()) {
+                      <button 
+                        class="delete-msg-btn"
+                        style="color:#D97706; margin-right:24px"
+                        title="Award 10 XP to this student"
+                        (click)="awardStudentXP(msg.senderId, msg.senderName)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                        </svg>
+                      </button>
+                    }
+
+                    @if (canDeleteMessage(msg)) {
+                      <button 
+                        class="delete-msg-btn"
+                        title="Delete message (available for 5 min)"
+                        (click)="deleteMessage(msg)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>
+                        </svg>
+                      </button>
+                    }
                   </div>
                 </div>
               </div>
             } @empty {
               <div class="empty-chat-placeholder">
-                <i class="ti ti-messages" aria-hidden="true" style="font-size:40px; color:var(--text-muted); margin-bottom:10px"></i>
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.5" style="margin-bottom:12px">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
                 <p style="font-weight:600; color:var(--text-primary); margin-bottom:4px">Start the conversation!</p>
-                <p style="color:var(--text-secondary); max-width:260px; margin:0 auto">
+                <p style="color:var(--text-secondary); max-width:260px; margin:0 auto; font-size:12px">
                   Write a message in English. Other online students or teachers will reply to practice with you.
                 </p>
               </div>
             }
           </div>
 
-          <div class="chat-input-wrapper">
-            <input 
-              type="text" 
-              [(ngModel)]="newMessageContent" 
-              (keyup.enter)="sendMessage()" 
-              placeholder="Write in English here..." 
-              class="chat-textbox" />
-            <button class="chat-send-btn" (click)="sendMessage()" [disabled]="!newMessageContent.trim()">
-              <i class="ti ti-send" aria-hidden="true"></i>
-            </button>
+          <!-- Bottom Chat Input with Voice Recording capability -->
+          <div class="chat-input-wrapper" style="display:flex; flex-direction:column; gap:8px">
+            @if (recordingState() === 'recording') {
+              <!-- Vocal Recording Active Strip -->
+              <div style="background:#F0FDFA; border:1px solid #99F6E4; border-radius:8px; padding:8px 12px; display:flex; justify-content:space-between; align-items:center; width:100%">
+                <div style="display:flex; align-items:center; gap:8px">
+                  <span class="recording-pulse"></span>
+                  <span style="font-size:12px; font-weight:700; color:#0D9488">Recording Voice Message... ({{ recordSeconds() }}s)</span>
+                </div>
+                <div style="display:flex; gap:8px">
+                  <button (click)="cancelVoiceRecording()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; padding:4px; display:flex; align-items:center" title="Cancel">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
+                  <button (click)="stopAndSendVoiceMessage()" style="background:#0D9488; border:none; color:white; padding:4px 10px; border-radius:6px; font-size:11.5px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:4px">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                    Send voice
+                  </button>
+                </div>
+              </div>
+            }
+
+            <div style="display:flex; gap:8px; width:100%; align-items:center">
+              <input 
+                type="text" 
+                [(ngModel)]="newMessageContent" 
+                (keyup.enter)="sendMessage()" 
+                [disabled]="recordingState() === 'recording'"
+                placeholder="Write in English here..." 
+                class="chat-textbox" 
+                style="flex:1" />
+
+              <!-- Voice Recording Button -->
+              <button 
+                [disabled]="!isVoiceChatAllowed() || recordingState() === 'recording'"
+                [style.opacity]="isVoiceChatAllowed() ? '1' : '0.4'"
+                [style.cursor]="isVoiceChatAllowed() ? 'pointer' : 'not-allowed'"
+                [title]="isVoiceChatAllowed() ? 'Record voice message' : 'Voice messaging locked. Speak with teacher to unlock!'"
+                (click)="startVoiceRecording()"
+                style="background:none; border:1px solid var(--border); color:#4F46E5; width:38px; height:38px; border-radius:8px; display:flex; align-items:center; justify-content:center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                  <line x1="12" x2="12" y1="19" y2="22" />
+                </svg>
+              </button>
+
+              <button class="chat-send-btn" (click)="sendMessage()" [disabled]="!newMessageContent.trim() || recordingState() === 'recording'" style="height:38px; width:38px; display:flex; align-items:center; justify-content:center; padding:0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -163,6 +316,51 @@ interface ChatMember {
         </div>
 
       </div>
+
+      <!-- Create Channel Modal Dialog (Teacher only) -->
+      @if (showCreateChanModal()) {
+        <div style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.65); display:flex; justify-content:center; align-items:center; z-index:99999; padding:16px">
+          <div class="card" style="width:100%; max-width:480px; background:#FFF; border-radius:12px; padding:20px; box-shadow:0 10px 25px rgba(0,0,0,0.25); margin:0">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px">
+              <h3 style="font-size:15px; font-weight:700; color:#4F46E5; margin:0">Create New Chat Room</h3>
+              <button (click)="showCreateChanModal.set(false)" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:18px; font-weight:700; line-height:1; padding:4px">
+                ×
+              </button>
+            </div>
+
+            <div class="input-row" style="margin-bottom:12px">
+              <label for="newChanName" class="form-lbl" style="font-size:11px; margin-bottom:4px; display:block">Channel Name</label>
+              <input id="newChanName" type="text" [(ngModel)]="newChanName" placeholder="e.g. intermediate-speakers" class="form-input" style="height:36px; font-size:12px; width:100%; border:1px solid var(--border); border-radius:6px; padding:0 10px; background:var(--surface-1); color:var(--text-primary)" />
+            </div>
+
+            <div class="input-row" style="margin-top:12px; margin-bottom:12px">
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:700; font-size:12px; color:var(--text-primary)">
+                <input type="checkbox" [checked]="newChanIsPrivate" (change)="newChanIsPrivate = !newChanIsPrivate" />
+                <span>Make Room Private (Invite-only)</span>
+              </label>
+            </div>
+
+            @if (newChanIsPrivate) {
+              <div style="margin-top:12px; border-top:1px solid var(--border-weak); padding-top:10px">
+                <label class="form-lbl" style="font-size:11px; margin-bottom:6px; display:block">Select Students to Invite:</label>
+                <div style="max-height:140px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; background:var(--surface-2); padding:8px; border-radius:6px; border:1px solid var(--border-weak)">
+                  @for (stud of studentList(); track stud.id) {
+                    <label style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer; color:var(--text-primary)">
+                      <input type="checkbox" [checked]="newChanSelectedStudents().includes(stud.id)" (change)="toggleStudentSelection(stud.id)" />
+                      <span>{{ stud.name }} ({{ stud.level }})</span>
+                    </label>
+                  }
+                </div>
+              </div>
+            }
+
+            <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:20px; border-top:1px solid var(--border-weak); padding-top:12px">
+              <button class="btn-s" (click)="showCreateChanModal.set(false)" style="height:36px; font-size:12px; padding:0 14px">Cancel</button>
+              <button class="btn-p" [disabled]="!newChanName.trim()" (click)="createChannel()" style="height:36px; font-size:12px; padding:0 16px; background:#4F46E5; border-color:#4F46E5">Create Room</button>
+            </div>
+          </div>
+        </div>
+      }
     </div>
   `,
   styles: [`
@@ -218,7 +416,6 @@ interface ChatMember {
 
     .channel-btn:hover {
       background: rgba(0, 0, 0, 0.04);
-      color: var(--text-primary);
     }
 
     .channel-btn.active {
@@ -226,36 +423,46 @@ interface ChatMember {
       color: #4F46E5;
     }
 
+    .unread-badge {
+      background: #EF4444;
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 10px;
+      margin-left: auto;
+      min-width: 18px;
+      text-align: center;
+    }
+
     .hashtag {
-      font-weight: 600;
+      font-size: 14px;
+      font-weight: 500;
       color: var(--text-muted);
     }
 
-    .channel-btn.active .hashtag {
-      color: #4F46E5;
-    }
-
-    /* Middle message pane */
+    /* Middle Pane */
     .chat-messages-pane {
       flex: 1;
       display: flex;
       flex-direction: column;
-      border-right: 1px solid var(--border-weak);
       background: #FFF;
     }
 
     .chat-messages-header {
-      padding: 14px 20px;
+      height: 48px;
       border-bottom: 1px solid var(--border-weak);
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      flex-shrink: 0;
     }
 
     .chat-scroll-container {
       flex: 1;
       overflow-y: auto;
-      padding: 20px;
+      padding: 16px;
       display: flex;
       flex-direction: column;
       gap: 16px;
@@ -263,15 +470,14 @@ interface ChatMember {
 
     .message-bubble-row {
       display: flex;
+      gap: 10px;
       align-items: flex-start;
-      gap: 12px;
       max-width: 80%;
     }
 
     .message-bubble-row.is-me {
       align-self: flex-end;
       flex-direction: row-reverse;
-      max-width: 75%;
     }
 
     .message-avatar {
@@ -282,9 +488,9 @@ interface ChatMember {
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 16px;
+      font-size: 14px;
+      border: 1px solid var(--border-weak);
       flex-shrink: 0;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
 
     .message-content-col {
@@ -296,12 +502,12 @@ interface ChatMember {
     .message-meta-row {
       display: flex;
       align-items: center;
-      gap: 6px;
-      font-size: 10px;
+      gap: 8px;
+      font-size: 11px;
     }
 
     .message-meta-row.is-me {
-      justify-content: flex-end;
+      flex-direction: row-reverse;
     }
 
     .msg-sender-name {
@@ -309,12 +515,8 @@ interface ChatMember {
       color: var(--text-primary);
     }
 
-    .msg-time {
-      color: var(--text-muted);
-    }
-
     .role-badge {
-      font-size: 8px;
+      font-size: 8.5px;
       font-weight: 700;
       padding: 1px 5px;
       border-radius: 4px;
@@ -322,23 +524,26 @@ interface ChatMember {
     }
 
     .role-badge.teacher {
-      background: #E0E7FF;
+      background: #EEF2FF;
       color: #4F46E5;
     }
 
     .role-badge.student {
-      background: #ECFDF5;
-      color: #047857;
+      background: var(--surface-3);
+      color: var(--text-secondary);
+    }
+
+    .msg-time {
+      color: var(--text-muted);
     }
 
     .message-bubble {
       background: var(--surface-2);
       color: var(--text-primary);
-      border: 1px solid var(--border-weak);
       padding: 10px 14px;
-      border-radius: 4px 14px 14px 14px;
+      border-radius: 0 12px 12px 12px;
       font-size: 12.5px;
-      line-height: 1.5;
+      line-height: 1.4;
       white-space: pre-wrap;
       word-break: break-word;
     }
@@ -346,30 +551,26 @@ interface ChatMember {
     .message-bubble.me {
       background: #4F46E5;
       color: #FFF;
-      border-color: #4F46E5;
-      border-radius: 14px 4px 14px 14px;
+      border-radius: 12px 0 12px 12px;
     }
 
     .chat-input-wrapper {
-      padding: 16px 20px;
+      padding: 16px;
       border-top: 1px solid var(--border-weak);
-      display: flex;
-      gap: 10px;
-      background: #FFF;
+      flex-shrink: 0;
     }
 
     .chat-textbox {
-      flex: 1;
-      background: var(--surface-2);
       border: 1px solid var(--border);
       border-radius: 8px;
       padding: 10px 14px;
       font-size: 12.5px;
+      outline: none;
+      background: var(--surface-1);
       transition: all 0.2s;
     }
 
     .chat-textbox:focus {
-      outline: none;
       border-color: #4F46E5;
       background: #FFF;
     }
@@ -379,13 +580,8 @@ interface ChatMember {
       color: #FFF;
       border: none;
       border-radius: 8px;
-      width: 38px;
-      height: 38px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      padding: 8px 12px;
       cursor: pointer;
-      font-size: 14px;
       transition: background 0.2s;
     }
 
@@ -394,25 +590,26 @@ interface ChatMember {
     }
 
     .chat-send-btn:disabled {
-      background: var(--border);
+      background: var(--surface-3);
       color: var(--text-muted);
       cursor: not-allowed;
     }
 
-    /* Right members pane */
+    /* Right active members pane */
     .chat-members-pane {
       width: 220px;
-      background: var(--surface-2);
+      border-left: 1px solid var(--border-weak);
       display: flex;
       flex-direction: column;
+      background: var(--surface-2);
       flex-shrink: 0;
-      padding: 16px 12px;
+      padding: 16px 8px;
     }
 
     .members-list-wrapper {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
       overflow-y: auto;
     }
 
@@ -420,33 +617,35 @@ interface ChatMember {
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 4px;
+      padding: 6px 8px;
+      border-radius: 6px;
     }
 
     .member-item.offline {
-      opacity: 0.55;
+      opacity: 0.6;
     }
 
     .member-avatar-box {
-      position: relative;
-      width: 30px;
-      height: 30px;
-      background: #FFF;
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
+      background: #FFF;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 14px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      font-size: 15px;
+      position: relative;
+      border: 1px solid var(--border-weak);
+      flex-shrink: 0;
     }
 
     .status-dot {
-      position: absolute;
-      bottom: -1px;
-      right: -1px;
       width: 8px;
       height: 8px;
       border-radius: 50%;
+      position: absolute;
+      bottom: 0;
+      right: 0;
       border: 1.5px solid #FFF;
     }
 
@@ -461,51 +660,308 @@ interface ChatMember {
     .member-name {
       font-size: 11.5px;
       font-weight: 700;
+      color: var(--text-primary);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
 
     .member-subtext {
-      font-size: 9px;
-      color: var(--text-secondary);
+      font-size: 10px;
+      color: var(--text-muted);
       margin-top: 1px;
     }
 
     .empty-chat-placeholder {
       text-align: center;
-      padding: 40px 20px;
-      font-size: 12px;
-      margin: auto 0;
+      padding: 60px 20px;
+    }
+
+    .recording-pulse {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #0D9488;
+      display: inline-block;
+      animation: pulse-teal 1s infinite;
+    }
+    @keyframes pulse-teal {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(13, 148, 136, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(13, 148, 136, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(13, 148, 136, 0); }
+    }
+
+    .voice-wave-bar {
+      width: 2.5px;
+      background: var(--text-secondary);
+      border-radius: 2px;
+      animation: wave-vibrate 0.8s ease-in-out infinite alternate;
+    }
+    .message-bubble.me:not(.audio-msg) .voice-wave-bar {
+      background: rgba(255, 255, 255, 0.7);
+    }
+    .message-bubble.audio-msg.me .voice-wave-bar {
+      background: #3B82F6;
+    }
+    .message-bubble.audio-msg:not(.me) .voice-wave-bar {
+      background: #10B981;
+    }
+    .voice-wave-bar.playing {
+      background: #34D399 !important;
+      animation: wave-vibrate-playing 0.3s ease-in-out infinite alternate;
+    }
+    @keyframes wave-vibrate {
+      0% { height: 4px; }
+      100% { height: 12px; }
+    }
+    @keyframes wave-vibrate-playing {
+      0% { height: 3px; }
+      100% { height: 22px; }
     }
 
     /* Responsive */
-    @media (max-width: 850px) {
+    @media (max-width: 900px) {
+      .chat-channels-pane {
+        width: 160px;
+        padding: 12px 6px;
+      }
       .chat-members-pane {
-        display: none;
+        width: 180px;
+        padding: 12px 6px;
+      }
+      .channel-btn {
+        font-size: 11px;
+        padding: 6px 10px;
+      }
+      .pane-title {
+        font-size: 9px;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .chat-channels-pane {
+        display: none !important;
+      }
+      .chat-members-pane {
+        display: none !important;
+      }
+      .chat-workspace {
+        height: calc(100vh - 125px) !important;
+      }
+    }
+
+    @media (min-width: 1200px) {
+      .chat-channels-pane {
+        width: 240px;
+      }
+      .chat-members-pane {
+        width: 260px;
+      }
+      .channel-btn {
+        font-size: 13px;
+        padding: 10px 14px;
+      }
+    }
+
+    .delete-msg-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      opacity: 0;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .message-bubble-row:hover .delete-msg-btn {
+      opacity: 0.6;
+    }
+
+    .delete-msg-btn:hover {
+      opacity: 1 !important;
+      color: #EF4444;
+      background: var(--surface-2);
+    }
+
+    .message-bubble.audio-msg {
+      background: #F0FDF4;
+      border: 0.5px solid #D1FAE5;
+      color: #065F46;
+      padding: 6px 10px !important;
+      border-radius: 0 12px 12px 12px;
+      min-width: 215px;
+      max-width: 290px;
+    }
+    
+    .message-bubble.audio-msg.me {
+      background: #EFF6FF;
+      border: 0.5px solid #DBEAFE;
+      color: #1E40AF;
+      border-radius: 12px 0 12px 12px;
+      padding: 6px 10px !important;
+      min-width: 215px;
+      max-width: 290px;
+    }
+
+    .audio-transcript {
+      font-size: 10px;
+      font-style: italic;
+      border-top: 0.5px solid rgba(0, 0, 0, 0.05);
+      padding-top: 2px;
+      margin-top: 2px;
+      color: inherit;
+      opacity: 0.8;
+    }
+
+    /* Mobile Responsive Chat Layout overrides */
+    .show-mobile-inline {
+      display: none;
+    }
+
+    /* Unread notification badge styling */
+    .unread-badge {
+      background: #EF4444;
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 10px;
+      margin-left: auto;
+      min-width: 18px;
+      text-align: center;
+    }
+
+    .channel-select-dropdown {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 2px 20px 2px 6px;
+      background: var(--surface-1);
+      cursor: pointer;
+      outline: none;
+      max-width: 140px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+      appearance: none;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>");
+      background-repeat: no-repeat;
+      background-position: right 6px center;
+    }
+
+    @media (max-width: 768px) {
+      .show-mobile-inline {
+        display: inline-block !important;
+      }
+      .hide-mobile {
+        display: none !important;
+      }
+      .chat-messages-header {
+        padding: 0 10px !important;
+        height: 42px;
+      }
+      .message-bubble-row {
+        max-width: 92% !important;
+      }
+      .chat-input-wrapper {
+        padding: 10px !important;
+      }
+      .chat-send-btn {
+        width: 34px !important;
+        height: 34px !important;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .chat-workspace {
+        height: calc(100vh - 110px) !important;
+      }
+      .message-bubble-row {
+        max-width: 95% !important;
+      }
+      .chat-scroll-container {
+        padding: 10px !important;
+      }
+      .chat-messages-header {
+        padding: 0 8px !important;
       }
     }
   `]
 })
 export class StudentChatComponent implements OnDestroy {
   private db = inject(DatabaseService);
+  private dialogService = inject(DialogService);
 
   @ViewChild('scrollContainer') private scrollContainer!: ElementRef;
 
   activeChannel = signal<string>('general');
   messages = signal<ChatMessage[]>([]);
   newMessageContent = '';
-  
+  unreadCounts = signal<{[channelId: string]: number}>({});
   currentUser: UserProfile | null = null;
   private chatSub: Subscription | null = null;
   private localUpdateListener: any;
 
   dbUsers = signal<UserProfile[]>([]);
+  channels = signal<ChatChannel[]>([]);
+  
+  // Custom channel creation states
+  showCreateChanModal = signal<boolean>(false);
+  newChanName = '';
+  newChanIsPrivate = false;
+  newChanSelectedStudents = signal<string[]>([]);
+  
+  studentList = computed(() => {
+    return this.dbUsers().filter(u => u.role === 'student');
+  });
+
+  visibleChannels = computed(() => {
+    const list = this.channels();
+    const isTeacher = this.isTeacher();
+    const uid = this.currentUserId();
+    
+    return list.filter(c => {
+      if (isTeacher) return true;
+      if (!c.isPrivate) return true;
+      return c.members?.includes(uid);
+    });
+  });
+
+  // Voice recording state variables
+  recordingState = signal<'idle' | 'recording' | 'finished'>('idle');
+  recordSeconds = signal<number>(0);
+  private timerInterval: any = null;
+  playingMessageId = signal<string | null>(null);
+
+  private mediaRecorder: MediaRecorder | null = null;
+  private audioChunks: Blob[] = [];
+  private currentAudioPlayer: HTMLAudioElement | null = null;
+  private recognitionInstance: any = null;
+  private recordedTranscript = '';
 
   constructor() {
     this.db.observeCurrentUser().subscribe(u => this.currentUser = u);
     this.db.observeUsers().subscribe(list => this.dbUsers.set(list));
+    this.db.observeChannels().subscribe(list => this.channels.set(list));
     this.subscribeToChat();
+
+    // Listen for custom chat notification events from layout
+    window.addEventListener('chat-notification', (event: any) => {
+      const { channelId, channelName } = event.detail;
+      const current = this.unreadCounts();
+      if (channelId !== this.activeChannel()) {
+        this.unreadCounts.set({
+          ...current,
+          [channelId]: (current[channelId] || 0) + 1
+        });
+      }
+    });
 
     // Listen to local updates
     this.localUpdateListener = (e: any) => {
@@ -516,22 +972,82 @@ export class StudentChatComponent implements OnDestroy {
     window.addEventListener('local-chat-update', this.localUpdateListener);
   }
 
+  isTeacher(): boolean {
+    return this.currentUser?.role === 'teacher';
+  }
+
+  isVoiceChatAllowed(): boolean {
+    if (this.isTeacher()) return true;
+    return !!this.currentUser?.voiceChatAllowed;
+  }
+
   currentUserId() {
     return this.currentUser?.id || '';
   }
 
+  canDeleteMessage(msg: ChatMessage): boolean {
+    if (this.isTeacher()) return true;
+    return msg.senderId === this.currentUserId();
+  }
+
+  deleteMessage(msg: ChatMessage) {
+    if (!msg.id) return;
+    this.db.deleteChatMessage(this.activeChannel(), msg.id);
+  }
+
   getChannelLabel() {
-    switch (this.activeChannel()) {
-      case 'general': return 'general-discussion';
-      case 'group-a': return 'study-group-a';
-      case 'travel': return 'travel-dialogue';
-      case 'debate': return 'debate-club';
-      default: return 'chat-room';
+    const active = this.activeChannel();
+    const match = this.channels().find(c => c.id === active);
+    return match ? match.name : active;
+  }
+
+  toggleStudentSelection(studentId: string) {
+    const active = this.newChanSelectedStudents();
+    if (active.includes(studentId)) {
+      this.newChanSelectedStudents.set(active.filter(id => id !== studentId));
+    } else {
+      this.newChanSelectedStudents.set([...active, studentId]);
     }
   }
 
+  createChannel() {
+    if (!this.newChanName.trim()) return;
+    const name = this.newChanName.toLowerCase().replace(/[^a-z0-9-_]/g, '-');
+    const isPrivate = this.newChanIsPrivate;
+    const members = isPrivate ? this.newChanSelectedStudents() : [];
+
+    this.db.addChannel(name, isPrivate, members);
+    this.dialogService.alert('Success', `Channel #${name} created successfully!`, 'success');
+
+    // Reset fields
+    this.newChanName = '';
+    this.newChanIsPrivate = false;
+    this.newChanSelectedStudents.set([]);
+    this.showCreateChanModal.set(false);
+  }
+
+  removeChannel(chan: ChatChannel) {
+    this.dialogService.show({
+      title: 'Close Chat Room',
+      message: `Are you sure you want to delete the channel #${chan.name}? This will remove all messages inside it.`,
+      type: 'confirm',
+      confirmText: 'Delete Room',
+      cancelText: 'Cancel',
+      onConfirm: () => {
+        this.db.deleteChannel(chan.id);
+        this.activeChannel.set('general');
+        this.subscribeToChat();
+        this.dialogService.alert('Deleted', 'Chat room deleted successfully!', 'success');
+      }
+    });
+  }
+
+  awardStudentXP(studentId: string, studentName: string) {
+    this.db.updateUserXP(studentId, 10, true);
+    this.dialogService.alert('XP Awarded', `Awarded +10 XP to ${studentName} for great English communication!`, 'success');
+  }
+
   getChannelMembers(): ChatMember[] {
-    // Only return actual registered users from the database (excluding current user)
     return this.dbUsers()
       .filter(u => u.id !== this.currentUserId())
       .map(u => ({
@@ -559,12 +1075,10 @@ export class StudentChatComponent implements OnDestroy {
     if (msg.senderId === this.currentUserId()) {
       return this.currentUser?.countryFlag || '';
     }
-    // Check simulated list
     const simFound = this.getChannelMembers().find(m => m.id === msg.senderId || m.name === msg.senderName);
     if (simFound && simFound.countryFlag) {
       return simFound.countryFlag;
     }
-    // Check database users
     const dbFound = this.dbUsers().find(u => u.id === msg.senderId || u.name === msg.senderName);
     return dbFound?.countryFlag || '';
   }
@@ -591,6 +1105,15 @@ export class StudentChatComponent implements OnDestroy {
   switchChannel(channelId: string) {
     this.activeChannel.set(channelId);
     this.subscribeToChat();
+    // Clear unread count for this channel
+    const current = this.unreadCounts();
+    const updated = { ...current };
+    delete updated[channelId];
+    this.unreadCounts.set(updated);
+  }
+
+  onChannelSelectChange(event: any) {
+    this.switchChannel(event.target.value);
   }
 
   subscribeToChat() {
@@ -599,8 +1122,22 @@ export class StudentChatComponent implements OnDestroy {
     }
     
     this.chatSub = this.db.observeChatMessages(this.activeChannel()).subscribe(list => {
+      const prevLength = this.messages().length;
       this.messages.set(list);
       this.scrollToBottom();
+
+      // Dispatch notification if new messages arrived while user was in another channel
+      if (list.length > prevLength && prevLength > 0) {
+        const newMsg = list[list.length - 1];
+        if (newMsg && newMsg.senderId !== this.currentUserId()) {
+          window.dispatchEvent(new CustomEvent('chat-notification', {
+            detail: {
+              channelId: this.activeChannel(),
+              channelName: this.getChannelLabel()
+            }
+          }));
+        }
+      }
     });
   }
 
@@ -608,8 +1145,154 @@ export class StudentChatComponent implements OnDestroy {
     const text = this.newMessageContent.trim();
     if (!text) return;
     
-    this.newMessageContent = ''; // clear input for reactive feel
+    this.newMessageContent = '';
     await this.db.sendChatMessage(this.activeChannel(), text);
+  }
+
+  // Voice recording methods for chat
+  startVoiceRecording() {
+    if (!this.isVoiceChatAllowed()) return;
+    this.recordedTranscript = '';
+    
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+      // iOS/Safari compatible MIME type selection
+      const mimeType = this.getSupportedAudioMimeType();
+      const options: MediaRecorderOptions = mimeType ? { mimeType } : {};
+      this.mediaRecorder = new MediaRecorder(stream, options);
+      this.audioChunks = [];
+      
+      this.mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          this.audioChunks.push(event.data);
+        }
+      };
+      
+      this.mediaRecorder.start();
+      this.recordingState.set('recording');
+      this.recordSeconds.set(0);
+      
+      this.timerInterval = setInterval(() => {
+        this.recordSeconds.set(this.recordSeconds() + 1);
+      }, 1000);
+
+      // Start recognition in parallel
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        try {
+          this.recognitionInstance = new SpeechRecognition();
+          this.recognitionInstance.continuous = true;
+          this.recognitionInstance.interimResults = false;
+          this.recognitionInstance.lang = 'en-US';
+          
+          this.recognitionInstance.onresult = (e: any) => {
+            for (let i = e.resultIndex; i < e.results.length; ++i) {
+              if (e.results[i].isFinal) {
+                this.recordedTranscript += e.results[i][0].transcript + ' ';
+              }
+            }
+          };
+          this.recognitionInstance.start();
+        } catch (e) {
+          console.error("SpeechRecognition initialization failed:", e);
+        }
+      }
+    }).catch(err => {
+      console.error("Microphone access denied:", err);
+    });
+  }
+
+  cancelVoiceRecording() {
+    if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+      this.mediaRecorder.stop();
+      this.mediaRecorder.stream.getTracks().forEach(t => t.stop());
+    }
+    if (this.recognitionInstance) {
+      try {
+        this.recognitionInstance.stop();
+      } catch (e) {}
+      this.recognitionInstance = null;
+    }
+    clearInterval(this.timerInterval);
+    this.recordingState.set('idle');
+    this.recordSeconds.set(0);
+  }
+
+  async stopAndSendVoiceMessage() {
+    if (!this.mediaRecorder || this.mediaRecorder.state === 'inactive') {
+      clearInterval(this.timerInterval);
+      this.recordingState.set('idle');
+      return;
+    }
+
+    if (this.recognitionInstance) {
+      try {
+        this.recognitionInstance.stop();
+      } catch (e) {}
+    }
+
+    this.mediaRecorder.onstop = () => {
+      const mimeType = this.getSupportedAudioMimeType();
+      const blobType = mimeType || 'audio/webm';
+      const audioBlob = new Blob(this.audioChunks, { type: blobType });
+      
+      const reader = new FileReader();
+      reader.readAsDataURL(audioBlob);
+      reader.onloadend = async () => {
+        const base64Data = reader.result as string;
+        const finalTranscript = this.recordedTranscript.trim() || 'Voice Message';
+        await this.db.sendChatMessage(this.activeChannel(), finalTranscript, 'audio', base64Data);
+      };
+      this.mediaRecorder?.stream.getTracks().forEach(t => t.stop());
+    };
+
+    this.mediaRecorder.stop();
+    clearInterval(this.timerInterval);
+    this.recordingState.set('idle');
+  }
+
+  playChatMessageAudio(msg: ChatMessage) {
+    if (msg.audioUrl) {
+      if (this.currentAudioPlayer && this.playingMessageId() === msg.id) {
+        this.currentAudioPlayer.pause();
+        this.playingMessageId.set(null);
+        return;
+      }
+
+      if (this.currentAudioPlayer) {
+        this.currentAudioPlayer.pause();
+      }
+
+      this.playingMessageId.set(msg.id || null);
+      this.currentAudioPlayer = new Audio(msg.audioUrl);
+      
+      this.currentAudioPlayer.onended = () => {
+        this.playingMessageId.set(null);
+      };
+      this.currentAudioPlayer.onerror = () => {
+        this.playingMessageId.set(null);
+        this.playTTSFallback(msg.content);
+      };
+      
+      this.currentAudioPlayer.play().catch(err => {
+        console.error("Audio playback error:", err);
+        this.playTTSFallback(msg.content);
+      });
+    } else {
+      this.playTTSFallback(msg.content);
+    }
+  }
+
+  private playTTSFallback(text: string) {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'en-US';
+      utterance.onend = () => this.playingMessageId.set(null);
+      utterance.onerror = () => this.playingMessageId.set(null);
+      window.speechSynthesis.speak(utterance);
+    } else {
+      this.playingMessageId.set(null);
+    }
   }
 
   private scrollToBottom() {
@@ -626,5 +1309,43 @@ export class StudentChatComponent implements OnDestroy {
   ngOnDestroy() {
     if (this.chatSub) this.chatSub.unsubscribe();
     window.removeEventListener('local-chat-update', this.localUpdateListener);
+    
+    if (this.currentAudioPlayer) {
+      try {
+        this.currentAudioPlayer.pause();
+        this.currentAudioPlayer = null;
+      } catch (e) {}
+    }
+    if (this.recognitionInstance) {
+      try {
+        this.recognitionInstance.stop();
+      } catch (e) {}
+      this.recognitionInstance = null;
+    }
+    if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+      try {
+        this.mediaRecorder.stop();
+        this.mediaRecorder.stream.getTracks().forEach(t => t.stop());
+      } catch (e) {}
+      this.mediaRecorder = null;
+    }
+    clearInterval(this.timerInterval);
+  }
+
+  private getSupportedAudioMimeType(): string {
+    // iOS/Safari compatible MIME type detection
+    const types = [
+      'audio/mp4;codecs=mp4a.40.2',
+      'audio/mp4',
+      'audio/aac',
+      'audio/webm;codecs=opus',
+      'audio/webm'
+    ];
+    for (const type of types) {
+      if (MediaRecorder.isTypeSupported(type)) {
+        return type;
+      }
+    }
+    return '';
   }
 }

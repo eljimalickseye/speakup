@@ -131,6 +131,58 @@ import { DialogService } from '../../services/dialog.service';
 
               <!-- Grading Form Inputs -->
               <div class="grading-inputs-section">
+                <!-- Toggle Rubric Helper -->
+                <div style="margin-bottom: 16px; border-bottom: 1px solid var(--border-weak); padding-bottom: 12px">
+                  <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:700; font-size:12px; color:#4F46E5">
+                    <input type="checkbox" [checked]="useRubric()" (change)="useRubric.set(!useRubric())" />
+                    <span>Use Rubric Evaluation Helper</span>
+                  </label>
+                  
+                  @if (useRubric()) {
+                    <div style="background:var(--surface-2); border:1px solid var(--border-weak); border-radius:8px; padding:12px; margin-top:8px; display:flex; flex-direction:column; gap:10px">
+                      <!-- Criteria 1: Pronunciation -->
+                      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap">
+                        <span style="font-size:11.5px; font-weight:600; color:var(--text-primary)">Pronunciation & Articulation</span>
+                        <div style="display:flex; gap:4px">
+                          @for (star of [1,2,3,4,5]; track star) {
+                            <button (click)="updateRubricRating('pron', star)" style="background:none; border:none; cursor:pointer; padding:2px; font-size:16px; color:#94A3B8; transition:color 0.15s" [style.color]="pronunciationRating() >= star ? '#F59E0B' : '#94A3B8'">
+                              ★
+                            </button>
+                          }
+                        </div>
+                      </div>
+
+                      <!-- Criteria 2: Grammar -->
+                      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap">
+                        <span style="font-size:11.5px; font-weight:600; color:var(--text-primary)">Grammar & Sentence Structure</span>
+                        <div style="display:flex; gap:4px">
+                          @for (star of [1,2,3,4,5]; track star) {
+                            <button (click)="updateRubricRating('gram', star)" style="background:none; border:none; cursor:pointer; padding:2px; font-size:16px; color:#94A3B8; transition:color 0.15s" [style.color]="grammarRating() >= star ? '#F59E0B' : '#94A3B8'">
+                              ★
+                            </button>
+                          }
+                        </div>
+                      </div>
+
+                      <!-- Criteria 3: Vocabulary -->
+                      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap">
+                        <span style="font-size:11.5px; font-weight:600; color:var(--text-primary)">Vocabulary & Fluency</span>
+                        <div style="display:flex; gap:4px">
+                          @for (star of [1,2,3,4,5]; track star) {
+                            <button (click)="updateRubricRating('vocab', star)" style="background:none; border:none; cursor:pointer; padding:2px; font-size:16px; color:#94A3B8; transition:color 0.15s" [style.color]="vocabularyRating() >= star ? '#F59E0B' : '#94A3B8'">
+                              ★
+                            </button>
+                          }
+                        </div>
+                      </div>
+
+                      <button class="btn-s" (click)="insertRubricBreakdown()" [disabled]="pronunciationRating() === 0 && grammarRating() === 0 && vocabularyRating() === 0" style="padding:4px 8px; font-size:10px; margin-top:4px; align-self:flex-start">
+                        Insert Ratings report into Feedback
+                      </button>
+                    </div>
+                  }
+                </div>
+
                 <div class="input-grid">
                   <div class="input-row">
                     <label for="gradeScoreSelect" class="form-lbl">Award Grade</label>
@@ -152,7 +204,18 @@ import { DialogService } from '../../services/dialog.service';
                 </div>
 
                 <div class="input-row">
-                  <label for="gradeFeedbackText" class="form-lbl">Teacher Feedback (Advice, Corrections, or Praise)</label>
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; flex-wrap:wrap; gap:8px">
+                    <label for="gradeFeedbackText" class="form-lbl" style="margin-bottom:0">Teacher Feedback</label>
+                    
+                    <!-- Quick feedback templates -->
+                    <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap">
+                      <span style="font-size:9.5px; font-weight:700; color:var(--text-muted)">QUICK TEMPLATES:</span>
+                      <button (click)="applyFeedbackTemplate('excellent')" class="badge" style="background:#ECFDF5; border:1px solid #A7F3D0; color:#047857; cursor:pointer; font-size:9px" title="Excellent template">🌟 Excellent</button>
+                      <button (click)="applyFeedbackTemplate('grammar')" class="badge" style="background:#EFF6FF; border:1px solid #BFDBFE; color:#1D4ED8; cursor:pointer; font-size:9px" title="Grammar focus template">📝 Grammar</button>
+                      <button (click)="applyFeedbackTemplate('pron')" class="badge" style="background:#F0FDFA; border:1px solid #99F6E4; color:#0F766E; cursor:pointer; font-size:9px" title="Pronunciation template">🗣️ Pron</button>
+                      <button (click)="applyFeedbackTemplate('incomplete')" class="badge" style="background:#FEF3C7; border:1px solid #FDE68A; color:#92400E; cursor:pointer; font-size:9px" title="Incomplete template">⚠️ Incomplete</button>
+                    </div>
+                  </div>
                   <textarea 
                     id="gradeFeedbackText" 
                     [(ngModel)]="gradeFeedback" 
@@ -540,6 +603,12 @@ export class TeacherHomeworkComponent {
   gradeXp = 50;
   gradeFeedback = '';
 
+  // Rubric Rating states
+  useRubric = signal<boolean>(false);
+  pronunciationRating = signal<number>(0);
+  grammarRating = signal<number>(0);
+  vocabularyRating = signal<number>(0);
+
   constructor() {
     this.db.observeSubmissions().subscribe(list => {
       this.submissions.set(list);
@@ -563,6 +632,75 @@ export class TeacherHomeworkComponent {
     this.gradeScore = sub.score || 'B — Good';
     this.gradeXp = sub.xpReward || 50;
     this.gradeFeedback = sub.feedback || 'Good effort! Pay close attention to English grammar and verb tenses.';
+    
+    // Reset rubric helper
+    this.useRubric.set(false);
+    this.pronunciationRating.set(0);
+    this.grammarRating.set(0);
+    this.vocabularyRating.set(0);
+  }
+
+  updateRubricRating(category: 'pron' | 'gram' | 'vocab', value: number) {
+    if (category === 'pron') this.pronunciationRating.set(value);
+    if (category === 'gram') this.grammarRating.set(value);
+    if (category === 'vocab') this.vocabularyRating.set(value);
+
+    // Calculate recommended grade and XP if at least one rating is set
+    const p = this.pronunciationRating();
+    const g = this.grammarRating();
+    const v = this.vocabularyRating();
+    
+    let count = 0;
+    let sum = 0;
+    if (p > 0) { sum += p; count++; }
+    if (g > 0) { sum += g; count++; }
+    if (v > 0) { sum += v; count++; }
+
+    if (count > 0) {
+      const avg = sum / count;
+      // Recommend Grade
+      if (avg >= 4.5) this.gradeScore = 'A — Excellent';
+      else if (avg >= 3.5) this.gradeScore = 'B — Good';
+      else if (avg >= 2.5) this.gradeScore = 'C — Satisfactory';
+      else this.gradeScore = 'D — Needs improvement';
+
+      // Recommend XP: avg * 20 (capped at 100)
+      this.gradeXp = Math.min(100, Math.round(avg * 20));
+    }
+  }
+
+  insertRubricBreakdown() {
+    const p = this.pronunciationRating();
+    const g = this.grammarRating();
+    const v = this.vocabularyRating();
+
+    const breakdown = `[Evaluation Criteria Rating]:
+- Pronunciation & Articulation: ${p > 0 ? p + '/5 ⭐' : 'N/A'}
+- Grammar & Sentence Structure: ${g > 0 ? g + '/5 ⭐' : 'N/A'}
+- Vocabulary & Fluency: ${v > 0 ? v + '/5 ⭐' : 'N/A'}
+
+`;
+    // Prepend to feedback
+    this.gradeFeedback = breakdown + this.gradeFeedback;
+  }
+
+  applyFeedbackTemplate(templateCode: string) {
+    let text = '';
+    if (templateCode === 'excellent') {
+      text = "Excellent pronunciation and fluent sentence structure! Keep up the great work.";
+    } else if (templateCode === 'grammar') {
+      text = "Good effort! Try to review verb tenses and singular/plural subject agreements.";
+    } else if (templateCode === 'pron') {
+      text = "Very clear articulation, but try to speak a bit more slowly to improve your flow and rhythm.";
+    } else if (templateCode === 'incomplete') {
+      text = "Please make sure to address all parts of the homework prompt in your submission.";
+    }
+
+    if (this.gradeFeedback) {
+      this.gradeFeedback += '\n\n' + text;
+    } else {
+      this.gradeFeedback = text;
+    }
   }
 
   submitGrade() {

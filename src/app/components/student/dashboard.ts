@@ -101,8 +101,8 @@ import { DialogService } from '../../services/dialog.service';
         </div>
 
         <!-- Quick Profile flag selector card -->
-        <div class="card" style="background:rgba(255,255,255,0.22); border:1px solid rgba(255,255,255,0.3); padding:12px 16px; border-radius:12px; width:220px; color:#FFF; margin-bottom:0">
-          <h4 style="font-size:10px; text-transform:uppercase; font-weight:700; margin-bottom:8px; opacity:0.95; letter-spacing:0.03em; display:flex; align-items:center; gap:6px">
+        <div class="card" style="background:#FFF; border:1px solid #E0E7FF; padding:12px 16px; border-radius:12px; width:220px; color:#1F2937; margin-bottom:0; box-shadow:0 2px 4px rgba(0,0,0,0.02)">
+          <h4 style="font-size:10px; text-transform:uppercase; font-weight:700; margin-bottom:8px; opacity:0.85; letter-spacing:0.03em; display:flex; align-items:center; gap:6px; color:#4F46E5">
             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:12px; height:12px; vertical-align:middle">
               <circle cx="12" cy="12" r="10"/>
               <line x1="2" y1="12" x2="22" y2="12"/>
@@ -110,7 +110,7 @@ import { DialogService } from '../../services/dialog.service';
             </svg>
             <span>Select your flag</span>
           </h4>
-          <select [value]="currentUser()?.countryFlag || ''" (change)="updateFlag($event)" style="width:100%; background:#FFF; border:none; padding:6px 10px; border-radius:6px; font-size:12px; color:#1F2937; font-weight:600">
+          <select [value]="currentUser()?.countryFlag || ''" (change)="updateFlag($event)" style="width:100%; background:#FFF; border:1px solid #CBD5E1; padding:6px 10px; border-radius:6px; font-size:12px; color:#1F2937; font-weight:600; outline:none">
             <option value="">No Flag</option>
             <option value="🇸🇳">Senegal 🇸🇳</option>
             <option value="🇳🇬">Nigeria 🇳🇬</option>

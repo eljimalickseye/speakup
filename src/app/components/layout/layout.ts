@@ -51,11 +51,14 @@ import { TeacherEventsComponent } from '../teacher/events';
     TeacherEventsComponent
   ],
   template: `
-    <div class="shell">
+    <div class="shell" [class.sidebar-open]="isSidebarOpen()">
+      <!-- SIDEBAR BACKDROP (Mobile only) -->
+      <div class="sidebar-backdrop" (click)="toggleSidebar(false)"></div>
+
       <!-- SIDEBAR -->
       <div class="sidebar">
         <div class="logo">
-          <div class="logo-mark">S</div>
+          <img src="logo.png" style="width:28px; height:28px; object-fit:contain; border-radius:6px" alt="logo">
           <span class="logo-name">SpeakUp</span>
           @if (currentUser()?.role === 'teacher') {
             <span class="logo-role">Teacher</span>
@@ -85,6 +88,9 @@ import { TeacherEventsComponent } from '../teacher/events';
             <div class="nav-section">Community</div>
             <button class="nav-item" [class.active]="activeTab === 'chat'" (click)="setTab('chat')">
               <i class="ti ti-messages" aria-hidden="true"></i>English Chat
+              @if (chatUnreadCount() > 0) {
+                <span class="badge" style="background:#EF4444; color:white; margin-left:auto">{{ chatUnreadCount() }}</span>
+              }
             </button>
             <button class="nav-item" [class.active]="activeTab === 'leaderboard'" (click)="setTab('leaderboard')">
               <i class="ti ti-trophy" aria-hidden="true"></i>Leaderboard
@@ -112,9 +118,11 @@ import { TeacherEventsComponent } from '../teacher/events';
             <button class="ni" [class.active]="activeTab === 'overview'" (click)="setTab('overview')">
               <i class="ti ti-layout-dashboard" aria-hidden="true"></i>Overview
             </button>
+            <button class="ni" [class.active]="activeTab === 'chat'" (click)="setTab('chat')">
+              <i class="ti ti-messages" aria-hidden="true"></i>English Chat
+            </button>
             <button class="ni" [class.active]="activeTab === 'students'" (click)="setTab('students')">
               <i class="ti ti-users" aria-hidden="true"></i>Students
-              <span class="badge b">{{ studentsCount() }}</span>
             </button>
             
             <div class="ns">Content</div>
@@ -157,11 +165,18 @@ import { TeacherEventsComponent } from '../teacher/events';
       <div class="main">
         <!-- TOPBAR -->
         <div class="topbar">
+          <!-- Hamburger menu button (Mobile only) -->
+          <button class="hamburger-btn" (click)="toggleSidebar(true)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </button>
+
           <span class="topbar-title">{{ pageTitle }}</span>
           
           <!-- Reset DB Button (Teacher only) -->
           @if (currentUser()?.role === 'teacher') {
-            <button class="btn-s" style="font-size: 11px; padding: 4px 12px; border-radius: 20px; display:flex; align-items:center; gap:4px; margin-right: 12px; border-color:#D97706; color:#D97706" (click)="resetDB()">
+            <button class="btn-s hide-mobile" style="font-size: 11px; padding: 4px 12px; border-radius: 20px; display:flex; align-items:center; gap:4px; margin-right: 12px; border-color:#D97706; color:#D97706" (click)="resetDB()">
               <i class="ti ti-refresh" aria-hidden="true"></i> Reset DB
             </button>
           }
@@ -223,6 +238,8 @@ import { TeacherEventsComponent } from '../teacher/events';
               <app-teacher-payments></app-teacher-payments>
             } @else if (activeTab === 'teacher-events') {
               <app-teacher-events></app-teacher-events>
+            } @else if (activeTab === 'chat') {
+              <app-student-chat></app-student-chat>
             }
           }
         </div>
@@ -268,9 +285,12 @@ import { TeacherEventsComponent } from '../teacher/events';
             </div>
             <div class="modal-actions">
               @if (d.type === 'confirm') {
-                <button class="btn-s" style="padding: 6px 16px; font-size:12px; border-radius:6px" (click)="cancelDialog()">{{ d.cancelText || 'Cancel' }}</button>
+                <button class="btn-s" style="padding: 6px 16px; font-size:12px; border-radius:6px" [style.background]="d.buttonColors?.cancel || '#FFFFFF'" [style.border-color]="d.buttonColors?.cancel || '#D1D5DB'" [style.color]="d.buttonColors?.cancelTextColor || (d.buttonColors?.cancel ? '#FFFFFF' : '#1F2937')" (click)="cancelDialog()">{{ d.cancelText || 'Cancel' }}</button>
               }
-              <button class="btn-p" style="padding: 6px 16px; font-size:12px; border-radius:6px" [style.background]="d.type === 'success' ? '#10B981' : (d.type === 'confirm' ? '#D97706' : '#4F46E5')" [style.border-color]="d.type === 'success' ? '#10B981' : (d.type === 'confirm' ? '#D97706' : '#4F46E5')" (click)="confirmDialog()">{{ d.confirmText || 'OK' }}</button>
+              @if (d.thirdOption) {
+                <button class="btn-s" style="padding: 6px 16px; font-size:12px; border-radius:6px" [style.background]="d.buttonColors?.third || '#FFFFFF'" [style.border-color]="d.buttonColors?.third || '#D1D5DB'" [style.color]="d.buttonColors?.third || '#1F2937'" (click)="thirdOptionDialog()">{{ d.thirdOption.text }}</button>
+              }
+              <button class="btn-p" style="padding: 6px 16px; font-size:12px; border-radius:6px" [style.background]="d.buttonColors?.confirm || (d.type === 'success' ? '#10B981' : (d.type === 'confirm' ? '#D97706' : '#4F46E5'))" [style.border-color]="d.buttonColors?.confirm || (d.type === 'success' ? '#10B981' : (d.type === 'confirm' ? '#D97706' : '#4F46E5'))" (click)="confirmDialog()">{{ d.confirmText || 'OK' }}</button>
             </div>
           </div>
         </div>
@@ -373,13 +393,14 @@ export class LayoutComponent {
   
   activeTab = 'dashboard';
   pageTitle = 'Dashboard';
+  isSidebarOpen = signal<boolean>(false);
 
   // Badges stats
-  studentsCount = signal<number>(0);
   lessonsCount = signal<number>(0);
   pendingHomeworkCount = signal<number>(0);
   activeClassAvailable = signal<boolean>(false);
   unreadAnnouncementsCount = signal<number>(0);
+  chatUnreadCount = signal<number>(0);
 
   // Toasts state
   toasts = signal<{
@@ -415,7 +436,6 @@ export class LayoutComponent {
 
     this.db.observeUsers().subscribe(list => {
       this.allUsers.set(list);
-      this.studentsCount.set(list.filter(u => u.role === 'student').length);
     });
 
     this.db.observeLessons().subscribe(list => {
@@ -509,6 +529,15 @@ export class LayoutComponent {
   setTab(tabName: string) {
     this.activeTab = tabName;
     this.pageTitle = this.getTabTitle(tabName);
+    this.isSidebarOpen.set(false);
+    // Clear chat unread count when switching to chat
+    if (tabName === 'chat') {
+      this.chatUnreadCount.set(0);
+    }
+  }
+
+  toggleSidebar(open: boolean) {
+    this.isSidebarOpen.set(open);
   }
 
   logOut() {
@@ -539,6 +568,14 @@ export class LayoutComponent {
     const d = this.dialogService.activeDialog();
     if (d && d.onCancel) {
       d.onCancel();
+    }
+    this.dialogService.close();
+  }
+
+  thirdOptionDialog() {
+    const d = this.dialogService.activeDialog();
+    if (d && d.thirdOption && d.thirdOption.callback) {
+      d.thirdOption.callback();
     }
     this.dialogService.close();
   }

@@ -199,7 +199,7 @@ export class TeacherScheduleComponent {
 
   // Form states
   title = 'B1 — Reported Speech Practice';
-  date = new Date(Date.now() + 86400000).toISOString().split('T')[0];
+  date = this.getLocalDateString(new Date(Date.now() + 86400000));
   time = '10:00';
   duration = '45 minutes';
   group = 'B1 — All students (18)';
@@ -228,12 +228,12 @@ export class TeacherScheduleComponent {
     const prevMonthTotalDays = new Date(year, month, 0).getDate();
 
     const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
+    const todayStr = this.getLocalDateString(today);
 
     // Padding previous month slots
     for (let i = startDayOfWeek - 1; i >= 0; i--) {
       const d = new Date(year, month - 1, prevMonthTotalDays - i);
-      const dStr = d.toISOString().split('T')[0];
+      const dStr = this.getLocalDateString(d);
       days.push({
         key: `prev-${prevMonthTotalDays - i}`,
         dayNum: prevMonthTotalDays - i,
@@ -246,7 +246,7 @@ export class TeacherScheduleComponent {
     // Current month slots
     for (let i = 1; i <= totalDays; i++) {
       const d = new Date(year, month, i);
-      const dStr = d.toISOString().split('T')[0];
+      const dStr = this.getLocalDateString(d);
       days.push({
         key: `curr-${i}`,
         dayNum: i,
@@ -260,7 +260,7 @@ export class TeacherScheduleComponent {
     const remainingSlots = 42 - days.length;
     for (let i = 1; i <= remainingSlots; i++) {
       const d = new Date(year, month + 1, i);
-      const dStr = d.toISOString().split('T')[0];
+      const dStr = this.getLocalDateString(d);
       days.push({
         key: `next-${i}`,
         dayNum: i,
@@ -325,7 +325,7 @@ export class TeacherScheduleComponent {
     if (!this.title.trim() || !this.description.trim()) return;
 
     const today = new Date();
-    const dateStr = today.toISOString().split('T')[0];
+    const dateStr = this.getLocalDateString(today);
     const timeStr = today.toTimeString().split(' ')[0].slice(0, 5);
 
     this.db.scheduleClass({
@@ -386,5 +386,18 @@ export class TeacherScheduleComponent {
     this.title = '';
     this.date = '';
     this.description = '';
+  }
+
+  private getLocalDateString(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  private getDefaultDueDate(): string {
+    const d = new Date();
+    d.setDate(d.getDate() + 15);
+    return this.getLocalDateString(d);
   }
 }

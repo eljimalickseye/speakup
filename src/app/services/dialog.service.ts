@@ -9,6 +9,18 @@ export interface DialogOptions {
   onConfirm?: () => void;
   onCancel?: () => void;
   imageUrl?: string;
+  thirdOption?: {
+    text: string;
+    callback: () => void;
+  };
+  buttonColors?: {
+    confirm?: string;
+    cancel?: string;
+    third?: string;
+    confirmTextColor?: string;
+    cancelTextColor?: string;
+    thirdTextColor?: string;
+  };
 }
 
 @Injectable({
@@ -46,5 +58,26 @@ export class DialogService {
 
   close() {
     this.activeDialog.set(null);
+  }
+
+  showPaymentMethod(options: {
+    studentName: string;
+    onWave: () => void;
+    onOrangeMoney: () => void;
+  }) {
+    this.show({
+      title: 'Payment Method',
+      message: `Select the payment method used by ${options.studentName}:`,
+      type: 'confirm',
+      confirmText: 'Wave',
+      cancelText: 'Orange Money',
+      buttonColors: {
+        confirm: '#1D4ED8',
+        cancel: '#EA580C',
+        cancelTextColor: '#FFFFFF'
+      },
+      onConfirm: () => options.onWave(),
+      onCancel: () => options.onOrangeMoney()
+    });
   }
 }

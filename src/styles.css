@@ -264,40 +264,44 @@ body {
 
 /* Welcome Banner */
 .welcome {
-  background: linear-gradient(135deg, #4F46E5, #7C3AED);
+  background: linear-gradient(135deg, #EFF6FF 0%, #FAF5FF 100%);
   border-radius: 12px;
   padding: 24px;
-  color: #fff;
-  box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
+  color: #1F2937;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
 .welcome h2 {
   font-size: 18px;
-  font-weight: 600;
+  font-weight: 700;
   margin-bottom: 4px;
   letter-spacing: -0.3px;
+  color: #111827;
 }
 
 .welcome p {
   font-size: 13px;
-  opacity: .9;
+  color: #4B5563;
+  margin-bottom: 0px;
 }
 
 .welcome .cta {
   margin-top: 14px;
-  background: rgba(255, 255, 255, 0.2);
-  border: 0.5px solid rgba(255, 255, 255, 0.4);
+  background: #4F46E5;
+  border: none;
   border-radius: var(--radius);
   padding: 8px 16px;
   color: #fff;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: background 0.15s;
+  box-shadow: 0 2px 4px rgba(79, 70, 229, 0.15);
 }
 
 .welcome .cta:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: #4338CA;
 }
 
 /* Forms & Inputs */
@@ -1376,5 +1380,195 @@ body {
   width: 220px;
   padding: 10px;
   font-size: 11px;
+}
+
+/* Responsive Hamburger Navigation Drawer */
+.hamburger-btn {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  color: var(--text-primary);
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  margin-right: 8px;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.hamburger-btn:hover {
+  background: var(--surface-2);
+}
+
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+
+/* Media Queries for Mobile Responsiveness */
+@media (max-width: 1024px) {
+  .grid4, .g4 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .hamburger-btn {
+    display: flex;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: -220px;
+    z-index: 1001;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 10px 0 15px -3px rgba(0, 0, 0, 0.1);
+  }
+
+  .shell.sidebar-open .sidebar {
+    transform: translateX(220px);
+  }
+
+  .shell.sidebar-open .sidebar-backdrop {
+    display: block;
+  }
+
+  .hide-mobile {
+    display: none !important;
+  }
+
+  .grid2, .g2, .grid3, .g3, .grid4, .g4 {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Card layout paddings optimization */
+  .content {
+    padding: 12px !important;
+  }
+
+  .topbar {
+    padding: 10px 14px !important;
+  }
+}
+
+/* ==========================================================================
+   iOS / Safari Compatibility Fixes
+   ========================================================================== */
+* {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Fix iOS input zoom on focus - only for touch devices, only in mobile context */
+@media (pointer: coarse) and (max-width: 768px) {
+  .input-row input, .input-row select, .input-row textarea,
+  .chat-textbox, .form-input, .form-select {
+    font-size: 16px !important;
+  }
+}
+
+/* Safe area support for iPhone notch/home indicator - only add padding where needed */
+@media (max-width: 768px) {
+  .shell {
+    padding-top: env(safe-area-inset-top);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .topbar {
+    padding-top: calc(14px + env(safe-area-inset-top, 0px));
+    padding-left: calc(20px + env(safe-area-inset-left, 0px));
+    padding-right: calc(20px + env(safe-area-inset-right, 0px));
+  }
+
+  /* Fix iOS scroll momentum - ensure proper height containment */
+  .chat-scroll-container, .calendar-wrapper, .schedules-list, .chat-messages {
+    -webkit-overflow-scrolling: touch;
+    overflow-y: auto;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
+
+  /* iOS button fixes */
+  button, .btn-p, .btn-s, .chat-send-btn, .send-btn, .calendar-nav-btn {
+    -webkit-appearance: none;
+    appearance: none;
+    border-radius: 8px;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  button:active, .btn-p:active, .btn-s:active, .chat-send-btn:active {
+    opacity: 0.7;
+    transform: scale(0.98);
+  }
+
+  /* Fix iOS date/time inputs */
+  input[type="date"], input[type="time"], input[type="datetime-local"] {
+    -webkit-appearance: none;
+    appearance: none;
+    min-height: 44px;
+    border-radius: 8px;
+  }
+
+  /* Fix iOS modal overflow - prevent layout blowout */
+  .modal-overlay {
+    align-items: flex-start;
+    padding-top: 60px;
+  }
+  .modal-card {
+    -webkit-overflow-scrolling: touch;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  /* Fix iOS iframe/Jitsi */
+  app-jitsi-meet, iframe {
+    -webkit-overflow-scrolling: touch;
+    touch-action: manipulation;
+  }
+
+  /* iOS audio player fixes */
+  audio, video {
+    -webkit-appearance: none;
+    appearance: none;
+    border-radius: 8px;
+  }
+
+  /* Fix iOS flex gaps */
+  .chat-workspace, .calendar-days-grid, .calendar-weekdays-grid {
+    display: flex;
+    flex-wrap: nowrap;
+  }
+
+  /* iOS safe-area for fixed elements */
+  .toaster-container {
+    padding-top: env(safe-area-inset-top, 0);
+    padding-left: env(safe-area-inset-left, 0);
+    padding-right: env(safe-area-inset-right, 0);
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+
+  /* Prevent iOS bounce scroll - NOT applying fixed positioning to body as it breaks layout */
+  /* Instead, rely on the shell container to manage overflow */
+  
+  .shell {
+    height: 100vh;
+    height: 100dvh;
+  }
 }
 
