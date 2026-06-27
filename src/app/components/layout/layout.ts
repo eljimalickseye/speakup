@@ -356,7 +356,7 @@ import { TeacherEventsComponent } from '../teacher/events';
 
       <!-- Floating Action Button for Teachers: Start Live Class Instantly -->
       @if (currentUser()?.role === 'teacher') {
-        <button (click)="triggerInstantLive()" style="position:fixed; bottom:20px; right:20px; z-index:99; background:#EEF2FF; border:1px solid #4F46E5; color:#4F46E5; box-shadow:0 4px 14px rgba(79, 70, 229, 0.2); border-radius:30px; padding:10px 16px; font-size:12px; font-weight:700; display:flex; align-items:center; gap:8px; cursor:pointer; transition:transform 0.2s ease, background 0.2s ease" onmouseover="this.style.transform='scale(1.04)'; this.style.background='#FFF'" onmouseout="this.style.transform='scale(1)'; this.style.background='#EEF2FF'">
+        <button (click)="triggerInstantLive()" class="float-live-btn" title="Activer le Live">
           <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7a2 2 0 0 0-2-2H3a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V7Z"/><path d="M12 9v6"/><path d="M9 12h6"/></svg>
           <span>Activer le Live</span>
         </button>
@@ -401,6 +401,44 @@ import { TeacherEventsComponent } from '../teacher/events';
     </div>
   `,
   styles: [`
+    .float-live-btn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 99;
+      background: #EEF2FF;
+      border: 1px solid #4F46E5;
+      color: #4F46E5;
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.2);
+      border-radius: 30px;
+      padding: 10px 16px;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+    .float-live-btn:hover {
+      transform: scale(1.04);
+      background: #FFFFFF;
+    }
+    @media (max-width: 768px) {
+      .float-live-btn {
+        bottom: 90px;
+        right: 16px;
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        padding: 0;
+        justify-content: center;
+      }
+      .float-live-btn span {
+        display: none;
+      }
+    }
+
     .tester-switcher {
       display: flex;
       align-items: center;
@@ -533,7 +571,7 @@ export class LayoutComponent {
       if (user) {
         this.currentUser.set(user);
         // Sync active tab for roles
-        if (user.role === 'teacher' && ['dashboard', 'lessons', 'speaking', 'exercises', 'chat', 'leaderboard', 'events', 'live-classes'].includes(this.activeTab)) {
+        if (user.role === 'teacher' && ['dashboard', 'lessons', 'speaking', 'exercises', 'leaderboard', 'events', 'live-classes'].includes(this.activeTab)) {
           this.setTab('overview');
         } else if (user.role === 'student' && ['overview', 'students', 'create-lesson', 'create-quiz', 'grade-homework', 'attendance', 'schedule-class', 'announcements', 'payments', 'teacher-events'].includes(this.activeTab)) {
           this.setTab('dashboard');
