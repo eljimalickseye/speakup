@@ -11,16 +11,16 @@ import { DialogService } from '../../services/dialog.service';
     <div class="page">
       <!-- PLACEMENT TEST ALERT & MODAL -->
       @if (!currentUser()?.placementTestTaken) {
-        <div class="card" style="background: linear-gradient(135deg, #FAF5FF 0%, #E8FFF5 100%); border: 1.5px solid #8B5CF6; margin-bottom: 20px; padding: 20px; border-radius: 12px">
+        <div class="card" style="background: linear-gradient(135deg, #EFF6FF 0%, #E8FFF5 100%); border: 1.5px solid #4F46E5; margin-bottom: 20px; padding: 20px; border-radius: 12px">
           <div style="display:flex; justify-content:space-between; align-items:center; gap:20px; flex-wrap:wrap">
             <div style="flex:1; min-width:250px">
-              <span class="badge" style="background:#8B5CF6; color:white; font-size:10px; font-weight:700; padding:2px 8px; border-radius:20px; text-transform:uppercase">Level Assessment</span>
+              <span class="badge" style="background:#4F46E5; color:white; font-size:10px; font-weight:700; padding:2px 8px; border-radius:20px; text-transform:uppercase">Level Assessment</span>
               <h3 style="font-size:16px; font-weight:800; color:#1F2937; margin:6px 0 0 0">Determine your starting English Level! 🚀</h3>
               <p style="font-size:12.5px; color:#4B5563; margin:4px 0 0 0">
                 Take this quick 5-question test to evaluate your level (A1, A2, B1, B2) and unlock matching lessons!
               </p>
             </div>
-            <button class="btn-p" style="background:#8B5CF6; border-color:#8B5CF6; font-size:12px; padding:8px 16px; border-radius:8px" (click)="startPlacementTest()">
+            <button class="btn-p" style="background:#4F46E5; border-color:#4F46E5; font-size:12px; padding:8px 16px; border-radius:8px" (click)="startPlacementTest()">
               Start Test Now
             </button>
           </div>
@@ -30,13 +30,13 @@ import { DialogService } from '../../services/dialog.service';
             <div style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.65); display:flex; justify-content:center; align-items:center; z-index:99999; padding:16px">
               <div class="card" style="width:100%; max-width:550px; background:#FFF; border-radius:12px; padding:24px; box-shadow:0 10px 25px rgba(0,0,0,0.25)">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px">
-                  <h3 style="font-size:16px; font-weight:700; color:#8B5CF6; margin:0">Level Placement Test</h3>
+                  <h3 style="font-size:16px; font-weight:700; color:#4F46E5; margin:0">Level Placement Test</h3>
                   <span style="font-size:12px; color:var(--text-muted)">Question {{ currentQuestionIndex() + 1 }} of {{ placementQuestions().length }}</span>
                 </div>
 
                 <!-- Progress Bar -->
                 <div style="width:100%; height:6px; background:#E5E7EB; border-radius:3px; margin-bottom:20px; overflow:hidden">
-                  <div [style.width.%]="((currentQuestionIndex() + 1) / placementQuestions().length) * 100" style="height:100%; background:#8B5CF6; transition:width 0.3s"></div>
+                  <div [style.width.%]="((currentQuestionIndex() + 1) / placementQuestions().length) * 100" style="height:100%; background:#4F46E5; transition:width 0.3s"></div>
                 </div>
 
                 <!-- Question Body -->
@@ -47,11 +47,11 @@ import { DialogService } from '../../services/dialog.service';
                     @for (opt of q.options; track opt; let oIdx = $index) {
                       <button 
                         class="row" 
-                        [style.background]="selectedAnswers()[currentQuestionIndex()] === getOptionLetter(oIdx) ? '#F5F3FF' : '#FFF'"
-                        [style.border-color]="selectedAnswers()[currentQuestionIndex()] === getOptionLetter(oIdx) ? '#8B5CF6' : 'var(--border)'"
+                        [style.background]="selectedAnswers()[currentQuestionIndex()] === getOptionLetter(oIdx) ? '#EFF6FF' : '#FFF'"
+                        [style.border-color]="selectedAnswers()[currentQuestionIndex()] === getOptionLetter(oIdx) ? '#4F46E5' : 'var(--border)'"
                         style="text-align:left; cursor:pointer; font-weight:500; font-size:13px; margin:0; padding:12px; border-radius:8px; display:block; width:100%"
                         (click)="selectAnswer(getOptionLetter(oIdx))">
-                        <strong style="color:#8B5CF6; margin-right:6px">{{ getOptionLetter(oIdx) }}.</strong> {{ opt }}
+                        <strong style="color:#4F46E5; margin-right:6px">{{ getOptionLetter(oIdx) }}.</strong> {{ opt }}
                       </button>
                     }
                   </div>
@@ -61,7 +61,7 @@ import { DialogService } from '../../services/dialog.service';
                   <button class="btn-s" [disabled]="currentQuestionIndex() === 0" (click)="prevQuestion()">Previous</button>
                   
                   @if (currentQuestionIndex() < placementQuestions().length - 1) {
-                    <button class="btn-p" style="background:#8B5CF6; border-color:#8B5CF6" [disabled]="!selectedAnswers()[currentQuestionIndex()]" (click)="nextQuestion()">Next</button>
+                    <button class="btn-p" style="background:#4F46E5; border-color:#4F46E5" [disabled]="!selectedAnswers()[currentQuestionIndex()]" (click)="nextQuestion()">Next</button>
                   } @else {
                     <button class="btn-p" style="background:#10B981; border-color:#10B981" [disabled]="!selectedAnswers()[currentQuestionIndex()]" (click)="submitPlacementTest()">Submit Test</button>
                   }

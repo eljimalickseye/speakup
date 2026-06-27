@@ -111,12 +111,12 @@ interface QuestionDraft {
       <div style="margin-top:20px">
         <div class="st" style="margin-bottom:12px">Published Quizzes</div>
         @for (quiz of quizzes(); track quiz.id) {
-          <div class="row" style="font-size:13px; align-items:center; justify-content:space-between" [style.background]="quiz.id === 'placement-test' ? '#FAF5FF' : 'var(--surface-1)'" [style.border]="quiz.id === 'placement-test' ? '1.5px solid #C084FC' : '1px solid var(--border)'">
+          <div class="row" style="font-size:13px; align-items:center; justify-content:space-between" [style.background]="quiz.id === 'placement-test' ? '#EFF6FF' : 'var(--surface-1)'" [style.border]="quiz.id === 'placement-test' ? '1.5px solid #93C5FD' : '1px solid var(--border)'">
             <div style="flex:1">
               <strong style="color:var(--text-primary)">
                 {{ quiz.title }}
                 @if (quiz.id === 'placement-test') {
-                  <span class="badge" style="background:#8B5CF6; color:white; font-size:9px; margin-left:6px; font-weight:700; padding:1px 6px; border-radius:10px; text-transform:uppercase">Placement Test</span>
+                  <span class="badge" style="background:#3B82F6; color:white; font-size:9px; margin-left:6px; font-weight:700; padding:1px 6px; border-radius:10px; text-transform:uppercase">Placement Test</span>
                 }
               </strong>
               <div style="font-size:11px; color:var(--text-muted); margin-top:2px">
