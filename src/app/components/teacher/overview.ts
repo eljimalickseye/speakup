@@ -11,6 +11,21 @@ import { JitsiMeet } from '../jitsi-meet/jitsi-meet';
   template: `
     <div class="page" style="height: 100%">
       @if (!activeMeeting()) {
+        <!-- TEACHER BIO/PROFILE SUMMARY -->
+        <div class="card" style="margin-bottom:20px; display:flex; gap:16px; align-items:center; background:linear-gradient(135deg, #EEF2FF 0%, #FFFFFF 100%); border:1px solid #C7D2FE; border-radius:12px; padding:16px">
+          <div class="av" style="width:48px; height:48px; font-size:18px; background:#3730A3; color:white; font-weight:700; display:flex; align-items:center; justify-content:center; border-radius:50%">
+            {{ teacherProfile()?.avatar }}
+          </div>
+          <div style="flex:1">
+            <div style="font-size:15px; font-weight:700; color:var(--text-primary)">
+              Welcome back, Teacher {{ teacherProfile()?.name }}!
+            </div>
+            <div style="font-size:12px; color:var(--text-secondary); margin-top:4px; line-height:1.5">
+              {{ teacherProfile()?.description || 'You haven\'t set a profile description yet. Click your avatar in the topbar to write your biography and customize your settings.' }}
+            </div>
+          </div>
+        </div>
+
         <!-- METRICS CARDS -->
         <div class="g4">
           <div class="mcard">
@@ -121,6 +136,7 @@ import { JitsiMeet } from '../jitsi-meet/jitsi-meet';
 export class TeacherOverviewComponent {
   private db = inject(DatabaseService);
 
+  teacherProfile = signal<UserProfile | null>(null);
   totalStudents = signal<number>(0);
   pendingCount = signal<number>(0);
   avgAttendance = signal<number>(100);
@@ -133,6 +149,10 @@ export class TeacherOverviewComponent {
   @Output() navigateToTab = new EventEmitter<string>();
 
   constructor() {
+    this.db.observeCurrentUser().subscribe(user => {
+      this.teacherProfile.set(user);
+    });
+
     // Total students & status alerts combine subscriptions
     combineLatest([
       this.db.observeUsers(),

@@ -2,6 +2,7 @@ import { Component, inject, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DatabaseService, UserProfile, LiveClass, Submission, Announcement } from '../../services/database.service';
 import { DialogService } from '../../services/dialog.service';
+import { FormsModule } from '@angular/forms';
 
 // Subcomponents imports
 import { StudentDashboardComponent } from '../student/dashboard';
@@ -30,6 +31,7 @@ import { TeacherEventsComponent } from '../teacher/events';
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     StudentDashboardComponent,
     StudentLessonsComponent,
     StudentSpeakingComponent,
@@ -186,7 +188,7 @@ import { TeacherEventsComponent } from '../teacher/events';
             <i class="ti ti-logout" aria-hidden="true"></i> Log Out
           </button>
 
-          <div class="avatar" [style.background]="currentUser()?.role === 'teacher' ? '#3730A3' : '#4F46E5'">
+          <div class="avatar" [style.background]="currentUser()?.role === 'teacher' ? '#3730A3' : '#4F46E5'" style="cursor:pointer; transition: transform 0.2s ease" (click)="openProfileEditor()" title="Edit Profile Settings">
             {{ currentUser()?.avatar }}
           </div>
         </div>
@@ -294,6 +296,68 @@ import { TeacherEventsComponent } from '../teacher/events';
             </div>
           </div>
         </div>
+      }
+
+      <!-- PROFILE EDITOR MODAL -->
+      @if (isProfileModalOpen()) {
+        <div class="modal-overlay" (click)="closeProfileEditor()">
+          <div class="modal-card" style="max-width: 480px" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <h3 class="modal-title">Profile Settings</h3>
+            </div>
+            <div class="modal-body" style="display:flex; flex-direction:column; gap:16px">
+              
+              <!-- Avatar input -->
+              <div class="input-row">
+                <label>Avatar Emoji / Initials</label>
+                <div style="display:flex; gap:10px; align-items:center">
+                  <input type="text" [(ngModel)]="profileAvatar" maxLength="3" style="width:70px; height:42px; text-align:center; font-size:18px; font-weight:700" />
+                  <div style="font-size:11px; color:var(--text-muted)">Max 3 characters or an emoji (e.g. 👩‍🏫)</div>
+                </div>
+              </div>
+
+              <!-- Name input -->
+              <div class="input-row">
+                <label>Full Name</label>
+                <input type="text" [(ngModel)]="profileName" placeholder="Your Name" />
+              </div>
+
+              <!-- Description input (only for teachers) -->
+              @if (currentUser()?.role === 'teacher') {
+                <div class="input-row">
+                  <label>Professional Description / Biography</label>
+                  <textarea [(ngModel)]="profileDescription" rows="3" placeholder="Tell students about your qualifications, teaching methodology or office hours..." style="width:100%; border:1px solid var(--border); border-radius:6px; padding:10px; font-size:12px; line-height:1.5; background:var(--surface-1); color:var(--text-primary)"></textarea>
+                </div>
+              }
+
+              <!-- Gemini API Key input -->
+              <div class="input-row" style="background:#FAF5FF; border:1px solid #E9D5FF; padding:12px; border-radius:8px">
+                <label style="color:#7E22CE; font-weight:700; display:flex; align-items:center; gap:4px">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                  <span>Google Gemini API Key</span>
+                </label>
+                <input type="password" [(ngModel)]="profileGeminiKey" placeholder="Paste your API key here" style="margin-top:6px; border-color:#E9D5FF" />
+                <div style="font-size:10px; color:#6B7280; margin-top:4px; line-height:1.4">
+                  Used for real AI coach feedback & quiz generation. Get a free key at <a href="https://aistudio.google.com/" target="_blank" style="color:#7E22CE; font-weight:600; text-decoration:underline">Google AI Studio</a>.
+                </div>
+              </div>
+
+            </div>
+            <div class="modal-actions" style="border-top:1px solid var(--border-weak); padding-top:12px; margin-top:12px">
+              <button class="btn-s" (click)="closeProfileEditor()">Cancel</button>
+              <button class="btn-p" (click)="saveProfileSettings()">Save Settings</button>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Floating Action Button for Teachers: Start Live Class Instantly -->
+      @if (currentUser()?.role === 'teacher') {
+        <button (click)="triggerInstantLive()" style="position:fixed; bottom:20px; right:20px; z-index:99; background:#EEF2FF; border:1px solid #4F46E5; color:#4F46E5; box-shadow:0 4px 14px rgba(79, 70, 229, 0.2); border-radius:30px; padding:10px 16px; font-size:12px; font-weight:700; display:flex; align-items:center; gap:8px; cursor:pointer; transition:transform 0.2s ease, background 0.2s ease" onmouseover="this.style.transform='scale(1.04)'; this.style.background='#FFF'" onmouseout="this.style.transform='scale(1)'; this.style.background='#EEF2FF'">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7a2 2 0 0 0-2-2H3a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V7Z"/><path d="M12 9v6"/><path d="M9 12h6"/></svg>
+          <span>Activer le Live</span>
+        </button>
       }
     </div>
   `,
@@ -633,5 +697,64 @@ export class LayoutComponent {
       'teacher-events': 'Events Registry'
     };
     return titles[tab] || 'Overview';
+  }
+
+  isProfileModalOpen = signal<boolean>(false);
+  profileName = '';
+  profileAvatar = '';
+  profileDescription = '';
+  profileGeminiKey = '';
+
+  openProfileEditor() {
+    const user = this.currentUser();
+    if (!user) return;
+    this.profileName = user.name;
+    this.profileAvatar = user.avatar;
+    this.profileDescription = user.description || '';
+    this.profileGeminiKey = this.db.getGeminiApiKey() || '';
+    this.isProfileModalOpen.set(true);
+  }
+
+  closeProfileEditor() {
+    this.isProfileModalOpen.set(false);
+  }
+
+  async saveProfileSettings() {
+    const user = this.currentUser();
+    if (!user) return;
+
+    const updatedProfile: Partial<UserProfile> = {
+      name: this.profileName,
+      avatar: this.profileAvatar
+    };
+
+    if (user.role === 'teacher') {
+      updatedProfile.description = this.profileDescription;
+    }
+
+    try {
+      await this.db.updateUserProfile(user.id, updatedProfile);
+      this.db.setGeminiApiKey(this.profileGeminiKey);
+      this.dialogService.alert('Profile Updated', 'Your profile settings have been successfully saved!', 'success');
+      this.isProfileModalOpen.set(false);
+    } catch (e: any) {
+      this.dialogService.alert('Error', e.message || 'Failed to update profile settings.', 'info');
+    }
+  }
+
+  async triggerInstantLive() {
+    this.dialogService.confirm(
+      'Start Instant Live Class',
+      'Would you like to start a live meeting session instantly and notify students?',
+      async () => {
+        try {
+          await this.db.startInstantLiveClass();
+          this.setTab('overview');
+          this.dialogService.alert('Live Session Started', 'Instant Live Class is now active! Students can join from their dashboards.', 'success');
+        } catch (e: any) {
+          this.dialogService.alert('Failed to Start Live', e.message || 'Error occurred starting live session.', 'info');
+        }
+      }
+    );
   }
 }

@@ -29,6 +29,7 @@ export interface UserProfile {
   placementTestTaken?: boolean;
   placementTestScore?: number;
   voiceChatAllowed?: boolean;
+  description?: string;
 }
 
 export interface Lesson {
@@ -1085,6 +1086,19 @@ export class DatabaseService {
         console.warn(e);
       }
     }
+  }
+
+  async startInstantLiveClass() {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const timeStr = new Date().toTimeString().split(' ')[0].substring(0, 5);
+    await this.scheduleClass({
+      title: 'Instant Live Class',
+      description: 'Join our live practice session with the teacher now!',
+      date: todayStr,
+      time: timeStr,
+      duration: '60 mins',
+      group: 'All Students'
+    }, 'active');
   }
 
   // --- ANNOUNCEMENT OPERATIONS ---
