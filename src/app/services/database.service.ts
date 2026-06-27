@@ -295,9 +295,9 @@ export class DatabaseService {
     this.events$.next(events);
     this.channels$.next(channels);
 
-    // Set Default User (teacher)
-    const savedUserId = localStorage.getItem('speak_current_user_id') || 'teacher';
-    const foundUser = users.find((u: UserProfile) => u.id === savedUserId) || users[0];
+    // Require authentication on startup instead of auto-logging in as teacher
+    const savedUserId = localStorage.getItem('speak_current_user_id') || null;
+    const foundUser = savedUserId ? (users.find((u: UserProfile) => u.id === savedUserId) || null) : null;
     this.currentUser$.next(foundUser);
 
     // If using Firebase, sync local data to Firestore if Firebase has no collections yet

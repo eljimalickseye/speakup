@@ -73,17 +73,31 @@ interface ChatMember {
             <div style="display:flex; align-items:center; gap:6px">
               <span class="hashtag" style="font-size:16px; font-weight:700; color:#4F46E5">#</span>
               <span class="hide-mobile" style="font-size:14px; font-weight:700; color:var(--text-primary); white-space:nowrap">{{ getChannelLabel() }}</span>
-              <select class="show-mobile-inline channel-select-dropdown" [value]="activeChannel()" (change)="onChannelSelectChange($event)">
+              <select class="show-mobile-inline channel-select-dropdown" [value]="activeChannel()" (change)="onChannelSelectChange($event)" style="margin-right:2px">
                 @for (chan of visibleChannels(); track chan.id) {
                   <option [value]="chan.id"># {{ chan.name }} {{ chan.isPrivate ? '(🔒)' : '' }}</option>
                 }
               </select>
+              
+              <!-- Create room button on mobile (Teacher only) -->
+              @if (isTeacher()) {
+                <button class="show-mobile-inline" (click)="showCreateChanModal.set(true)" style="background:none; border:none; color:#4F46E5; padding:4px 6px; cursor:pointer; display:flex; align-items:center" title="Create Room">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+              }
             </div>
             
             <div style="display:flex; align-items:center; gap:12px">
               <span class="hide-mobile" style="font-size:11.5px; color:var(--text-muted)">
                 {{ getActiveOnlineCount() }} members online
               </span>
+
+              <!-- View members list on mobile -->
+              <button class="show-mobile-inline" (click)="showMembersMobile.set(true)" style="background:none; border:none; color:var(--text-secondary); padding:4px; cursor:pointer; display:flex; align-items:center" title="View Members">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+              </button>
 
               <!-- Student indicator showing personal voice chat status -->
               @if (!isTeacher()) {
@@ -361,8 +375,45 @@ interface ChatMember {
           </div>
         </div>
       }
+
+      <!-- Members Drawer Overlay on Mobile -->
+      @if (showMembersMobile()) {
+        <div style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.65); display:flex; justify-content:center; align-items:center; z-index:99999; padding:16px">
+          <div class="card" style="width:100%; max-width:360px; background:#FFF; border-radius:12px; padding:20px; box-shadow:0 10px 25px rgba(0,0,0,0.25); margin:0">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px">
+              <h3 style="font-size:14px; font-weight:700; color:var(--text-primary); margin:0">Active Members</h3>
+              <button (click)="showMembersMobile.set(false)" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:18px; font-weight:700; line-height:1; padding:4px">
+                ×
+              </button>
+            </div>
+            
+            <div style="max-height:280px; overflow-y:auto; display:flex; flex-direction:column; gap:8px">
+              @for (m of getChannelMembers(); track m.id) {
+                <div class="member-item" [class.offline]="!m.online" style="padding:4px 0; display:flex; align-items:center; gap:10px">
+                  <div class="member-avatar-box" [style.background]="m.role === 'teacher' ? '#EEF2FF' : '#FFF'" [style.color]="m.role === 'teacher' ? '#4F46E5' : '#111827'">
+                    {{ m.avatar }}
+                    <span class="status-dot" [class.online]="m.online" [class.offline]="!m.online"></span>
+                  </div>
+                  <div style="flex:1; min-width:0">
+                    <div class="member-name" style="display:flex; align-items:center; gap:4px">
+                      <span>{{ m.name }}</span>
+                      @if (getFlagUrl(m.countryFlag)) {
+                        <img [src]="getFlagUrl(m.countryFlag)" style="width: 14px; height: 10px; object-fit: contain" alt="flag">
+                      }
+                    </div>
+                    <div class="member-subtext" style="font-size:9.5px">
+                      {{ m.level }} · {{ m.role | titlecase }}
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      }
     </div>
   `,
+
   styles: [`
     .chat-workspace {
       display: flex;
@@ -916,6 +967,7 @@ export class StudentChatComponent implements OnDestroy {
   newChanName = '';
   newChanIsPrivate = false;
   newChanSelectedStudents = signal<string[]>([]);
+  showMembersMobile = signal<boolean>(false);
   
   studentList = computed(() => {
     return this.dbUsers().filter(u => u.role === 'student');
