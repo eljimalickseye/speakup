@@ -578,7 +578,7 @@ export class LayoutComponent {
   currentUser = signal<UserProfile | null>(null);
   allUsers = signal<UserProfile[]>([]);
   
-  activeTab = 'dashboard';
+  activeTab = localStorage.getItem('speak_active_tab') || 'dashboard';
   pageTitle = 'Dashboard';
   isSidebarOpen = signal<boolean>(false);
 
@@ -619,7 +619,7 @@ export class LayoutComponent {
         // Sync active tab for roles
         if (user.role === 'teacher' && ['dashboard', 'lessons', 'speaking', 'exercises', 'events', 'live-classes'].includes(this.activeTab)) {
           this.setTab('overview');
-        } else if (user.role === 'student' && ['overview', 'students', 'create-lesson', 'create-quiz', 'grade-homework', 'attendance', 'schedule-class', 'announcements', 'payments', 'teacher-events'].includes(this.activeTab)) {
+        } else if ((user.role === 'student' || user.role === 'guest') && ['overview', 'students', 'create-lesson', 'create-quiz', 'grade-homework', 'attendance', 'schedule-class', 'announcements', 'payments', 'teacher-events'].includes(this.activeTab)) {
           this.setTab('dashboard');
         }
       }
@@ -734,6 +734,7 @@ export class LayoutComponent {
 
   setTab(tabName: string) {
     this.activeTab = tabName;
+    localStorage.setItem('speak_active_tab', tabName);
     this.pageTitle = this.getTabTitle(tabName);
     this.isSidebarOpen.set(false);
     // Clear chat unread count when switching to chat
@@ -747,6 +748,7 @@ export class LayoutComponent {
   }
 
   logOut() {
+    localStorage.removeItem('speak_active_tab');
     this.db.logout();
   }
 
