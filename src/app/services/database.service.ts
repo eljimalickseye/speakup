@@ -262,9 +262,9 @@ export class DatabaseService {
   private initializeData() {
     // 1. Users (Pre-established 3 teachers)
     const defaultUsers: UserProfile[] = [
-      { id: 'teacher', name: 'AT - Teacher', role: 'teacher', level: 'C2', xp: 0, streak: 0, lastActive: 'Today', avatar: 'AT' },
-      { id: 'teacher-2', name: 'MJ - Teacher Marie', role: 'teacher', level: 'C2', xp: 0, streak: 0, lastActive: 'Today', avatar: 'MJ' },
-      { id: 'teacher-3', name: 'KS - Teacher Karim', role: 'teacher', level: 'C2', xp: 0, streak: 0, lastActive: 'Today', avatar: 'KS' }
+      { id: 'teacher', name: 'AT - Teacher', role: 'teacher', level: 'C2', xp: 0, streak: 0, lastActive: 'Today', avatar: 'AT', username: 'teacher', password: 'admin123' },
+      { id: 'teacher-2', name: 'MJ - Teacher Marie', role: 'teacher', level: 'C2', xp: 0, streak: 0, lastActive: 'Today', avatar: 'MJ', username: 'teacher2', password: 'teacher123' },
+      { id: 'teacher-3', name: 'KS - Teacher Karim', role: 'teacher', level: 'C2', xp: 0, streak: 0, lastActive: 'Today', avatar: 'KS', username: 'teacher3', password: 'teacher123' }
     ];
 
     // 2. Lessons (Empty by default)
@@ -310,10 +310,23 @@ export class DatabaseService {
 
     const users = getLocal('speak_users', defaultUsers);
     defaultUsers.forEach(t => {
-      if (!users.some((u: any) => u.id === t.id)) {
+      const match = users.find((u: any) => u.id === t.id);
+      if (!match) {
         users.push(t);
+      } else if (!match.password) {
+        match.username = t.username;
+        match.password = t.password;
       }
     });
+
+    // Auto-generate credentials for any existing users without them
+    users.forEach((u: any) => {
+      if (!u.password) {
+        u.username = u.name.toLowerCase().replace(/[^a-z0-9]/g, '') + Math.floor(10 + Math.random() * 90);
+        u.password = Math.floor(1000 + Math.random() * 9000).toString(); // 4-digit PIN code
+      }
+    });
+
     localStorage.setItem('speak_users', JSON.stringify(users));
 
     users.forEach((u: UserProfile) => {
@@ -819,8 +832,8 @@ export class DatabaseService {
     const id = name.toLowerCase().replace(/[^a-z0-9]/g, '') + '-' + Date.now().toString().slice(-4);
     const avatar = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
     const isGuest = level === 'Guest';
-    const generatedUsername = name.toLowerCase().replace(/[^a-z0-9]/g, '');
-    const generatedPassword = Math.floor(1000 + Math.random() * 9000).toString();
+    const generatedUsername = name.toLowerCase().replace(/[^a-z0-9]/g, '') + Math.floor(10 + Math.random() * 90);
+    const generatedPassword = Math.floor(1000 + Math.random() * 9000).toString(); // 4-digit PIN
 
     const newStudent: UserProfile = {
       id,
@@ -835,8 +848,8 @@ export class DatabaseService {
       registrationFee,
       monthlyFee,
       registeredAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      username: isGuest ? generatedUsername : undefined,
-      password: isGuest ? generatedPassword : undefined,
+      username: generatedUsername,
+      password: generatedPassword,
       blocked: false
     };
 
@@ -951,7 +964,7 @@ export class DatabaseService {
 
     // Now re-initialize data with clean defaults
     const defaultUsers: UserProfile[] = [
-      { id: 'teacher', name: 'AT - Teacher', role: 'teacher', level: 'C2', xp: 0, streak: 0, lastActive: 'Today', avatar: 'AT' }
+      { id: 'teacher', name: 'AT - Teacher', role: 'teacher', level: 'C2', xp: 0, streak: 0, lastActive: 'Today', avatar: 'AT', username: 'teacher', password: 'admin123' }
     ];
     const defaultPayments: Payment[] = [];
 

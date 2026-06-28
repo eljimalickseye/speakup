@@ -72,8 +72,25 @@ import { DialogService } from '../../services/dialog.service';
             }
           </div>
         </div>
+
+        <!-- Code d'accès PIN Input -->
+        @if (selectedUserId()) {
+          <div style="margin-bottom:18px; animation: fadeIn 0.2s">
+            <label style="font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 6px; display: block; letter-spacing: 0.5px">
+              Code d'accès (PIN) :
+            </label>
+            <input 
+              type="password" 
+              [(ngModel)]="pinCode" 
+              placeholder="Saisissez votre code d'accès" 
+              class="form-input" 
+              style="height: 38px; font-size: 13px; width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 0 10px; background: var(--surface-1); color: var(--text-primary)" 
+              (keyup.enter)="signIn()" 
+            />
+          </div>
+        }
         
-        <button class="btn-p" style="width: 100%; height: 42px; border-radius: 8px; font-size: 14px" [disabled]="!selectedUserId()" (click)="signIn()">
+        <button class="btn-p" style="width: 100%; height: 42px; border-radius: 8px; font-size: 14px" [disabled]="!selectedUserId() || !pinCode.trim()" (click)="signIn()">
           <i class="ti ti-login"></i> Sign In to SpeakUp
         </button>
 
@@ -163,6 +180,7 @@ export class LoginComponent {
 
   activeRole = signal<'student' | 'teacher'>('student');
   selectedUserId = signal<string | null>(null);
+  pinCode = '';
   allUsers = signal<UserProfile[]>([]);
 
   showTeacherTab = signal<boolean>(true);
@@ -184,6 +202,7 @@ export class LoginComponent {
   setRole(role: 'student' | 'teacher') {
     this.activeRole.set(role);
     this.selectedUserId.set(null);
+    this.pinCode = '';
     this.setDefaultUser();
   }
 
@@ -193,12 +212,14 @@ export class LoginComponent {
 
   selectUser(userId: string) {
     this.selectedUserId.set(userId);
+    this.pinCode = '';
   }
 
   private setDefaultUser() {
     const list = this.filteredUsers();
     if (list.length > 0) {
       this.selectedUserId.set(list[0].id);
+      this.pinCode = '';
     }
   }
 
@@ -224,7 +245,15 @@ export class LoginComponent {
   signIn() {
     const uid = this.selectedUserId();
     if (uid) {
-      this.db.setCurrentUser(uid);
+      const match = this.allUsers().find(u => u.id === uid);
+      if (match) {
+        if (match.password && this.pinCode !== match.password) {
+          this.dialogService.alert('Erreur', 'Code d\'accès (PIN) incorrect pour ce profil !', 'info');
+          return;
+        }
+        this.db.setCurrentUser(uid);
+        this.pinCode = '';
+      }
     }
   }
 
