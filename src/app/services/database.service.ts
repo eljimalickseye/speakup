@@ -311,12 +311,15 @@ export class DatabaseService {
 
     const users = getLocal('speak_users', defaultUsers);
     defaultUsers.forEach(t => {
-      const match = users.find((u: any) => u.id === t.id);
-      if (!match) {
+      const idx = users.findIndex((u: any) => u.id === t.id);
+      if (idx === -1) {
         users.push(t);
-      } else if (!match.password) {
-        match.username = t.username;
-        match.password = t.password;
+      } else {
+        // Always force canonical credentials for seeded default accounts
+        users[idx].username = t.username;
+        users[idx].password = t.password;
+        users[idx].role = t.role;
+        users[idx].name = t.name;
       }
     });
 
