@@ -12,7 +12,7 @@ import { getAuth, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 export interface UserProfile {
   id: string;
   name: string;
-  role: 'student' | 'teacher' | 'guest';
+  role: 'student' | 'teacher' | 'guest' | 'admin';
   level: string;
   xp: number;
   streak: number;
@@ -260,8 +260,9 @@ export class DatabaseService {
 
   // Initial Mock Data Setup
   private initializeData() {
-    // 1. Users (Pre-established 3 teachers)
+    // 1. Users (Pre-established 3 teachers + 1 admin)
     const defaultUsers: UserProfile[] = [
+      { id: 'admin', name: 'AT - Admin', role: 'admin', level: 'C2', xp: 0, streak: 0, lastActive: 'Today', avatar: 'AD', username: 'admin', password: 'adminpassword' },
       { id: 'teacher', name: 'AT - Teacher', role: 'teacher', level: 'C2', xp: 0, streak: 0, lastActive: 'Today', avatar: 'AT', username: 'teacher', password: 'admin123' },
       { id: 'teacher-2', name: 'MJ - Teacher Marie', role: 'teacher', level: 'C2', xp: 0, streak: 0, lastActive: 'Today', avatar: 'MJ', username: 'teacher2', password: 'teacher123' },
       { id: 'teacher-3', name: 'KS - Teacher Karim', role: 'teacher', level: 'C2', xp: 0, streak: 0, lastActive: 'Today', avatar: 'KS', username: 'teacher3', password: 'teacher123' }
@@ -828,6 +829,90 @@ export class DatabaseService {
     }
   }
 
+  async addAdmin(name: string, customUsername?: string, customPassword?: string): Promise<UserProfile | null> {
+    const baseName = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const id = 'admin-' + baseName + '-' + Date.now().toString().slice(-4);
+    const avatar = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'AD';
+    const username = customUsername?.trim() || (baseName + Math.floor(10 + Math.random() * 90));
+    const password = customPassword?.trim() || Math.floor(1000 + Math.random() * 9000).toString();
+
+    // Check username uniqueness
+    const exists = this.users$.value.find(u => u.username?.toLowerCase() === username.toLowerCase());
+    if (exists) return null;
+
+    const newAdmin: UserProfile = {
+      id,
+      name,
+      role: 'admin',
+      level: 'C2',
+      xp: 0,
+      streak: 0,
+      lastActive: 'Today',
+      avatar,
+      username,
+      password,
+      blocked: false,
+      registeredAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    };
+
+    const users = [...this.users$.value, newAdmin];
+    this.users$.next(users);
+    this.saveLocal('speak_users', users);
+
+    if (this.useFirebase) {
+      try {
+        const { setDoc, doc } = await import('firebase/firestore');
+        await setDoc(doc(this.firestore, 'users', id), newAdmin);
+      } catch (e) {
+        console.warn('Firestore addAdmin failed:', e);
+      }
+    }
+
+    return newAdmin;
+  }
+
+  async addTeacher(name: string, customUsername?: string, customPassword?: string): Promise<UserProfile | null> {
+    const baseName = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const id = 'teacher-' + baseName + '-' + Date.now().toString().slice(-4);
+    const avatar = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'TC';
+    const username = customUsername?.trim() || (baseName + Math.floor(10 + Math.random() * 90));
+    const password = customPassword?.trim() || Math.floor(1000 + Math.random() * 9000).toString();
+
+    // Check username uniqueness
+    const exists = this.users$.value.find(u => u.username?.toLowerCase() === username.toLowerCase());
+    if (exists) return null;
+
+    const newTeacher: UserProfile = {
+      id,
+      name,
+      role: 'teacher',
+      level: 'C2',
+      xp: 0,
+      streak: 0,
+      lastActive: 'Today',
+      avatar,
+      username,
+      password,
+      blocked: false,
+      registeredAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    };
+
+    const users = [...this.users$.value, newTeacher];
+    this.users$.next(users);
+    this.saveLocal('speak_users', users);
+
+    if (this.useFirebase) {
+      try {
+        const { setDoc, doc } = await import('firebase/firestore');
+        await setDoc(doc(this.firestore, 'users', id), newTeacher);
+      } catch (e) {
+        console.warn('Firestore addTeacher failed:', e);
+      }
+    }
+
+    return newTeacher;
+  }
+
   async addStudent(name: string, level: string, countryFlag: string = '', registrationFee: number = 10000, monthlyFee: number = 7000) {
     const id = name.toLowerCase().replace(/[^a-z0-9]/g, '') + '-' + Date.now().toString().slice(-4);
     const avatar = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -964,6 +1049,7 @@ export class DatabaseService {
 
     // Now re-initialize data with clean defaults
     const defaultUsers: UserProfile[] = [
+      { id: 'admin', name: 'AT - Admin', role: 'admin', level: 'C2', xp: 0, streak: 0, lastActive: 'Today', avatar: 'AD', username: 'admin', password: 'adminpassword' },
       { id: 'teacher', name: 'AT - Teacher', role: 'teacher', level: 'C2', xp: 0, streak: 0, lastActive: 'Today', avatar: 'AT', username: 'teacher', password: 'admin123' }
     ];
     const defaultPayments: Payment[] = [];
@@ -1592,16 +1678,21 @@ export class DatabaseService {
         }
       }
 
-      // Automatically create the student profile!
-      const isGuest = req.level === 'Guest';
-      const user = await this.addStudent(
-        req.name,
-        req.level,
-        req.countryFlag,
-        isGuest ? 0 : 10000,
-        isGuest ? 0 : 7000
-      );
-      return user;
+      // Automatically create the student or teacher profile!
+      if (req.level === 'Teacher') {
+        const user = await this.addTeacher(req.name);
+        return user;
+      } else {
+        const isGuest = req.level === 'Guest';
+        const user = await this.addStudent(
+          req.name,
+          req.level,
+          req.countryFlag,
+          isGuest ? 0 : 10000,
+          isGuest ? 0 : 7000
+        );
+        return user;
+      }
     }
     return null;
   }

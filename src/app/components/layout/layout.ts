@@ -30,6 +30,7 @@ import { TeacherAnnouncementsComponent } from '../teacher/announcements';
 import { TeacherPaymentsComponent } from '../teacher/payments';
 import { TeacherEventsComponent } from '../teacher/events';
 import { TeacherUserManagementComponent } from '../teacher/user-management';
+import { AdminManagementComponent } from '../admin/admin-management';
 
 @Component({
   selector: 'app-layout',
@@ -60,7 +61,8 @@ import { TeacherUserManagementComponent } from '../teacher/user-management';
     TeacherAnnouncementsComponent,
     TeacherPaymentsComponent,
     TeacherEventsComponent,
-    TeacherUserManagementComponent
+    TeacherUserManagementComponent,
+    AdminManagementComponent
   ],
   template: `
     <div class="shell" [class.sidebar-open]="isSidebarOpen()">
@@ -74,12 +76,14 @@ import { TeacherUserManagementComponent } from '../teacher/user-management';
           <span class="logo-name">SpeakUp</span>
           @if (currentUser()?.role === 'teacher') {
             <span class="logo-role">Teacher</span>
+          } @else if (currentUser()?.role === 'admin') {
+            <span class="logo-role" style="background:#EF4444; color:white">Admin</span>
           }
         </div>
         
         <div class="nav">
-          <!-- STUDENT SIDEBAR TABS -->
-          @if (currentUser()?.role === 'student') {
+          <!-- STUDENT/GUEST SIDEBAR TABS -->
+          @if (currentUser()?.role === 'student' || currentUser()?.role === 'guest') {
             <div class="nav-section">Learn</div>
             <button class="nav-item" [class.active]="activeTab === 'dashboard'" (click)="setTab('dashboard')">
               <i class="ti ti-layout-dashboard" aria-hidden="true"></i>Dashboard
@@ -129,6 +133,18 @@ import { TeacherUserManagementComponent } from '../teacher/user-management';
               @if (activeClassAvailable()) {
                 <span class="badge red" style="background:#EF4444; color:white; animation: pulse-live 1.5s infinite">LIVE</span>
               }
+            </button>
+          } @else if (currentUser()?.role === 'admin') {
+            <!-- ADMIN SIDEBAR TABS -->
+            <div class="ns">Admin Panel</div>
+            <button class="ni" [class.active]="activeTab === 'admin-management'" (click)="setTab('admin-management')">
+              <i class="ti ti-settings" aria-hidden="true"></i>Admin Control
+            </button>
+            <button class="ni" [class.active]="activeTab === 'chat'" (click)="setTab('chat')">
+              <i class="ti ti-messages" aria-hidden="true"></i>English Chat
+            </button>
+            <button class="ni" [class.active]="activeTab === 'announcements'" (click)="setTab('announcements')">
+              <i class="ti ti-speakerphone" aria-hidden="true"></i>Announcements
             </button>
           } @else {
             <!-- TEACHER SIDEBAR TABS -->
@@ -220,8 +236,8 @@ import { TeacherUserManagementComponent } from '../teacher/user-management';
         
         <!-- CONTENT VIEWPORT -->
         <div class="content">
-          <!-- Student Views -->
-          @if (currentUser()?.role === 'student') {
+          <!-- Student/Guest Views -->
+          @if (currentUser()?.role === 'student' || currentUser()?.role === 'guest') {
             @if (activeTab === 'dashboard') {
               <app-student-dashboard (navigateToTab)="setTab($event)"></app-student-dashboard>
             } @else if (activeTab === 'lessons') {
@@ -244,6 +260,17 @@ import { TeacherUserManagementComponent } from '../teacher/user-management';
               <app-student-announcements></app-student-announcements>
             } @else if (activeTab === 'live-classes') {
               <app-student-live></app-student-live>
+            }
+          }
+          
+          <!-- Admin Views -->
+          @if (currentUser()?.role === 'admin') {
+            @if (activeTab === 'admin-management') {
+              <app-admin-management></app-admin-management>
+            } @else if (activeTab === 'chat') {
+              <app-student-chat></app-student-chat>
+            } @else if (activeTab === 'announcements') {
+              <app-teacher-announcements></app-teacher-announcements>
             }
           }
           
@@ -617,10 +644,12 @@ export class LayoutComponent {
       if (user) {
         this.currentUser.set(user);
         // Sync active tab for roles
-        if (user.role === 'teacher' && ['dashboard', 'lessons', 'speaking', 'exercises', 'events', 'live-classes'].includes(this.activeTab)) {
+        if (user.role === 'teacher' && ['dashboard', 'lessons', 'speaking', 'exercises', 'events', 'live-classes', 'admin-management'].includes(this.activeTab)) {
           this.setTab('overview');
-        } else if ((user.role === 'student' || user.role === 'guest') && ['overview', 'students', 'create-lesson', 'create-quiz', 'grade-homework', 'attendance', 'schedule-class', 'announcements', 'payments', 'teacher-events'].includes(this.activeTab)) {
+        } else if ((user.role === 'student' || user.role === 'guest') && ['overview', 'students', 'create-lesson', 'create-quiz', 'grade-homework', 'attendance', 'schedule-class', 'payments', 'teacher-events', 'user-management', 'admin-management'].includes(this.activeTab)) {
           this.setTab('dashboard');
+        } else if (user.role === 'admin' && ['dashboard', 'lessons', 'speaking', 'exercises', 'events', 'live-classes', 'overview', 'students', 'create-lesson', 'create-quiz', 'grade-homework', 'attendance', 'schedule-class', 'payments', 'teacher-events', 'user-management'].includes(this.activeTab)) {
+          this.setTab('admin-management');
         }
       }
     });
@@ -838,7 +867,10 @@ export class LayoutComponent {
       'schedule-class': 'Schedule Class',
       announcements: 'Announcements',
       payments: 'Payments',
-      'teacher-events': 'Events Registry'
+      'teacher-events': 'Events Registry',
+      'admin-management': 'Admin Control',
+      'user-management': 'User Management',
+      dictionary: 'Dictionary'
     };
     return titles[tab] || 'Overview';
   }

@@ -125,11 +125,12 @@ import { DialogService } from '../../services/dialog.service';
             <div class="input-row" style="margin-bottom:12px">
               <label style="font-weight:600; font-size:12px; color:var(--text-primary)">Niveau d'anglais souhaité / Rôle</label>
               <select [(ngModel)]="requestLevel" style="width:100%; padding:8px; border:1px solid #D1D5DB; border-radius:6px; font-size:13px; background:#FFF">
-                <option value="A1">A1 — Débutant</option>
-                <option value="A2">A2 — Élémentaire</option>
-                <option value="B1">B1 — Intermédiaire</option>
-                <option value="B2">B2 — Intermédiaire Supérieur</option>
+                <option value="A1">A1 — Débutant (Élève)</option>
+                <option value="A2">A2 — Élémentaire (Élève)</option>
+                <option value="B1">B1 — Intermédiaire (Élève)</option>
+                <option value="B2">B2 — Intermédiaire Supérieur (Élève)</option>
                 <option value="Guest">Guest / Invité (Accès libre)</option>
+                <option value="Teacher">Professeur — Demande d'enrôlement 🎓</option>
               </select>
             </div>
 

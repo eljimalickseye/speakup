@@ -36,101 +36,57 @@ import { DialogService } from '../../services/dialog.service';
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle">
               <path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
             </svg>
-            <span>Ajouter / Rechercher un Mot</span>
+            <span>Ajouter un Mot au Carnet</span>
           </h3>
-          
-          <div style="display:flex; gap:8px">
-            <button class="btn-s" [class.active]="lookupMode() === 'ai'" (click)="lookupMode.set('ai')" style="font-size:11px; padding:4px 10px; font-weight:700">
-              🤖 Assistant IA
-            </button>
-            <button class="btn-s" [class.active]="lookupMode() === 'manual'" (click)="lookupMode.set('manual')" style="font-size:11px; padding:4px 10px; font-weight:700">
-              ✍️ Manuel
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:12px">
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px">
+            <div class="input-row" style="margin-bottom:0">
+              <label style="font-size:11px; font-weight:600; color:var(--text-secondary); margin-bottom:4px; display:block">Mot en Anglais</label>
+              <input [(ngModel)]="newWord" placeholder="Ex: Resilience" class="form-input" style="height:36px; font-size:13px; width:100%" />
+            </div>
+            <div class="input-row" style="margin-bottom:0">
+              <label style="font-size:11px; font-weight:600; color:var(--text-secondary); margin-bottom:4px; display:block">Traduction Française</label>
+              <input [(ngModel)]="newTranslation" placeholder="Ex: Résilience" class="form-input" style="height:36px; font-size:13px; width:100%" />
+            </div>
+            <div class="input-row" style="margin-bottom:0">
+              <label style="font-size:11px; font-weight:600; color:var(--text-secondary); margin-bottom:4px; display:block">Classe Grammaticale</label>
+              <select [(ngModel)]="newPartOfSpeech" class="form-select" style="height:36px; font-size:13px; width:100%">
+                <option value="nom">Nom (Noun)</option>
+                <option value="verbe">Verbe (Verb)</option>
+                <option value="adjectif">Adjectif (Adjective)</option>
+                <option value="adverbe">Adverbe (Adverb)</option>
+                <option value="expression">Expression (Idiom)</option>
+              </select>
+            </div>
+            <div class="input-row" style="margin-bottom:0">
+              <label style="font-size:11px; font-weight:600; color:var(--text-secondary); margin-bottom:4px; display:block">Prononciation (Phonétique)</label>
+              <input [(ngModel)]="newPhonetic" placeholder="Ex: /rɪˈzɪl.jəns/" class="form-input" style="height:36px; font-size:13px; width:100%" />
+            </div>
+          </div>
+
+          <div class="input-row" style="margin-bottom:0">
+            <label style="font-size:11px; font-weight:600; color:var(--text-secondary); margin-bottom:4px; display:block">Définition</label>
+            <textarea [(ngModel)]="newDefinition" placeholder="Saisissez la définition ou explication du mot..." rows="2" class="form-input" style="font-size:13px; width:100%; padding:8px 12px"></textarea>
+          </div>
+
+          <div class="input-row" style="margin-bottom:0">
+            <label style="font-size:11px; font-weight:600; color:var(--text-secondary); margin-bottom:4px; display:block">Exemples de phrases en contexte (Une phrase par ligne)</label>
+            <textarea [(ngModel)]="newContextsStr" placeholder="Ex:&#10;1. Her resilience helped her. (Sa résilience l'a aidée.)&#10;2. Building mental resilience is key. (Bâtir une résilience mentale est capital.)" rows="3" class="form-input" style="font-size:13px; width:100%; padding:8px 12px; font-family:monospace"></textarea>
+          </div>
+
+          <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:8px">
+            <button class="btn-s" (click)="clearForm()" style="height:36px; padding:0 16px; font-weight:600">Vider les champs</button>
+            <button 
+              class="btn-p" 
+              [disabled]="!newWord.trim() || !newTranslation.trim() || !newDefinition.trim()" 
+              (click)="saveWord()" 
+              style="height:36px; padding:0 24px; font-weight:700; background:#10B981; border-color:#10B981">
+              💾 Sauvegarder dans mon Carnet
             </button>
           </div>
         </div>
-
-        <!-- AI Assistant Tab Content -->
-        @if (lookupMode() === 'ai') {
-          <div style="display:flex; flex-direction:column; gap:12px">
-            <p style="font-size:12px; color:var(--text-secondary); margin:0">
-              Saisissez un mot en anglais. Notre assistant IA va traduire, prononcer, définir et générer des exemples de phrases contextualisées pour vous.
-            </p>
-            <div style="display:flex; gap:12px; align-items:center">
-              <input 
-                type="text" 
-                [(ngModel)]="searchWordAI" 
-                (keyup.enter)="lookupWithAI()"
-                placeholder="Ex: Resilience, Ubiquitous, Sempiternal..." 
-                class="form-input" 
-                style="flex:1; height:40px; font-size:14px; border:1px solid var(--border); border-radius:8px; padding:0 12px; background:#FFF; color:var(--text-primary)" 
-              />
-              <button 
-                class="btn-p" 
-                [disabled]="!searchWordAI.trim() || isAnalyzing()" 
-                (click)="lookupWithAI()" 
-                style="height:40px; padding:0 20px; font-weight:700; background:#4F46E5; display:flex; align-items:center; gap:6px">
-                @if (isAnalyzing()) {
-                  <span>Analyse...</span>
-                } @else {
-                  <span>🔍 Traduire & Analyser</span>
-                }
-              </button>
-            </div>
-          </div>
-        }
-
-        <!-- Manual Tab Content / AI Filled Draft -->
-        @if (lookupMode() === 'manual' || showDraftForm()) {
-          <div style="display:flex; flex-direction:column; gap:12px; margin-top:10px; padding-top:10px; border-top:1px solid var(--border-weak)">
-            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px">
-              <div class="input-row" style="margin-bottom:0">
-                <label style="font-size:11px; font-weight:600; color:var(--text-secondary); margin-bottom:4px; display:block">Mot en Anglais</label>
-                <input [(ngModel)]="newWord" placeholder="Ex: Resilience" class="form-input" style="height:36px; font-size:13px; width:100%" />
-              </div>
-              <div class="input-row" style="margin-bottom:0">
-                <label style="font-size:11px; font-weight:600; color:var(--text-secondary); margin-bottom:4px; display:block">Traduction Française</label>
-                <input [(ngModel)]="newTranslation" placeholder="Ex: Résilience" class="form-input" style="height:36px; font-size:13px; width:100%" />
-              </div>
-              <div class="input-row" style="margin-bottom:0">
-                <label style="font-size:11px; font-weight:600; color:var(--text-secondary); margin-bottom:4px; display:block">Classe Grammaticale</label>
-                <select [(ngModel)]="newPartOfSpeech" class="form-select" style="height:36px; font-size:13px; width:100%">
-                  <option value="nom">Nom (Noun)</option>
-                  <option value="verbe">Verbe (Verb)</option>
-                  <option value="adjectif">Adjectif (Adjective)</option>
-                  <option value="adverbe">Adverbe (Adverb)</option>
-                  <option value="expression">Expression (Idiom)</option>
-                </select>
-              </div>
-              <div class="input-row" style="margin-bottom:0">
-                <label style="font-size:11px; font-weight:600; color:var(--text-secondary); margin-bottom:4px; display:block">Prononciation (Phonétique)</label>
-                <input [(ngModel)]="newPhonetic" placeholder="Ex: /rɪˈzɪl.jəns/" class="form-input" style="height:36px; font-size:13px; width:100%" />
-              </div>
-            </div>
-
-            <div class="input-row" style="margin-bottom:0">
-              <label style="font-size:11px; font-weight:600; color:var(--text-secondary); margin-bottom:4px; display:block">Définition</label>
-              <textarea [(ngModel)]="newDefinition" placeholder="Saisissez la définition ou explication du mot..." rows="2" class="form-input" style="font-size:13px; width:100%; padding:8px 12px"></textarea>
-            </div>
-
-            <div class="input-row" style="margin-bottom:0">
-              <label style="font-size:11px; font-weight:600; color:var(--text-secondary); margin-bottom:4px; display:block">Exemples de phrases en contexte (Une phrase par ligne)</label>
-              <textarea [(ngModel)]="newContextsStr" placeholder="Ex:&#10;1. Her resilience helped her. (Sa résilience l'a aidée.)&#10;2. Building mental resilience is key. (Bâtir une résilience mentale est capital.)" rows="3" class="form-input" style="font-size:13px; width:100%; padding:8px 12px; font-family:monospace"></textarea>
-            </div>
-
-            <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:8px">
-              @if (showDraftForm()) {
-                <button class="btn-s" (click)="clearDraft()" style="height:36px; padding:0 16px; font-weight:600">Annuler le brouillon</button>
-              }
-              <button 
-                class="btn-p" 
-                [disabled]="!newWord || !newTranslation || !newDefinition" 
-                (click)="saveWord()" 
-                style="height:36px; padding:0 24px; font-weight:700; background:#10B981; border-color:#10B981">
-                💾 Sauvegarder dans mon Carnet
-              </button>
-            </div>
-          </div>
-        }
       </div>
 
       <!-- Dictionary Listing Cards -->
@@ -160,7 +116,7 @@ import { DialogService } from '../../services/dialog.service';
           <div style="text-align:center; padding:48px 16px; color:var(--text-muted)">
             <i class="ti ti-bookmarks" style="font-size:40px; display:block; margin-bottom:12px; color:var(--text-muted); opacity:0.5"></i>
             <p style="font-size:13px; font-weight:600; margin-bottom:4px; color:var(--text-primary)">Aucun mot trouvé</p>
-            <p style="font-size:11px; margin:0">Recherchez un mot via l'IA ou ajoutez-en un manuellement pour enrichir votre vocabulaire.</p>
+            <p style="font-size:11px; margin:0">Ajoutez un mot manuellement pour enrichir votre vocabulaire.</p>
           </div>
         } @else {
           <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:12px">
@@ -240,16 +196,12 @@ export class StudentDictionaryComponent {
   allWords = signal<DictionaryWord[]>([]);
   
   // UI states
-  lookupMode = signal<'ai' | 'manual'>('ai');
-  showDraftForm = signal<boolean>(false);
-  isAnalyzing = signal<boolean>(false);
   viewTab = signal<'my' | 'all'>('my');
 
   // Input states
-  searchWordAI = '';
   searchQuery = '';
 
-  // Manual / Draft form states
+  // Manual form states
   newWord = '';
   newTranslation = '';
   newPartOfSpeech = 'nom';
@@ -295,63 +247,6 @@ export class StudentDictionaryComponent {
     return list;
   });
 
-  async lookupWithAI() {
-    const queryWord = this.searchWordAI.trim();
-    if (!queryWord) return;
-
-    this.isAnalyzing.set(true);
-    this.showDraftForm.set(false);
-
-    const prompt = `You are an advanced bilingual English-French dictionary assistant.
-Analyze the English word: "${queryWord}".
-Provide a JSON response with the following format:
-{
-  "translation": "French translation",
-  "partOfSpeech": "nom/verbe/adjectif/adverbe/expression",
-  "phonetic": "/phonetic spelling/",
-  "definition": "Definition in French explaining the meaning clearly",
-  "contexts": [
-    "1. Example sentence using the word. (French translation of sentence)",
-    "2. Another example sentence. (French translation)"
-  ]
-}
-Do not include any markdown formatting tags like \`\`\`json or backticks. Return ONLY the raw JSON string.`;
-
-    try {
-      const response = await this.db.callGemini(prompt, 'Analyzing word parameters...');
-      const cleanJson = response.replace(/```json/g, '').replace(/```/g, '').trim();
-      const parsed = JSON.parse(cleanJson);
-
-      this.newWord = queryWord;
-      this.newTranslation = parsed.translation || '';
-      this.newPartOfSpeech = parsed.partOfSpeech || 'nom';
-      this.newPhonetic = parsed.phonetic || '';
-      this.newDefinition = parsed.definition || '';
-      this.newContextsStr = (parsed.contexts || []).join('\n');
-
-      this.showDraftForm.set(true);
-      this.lookupMode.set('manual');
-      this.dialogService.alert('IA Assist Rempli', `Les informations du mot "${queryWord}" ont été préparées. Veuillez les valider ci-dessous !`, 'success');
-    } catch (e) {
-      console.warn('Gemini dictionary lookup failed, executing local fallback:', e);
-      
-      // Fallback
-      this.newWord = queryWord;
-      this.newTranslation = '';
-      this.newPartOfSpeech = 'nom';
-      this.newPhonetic = '';
-      this.newDefinition = 'Définition indisponible (Quota IA atteint). Veuillez compléter manuellement.';
-      this.newContextsStr = `1. Use ${queryWord} in a sentence. (Utilisez ${queryWord} dans une phrase.)`;
-
-      this.showDraftForm.set(true);
-      this.lookupMode.set('manual');
-      this.dialogService.alert('Fallback Activé', 'Quota API atteint. Veuillez compléter ou ajuster la définition et la traduction manuellement.', 'info');
-    } finally {
-      this.isAnalyzing.set(false);
-      this.searchWordAI = '';
-    }
-  }
-
   saveWord() {
     if (!this.newWord.trim() || !this.newTranslation.trim() || !this.newDefinition.trim()) {
       this.dialogService.alert('Champs requis', 'Veuillez remplir au moins le mot, la traduction et la définition.', 'info');
@@ -379,7 +274,7 @@ Do not include any markdown formatting tags like \`\`\`json or backticks. Return
 
     this.db.addWordToDictionary(newDictWord).then(() => {
       this.dialogService.alert('Mot Sauvegardé', `"${this.newWord}" a été ajouté à votre carnet !`, 'success');
-      this.clearDraft();
+      this.clearForm();
     });
   }
 
@@ -398,14 +293,12 @@ Do not include any markdown formatting tags like \`\`\`json or backticks. Return
     });
   }
 
-  clearDraft() {
+  clearForm() {
     this.newWord = '';
     this.newTranslation = '';
     this.newPartOfSpeech = 'nom';
     this.newPhonetic = '';
     this.newDefinition = '';
     this.newContextsStr = '';
-    this.showDraftForm.set(false);
-    this.lookupMode.set('ai');
   }
 }
