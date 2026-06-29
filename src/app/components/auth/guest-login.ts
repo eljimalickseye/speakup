@@ -8,12 +8,22 @@ import { DatabaseService } from '../../services/database.service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="page" style="display:flex; justify-content:center; align-items:center; min-height:100vh; background:linear-gradient(135deg, #EEF2FF 0%, #F0FDFA 100%)">
-      <div class="card" style="width:100%; max-width:420px; padding:32px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.1);">
+    <div class="login-screen">
+      <!-- Ambient animated glowing orbs matching the logo -->
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
+      <div class="orb orb-3"></div>
+      <div class="orb orb-4"></div>
+
+      <div class="login-card" style="position:relative">
         <div style="text-align:center; margin-bottom:24px">
-          <div style="font-size:48px; margin-bottom:12px">🎓</div>
-          <h2 style="font-size:22px; font-weight:700; color:var(--text-primary); margin:0 0 8px 0">Guest Login</h2>
-          <p style="font-size:13px; color:var(--text-secondary); margin:0">
+          <div style="display:flex; justify-content:center; margin-bottom:18px">
+            <img src="logo.png" style="width:64px; height:64px; object-fit:contain; border-radius:14px; filter: drop-shadow(0 8px 16px rgba(30, 166, 179, 0.25))" alt="logo">
+          </div>
+          <h2 style="font-size:22px; font-weight:800; color:var(--text-primary); margin:0 0 4px 0; font-family:'Outfit', sans-serif">
+            <span style="color:#1b3b6f">Guest</span> <span style="color:#ff5a5f">Login</span>
+          </h2>
+          <p style="font-size:12px; color:var(--text-secondary); margin:0; font-family:'Inter', sans-serif">
             Use the credentials provided by your teacher to access your account.
           </p>
         </div>
@@ -59,7 +69,7 @@ import { DatabaseService } from '../../services/database.service';
             class="btn-p" 
             [disabled]="!username || !password || isLoading()" 
             (click)="login()" 
-            style="width:100%; height:44px; font-size:14px; font-weight:700; margin-top:8px">
+            style="width:100%; height:44px; font-size:14px; font-weight:700; margin-top:8px; background:linear-gradient(135deg, #1b3b6f 0%, #7b2cb1 100%); border:none; color:white; cursor:pointer; box-shadow: 0 4px 12px rgba(123, 44, 177, 0.25)">
             @if (isLoading()) {
               <span>Logging in...</span>
             } @else {
@@ -68,7 +78,7 @@ import { DatabaseService } from '../../services/database.service';
           </button>
 
           <div style="text-align:center; margin-top:8px">
-            <button (click)="goToMainLogin()" style="background:none; border:none; color:#4F46E5; font-size:13px; font-weight:600; cursor:pointer; text-decoration:underline">
+            <button (click)="goToMainLogin()" style="background:none; border:none; color:#1ea6b3; font-size:13px; font-weight:600; cursor:pointer; text-decoration:underline">
               Back to main login
             </button>
           </div>

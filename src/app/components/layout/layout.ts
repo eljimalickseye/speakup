@@ -17,6 +17,8 @@ import { StudentLiveClassesComponent } from '../student/live';
 import { StudentAnnouncementsComponent } from '../student/announcements';
 import { StudentDictionaryComponent } from '../student/dictionary';
 import { StudentEbooksComponent } from '../student/ebooks';
+import { StudentHistoryComponent } from '../student/history';
+import { StudentExamComponent } from '../student/exam';
 import { TeacherEbooksComponent } from '../teacher/ebooks';
 
 import { TeacherOverviewComponent } from '../teacher/overview';
@@ -30,7 +32,10 @@ import { TeacherAnnouncementsComponent } from '../teacher/announcements';
 import { TeacherPaymentsComponent } from '../teacher/payments';
 import { TeacherEventsComponent } from '../teacher/events';
 import { TeacherUserManagementComponent } from '../teacher/user-management';
+import { TeacherResultsComponent } from '../teacher/results';
+import { TeacherVocabGamesComponent } from '../teacher/vocab-games';
 import { AdminManagementComponent } from '../admin/admin-management';
+import { NotificationsComponent } from '../shared/notifications';
 
 @Component({
   selector: 'app-layout',
@@ -50,6 +55,8 @@ import { AdminManagementComponent } from '../admin/admin-management';
     StudentAnnouncementsComponent,
     StudentDictionaryComponent,
     StudentEbooksComponent,
+    StudentHistoryComponent,
+    StudentExamComponent,
     TeacherEbooksComponent,
     TeacherOverviewComponent,
     TeacherStudentsComponent,
@@ -62,7 +69,10 @@ import { AdminManagementComponent } from '../admin/admin-management';
     TeacherPaymentsComponent,
     TeacherEventsComponent,
     TeacherUserManagementComponent,
-    AdminManagementComponent
+    TeacherResultsComponent,
+    TeacherVocabGamesComponent,
+    AdminManagementComponent,
+    NotificationsComponent
   ],
   template: `
     <div class="shell" [class.sidebar-open]="isSidebarOpen()">
@@ -134,6 +144,15 @@ import { AdminManagementComponent } from '../admin/admin-management';
                 <span class="badge red" style="background:#EF4444; color:white; animation: pulse-live 1.5s infinite">LIVE</span>
               }
             </button>
+            
+            <div class="nav-section">Progress</div>
+            <button class="nav-item" [class.active]="activeTab === 'history'" (click)="setTab('history')">
+              <i class="ti ti-history" aria-hidden="true"></i>Mon Historique
+            </button>
+            <button class="nav-item" [class.active]="activeTab === 'exam'" (click)="setTab('exam')">
+              <i class="ti ti-certificate" aria-hidden="true"></i>Mode Examen
+              <span class="badge" style="background:#4F46E5; color:white; font-size:9px">NEW</span>
+            </button>
           } @else if (currentUser()?.role === 'admin') {
             <!-- ADMIN SIDEBAR TABS -->
             <div class="ns">Admin Panel</div>
@@ -167,13 +186,21 @@ import { AdminManagementComponent } from '../admin/admin-management';
               <i class="ti ti-book" aria-hidden="true"></i>Create lesson
             </button>
             <button class="ni" [class.active]="activeTab === 'create-quiz'" (click)="setTab('create-quiz')">
-              <i class="ti ti-list-check" aria-hidden="true"></i>Create quiz
+              <i class="ti ti-list-check" aria-hidden="true"></i>Exercices &amp; Quiz
+            </button>
+            <button class="ni" [class.active]="activeTab === 'vocab-games'" (click)="setTab('vocab-games')">
+              <i class="ti ti-cards" aria-hidden="true"></i>Jeux Vocab
+              <span class="badge" style="background:#F59E0B; color:#92400E; font-size:9px">NEW</span>
             </button>
             <button class="ni" [class.active]="activeTab === 'grade-homework'" (click)="setTab('grade-homework')">
               <i class="ti ti-writing" aria-hidden="true"></i>Grade homework
               @if (pendingHomeworkCount() > 0) {
                 <span class="badge" style="background:#FEE2E2; color:#DC2626">{{ pendingHomeworkCount() }}</span>
               }
+            </button>
+            <button class="ni" [class.active]="activeTab === 'results'" (click)="setTab('results')">
+              <i class="ti ti-clipboard-data" aria-hidden="true"></i>Résultats Élèves
+              <span class="badge" style="background:#059669; color:white; font-size:9px">NEW</span>
             </button>
             <button class="ni" [class.active]="activeTab === 'ebooks'" (click)="setTab('ebooks')">
               <i class="ti ti-notebook" aria-hidden="true"></i>Gérer les Ebooks
@@ -216,6 +243,9 @@ import { AdminManagementComponent } from '../admin/admin-management';
           </button>
 
           <span class="topbar-title">{{ pageTitle }}</span>
+          
+          <!-- Real-time notifications bell -->
+          <app-notifications style="margin-left: auto; margin-right: 12px;"></app-notifications>
           
           <!-- Reset DB Button (Teacher only) -->
           @if (currentUser()?.role === 'teacher') {
@@ -260,6 +290,10 @@ import { AdminManagementComponent } from '../admin/admin-management';
               <app-student-announcements></app-student-announcements>
             } @else if (activeTab === 'live-classes') {
               <app-student-live></app-student-live>
+            } @else if (activeTab === 'history') {
+              <app-student-history></app-student-history>
+            } @else if (activeTab === 'exam') {
+              <app-student-exam></app-student-exam>
             }
           }
           
@@ -284,8 +318,12 @@ import { AdminManagementComponent } from '../admin/admin-management';
               <app-teacher-lessons></app-teacher-lessons>
             } @else if (activeTab === 'create-quiz') {
               <app-teacher-quizzes></app-teacher-quizzes>
+            } @else if (activeTab === 'vocab-games') {
+              <app-teacher-vocab-games></app-teacher-vocab-games>
             } @else if (activeTab === 'grade-homework') {
               <app-teacher-homework></app-teacher-homework>
+            } @else if (activeTab === 'results') {
+              <app-teacher-results></app-teacher-results>
             } @else if (activeTab === 'ebooks') {
               <app-teacher-ebooks></app-teacher-ebooks>
             } @else if (activeTab === 'attendance') {
@@ -644,11 +682,11 @@ export class LayoutComponent {
       if (user) {
         this.currentUser.set(user);
         // Sync active tab for roles
-        if (user.role === 'teacher' && ['dashboard', 'lessons', 'speaking', 'exercises', 'events', 'live-classes', 'admin-management'].includes(this.activeTab)) {
+        if (user.role === 'teacher' && ['dashboard', 'lessons', 'speaking', 'exercises', 'events', 'live-classes', 'admin-management', 'history', 'exam'].includes(this.activeTab)) {
           this.setTab('overview');
-        } else if ((user.role === 'student' || user.role === 'guest') && ['overview', 'students', 'create-lesson', 'create-quiz', 'grade-homework', 'attendance', 'schedule-class', 'payments', 'teacher-events', 'user-management', 'admin-management'].includes(this.activeTab)) {
+        } else if ((user.role === 'student' || user.role === 'guest') && ['overview', 'students', 'create-lesson', 'create-quiz', 'grade-homework', 'attendance', 'schedule-class', 'payments', 'teacher-events', 'user-management', 'admin-management', 'results', 'vocab-games'].includes(this.activeTab)) {
           this.setTab('dashboard');
-        } else if (user.role === 'admin' && ['dashboard', 'lessons', 'speaking', 'exercises', 'events', 'live-classes', 'overview', 'students', 'create-lesson', 'create-quiz', 'grade-homework', 'attendance', 'schedule-class', 'payments', 'teacher-events', 'user-management'].includes(this.activeTab)) {
+        } else if (user.role === 'admin' && ['dashboard', 'lessons', 'speaking', 'exercises', 'events', 'live-classes', 'overview', 'students', 'create-lesson', 'create-quiz', 'grade-homework', 'attendance', 'schedule-class', 'payments', 'teacher-events', 'user-management', 'history', 'exam', 'results', 'vocab-games'].includes(this.activeTab)) {
           this.setTab('admin-management');
         }
       }
@@ -861,7 +899,7 @@ export class LayoutComponent {
       overview: 'Overview',
       students: 'Students Manager',
       'create-lesson': 'Create Lesson',
-      'create-quiz': 'Create Quiz',
+      'create-quiz': 'Exercices & Quiz',
       'grade-homework': 'Grade Homework',
       attendance: 'Attendance',
       'schedule-class': 'Schedule Class',
@@ -870,7 +908,12 @@ export class LayoutComponent {
       'teacher-events': 'Events Registry',
       'admin-management': 'Admin Control',
       'user-management': 'User Management',
-      dictionary: 'Dictionary'
+      dictionary: 'Dictionary',
+      ebooks: 'Bibliothèque Ebooks',
+      history: 'Mon Historique',
+      exam: 'Mode Examen',
+      results: 'Résultats Élèves',
+      'vocab-games': 'Jeux Vocabulaire'
     };
     return titles[tab] || 'Overview';
   }

@@ -106,6 +106,7 @@ export interface Quiz {
   title: string;
   type: string;
   timeLimit: string;
+  level?: string; // Optional level property matching brand design requirements
   questions: {
     question: string;
     options: string[];
@@ -157,7 +158,84 @@ export interface Announcement {
   imageUrl?: string;
 }
 
+export type ExerciseType = 'quiz' | 'written' | 'vocal' | 'translation' | 'essay' | 'listening' | 'pronunciation';
+
+export interface Exercise {
+  id: string;
+  title: string;
+  type: ExerciseType;
+  level: string;
+  createdAt: string;
+  authorId: string;
+  authorName: string;
+  status: 'draft' | 'published';
+  points: number;
+  description?: string;
+  content?: string;
+  timeLimit?: string;
+  questions?: any[];
+}
+
+export interface ActivityLog {
+  id: string;
+  studentId: string;
+  type: 'quiz' | 'exercise' | 'vocabulary' | 'speaking' | 'listening' | 'exam';
+  title: string;
+  score?: number;
+  maxScore?: number;
+  percentage?: number;
+  timeSpentSeconds?: number;
+  teacherName?: string;
+  status: 'completed' | 'pending' | 'failed';
+  completedAt: string;
+  quizId?: string;
+  canRetry?: boolean;
+}
+
+export interface AppNotification {
+  id: string;
+  recipientId: string;
+  recipientRole?: 'student' | 'teacher' | 'admin' | 'all';
+  type: 'homework_submitted' | 'homework_graded' | 'new_student' | 'exam_completed' | 'exercise_assigned' | 'quiz_available' | 'grade_updated' | 'new_comment' | 'announcement' | 'reminder' | 'live_started';
+  title: string;
+  message: string;
+  read: boolean;
+  createdAt: string;
+  link?: string;
+}
+
+export interface VocabGame {
+  id: string;
+  title: string;
+  gameType: 'flashcards' | 'matching' | 'memory' | 'word_builder' | 'hangman' | 'multiple_choice';
+  difficulty: 'easy' | 'medium' | 'hard';
+  authorId: string;
+  createdAt: string;
+  words: {
+    word: string;
+    definition: string;
+    translation: string;
+    imageUrl?: string;
+    pronunciation?: string;
+  }[];
+}
+
+export interface ExamAttempt {
+  id: string;
+  studentId: string;
+  studentName: string;
+  quizId: string;
+  quizTitle: string;
+  answers: { questionIdx: number; answer: string; correct: boolean }[];
+  score: number;
+  percentage: number;
+  timeTakenSeconds: number;
+  completedAt: string;
+  passed: boolean;
+}
+
 export interface Payment {
+
   id: string;
   studentId: string;
   studentName: string;
@@ -223,6 +301,11 @@ export class DatabaseService {
   private channels$ = new BehaviorSubject<ChatChannel[]>([]);
   private ebooks$ = new BehaviorSubject<Ebook[]>([]);
   private reports$ = new BehaviorSubject<AbuseReport[]>([]);
+  private exercises$ = new BehaviorSubject<Exercise[]>([]);
+  private activityLogs$ = new BehaviorSubject<ActivityLog[]>([]);
+  private notifications$ = new BehaviorSubject<AppNotification[]>([]);
+  private vocabGames$ = new BehaviorSubject<VocabGame[]>([]);
+  private examAttempts$ = new BehaviorSubject<ExamAttempt[]>([]);
   
   // Current user state
   private currentUser$ = new BehaviorSubject<UserProfile | null>(null);
@@ -428,6 +511,18 @@ export class DatabaseService {
     const defaultReports: AbuseReport[] = [];
     const reports = getLocal('speak_reports', defaultReports);
     this.reports$.next(reports);
+
+    // New collections
+    const exercises = getLocal('speak_exercises', []);
+    this.exercises$.next(exercises);
+    const activityLogs = getLocal('speak_activity_logs', []);
+    this.activityLogs$.next(activityLogs);
+    const notifications = getLocal('speak_notifications', []);
+    this.notifications$.next(notifications);
+    const vocabGames = getLocal('speak_vocab_games', []);
+    this.vocabGames$.next(vocabGames);
+    const examAttempts = getLocal('speak_exam_attempts', []);
+    this.examAttempts$.next(examAttempts);
 
     this.users$.next(users);
     this.lessons$.next(lessons);
@@ -1240,6 +1335,20 @@ export class DatabaseService {
         } catch (e) {
           console.warn(e);
         }
+      }
+    }
+  }
+
+  async deleteQuiz(quizId: string) {
+    const list = this.quizzes$.value.filter(q => q.id !== quizId);
+    this.quizzes$.next(list);
+    this.saveLocal('speak_quizzes', list);
+
+    if (this.useFirebase) {
+      try {
+        await deleteDoc(doc(this.firestore, 'quizzes', quizId));
+      } catch (e) {
+        console.warn(e);
       }
     }
   }
@@ -2230,6 +2339,155 @@ export class DatabaseService {
     } catch (e) {
       return false;
     }
+  }
+
+  // --- EXERCISE OPERATIONS ---
+  observeExercises(): Observable<Exercise[]> { return this.exercises$.asObservable(); }
+
+  async addExercise(exercise: Omit<Exercise, 'id' | 'createdAt'>): Promise<Exercise> {
+    const newEx: Exercise = {
+      ...exercise,
+      id: 'ex-' + Date.now(),
+      createdAt: new Date().toISOString()
+    };
+    const list = [newEx, ...this.exercises$.value];
+    this.exercises$.next(list);
+    this.saveLocal('speak_exercises', list);
+    if (this.useFirebase) {
+      try { await setDoc(doc(this.firestore, 'exercises', newEx.id), newEx); } catch(e) { console.warn(e); }
+    }
+    return newEx;
+  }
+
+  async updateExercise(id: string, updates: Partial<Exercise>) {
+    const list = [...this.exercises$.value];
+    const idx = list.findIndex(e => e.id === id);
+    if (idx !== -1) {
+      const updated = { ...list[idx], ...updates };
+      list[idx] = updated;
+      this.exercises$.next(list);
+      this.saveLocal('speak_exercises', list);
+      if (this.useFirebase) {
+        try { await updateDoc(doc(this.firestore, 'exercises', id), updates); } catch(e) { console.warn(e); }
+      }
+    }
+  }
+
+  async deleteExercise(id: string) {
+    const list = this.exercises$.value.filter(e => e.id !== id);
+    this.exercises$.next(list);
+    this.saveLocal('speak_exercises', list);
+    if (this.useFirebase) {
+      try { await deleteDoc(doc(this.firestore, 'exercises', id)); } catch(e) { console.warn(e); }
+    }
+  }
+
+  // --- ACTIVITY LOG OPERATIONS ---
+  observeActivityLogs(): Observable<ActivityLog[]> { return this.activityLogs$.asObservable(); }
+
+  async logActivity(log: Omit<ActivityLog, 'id'>): Promise<void> {
+    const newLog: ActivityLog = { ...log, id: 'log-' + Date.now() };
+    const list = [newLog, ...this.activityLogs$.value];
+    this.activityLogs$.next(list);
+    this.saveLocal('speak_activity_logs', list);
+    if (this.useFirebase) {
+      try { await setDoc(doc(this.firestore, 'activity_logs', newLog.id), newLog); } catch(e) { console.warn(e); }
+    }
+  }
+
+  getStudentActivityLogs(studentId: string): ActivityLog[] {
+    return this.activityLogs$.value.filter(l => l.studentId === studentId);
+  }
+
+  // --- NOTIFICATION OPERATIONS ---
+  observeNotifications(): Observable<AppNotification[]> { return this.notifications$.asObservable(); }
+
+  getNotificationsForUser(userId: string, role: string): AppNotification[] {
+    return this.notifications$.value.filter(n =>
+      n.recipientId === userId ||
+      n.recipientId === 'all' ||
+      (n.recipientRole && n.recipientRole === role) ||
+      n.recipientRole === 'all'
+    ).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  async sendNotification(notif: Omit<AppNotification, 'id' | 'createdAt' | 'read'>): Promise<void> {
+    const newNotif: AppNotification = {
+      ...notif,
+      id: 'notif-' + Date.now(),
+      createdAt: new Date().toISOString(),
+      read: false
+    };
+    const list = [newNotif, ...this.notifications$.value];
+    this.notifications$.next(list);
+    this.saveLocal('speak_notifications', list);
+    if (this.useFirebase) {
+      try { await setDoc(doc(this.firestore, 'notifications', newNotif.id), newNotif); } catch(e) { console.warn(e); }
+    }
+  }
+
+  async markNotificationRead(notifId: string) {
+    const list = this.notifications$.value.map(n =>
+      n.id === notifId ? { ...n, read: true } : n
+    );
+    this.notifications$.next(list);
+    this.saveLocal('speak_notifications', list);
+    if (this.useFirebase) {
+      try { await updateDoc(doc(this.firestore, 'notifications', notifId), { read: true }); } catch(e) { console.warn(e); }
+    }
+  }
+
+  async markAllNotificationsRead(userId: string) {
+    const list = this.notifications$.value.map(n =>
+      (n.recipientId === userId || n.recipientId === 'all') ? { ...n, read: true } : n
+    );
+    this.notifications$.next(list);
+    this.saveLocal('speak_notifications', list);
+  }
+
+  // --- VOCAB GAME OPERATIONS ---
+  observeVocabGames(): Observable<VocabGame[]> { return this.vocabGames$.asObservable(); }
+
+  async addVocabGame(game: Omit<VocabGame, 'id' | 'createdAt'>): Promise<VocabGame> {
+    const newGame: VocabGame = { ...game, id: 'vg-' + Date.now(), createdAt: new Date().toISOString() };
+    const list = [newGame, ...this.vocabGames$.value];
+    this.vocabGames$.next(list);
+    this.saveLocal('speak_vocab_games', list);
+    if (this.useFirebase) {
+      try { await setDoc(doc(this.firestore, 'vocab_games', newGame.id), newGame); } catch(e) { console.warn(e); }
+    }
+    return newGame;
+  }
+
+  async deleteVocabGame(id: string) {
+    const list = this.vocabGames$.value.filter(g => g.id !== id);
+    this.vocabGames$.next(list);
+    this.saveLocal('speak_vocab_games', list);
+    if (this.useFirebase) {
+      try { await deleteDoc(doc(this.firestore, 'vocab_games', id)); } catch(e) { console.warn(e); }
+    }
+  }
+
+  // --- EXAM ATTEMPT OPERATIONS ---
+  observeExamAttempts(): Observable<ExamAttempt[]> { return this.examAttempts$.asObservable(); }
+
+  hasStudentAttemptedExam(studentId: string, quizId: string): boolean {
+    return this.examAttempts$.value.some(a => a.studentId === studentId && a.quizId === quizId);
+  }
+
+  async submitExamAttempt(attempt: Omit<ExamAttempt, 'id'>): Promise<ExamAttempt> {
+    const newAttempt: ExamAttempt = { ...attempt, id: 'exam-' + Date.now() };
+    const list = [newAttempt, ...this.examAttempts$.value];
+    this.examAttempts$.next(list);
+    this.saveLocal('speak_exam_attempts', list);
+    if (this.useFirebase) {
+      try { await setDoc(doc(this.firestore, 'exam_attempts', newAttempt.id), newAttempt); } catch(e) { console.warn(e); }
+    }
+    return newAttempt;
+  }
+
+  getStudentExamAttempts(studentId: string): ExamAttempt[] {
+    return this.examAttempts$.value.filter(a => a.studentId === studentId);
   }
 
   formatLastActive(lastActive: string): string {

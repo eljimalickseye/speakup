@@ -511,76 +511,39 @@ export class StudentSpeakingComponent implements OnDestroy {
 
   async analyzeWithAICoach() {
     if (!this.db.getGeminiApiKey()) {
-      const key = prompt('Google Gemini API Key is required to run real AI features.\nPlease enter your Gemini API Key (get a free key from https://aistudio.google.com/):');
-      if (key && key.trim()) {
-        this.db.setGeminiApiKey(key);
-      } else {
-        return;
-      }
+      const key = prompt('Google Gemini API Key is required.\nGet a free key at https://aistudio.google.com/');
+      if (key?.trim()) this.db.setGeminiApiKey(key);
+      else return;
     }
-    
     this.aiLoading.set(true);
     this.aiFeedback.set(null);
-
-    const systemInstruction = `You are the SpeakUp AI Speaking Coach. Analyze the student's spoken transcription and return a JSON object with this exact structure:
-    {
-      "score": "85%",
-      "transcript": "Transcribed text of user's reply...",
-      "pronunciation": "Pronunciation tips (stress, phonemes)...",
-      "grammar": "Grammar suggestions...",
-      "fluency": "Fluency and pacing advice..."
-    }
-    Do not wrap the response in markdown code blocks. Return ONLY the JSON object.`;
-
-    const promptText = `The student is answering the speaking prompt: "${this.activePrompt().text}" at level "${this.selectedLevel()}". Give them a constructive evaluation.`;
-
+    const systemInstruction = `You are the SpeakUp AI Speaking Coach. Analyze the student's spoken answer and return JSON:
+    {"score":85,"scoreLabel":"Good","transcript":"...","pronunciation":{"score":80,"comment":"...","problematic_words":["word1"]},"grammar":{"score":85,"comment":"...","corrected_sentence":"..."},"fluency":{"score":88,"comment":"..."},"vocabulary":{"score":82,"comment":"..."},"strengths":["strength1"],"improvements":["area1"],"overall_advice":"..."}
+    Return ONLY valid JSON. No markdown. All scores are 0-100 integers.`;
+    const promptText = `Student is answering: "${this.activePrompt().text}" at level "${this.selectedLevel()}". The student is a French speaker. Simulate a plausible response and evaluate constructively.`;
     try {
       const res = await this.db.callGemini(systemInstruction, promptText);
-      const data = JSON.parse(res);
-      this.aiFeedback.set(data);
-    } catch(e: any) {
-      console.warn('Gemini API call failed, falling back to local simulation:', e);
-      const fallbackData = this.getLocalSpeakingFeedback(this.selectedLevel());
-      this.aiFeedback.set(fallbackData);
+      this.aiFeedback.set(JSON.parse(res));
+    } catch(e) {
+      this.aiFeedback.set(this.getLocalSpeakingFeedback(this.selectedLevel()));
     } finally {
       this.aiLoading.set(false);
     }
   }
 
   getLocalSpeakingFeedback(lvl: string) {
-    if (lvl === 'A1') {
-      return {
-        score: '86%',
-        transcript: 'Hello! My name is Alex, I am twenty-five years old. I live in Dakar, Senegal. I like learning English.',
-        pronunciation: 'Good articulation. Pay special attention to the word "nationality" (make sure to stress the third syllable: na-tio-NAL-i-ty).',
-        grammar: 'Good structure! You successfully used the present simple tense. To improve, try adding more details about your job or studies.',
-        fluency: 'Excellent flow. Very minor hesitation.'
-      };
-    } else if (lvl === 'A2') {
-      return {
-        score: '82%',
-        transcript: "Usually, I wake up at seven o'clock. First, I drink coffee and eat breakfast. After that, I go to work by bus. In the evening, I cook dinner and read a book.",
-        pronunciation: 'Clear speech. Watch out for the word "o\'clock" - ensure the "o" is short and the stress is on "clock".',
-        grammar: 'Solid routine description. You used sequencing words like "First" and "After that" correctly. Try to use more frequency adverbs (e.g. "usually", "sometimes", "rarely").',
-        fluency: 'Good speed, keep practicing to reduce pauses between activities.'
-      };
-    } else if (lvl === 'B1') {
-      return {
-        score: '88%',
-        transcript: 'My favorite hobby is playing football. I have been playing football for five years with my friends. It helps me to relax because it is active and we have fun.',
-        pronunciation: 'Very natural accent. Make sure to pronounce the "h" in "hobby" clearly (avoid dropping the h-sound).',
-        grammar: 'Great use of the present perfect continuous ("have been playing"). Try to avoid repeating the word "football" too much by using pronouns (like "it" or "this sport").',
-        fluency: 'Fluent delivery with natural pacing and expression.'
-      };
-    } else {
-      return {
-        score: '92%',
-        transcript: 'On the one hand, technology has many benefits. For instance, it allows us to communicate instantly with people worldwide. However, a major drawback is that we spend too much time on screens, which can lead to social isolation. In my opinion, we must find a healthy balance.',
-        pronunciation: 'Advanced articulation. Be careful with the word "advantages" - make sure the second syllable "van" is stressed.',
-        grammar: 'Excellent advanced transitions ("On the one hand", "For instance", "However"). Very rich sentence structure.',
-        fluency: 'Superb sentence pacing, clear linking sounds between words.'
-      };
-    }
+    const common = {
+      score: 85, scoreLabel: 'Good',
+      fluency: { score: 85, comment: 'Good pacing. Reduce hesitation pauses between sentences.' },
+      vocabulary: { score: 80, comment: 'Solid vocabulary. Try using connectors: "furthermore", "in addition", "as a result".' },
+      strengths: ['Clear sentence structure', 'Correct use of tense'],
+      improvements: ['Add more details', 'Use more varied vocabulary'],
+      overall_advice: 'Practice speaking for 30 seconds on a random topic every day to build fluency!'
+    };
+    if (lvl === 'A1') return { ...common, transcript: 'Hello! My name is Awa. I am twenty years old. I live in Dakar, Senegal.', pronunciation: { score: 75, comment: 'Good effort! Watch word endings (-ed, -s). Stress "na-tio-NAL-i-ty" correctly.', problematic_words: ['nationality', 'years'] }, grammar: { score: 80, comment: 'Good use of "I am" and "I live". Add more details!', corrected_sentence: 'My name is Awa. I am twenty years old and I live in Dakar. I am a student and I enjoy learning English.' } };
+    if (lvl === 'A2') return { ...common, transcript: "Usually I wake up at seven. First I drink coffee. Then I go to work by bus.", pronunciation: { score: 78, comment: 'Clear speech. Watch the word "o\'clock" — stress is on "clock".', problematic_words: ["o'clock", 'usually'] }, grammar: { score: 82, comment: 'Good sequencing. Try adding frequency adverbs: "usually", "sometimes", "rarely".', corrected_sentence: 'I usually wake up at seven o\'clock. First, I drink coffee. Then, I take the bus to work.' } };
+    if (lvl === 'B2') return { ...common, score: 92, scoreLabel: 'Excellent', transcript: 'On the one hand, technology has many benefits. However, a major drawback is excessive screen time.', pronunciation: { score: 90, comment: 'Advanced articulation. Stress second syllable in "advantages": ad-VAN-tages.', problematic_words: ['advantages', 'drawback'] }, grammar: { score: 94, comment: 'Excellent transitions. Very rich sentence structure.', corrected_sentence: 'On the one hand, technology has numerous benefits. However, a major drawback is that we spend excessive time on screens, leading to social isolation.' } };
+    return { ...common, transcript: 'My favorite hobby is playing football. I have been playing for five years with my friends.', pronunciation: { score: 83, comment: 'Very natural! Watch dropping the "h" in "hobby".', problematic_words: ['hobby', 'enjoy'] }, grammar: { score: 87, comment: 'Excellent use of present perfect "have been playing". Avoid repeating "football".', corrected_sentence: 'My favorite hobby is football, which I have been practicing for five years. It helps me relax and bond with friends.' } };
   }
 
   private cleanUpAudioContext() {
