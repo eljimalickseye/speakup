@@ -501,7 +501,25 @@ export class DatabaseService {
 
         console.log('Firestore seeded successfully.');
       } else {
-        console.log('Firestore collections detected. Setting up Firebase subscriptions...');
+        console.log('Firestore collections detected. Syncing default accounts then subscribing...');
+        // Always force-update default/canonical accounts in Firestore (only credential fields)
+        const canonicalAccounts = [
+          { id: 'admin',     username: 'admin',    password: 'adminpassword', role: 'admin',   name: 'AT - Admin',          avatar: 'AD' },
+          { id: 'teacher',   username: 'teacher',  password: 'admin123',      role: 'teacher', name: 'AT - Teacher',         avatar: 'AT' },
+          { id: 'teacher-2', username: 'teacher2', password: 'teacher123',    role: 'teacher', name: 'MJ - Teacher Marie',   avatar: 'MJ' },
+          { id: 'teacher-3', username: 'teacher3', password: 'teacher123',    role: 'teacher', name: 'KS - Teacher Karim',   avatar: 'KS' }
+        ];
+        for (const acct of canonicalAccounts) {
+          try {
+            await setDoc(
+              doc(this.firestore, 'users', acct.id),
+              { username: acct.username, password: acct.password, role: acct.role, name: acct.name, avatar: acct.avatar },
+              { merge: true }
+            );
+          } catch (e2) {
+            console.warn('Could not sync canonical account', acct.id, e2);
+          }
+        }
         // Subscribe to Firestore collections to listen to changes in real-time
         this.setupFirebaseSubscriptions();
       }
