@@ -21,7 +21,11 @@ import { DialogService } from '../../services/dialog.service';
               Welcome back, Teacher {{ teacherProfile()?.name }}!
             </div>
             <div style="font-size:12px; color:var(--text-secondary); margin-top:4px; line-height:1.5">
-              {{ teacherProfile()?.description || 'You haven\'t set a profile description yet. Click your avatar in the topbar to write your biography and customize your settings.' }}
+              @if (teacherProfile()?.description) {
+                {{ teacherProfile()?.description }}
+              } @else {
+                You haven't set a profile description yet. Click your avatar in the topbar to write your biography and customize your settings.
+              }
             </div>
           </div>
         </div>
