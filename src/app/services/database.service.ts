@@ -126,6 +126,7 @@ export interface Quiz {
     matchPairs?: { left: string; right: string }[];
     orderItems?: string[];
     audioPrompt?: string;
+    explanation?: string;
   }[];
 }
 
