@@ -204,12 +204,12 @@ import { DialogService } from '../../services/dialog.service';
               </div>
 
               <div class="warm-field">
-                <label class="warm-label">Niveau d'anglais / Rôle</label>
+                <label class="warm-label">Niveau d'anglais</label>
                 <select [(ngModel)]="requestLevel" class="warm-input">
-                  <option value="A1">A1 — Débutant (Élève)</option>
-                  <option value="A2">A2 — Élémentaire (Élève)</option>
-                  <option value="B1">B1 — Intermédiaire (Élève)</option>
-                  <option value="B2">B2 — Intermédiaire Supérieur (Élève)</option>
+                  <option value="A1">A1 — Débutant</option>
+                  <option value="A2">A2 — Élémentaire</option>
+                  <option value="B1">B1 — Intermédiaire</option>
+                  <option value="B2">B2 — Intermédiaire Supérieur</option>
                   <option value="Guest">Guest / Invité (Accès libre)</option>
                   <option value="Teacher">Professeur — Demande d'enrôlement 🎓</option>
                 </select>

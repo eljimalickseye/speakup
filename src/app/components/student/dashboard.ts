@@ -195,26 +195,28 @@ import { DialogService } from '../../services/dialog.service';
 
         <!-- Right: School Announcements (History) -->
         <div>
-          <div class="section-title">📢 Announcements History</div>
+          <div class="section-title" style="display:flex; align-items:center; justify-content:space-between">
+            <span>📢 Annonces récentes</span>
+            @if (announcements().length > 0) {
+              <span style="font-size:10px; background:#EEF2FF; color:#4F46E5; padding:2px 8px; border-radius:20px; font-weight:700">
+                {{ announcements().length }}
+              </span>
+            }
+          </div>
           <div style="display:flex; flex-direction:column; gap:10px">
-            @for (ann of announcements(); track ann.id) {
-              <div class="card" style="margin-bottom:0; border-left: 4px solid #4F46E5; background: var(--surface-1); padding: 14px 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.05)">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px">
-                  <h4 style="font-size:12px; font-weight:700; color:var(--text-primary)">{{ ann.title }}</h4>
-                  <span style="font-size:9px; color:var(--text-muted)">{{ ann.createdAt | date:'shortDate' }}</span>
+            @for (ann of announcements().slice(0,4); track ann.id) {
+              <div class="ann-dash-card" (click)="selectedAnn.set(ann)"
+                   [style.border-left]="'4px solid ' + getDashPriorityColor(ann.priority)">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:4px; gap:6px">
+                  <h4 style="font-size:12px; font-weight:700; color:var(--text-primary); margin:0; flex:1; line-height:1.3">{{ ann.title }}</h4>
+                  <span style="font-size:9px; color:var(--text-muted); flex-shrink:0">{{ ann.createdAt | date:'shortDate' }}</span>
                 </div>
-                
-                @if (ann.imageUrl) {
-                  <div style="width:100%; max-height:120px; overflow:hidden; border-radius:6px; margin: 8px 0; border: 1px solid var(--border-weak); background:#F3F4F6; display:flex; justify-content:center; align-items:center">
-                    <img [src]="ann.imageUrl" style="width:100%; height:auto; max-height:120px; object-fit:cover" alt="Banner">
-                  </div>
-                }
-
-                <p style="font-size:11.5px; color:var(--text-secondary); line-height:1.4; margin:0">{{ ann.message }}</p>
+                <p style="font-size:11px; color:var(--text-secondary); line-height:1.4; margin:0; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden">{{ ann.message }}</p>
+                <div style="font-size:10px; color:#4F46E5; font-weight:600; margin-top:6px">Voir →</div>
               </div>
             } @empty {
               <div style="padding: 24px; background: var(--surface-2); border-radius: 8px; border: 1px dashed var(--border); text-align: center; font-size: 12px; color: var(--text-secondary)">
-                No announcements posted yet by the teacher.
+                Aucune annonce du professeur pour le moment.
               </div>
             }
           </div>
@@ -223,7 +225,59 @@ import { DialogService } from '../../services/dialog.service';
       </div>
 
     </div>
+
+    <!-- Announcement Modal -->
+    @if (selectedAnn()) {
+      <div style="position:fixed; inset:0; background:rgba(0,0,0,0.58); backdrop-filter:blur(5px); z-index:1100; display:flex; align-items:center; justify-content:center; padding:20px; animation:fadeIn 0.18s ease" (click)="selectedAnn.set(null)">
+        <div style="background:var(--surface-1); border-radius:18px; width:100%; max-width:560px; max-height:85vh; overflow:hidden; display:flex; flex-direction:column; box-shadow:0 30px 70px rgba(0,0,0,0.35); animation:slideUp 0.22s ease" (click)="$event.stopPropagation()">
+          <!-- Banner -->
+          <div [style.background]="getDashPriorityGradient(selectedAnn()!.priority)" style="padding:18px 22px; display:flex; justify-content:space-between; align-items:center">
+            <span style="font-size:11px; font-weight:700; padding:4px 12px; border-radius:20px; text-transform:uppercase" [style.background]="getDashPriorityBg(selectedAnn()!.priority)" [style.color]="getDashPriorityColor(selectedAnn()!.priority)">
+              {{ getDashPriorityIcon(selectedAnn()!.priority) }} {{ selectedAnn()!.priority }}
+            </span>
+            <button (click)="selectedAnn.set(null)" style="background:rgba(255,255,255,0.22); border:none; color:white; width:32px; height:32px; border-radius:50%; cursor:pointer; font-size:14px">✕</button>
+          </div>
+          <!-- Body -->
+          <div style="padding:22px; overflow-y:auto; flex:1">
+            <h2 style="font-size:18px; font-weight:800; color:var(--text-primary); margin:0 0 6px 0">{{ selectedAnn()!.title }}</h2>
+            <div style="font-size:11px; color:var(--text-muted); margin-bottom:18px; display:flex; gap:10px">
+              <span><i class="ti ti-calendar"></i> {{ selectedAnn()!.createdAt | date:'fullDate' }}</span>
+              <span>·</span>
+              <span><i class="ti ti-users"></i> {{ selectedAnn()!.sendTo }}</span>
+            </div>
+            @if (selectedAnn()!.imageUrl) {
+              <div style="width:100%; max-height:280px; overflow:hidden; border-radius:10px; margin-bottom:18px; border:1px solid var(--border-weak)">
+                <img [src]="selectedAnn()!.imageUrl" style="width:100%; height:auto; max-height:280px; object-fit:contain" alt="Flyer">
+              </div>
+            }
+            <div style="font-size:13.5px; color:var(--text-secondary); line-height:1.8; white-space:pre-line">{{ selectedAnn()!.message }}</div>
+            <div style="margin-top:22px; padding-top:16px; border-top:1px solid var(--border-weak); display:flex; justify-content:flex-end">
+              <button class="btn-p" style="height:auto; padding:8px 20px; font-size:13px" (click)="selectedAnn.set(null)">Fermer</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
   `,
+  styles: [
+    ...`
+    @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
+    @keyframes slideUp { from { transform:translateY(22px); opacity:0 } to { transform:translateY(0); opacity:1 } }
+    .ann-dash-card {
+      background: var(--surface-1);
+      border-radius: 10px;
+      padding: 12px 14px;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      border: 1px solid var(--border-weak);
+    }
+    .ann-dash-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+    }
+    `.split('\n').filter(l => !l.includes('...')).join('\n')
+  ]
   styles: [`
     .grid-content-split {
       display: grid;
@@ -246,6 +300,7 @@ export class StudentDashboardComponent {
   lessons = signal<Lesson[]>([]);
   quizzes = signal<Quiz[]>([]);
   announcements = signal<Announcement[]>([]);
+  selectedAnn = signal<Announcement | null>(null);
   allUsers = signal<UserProfile[]>([]);
 
   // Placement Test State
