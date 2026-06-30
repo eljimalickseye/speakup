@@ -1477,6 +1477,20 @@ export class DatabaseService {
     }
   }
 
+  async deleteSubmission(subId: string) {
+    const list = this.submissions$.value.filter(s => s.id !== subId);
+    this.submissions$.next(list);
+    this.saveLocal('speak_submissions', list);
+
+    if (this.useFirebase) {
+      try {
+        await deleteDoc(doc(this.firestore, 'submissions', subId));
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+  }
+
   // --- ATTENDANCE OPERATIONS ---
   observeAttendance(): Observable<Attendance[]> { return this.attendance$.asObservable(); }
 

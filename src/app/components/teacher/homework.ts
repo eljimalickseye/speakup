@@ -109,9 +109,15 @@ import { DialogService } from '../../services/dialog.service';
                 </button>
               </div>
 
-              <!-- Student Submission Box -->
               <div class="answer-container-box">
-                <div class="box-label">Student Submission:</div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
+                  <div class="box-label">Student Submission:</div>
+                  @if (sub.type === 'audio') {
+                    <button class="btn-s" style="font-size:10px; padding:4px 10px; color:#EF4444; border-color:#EF4444" (click)="deleteAudioSubmission(sub)">
+                      <i class="ti ti-trash" style="font-size:10px"></i> Delete Audio
+                    </button>
+                  }
+                </div>
                 
                 @if (sub.type === 'text') {
                   <div class="text-submission-content">
@@ -761,5 +767,21 @@ export class TeacherHomeworkComponent {
     
     // Automatically close the panel if it has been graded successfully
     this.selectedSub.set(null);
+  }
+
+  deleteAudioSubmission(sub: Submission) {
+    if (!confirm(`Are you sure you want to delete this audio submission from ${sub.studentName}? This action cannot be undone.`)) {
+      return;
+    }
+
+    // Delete the submission from the database
+    this.db.deleteSubmission(sub.id);
+    
+    // Clear the selected submission if it was the one deleted
+    if (this.selectedSub()?.id === sub.id) {
+      this.selectedSub.set(null);
+    }
+
+    this.dialogService.alert('Deleted', 'Audio submission has been deleted successfully.', 'success');
   }
 }
