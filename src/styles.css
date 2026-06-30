@@ -1948,6 +1948,27 @@ select.warm-input {
   transform: translateY(-1px);
 }
 
+.btn-delete-tag {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: none;
+  background: transparent;
+  color: #EF4444;
+  cursor: pointer;
+  border-radius: 3px;
+  padding: 0;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.btn-delete-tag:hover {
+  background: #FEE2E2;
+  transform: scale(1.1);
+}
+
 .calendar-detail-tooltip {
   position: absolute;
   top: 100%;

@@ -99,6 +99,12 @@ export interface Lesson {
   homeworkInstruction: string;
   dueDate: string;
   createdAt: string;
+  status: 'draft' | 'published';
+  authorId?: string;
+  authorName?: string;
+  youtubeUrl?: string;
+  youtubeDescription?: string;
+  points?: number;
 }
 
 export interface Quiz {
@@ -106,11 +112,20 @@ export interface Quiz {
   title: string;
   type: string;
   timeLimit: string;
-  level?: string; // Optional level property matching brand design requirements
+  level?: string;
+  points?: number;
+  status: 'draft' | 'published';
+  authorId?: string;
+  authorName?: string;
+  youtubeUrl?: string;
+  youtubeDescription?: string;
   questions: {
     question: string;
     options: string[];
     correctOption: string;
+    matchPairs?: { left: string; right: string }[];
+    orderItems?: string[];
+    audioPrompt?: string;
   }[];
 }
 
@@ -120,7 +135,7 @@ export interface Submission {
   studentName: string;
   lessonId: string;
   lessonTitle: string;
-  type: 'text' | 'audio';
+  type: 'text' | 'audio' | 'video';
   content: string;
   score?: string;
   feedback?: string;
@@ -145,6 +160,7 @@ export interface LiveClass {
   description: string;
   jitsiRoom: string;
   status: 'waiting' | 'active' | 'completed';
+  studentId?: string;
 }
 
 export interface Announcement {
@@ -264,7 +280,7 @@ export interface ChatMessage {
   senderName: string;
   content: string;
   timestamp: string;
-  type?: 'text' | 'audio';
+  type?: 'text' | 'audio' | 'video';
   audioUrl?: string;
 }
 
@@ -429,6 +445,7 @@ export class DatabaseService {
         title: 'English Level Placement Test',
         type: 'Multiple Choice',
         timeLimit: 'No limit',
+        status: 'published',
         questions: [
           {
             question: 'Choose the correct form: She ___ to school every day.',
@@ -497,7 +514,36 @@ export class DatabaseService {
     this.rewards$.next(finalRewards);
 
     const defaultDictWords: DictionaryWord[] = [
-      { id: 'w-1', word: 'Resilience', partOfSpeech: 'noun', translation: 'Résilience', definition: 'The capacity to recover quickly from difficulties; toughness.', phonetic: '/rɪˈzɪl.jəns/', contexts: ['1. Her resilience helped her overcome the academic challenge. (Sa résilience l\'a aidée à surmonter le défi académique.)'], userId: 'student', savedAt: new Date().toISOString() }
+      { id: 'w-1', word: 'Resilience', partOfSpeech: 'noun', translation: 'Résilience', definition: 'The capacity to recover quickly from difficulties; toughness.', phonetic: '/rɪˈzɪl.jəns/', contexts: ['Sa résilience l\'a aidée à surmonter le défi.'], userId: 'student', savedAt: new Date().toISOString() },
+      { id: 'w-2', word: 'Perseverance', partOfSpeech: 'noun', translation: 'Persévérance', definition: 'Persistence in doing something despite difficulty or delay in achieving success.', phonetic: '/ˌpɜː.sɪˈvɪə.rəns/', contexts: ['Through hard work and perseverance, he passed the exam.'], userId: 'student', savedAt: new Date().toISOString() },
+      { id: 'w-3', word: 'Eloquent', partOfSpeech: 'adjective', translation: 'Éloquent', definition: 'Fluent or persuasive in speaking or writing.', phonetic: '/ˈel.ə.kwənt/', contexts: ['She made an eloquent speech at the graduation.'], userId: 'student', savedAt: new Date().toISOString() },
+      { id: 'w-4', word: 'Ambiguous', partOfSpeech: 'adjective', translation: 'Ambigu', definition: 'Open to more than one interpretation; not having one obvious meaning.', phonetic: '/æmˈbɪɡ.ju.əs/', contexts: ['His answer was ambiguous, so we asked for clarification.'], userId: 'student', savedAt: new Date().toISOString() },
+      { id: 'w-5', word: 'Diligent', partOfSpeech: 'adjective', translation: 'Diligent / Assidu', definition: 'Having or showing care and conscientiousness in one\'s work or studies.', phonetic: '/ˈdɪl.ɪ.dʒənt/', contexts: ['A diligent student always finishes homework on time.'], userId: 'student', savedAt: new Date().toISOString() },
+      { id: 'w-6', word: 'Phenomenon', partOfSpeech: 'noun', translation: 'Phénomène', definition: 'A fact or situation that is observed to exist or happen, especially one whose cause is in question.', phonetic: '/fəˈnɒm.ɪ.nən/', contexts: ['Glaciers are a natural phenomenon.'], userId: 'student', savedAt: new Date().toISOString() },
+      { id: 'w-7', word: 'School', partOfSpeech: 'noun', translation: 'École', definition: 'An institution for educating children or students.', phonetic: '/skuːl/', contexts: ['We go to school every weekday.'], userId: 'student', savedAt: new Date().toISOString() },
+      { id: 'w-8', word: 'Teacher', partOfSpeech: 'noun', translation: 'Enseignant / Professeur', definition: 'A person who helps students to acquire knowledge or skills.', phonetic: '/ˈtiː.tʃər/', contexts: ['The English teacher explains grammar very clearly.'], userId: 'student', savedAt: new Date().toISOString() },
+      { id: 'w-9', word: 'Student', partOfSpeech: 'noun', translation: 'Étudiant / Élève', definition: 'A person who is studying at a school or college.', phonetic: '/ˈstjuː.dənt/', contexts: ['She is an outstanding student who loves reading.'], userId: 'student', savedAt: new Date().toISOString() },
+      { id: 'w-10', word: 'Lesson', partOfSpeech: 'noun', translation: 'Leçon / Cours', definition: 'A period of learning or teaching; a block of educational instruction.', phonetic: '/ˈles.ən/', contexts: ['Today\'s lesson is about reported speech.'], userId: 'student', savedAt: new Date().toISOString() },
+      { id: 'w-11', word: 'Vocabulary', partOfSpeech: 'noun', translation: 'Vocabulaire', definition: 'The body of words used in a particular language or activity.', phonetic: '/vəˈkæb.jə.ler.i/', contexts: ['Playing games helps you expand your English vocabulary.'], userId: 'student', savedAt: new Date().toISOString() },
+      { id: 'w-12', word: 'Grammar', partOfSpeech: 'noun', translation: 'Grammaire', definition: 'The whole system and structure of a language.', phonetic: '/ˈɡræm.ər/', contexts: ['Grammar rules help us form correct sentences.'], userId: 'student', savedAt: new Date().toISOString() },
+      { id: 'w-13', word: 'Pronunciation', partOfSpeech: 'noun', translation: 'Prononciation', definition: 'The way in which a word is pronounced.', phonetic: '/prəˌnʌn.siˈeɪ.ʃən/', contexts: ['Listen carefully to the audio to improve your pronunciation.'], userId: 'student', savedAt: new Date().toISOString() },
+      { id: 'w-14', word: 'Understand', partOfSpeech: 'verb', translation: 'Comprendre', definition: 'Perceive the intended meaning of words, language, or information.', phonetic: '/ˌʌn.dəˈstænd/', contexts: ['Do you understand this difficult concept?'], userId: 'student', savedAt: new Date().toISOString() },
+      { id: 'w-15', word: 'Speak', partOfSpeech: 'verb', translation: 'Parler', definition: 'Say something in order to convey information or express feelings.', phonetic: '/spiːk/', contexts: ['I want to speak English fluently.'], userId: 'student', savedAt: new Date().toISOString() },
+      { id: 'w-16', word: 'Write', partOfSpeech: 'verb', translation: 'Écrire', definition: 'Mark letters or words on a surface, typically paper or screen.', phonetic: '/raɪt/', contexts: ['Please write your answer in the notebook.'], userId: 'student', savedAt: new Date().toISOString() },
+      { id: 'w-17', word: 'Read', partOfSpeech: 'verb', translation: 'Lire', definition: 'Look at and comprehend the meaning of written or printed matter.', phonetic: '/riːd/', contexts: ['Reading ebooks is a great way to study.'], userId: 'student', savedAt: new Date().toISOString() },
+      { id: 'w-18', word: 'Homework', partOfSpeech: 'noun', translation: 'Devoir', definition: 'Schoolwork that a student is given to do at home.', phonetic: '/ˈhəʊm.wɜːk/', contexts: ['The homework is due by next Friday.'], userId: 'student', savedAt: new Date().toISOString() },
+      { id: 'w-19', word: 'Exam', partOfSpeech: 'noun', translation: 'Examen', definition: 'A formal test of a person\'s knowledge or proficiency in a subject.', phonetic: '/ɪɡˈzæm/', contexts: ['Prepare well for the final exam.'], userId: 'student', savedAt: new Date().toISOString() },
+      { id: 'w-20', word: 'Success', partOfSpeech: 'noun', translation: 'Succès / Réussite', definition: 'The accomplishment of an aim or purpose.', phonetic: '/səkˈses/', contexts: ['Practice is the key to language success.'], userId: 'student', savedAt: new Date().toISOString() },
+      { id: 'w-21', word: 'Challenge', partOfSpeech: 'noun / verb', translation: 'Défi', definition: 'A call to take part in a contest or solve a difficult task.', phonetic: '/ˈtʃæl.ɪndʒ/', contexts: ['Learning English is a challenge, but it is rewarding.'], userId: 'student', savedAt: new Date().toISOString() },
+      { id: 'w-22', word: 'Opportunity', partOfSpeech: 'noun', translation: 'Opportunité', definition: 'A set of circumstances that makes it possible to do something.', phonetic: '/ˌɒp.əˈtʃuː.nə.ti/', contexts: ['Studying here is a great opportunity to practice speaking.'], userId: 'student', savedAt: new Date().toISOString() },
+      { id: 'w-23', word: 'Knowledge', partOfSpeech: 'noun', translation: 'Connaissance', definition: 'Facts, information, and skills acquired through experience or education.', phonetic: '/ˈnɒl.ɪdʒ/', contexts: ['He has a vast knowledge of English literature.'], userId: 'student', savedAt: new Date().toISOString() },
+      { id: 'w-24', word: 'Practice', partOfSpeech: 'noun / verb', translation: 'Pratique / S\'exercer', definition: 'Perform an activity repeatedly to improve or maintain proficiency.', phonetic: '/ˈpræk.tɪs/', contexts: ['Daily speaking practice makes a big difference.'], userId: 'student', savedAt: new Date().toISOString() },
+      { id: 'w-25', word: 'Improve', partOfSpeech: 'verb', translation: 'Améliorer', definition: 'Make or become better.', phonetic: '/ɪmˈpruːv/', contexts: ['We want to improve our listening comprehension.'], userId: 'student', savedAt: new Date().toISOString() },
+      { id: 'w-26', word: 'Fluent', partOfSpeech: 'adjective', translation: 'Courant', definition: 'Able to express oneself easily and articulately.', phonetic: '/ˈfluː.ənt/', contexts: ['She speaks fluent English and French.'], userId: 'student', savedAt: new Date().toISOString() },
+      { id: 'w-27', word: 'Conversation', partOfSpeech: 'noun', translation: 'Conversation', definition: 'An informal talk involving two or more people.', phonetic: '/ˌkɒn.vəˈseɪ.ʃən/', contexts: ['They had an interesting conversation about food.'], userId: 'student', savedAt: new Date().toISOString() },
+      { id: 'w-28', word: 'Water', partOfSpeech: 'noun', translation: 'Eau', definition: 'A colorless, transparent liquid essential for life.', phonetic: '/ˈwɔː.tər/', contexts: ['Drink some water to refresh yourself.'], userId: 'student', savedAt: new Date().toISOString() },
+      { id: 'w-29', word: 'Book', partOfSpeech: 'noun', translation: 'Livre', definition: 'A written or printed work consisting of pages bound together.', phonetic: '/bʊk/', contexts: ['This dictionary book contains many useful terms.'], userId: 'student', savedAt: new Date().toISOString() },
+      { id: 'w-30', word: 'Friend', partOfSpeech: 'noun', translation: 'Ami', definition: 'A person with whom one has a bond of mutual affection.', phonetic: '/frend/', contexts: ['He introduced me to his best friend from class.'], userId: 'student', savedAt: new Date().toISOString() }
     ];
     const dictWords = getLocal('speak_dictionary', defaultDictWords);
     this.dictionary$.next(dictWords);
@@ -665,6 +711,7 @@ export class DatabaseService {
           title: 'English Level Placement Test',
           type: 'Multiple Choice',
           timeLimit: 'No limit',
+          status: 'published',
           questions: [
             {
               question: 'Choose the correct form: She ___ to school every day.',
@@ -1295,6 +1342,20 @@ export class DatabaseService {
     }
   }
 
+  async deleteLesson(lessonId: string) {
+    const list = this.lessons$.value.filter(l => l.id !== lessonId);
+    this.lessons$.next(list);
+    this.saveLocal('speak_lessons', list);
+
+    if (this.useFirebase) {
+      try {
+        await deleteDoc(doc(this.firestore, 'lessons', lessonId));
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+  }
+
   // --- QUIZ OPERATIONS ---
   observeQuizzes(): Observable<Quiz[]> { return this.quizzes$.asObservable(); }
 
@@ -1356,7 +1417,7 @@ export class DatabaseService {
   // --- SUBMISSIONS OPERATIONS ---
   observeSubmissions(): Observable<Submission[]> { return this.submissions$.asObservable(); }
 
-  async submitHomework(lessonId: string, lessonTitle: string, type: 'text' | 'audio', content: string) {
+  async submitHomework(lessonId: string, lessonTitle: string, type: 'text' | 'audio' | 'video', content: string, customXpReward?: number) {
     const activeUser = this.currentUser$.value;
     if (!activeUser) return;
 
@@ -1368,6 +1429,7 @@ export class DatabaseService {
       lessonTitle,
       type,
       content,
+      xpReward: customXpReward || 50,
       graded: false,
       submittedAt: new Date().toISOString()
     };
@@ -1543,6 +1605,40 @@ export class DatabaseService {
         console.warn(e);
       }
     }
+    return newAnn;
+  }
+
+  async updateAnnouncement(annId: string, updatedData: Partial<Announcement>) {
+    const list = [...this.announcements$.value];
+    const idx = list.findIndex(a => a.id === annId);
+    if (idx !== -1) {
+      const updated = { ...list[idx], ...updatedData };
+      list[idx] = updated;
+      this.announcements$.next(list);
+      this.saveLocal('speak_announcements', list);
+
+      if (this.useFirebase) {
+        try {
+          await setDoc(doc(this.firestore, 'announcements', annId), updated);
+        } catch (e) {
+          console.warn(e);
+        }
+      }
+    }
+  }
+
+  async deleteAnnouncement(annId: string) {
+    const list = this.announcements$.value.filter(a => a.id !== annId);
+    this.announcements$.next(list);
+    this.saveLocal('speak_announcements', list);
+
+    if (this.useFirebase) {
+      try {
+        await deleteDoc(doc(this.firestore, 'announcements', annId));
+      } catch (e) {
+        console.warn(e);
+      }
+    }
   }
 
   async markAnnouncementAsRead(annId: string, studentId: string) {
@@ -1690,6 +1786,39 @@ export class DatabaseService {
     if (this.useFirebase) {
       try {
         await setDoc(doc(this.firestore, 'events', newEvent.id), newEvent);
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+  }
+
+  async updateEvent(eventId: string, updatedData: Partial<EventItem>) {
+    const list = [...this.events$.value];
+    const idx = list.findIndex(e => e.id === eventId);
+    if (idx !== -1) {
+      const updated = { ...list[idx], ...updatedData };
+      list[idx] = updated;
+      this.events$.next(list);
+      this.saveLocal('speak_events', list);
+
+      if (this.useFirebase) {
+        try {
+          await setDoc(doc(this.firestore, 'events', eventId), updated);
+        } catch (e) {
+          console.warn(e);
+        }
+      }
+    }
+  }
+
+  async deleteEvent(eventId: string) {
+    const list = this.events$.value.filter(e => e.id !== eventId);
+    this.events$.next(list);
+    this.saveLocal('speak_events', list);
+
+    if (this.useFirebase) {
+      try {
+        await deleteDoc(doc(this.firestore, 'events', eventId));
       } catch (e) {
         console.warn(e);
       }
@@ -2465,6 +2594,25 @@ export class DatabaseService {
     this.saveLocal('speak_vocab_games', list);
     if (this.useFirebase) {
       try { await deleteDoc(doc(this.firestore, 'vocab_games', id)); } catch(e) { console.warn(e); }
+    }
+  }
+
+  async updateVocabGame(gameId: string, updatedData: Partial<VocabGame>) {
+    const list = [...this.vocabGames$.value];
+    const idx = list.findIndex(g => g.id === gameId);
+    if (idx !== -1) {
+      const updated = { ...list[idx], ...updatedData };
+      list[idx] = updated;
+      this.vocabGames$.next(list);
+      this.saveLocal('speak_vocab_games', list);
+
+      if (this.useFirebase) {
+        try {
+          await setDoc(doc(this.firestore, 'vocab_games', gameId), updated);
+        } catch (e) {
+          console.warn(e);
+        }
+      }
     }
   }
 

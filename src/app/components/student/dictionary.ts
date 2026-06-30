@@ -25,52 +25,63 @@ interface ApiDictResult {
       <!-- Header Stats -->
       <div class="grid3">
         <div class="mcard" style="background:linear-gradient(135deg,#EEF2FF,#E0E7FF); border:1px solid #C7D2FE">
-          <div class="mlabel" style="color:#4338CA">Mon Carnet</div>
+          <div class="mlabel" style="color:#4338CA">My Vocabulary</div>
           <div class="mval" style="color:#4F46E5">{{ myWordsCount() }}</div>
-          <div class="msub" style="color:#4338CA">Mots sauvegardés</div>
+          <div class="msub" style="color:#4338CA">Saved Words</div>
         </div>
         <div class="mcard" style="background:linear-gradient(135deg,#ECFDF5,#D1FAE5); border:1px solid #A7F3D0">
-          <div class="mlabel" style="color:#047857">Définitions trouvées</div>
+          <div class="mlabel" style="color:#047857">Definitions Found</div>
           <div class="mval" style="color:#10B981">{{ searchHistory().length }}</div>
-          <div class="msub" style="color:#047857">Recherches ce mois</div>
+          <div class="msub" style="color:#047857">Searches this month</div>
         </div>
         <div class="mcard" style="background:linear-gradient(135deg,#FFFBEB,#FEF3C7); border:1px solid #FDE68A">
-          <div class="mlabel" style="color:#B45309">Niveau Vocabulaire</div>
+          <div class="mlabel" style="color:#B45309">Vocabulary Level</div>
           <div class="mval" style="color:#D97706">{{ masteryLevel() }}</div>
-          <div class="msub" style="color:#B45309">Rang de maîtrise</div>
+          <div class="msub" style="color:#B45309">Mastery Rank</div>
         </div>
       </div>
 
       <!-- Search Bar -->
       <div class="card" style="border:1.5px solid #C7D2FE; background:#F8F9FF; padding:18px">
         <h3 class="st" style="font-size:15px; margin-bottom:12px; color:#4F46E5; display:flex; align-items:center; gap:8px">
-          <i class="ti ti-search"></i> Recherche dans le dictionnaire
+          <i class="ti ti-search"></i> Dictionary Search
         </h3>
+        
+        <!-- Language Toggle -->
+        <div style="display:flex; gap:8px; margin-bottom:12px">
+          <button class="tab" [class.active]="searchLanguage() === 'en'" (click)="searchLanguage.set('en')" style="font-size:11px; padding:4px 12px">
+            🇬🇧 English
+          </button>
+          <button class="tab" [class.active]="searchLanguage() === 'fr'" (click)="searchLanguage.set('fr')" style="font-size:11px; padding:4px 12px">
+            🇫🇷 Français
+          </button>
+        </div>
+        
         <div style="display:flex; gap:8px; flex-wrap:wrap">
           <div style="position:relative; flex:1; min-width:200px">
             <i class="ti ti-letter-case" style="position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--text-muted); font-size:14px"></i>
             <input
               type="text"
               [(ngModel)]="searchQuery"
-              placeholder="Rechercher un mot en anglais..."
+              [placeholder]="searchLanguage() === 'en' ? 'Search for an English word...' : 'Rechercher un mot en français...'"
               style="height:40px; width:100%; padding:0 12px 0 32px; border:1px solid var(--border); border-radius:8px; font-size:13px; background:#FFF; color:var(--text-primary)"
               (keyup.enter)="searchWord()"
             />
           </div>
           <button class="btn-p" style="height:40px; padding:0 20px; font-size:13px" [disabled]="!searchQuery.trim() || isSearching()" (click)="searchWord()">
-            @if (isSearching()) { <span>Recherche...</span> } @else { <i class="ti ti-search"></i> Chercher }
+            @if (isSearching()) { <span>Searching...</span> } @else { <i class="ti ti-search"></i> Search }
           </button>
           @if (apiResult()) {
             <button class="btn-s" style="height:40px; padding:0 16px; font-size:12px; border-color:#059669; color:#059669" (click)="saveCurrentWord()">
-              <i class="ti ti-bookmark"></i> Sauvegarder
+              <i class="ti ti-bookmark"></i> Save
             </button>
           }
         </div>
 
         <!-- Quick searches -->
         <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:10px">
-          <span style="font-size:10px; color:var(--text-muted); font-weight:600">Rapide :</span>
-          @for (word of quickWords; track word) {
+          <span style="font-size:10px; color:var(--text-muted); font-weight:600">Quick:</span>
+          @for (word of (searchLanguage() === 'en' ? quickWordsEn : quickWordsFr); track word) {
             <button class="badge" style="background:#EEF2FF; color:#4F46E5; border:1px solid #C7D2FE; cursor:pointer; font-size:10px; padding:3px 8px" (click)="quickSearch(word)">
               {{ word }}
             </button>
@@ -109,6 +120,19 @@ interface ApiDictResult {
                 <i class="ti ti-bookmark"></i> Sauvegarder
               </button>
             </div>
+          </div>
+
+          <!-- French Translation Input -->
+          <div style="background:var(--surface-2); padding:10px 12px; border-radius:8px; border:1px solid var(--border-weak); margin-bottom:12px">
+            <label style="font-size:11px; font-weight:700; color:var(--text-primary); display:block; margin-bottom:4px">
+              🇫🇷 Traduction en français :
+            </label>
+            <input 
+              type="text" 
+              [(ngModel)]="currentTranslation" 
+              placeholder="Entrez sa traduction en français (ex. École, Livre...)" 
+              style="height:32px; width:100%; padding:0 8px; border:1px solid var(--border); border-radius:6px; font-size:12px; background:#FFF"
+            />
           </div>
 
           <!-- Meanings -->
@@ -155,24 +179,27 @@ interface ApiDictResult {
 
       <!-- Tab Selector -->
       <div class="tab-row">
+        <button class="tab" [class.active]="viewTab() === 'base'" (click)="viewTab.set('base')">
+          📖 Dictionnaire de base ({{ baseDictionaryWords.length }})
+        </button>
         <button class="tab" [class.active]="viewTab() === 'saved'" (click)="viewTab.set('saved')">
-          <i class="ti ti-bookmark"></i> Mes mots sauvegardés ({{ myWordsCount() }})
+          <i class="ti ti-bookmark"></i> My Saved Words ({{ myWordsCount() }})
         </button>
         <button class="tab" [class.active]="viewTab() === 'irregular'" (click)="viewTab.set('irregular')">
-          📋 Verbes irréguliers
+          📋 Irregular Verbs
         </button>
       </div>
 
       <!-- Saved Words -->
       @if (viewTab() === 'saved') {
-        @if (myWords().length === 0) {
+        @if (sortedMyWords().length === 0) {
           <div style="text-align:center; padding:40px; border:1px dashed var(--border); border-radius:12px">
             <i class="ti ti-bookmark" style="font-size:40px; color:var(--text-muted); display:block; margin-bottom:12px"></i>
-            <p style="font-size:13px; color:var(--text-muted)">Aucun mot sauvegardé. Recherchez des mots et sauvegardez-les !</p>
+            <p style="font-size:13px; color:var(--text-muted)">No saved words yet. Search for words and save them to your vocabulary list!</p>
           </div>
         }
         <div style="display:flex; flex-direction:column; gap:8px">
-          @for (word of myWords(); track word.id) {
+          @for (word of sortedMyWords(); track word.id) {
             <div class="saved-word-card">
               <div style="flex:1">
                 <div style="display:flex; align-items:center; gap:10px">
@@ -192,6 +219,38 @@ interface ApiDictResult {
               </div>
               <button (click)="deleteWord(word.id)" style="background:none; border:none; cursor:pointer; color:var(--text-muted); font-size:16px; flex-shrink:0; padding:4px" title="Supprimer">
                 <i class="ti ti-trash"></i>
+              </button>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Base Dictionary Words -->
+      @if (viewTab() === 'base') {
+        <div style="display:flex; flex-direction:column; gap:8px">
+          @for (word of baseDictionaryWords; track word.word) {
+            <div class="saved-word-card" style="border-left: 3px solid #4F46E5">
+              <div style="flex:1">
+                <div style="display:flex; align-items:center; gap:10px">
+                  <strong style="font-size:15px; color:var(--text-primary)">{{ word.word }}</strong>
+                  @if (word.phonetic) {
+                    <span style="font-size:12px; color:#4F46E5; font-style:italic">{{ word.phonetic }}</span>
+                  }
+                  <button (click)="speakWord(word.word)" style="background:none; border:none; cursor:pointer; color:#4F46E5; font-size:14px" title="Écouter">
+                    <i class="ti ti-volume"></i>
+                  </button>
+                </div>
+                <div style="font-size:11px; font-weight:600; color:var(--text-muted); margin-top:2px; text-transform:uppercase">{{ word.partOfSpeech }}</div>
+                <p style="font-size:12px; color:var(--text-secondary); margin:4px 0 0; line-height:1.4">{{ word.definition }}</p>
+                <p style="font-size:11px; color:#047857; margin:3px 0 0; font-style:italic">🇫🇷 {{ word.translation }}</p>
+                @if (word.contexts && word.contexts.length > 0) {
+                  <p style="font-size:11px; color:var(--text-muted); font-style:italic; margin-top:4px; padding-left:6px; border-left:2px solid var(--border)">
+                    Ex. {{ word.contexts[0] }}
+                  </p>
+                }
+              </div>
+              <button class="btn-s" style="padding:4px 8px; font-size:10px; display:inline-flex; align-items:center; gap:4px; align-self:center" (click)="savePreloadedWord(word)">
+                <i class="ti ti-bookmark"></i> Enregistrer
               </button>
             </div>
           }
@@ -271,15 +330,18 @@ export class StudentDictionaryComponent {
 
   currentUser = signal<UserProfile | null>(null);
   savedWords = signal<DictionaryWord[]>([]);
-  viewTab = signal<'saved' | 'irregular'>('saved');
+  viewTab = signal<'saved' | 'base' | 'irregular'>('base');
 
   searchQuery = '';
+  searchLanguage = signal<'en' | 'fr'>('en');
   isSearching = signal<boolean>(false);
   apiResult = signal<ApiDictResult | null>(null);
   searchError = signal<string | null>(null);
   searchHistory = signal<string[]>([]);
+  currentTranslation = '';
 
-  quickWords = ['Perseverance', 'Eloquent', 'Ambiguous', 'Resilience', 'Phenomenon', 'Diligent'];
+  quickWordsEn = ['Perseverance', 'Eloquent', 'Ambiguous', 'Resilience', 'Phenomenon', 'Diligent'];
+  quickWordsFr = ['sauver', 'parler', 'apprendre', 'comprendre', 'écrire', 'lire'];
 
   constructor() {
     this.db.observeCurrentUser().subscribe(u => this.currentUser.set(u));
@@ -291,42 +353,95 @@ export class StudentDictionaryComponent {
     return this.savedWords().filter(w => w.userId === user?.id || w.userId === 'student');
   });
 
+  sortedMyWords = computed<DictionaryWord[]>(() => {
+    return [...this.myWords()].sort((a, b) => a.word.localeCompare(b.word));
+  });
+
   myWordsCount = computed(() => this.myWords().length);
   masteryLevel = computed(() => {
     const c = this.myWordsCount();
     if (c >= 100) return 'Expert';
-    if (c >= 50) return 'Avancé';
-    if (c >= 20) return 'Intermédiaire';
-    return 'Débutant';
+    if (c >= 50) return 'Advanced';
+    if (c >= 20) return 'Intermediate';
+    return 'Beginner';
   });
 
   async searchWord() {
-    const query = this.searchQuery.trim();
+    const query = this.searchQuery.trim().toLowerCase();
     if (!query) return;
 
     this.isSearching.set(true);
     this.apiResult.set(null);
     this.searchError.set(null);
 
+    // 1. Search locally in our preloaded words first (both languages)
+    const localMatch = this.baseDictionaryWords.find(w => {
+      if (this.searchLanguage() === 'fr') {
+        return w.translation.toLowerCase() === query || 
+               w.translation.toLowerCase().includes(query) || 
+               query.includes(w.translation.toLowerCase());
+      } else {
+        return w.word.toLowerCase() === query;
+      }
+    });
+
+    if (localMatch) {
+      const result: ApiDictResult = {
+        word: localMatch.word,
+        phonetic: localMatch.phonetic,
+        meanings: [
+          {
+            partOfSpeech: localMatch.partOfSpeech,
+            definitions: [
+              {
+                definition: localMatch.definition,
+                example: localMatch.contexts?.[0]
+              }
+            ]
+          }
+        ]
+      };
+      this.apiResult.set(result);
+      this.currentTranslation = localMatch.translation;
+      this.isSearching.set(false);
+
+      // Add to search history
+      const hist = this.searchHistory();
+      if (!hist.includes(this.searchQuery)) {
+        this.searchHistory.set([this.searchQuery, ...hist].slice(0, 20));
+      }
+      return;
+    }
+
+    // 2. If searching French and not found in local list
+    if (this.searchLanguage() === 'fr') {
+      this.searchError.set(`Le mot français "${this.searchQuery}" n'a pas été trouvé dans notre dictionnaire de base. Essayez des mots comme: école, parler, enseignant, livre, devoir, etc.`);
+      this.isSearching.set(false);
+      return;
+    }
+
+    // 3. Fallback online search for English words
     try {
       const url = `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(query)}`;
       const res = await fetch(url);
 
       if (!res.ok) {
-        this.searchError.set(`"${query}" n'a pas été trouvé dans le dictionnaire. Vérifiez l'orthographe.`);
+        this.searchError.set(`"${this.searchQuery}" n'a pas été trouvé dans le dictionnaire. Vérifiez l'orthographe.`);
         return;
       }
 
       const data: ApiDictResult[] = await res.json();
       if (data && data.length > 0) {
         this.apiResult.set(data[0]);
+        this.currentTranslation = ''; // reset translation input
+        
         // Add to search history
         const hist = this.searchHistory();
-        if (!hist.includes(query)) {
-          this.searchHistory.set([query, ...hist].slice(0, 20));
+        if (!hist.includes(this.searchQuery)) {
+          this.searchHistory.set([this.searchQuery, ...hist].slice(0, 20));
         }
       } else {
-        this.searchError.set(`Aucune définition trouvée pour "${query}".`);
+        this.searchError.set(`Aucune définition trouvée pour "${this.searchQuery}".`);
       }
     } catch (e) {
       this.searchError.set('Erreur réseau. Vérifiez votre connexion internet et réessayez.');
@@ -374,13 +489,20 @@ export class StudentDictionaryComponent {
     const user = this.currentUser();
     if (!result || !user) return;
 
+    // Check if already saved
+    const exists = this.myWords().some(w => w.word.toLowerCase() === result.word.toLowerCase());
+    if (exists) {
+      this.dialogService.alert('Already Saved', `"${result.word}" is already in your vocabulary list.`, 'info');
+      return;
+    }
+
     const firstMeaning = result.meanings?.[0];
     const firstDef = firstMeaning?.definitions?.[0];
 
     const wordData: Omit<DictionaryWord, 'id'> = {
       word: result.word,
       partOfSpeech: firstMeaning?.partOfSpeech || 'word',
-      translation: '',
+      translation: this.currentTranslation.trim(),
       definition: firstDef?.definition || '',
       phonetic: this.getPhonetic(result),
       contexts: firstDef?.example ? [`"${firstDef.example}"`] : [],
@@ -389,7 +511,33 @@ export class StudentDictionaryComponent {
     };
 
     await this.db.addWordToDictionary(wordData);
-    this.dialogService.alert('Sauvegardé !', `"${result.word}" ajouté à votre carnet.`, 'success');
+    this.dialogService.alert('Saved!', `"${result.word}" has been added to your vocabulary.`, 'success');
+  }
+
+  async savePreloadedWord(word: any) {
+    const user = this.currentUser();
+    if (!user) return;
+
+    // Check if already saved
+    const exists = this.myWords().some(w => w.word.toLowerCase() === word.word.toLowerCase());
+    if (exists) {
+      this.dialogService.alert('Déjà enregistré', `"${word.word}" est déjà dans votre liste de vocabulaire personnel.`, 'info');
+      return;
+    }
+
+    const wordData: Omit<DictionaryWord, 'id'> = {
+      word: word.word,
+      partOfSpeech: word.partOfSpeech,
+      translation: word.translation,
+      definition: word.definition,
+      phonetic: word.phonetic,
+      contexts: word.contexts || [],
+      userId: user.id,
+      savedAt: new Date().toISOString()
+    };
+
+    await this.db.addWordToDictionary(wordData);
+    this.dialogService.alert('Enregistré !', `"${word.word}" a été ajouté à votre liste de vocabulaire personnel.`, 'success');
   }
 
   deleteWord(id: string) {
@@ -437,5 +585,38 @@ export class StudentDictionaryComponent {
     { base: 'understand', past: 'understood', pp: 'understood', fr: 'comprendre' },
     { base: 'wake', past: 'woke', pp: 'woken', fr: 'réveiller' },
     { base: 'write', past: 'wrote', pp: 'written', fr: 'écrire' },
+  ];
+
+  baseDictionaryWords = [
+    { word: 'Resilience', partOfSpeech: 'noun', translation: 'Résilience', definition: 'The capacity to recover quickly from difficulties; toughness.', phonetic: '/rɪˈzɪl.jəns/', contexts: ['Sa résilience l\'a aidée à surmonter le défi.'] },
+    { word: 'Perseverance', partOfSpeech: 'noun', translation: 'Persévérance', definition: 'Persistence in doing something despite difficulty or delay in achieving success.', phonetic: '/ˌpɜː.sɪˈvɪə.rəns/', contexts: ['Through hard work and perseverance, he passed the exam.'] },
+    { word: 'Eloquent', partOfSpeech: 'adjective', translation: 'Éloquent', definition: 'Fluent or persuasive in speaking or writing.', phonetic: '/ˈel.ə.kwənt/', contexts: ['She made an eloquent speech at the graduation.'] },
+    { word: 'Ambiguous', partOfSpeech: 'adjective', translation: 'Ambigu', definition: 'Open to more than one interpretation; not having one obvious meaning.', phonetic: '/æmˈbɪɡ.ju.əs/', contexts: ['His answer was ambiguous, so we asked for clarification.'] },
+    { word: 'Diligent', partOfSpeech: 'adjective', translation: 'Diligent / Assidu', definition: 'Having or showing care and conscientiousness in one\'s work or studies.', phonetic: '/ˈdɪl.ɪ.dʒənt/', contexts: ['A diligent student always finishes homework on time.'] },
+    { word: 'Phenomenon', partOfSpeech: 'noun', translation: 'Phénomène', definition: 'A fact or situation that is observed to exist or happen, especially one whose cause is in question.', phonetic: '/fəˈnɒm.ɪ.nən/', contexts: ['Glaciers are a natural phenomenon.'] },
+    { word: 'School', partOfSpeech: 'noun', translation: 'École', definition: 'An institution for educating children or students.', phonetic: '/skuːl/', contexts: ['We go to school every weekday.'] },
+    { word: 'Teacher', partOfSpeech: 'noun', translation: 'Enseignant / Professeur', definition: 'A person who helps students to acquire knowledge or skills.', phonetic: '/ˈtiː.tʃər/', contexts: ['The English teacher explains grammar very clearly.'] },
+    { word: 'Student', partOfSpeech: 'noun', translation: 'Étudiant / Élève', definition: 'A person who is studying at a school or college.', phonetic: '/ˈstjuː.dənt/', contexts: ['She is an outstanding student who loves reading.'] },
+    { word: 'Lesson', partOfSpeech: 'noun', translation: 'Leçon / Cours', definition: 'A period of learning or teaching; a block of educational instruction.', phonetic: '/ˈles.ən/', contexts: ['Today\'s lesson is about reported speech.'] },
+    { word: 'Vocabulary', partOfSpeech: 'noun', translation: 'Vocabulaire', definition: 'The body of words used in a particular language or activity.', phonetic: '/vəˈkæb.jə.ler.i/', contexts: ['Playing games helps you expand your English vocabulary.'] },
+    { word: 'Grammar', partOfSpeech: 'noun', translation: 'Grammaire', definition: 'The whole system and structure of a language.', phonetic: '/ˈɡræm.ər/', contexts: ['Grammar rules help us form correct sentences.'] },
+    { word: 'Pronunciation', partOfSpeech: 'noun', translation: 'Prononciation', definition: 'The way in which a word is pronounced.', phonetic: '/prəˌnʌn.siˈeɪ.ʃən/', contexts: ['Listen carefully to the audio to improve your pronunciation.'] },
+    { word: 'Understand', partOfSpeech: 'verb', translation: 'Comprendre', definition: 'Perceive the intended meaning of words, language, or information.', phonetic: '/ˌʌn.dəˈstænd/', contexts: ['Do you understand this difficult concept?'] },
+    { word: 'Speak', partOfSpeech: 'verb', translation: 'Parler', definition: 'Say something in order to convey information or express feelings.', phonetic: '/spiːk/', contexts: ['I want to speak English fluently.'] },
+    { word: 'Write', partOfSpeech: 'verb', translation: 'Écrire', definition: 'Mark letters or words on a surface, typically paper or screen.', phonetic: '/raɪt/', contexts: ['Please write your answer in the notebook.'] },
+    { word: 'Read', partOfSpeech: 'verb', translation: 'Lire', definition: 'Look at and comprehend the meaning of written or printed matter.', phonetic: '/riːd/', contexts: ['Reading ebooks is a great way to study.'] },
+    { word: 'Homework', partOfSpeech: 'noun', translation: 'Devoir', definition: 'Schoolwork that a student is given to do at home.', phonetic: '/ˈhəʊm.wɜːk/', contexts: ['The homework is due by next Friday.'] },
+    { word: 'Exam', partOfSpeech: 'noun', translation: 'Examen', definition: 'A formal test of a person\'s knowledge or proficiency in a subject.', phonetic: '/ɪɡˈzæm/', contexts: ['Prepare well for the final exam.'] },
+    { word: 'Success', partOfSpeech: 'noun', translation: 'Succès / Réussite', definition: 'The accomplishment of an aim or purpose.', phonetic: '/səkˈses/', contexts: ['Practice is the key to language success.'] },
+    { word: 'Challenge', partOfSpeech: 'noun / verb', translation: 'Défi', definition: 'A call to take part in a contest or solve a difficult task.', phonetic: '/ˈtʃæl.ɪndʒ/', contexts: ['Learning English is a challenge, but it is rewarding.'] },
+    { word: 'Opportunity', partOfSpeech: 'noun', translation: 'Opportunité', definition: 'A set of circumstances that makes it possible to do something.', phonetic: '/ˌɒp.əˈtʃuː.nə.ti/', contexts: ['Studying here is a great opportunity to practice speaking.'] },
+    { word: 'Knowledge', partOfSpeech: 'noun', translation: 'Connaissance', definition: 'Facts, information, and skills acquired through experience or education.', phonetic: '/ˈnɒl.ɪdʒ/', contexts: ['He has a vast knowledge of English literature.'] },
+    { word: 'Practice', partOfSpeech: 'noun / verb', translation: 'Pratique / S\'exercer', definition: 'Perform an activity repeatedly to improve or maintain proficiency.', phonetic: '/ˈpræk.tɪs/', contexts: ['Daily speaking practice makes a big difference.'] },
+    { word: 'Improve', partOfSpeech: 'verb', translation: 'Améliorer', definition: 'Make or become better.', phonetic: '/ɪmˈpruːv/', contexts: ['We want to improve our listening comprehension.'] },
+    { word: 'Fluent', partOfSpeech: 'adjective', translation: 'Courant', definition: 'Able to express oneself easily and articulately.', phonetic: '/ˈfluː.ənt/', contexts: ['She speaks fluent English and French.'] },
+    { word: 'Conversation', partOfSpeech: 'noun', translation: 'Conversation', definition: 'An informal talk involving two or more people.', phonetic: '/ˌkɒn.vəˈseɪ.ʃən/', contexts: ['They had an interesting conversation about food.'] },
+    { word: 'Water', partOfSpeech: 'noun', translation: 'Eau', definition: 'A colorless, transparent liquid essential for life.', phonetic: '/ˈwɔː.tər/', contexts: ['Drink some water to refresh yourself.'] },
+    { word: 'Book', partOfSpeech: 'noun', translation: 'Livre', definition: 'A written or printed work consisting of pages bound together.', phonetic: '/bʊk/', contexts: ['This dictionary book contains many useful terms.'] },
+    { word: 'Friend', partOfSpeech: 'noun', translation: 'Ami', definition: 'A person with whom one has a bond of mutual affection.', phonetic: '/frend/', contexts: ['He introduced me to his best friend from class.'] }
   ];
 }

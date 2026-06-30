@@ -27,10 +27,16 @@ interface QuestionDraft {
           <i class="ti ti-plus"></i> Créer Quiz/Exercice
         </button>
         <button class="tab" [class.active]="activeTab() === 'list'" (click)="activeTab.set('list')">
-          <i class="ti ti-list"></i> Publiés ({{ quizzes().length }})
+          <i class="ti ti-list"></i> Quiz Publiés ({{ quizzes().length }})
+        </button>
+        <button class="tab" [class.active]="activeTab() === 'placement'" (click)="activeTab.set('placement')">
+          <i class="ti ti-target"></i> Test de Niveau (Placement Test)
         </button>
         <button class="tab" [class.active]="activeTab() === 'exercises'" (click)="activeTab.set('exercises')">
           <i class="ti ti-pencil"></i> Exercices ({{ exercises().length }})
+        </button>
+        <button class="tab" [class.active]="activeTab() === 'drafts'" (click)="activeTab.set('drafts')">
+          <i class="ti ti-file"></i> Brouillons ({{ quizDrafts().length + exerciseDrafts().length }})
         </button>
       </div>
 
@@ -77,21 +83,28 @@ interface QuestionDraft {
             </div>
           </div>
 
-          <!-- AI Generator -->
-          <div style="background:#FAF5FF; border:1px solid #E9D5FF; border-radius:8px; padding:12px; margin-bottom:16px">
-            <div style="font-size:11px; font-weight:700; color:#7E22CE; margin-bottom:8px">🤖 Générateur IA</div>
-            <div style="display:flex; gap:8px; width:100%">
-              <input type="text" [(ngModel)]="aiTopic" placeholder="Sujet : ex. Conditional sentences, Airport vocabulary..." style="flex:1; height:34px; padding:0 10px; font-size:12px; border:1px solid var(--border); border-radius:6px; background:#FFF; color:var(--text-primary)" />
-              <button class="btn-p" [disabled]="!aiTopic.trim() || aiLoading()" (click)="generateQuizWithAI()" style="height:34px; padding:0 14px; font-size:12px; background:#7E22CE; border-color:#7E22CE; color:white; display:flex; align-items:center; gap:4px">
-                @if (aiLoading()) { <span>Génération...</span> } @else { <span>Générer</span> }
-              </button>
-            </div>
-          </div>
+
 
           <!-- Common Fields -->
           <div class="input-row">
             <label for="qTitle">Titre</label>
             <input id="qTitle" type="text" [(ngModel)]="title" placeholder="ex. Quiz Unité 9 — Reported Speech" />
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px">
+            <div class="input-row" style="margin-bottom:0">
+              <label for="qXp">Points XP à remporter</label>
+              <input id="qXp" type="number" [(ngModel)]="points" placeholder="ex. 10, 20, 50..." />
+            </div>
+            <div class="input-row" style="margin-bottom:0">
+              <label for="qYoutube">Lien Vidéo YouTube (Optionnel)</label>
+              <input id="qYoutube" type="text" [(ngModel)]="youtubeUrl" placeholder="https://www.youtube.com/watch?v=..." />
+            </div>
+          </div>
+          
+          <div class="input-row" style="margin-bottom:12px">
+            <label for="qYoutubeDesc">Description de la vidéo YouTube (Optionnel)</label>
+            <textarea id="qYoutubeDesc" [(ngModel)]="youtubeDescription" rows="2" placeholder="Description ou instructions sur la vidéo..." style="width:100%; border:1px solid var(--border); border-radius:6px; padding:6px 10px; background:#FFF; color:var(--text-primary); font-size:12px"></textarea>
           </div>
 
           <div class="g2">
@@ -287,6 +300,9 @@ interface QuestionDraft {
           </div>
 
           <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:20px; padding-top:16px; border-top:1px solid var(--border-weak)">
+            <button class="btn-s" (click)="saveAsDraft()">
+              <i class="ti ti-file"></i> Sauver comme brouillon
+            </button>
             @if (selectedQuizId()) {
               <button class="btn-s" (click)="resetForm()">Annuler</button>
             }
@@ -301,37 +317,91 @@ interface QuestionDraft {
       <!-- PUBLISHED QUIZZES LIST -->
       @if (activeTab() === 'list') {
         <div>
+          <!-- Placement Test Banner Box -->
+          @if (getPlacementTest(); as pt) {
+            <div style="background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%); border: 1.5px solid #4F46E5; border-radius: 10px; padding: 14px 16px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; gap:12px; flex-wrap:wrap">
+              <div>
+                <span class="badge" style="background:#4F46E5; color:white; font-size:8px; padding:1px 5px; border-radius:20px; font-weight:700">🎯 TEST DE NIVEAU</span>
+                <h4 style="font-size:13px; font-weight:800; color:#1e293b; margin:4px 0 2px 0">{{ pt.title }}</h4>
+                <p style="font-size:11.5px; color:#475569; margin:0">Ce test de niveau évalue automatiquement les nouveaux élèves lors de leur première connexion.</p>
+              </div>
+              <button class="btn-s" style="font-size:11.5px; padding:5px 12px; border-color:#4F46E5; color:#4F46E5" (click)="editQuiz(pt)">
+                <i class="ti ti-edit"></i> Configurer
+              </button>
+            </div>
+          }
+
           <div class="st" style="margin-bottom:12px">Quiz publiés ({{ quizzes().length }})</div>
           @for (quiz of quizzes(); track quiz.id) {
-            <div class="row" style="font-size:13px; align-items:center; justify-content:space-between"
-                [style.background]="quiz.id === 'placement-test' ? '#EFF6FF' : 'var(--surface-1)'"
-                [style.border]="quiz.id === 'placement-test' ? '1.5px solid #93C5FD' : '1px solid var(--border)'">
-              <div style="flex:1">
-                <strong style="color:var(--text-primary)">
-                  {{ quiz.title }}
-                  @if (quiz.id === 'placement-test') {
-                    <span class="badge" style="background:#3B82F6; color:white; font-size:9px; margin-left:6px">Placement Test</span>
-                  }
-                </strong>
-                <div style="font-size:11px; color:var(--text-muted); margin-top:2px">
-                  Type: {{ quiz.type }} · Limite: {{ quiz.timeLimit }} · {{ quiz.questions.length }} questions
+            @if (quiz.id !== 'placement-test') {
+              <div class="row" style="font-size:13px; align-items:center; justify-content:space-between">
+                <div style="flex:1">
+                  <strong style="color:var(--text-primary)">
+                    {{ quiz.title }}
+                  </strong>
+                  <div style="font-size:11px; color:var(--text-muted); margin-top:2px">
+                    Type: {{ quiz.type }} · Limite: {{ quiz.timeLimit }} · {{ quiz.questions.length }} questions
+                  </div>
                 </div>
-              </div>
-              <div style="display:flex; gap:6px">
-                <button class="btn-s" style="font-size:11px; padding:4px 10px; border-color:#4F46E5; color:#4F46E5" (click)="editQuiz(quiz)">
-                  <i class="ti ti-edit"></i> Modifier
-                </button>
-                @if (quiz.id !== 'placement-test') {
+                <div style="display:flex; gap:6px">
+                  <button class="btn-s" style="font-size:11px; padding:4px 10px; border-color:#4F46E5; color:#4F46E5" (click)="editQuiz(quiz)">
+                    <i class="ti ti-edit"></i> Modifier
+                  </button>
                   <button class="btn-s" style="font-size:11px; padding:4px 10px; border-color:#EF4444; color:#EF4444" (click)="deleteQuiz(quiz.id)">
                     <i class="ti ti-trash"></i>
                   </button>
-                }
+                </div>
               </div>
-            </div>
+            }
           }
           @if (quizzes().length === 0) {
             <div style="font-size:12px; color:var(--text-muted); padding:20px; text-align:center; border:1px dashed var(--border); border-radius:8px">
               Aucun quiz publié. Créez votre premier quiz !
+            </div>
+          }
+        </div>
+      }
+
+      <!-- PLACEMENT TEST VIEW -->
+      @if (activeTab() === 'placement') {
+        <div>
+          @if (getPlacementTest(); as pt) {
+            <div style="background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%); border: 1.5px solid #4F46E5; border-radius: 12px; padding: 24px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px">
+              <div>
+                <span class="badge" style="background:#4F46E5; color:white; font-size:10px; padding:3px 8px; border-radius:20px; font-weight:700">TEST DE NIVEAU INITIAL</span>
+                <h3 style="font-size:18px; font-weight:800; color:#1e293b; margin:8px 0 4px 0">{{ pt.title }}</h3>
+                <p style="font-size:13px; color:#475569; margin:0; max-width: 500px">Ce test est présenté automatiquement à chaque nouvel élève lors de sa première connexion pour évaluer son niveau de départ (A1, A2, B1, B2).</p>
+              </div>
+              <button class="btn-p" style="background:#4F46E5; border-color:#4F46E5; font-size:13px; padding:8px 18px; font-weight: 700" (click)="editQuiz(pt)">
+                <i class="ti ti-edit"></i> Configurer le Test
+              </button>
+            </div>
+
+            <div class="card" style="margin-top: 16px">
+              <h4 class="st" style="font-size:14px; margin-bottom:12px">Questions actuellement configurées ({{ pt.questions.length }})</h4>
+              <div style="display:flex; flex-direction:column; gap:12px">
+                @for (q of pt.questions; track q.question; let idx = $index) {
+                  <div style="background: var(--surface-2); border: 1px solid var(--border-weak); padding: 12px; border-radius: 8px">
+                    <div style="font-weight: 700; font-size: 13px; color: var(--text-primary)">
+                      Q{{ idx + 1 }}. {{ q.question }}
+                    </div>
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin-top: 8px">
+                      @for (opt of q.options; track opt; let oIdx = $index) {
+                        <div style="font-size: 12px; padding: 6px 10px; border-radius: 4px; border: 1px solid var(--border-weak)"
+                             [style.background]="getOptionLetter(oIdx) === q.correctOption ? '#ECFDF5' : '#FFF'"
+                             [style.border-color]="getOptionLetter(oIdx) === q.correctOption ? '#10B981' : 'var(--border-weak)'"
+                             [style.color]="getOptionLetter(oIdx) === q.correctOption ? '#065F46' : 'var(--text-secondary)'">
+                          <strong style="margin-right: 4px">{{ getOptionLetter(oIdx) }}</strong> {{ opt }}
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          } @else {
+            <div style="text-align:center; padding:40px; border:1px dashed var(--border); border-radius:8px">
+              Chargement du test de niveau...
             </div>
           }
         </div>
@@ -370,6 +440,73 @@ interface QuestionDraft {
           @if (exercises().length === 0) {
             <div style="font-size:12px; color:var(--text-muted); padding:20px; text-align:center; border:1px dashed var(--border); border-radius:8px">
               Aucun exercice créé. Utilisez l'onglet "Créer" pour commencer.
+            </div>
+          }
+        </div>
+      }
+
+      <!-- DRAFTS LIST -->
+      @if (activeTab() === 'drafts') {
+        <div>
+          <div class="st" style="margin-bottom:12px">Brouillons de Quiz et Exercices</div>
+          
+          @if (quizDrafts().length === 0 && exerciseDrafts().length === 0) {
+            <div style="font-size:12px; color:var(--text-muted); padding:20px; text-align:center; border:1px dashed var(--border); border-radius:8px">
+              Aucun brouillon. Commencez par créer un quiz ou exercice et sauvegardez-le comme brouillon.
+            </div>
+          }
+
+          @for (quiz of quizDrafts(); track quiz.id) {
+            <div class="row" style="font-size:13px; align-items:center; justify-content:space-between; margin-bottom:8px; border-left: 3px solid #F59E0B">
+              <div style="flex:1">
+                <div style="display:flex; align-items:center; gap:8px">
+                  <span style="font-size:16px">📝</span>
+                  <div>
+                    <strong style="font-size:13px; color:var(--text-primary)">{{ quiz.title }}</strong>
+                    <div style="font-size:11px; color:var(--text-muted); margin-top:2px">
+                      Quiz · {{ quiz.type }} · {{ quiz.questions.length }} questions
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex; gap:6px">
+                <button class="btn-s" style="font-size:11px; padding:4px 10px; border-color:#4F46E5; color:#4F46E5" (click)="editQuiz(quiz); activeTab.set('create')">
+                  <i class="ti ti-edit"></i> Éditer
+                </button>
+                <button class="btn-p" style="font-size:11px; padding:4px 10px; background:#10B981" (click)="publishDraft(quiz.id, 'quiz')">
+                  <i class="ti ti-check"></i> Publier
+                </button>
+                <button class="btn-s" style="font-size:11px; padding:4px 10px; border-color:#EF4444; color:#EF4444" (click)="deleteDraft(quiz.id, 'quiz')">
+                  <i class="ti ti-trash"></i>
+                </button>
+              </div>
+            </div>
+          }
+
+          @for (ex of exerciseDrafts(); track ex.id) {
+            <div class="row" style="font-size:13px; align-items:center; justify-content:space-between; margin-bottom:8px; border-left: 3px solid #F59E0B">
+              <div style="flex:1">
+                <div style="display:flex; align-items:center; gap:8px">
+                  <span style="font-size:16px">{{ getExerciseEmoji(ex.type) }}</span>
+                  <div>
+                    <strong style="font-size:13px; color:var(--text-primary)">{{ ex.title }}</strong>
+                    <div style="font-size:11px; color:var(--text-muted); margin-top:2px">
+                      {{ getExerciseLabel(ex.type) }} · {{ ex.level }} · {{ ex.points }} pts
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex; gap:6px">
+                <button class="btn-s" style="font-size:11px; padding:4px 10px; border-color:#4F46E5; color:#4F46E5" (click)="editExercise(ex); activeTab.set('create')">
+                  <i class="ti ti-edit"></i> Éditer
+                </button>
+                <button class="btn-p" style="font-size:11px; padding:4px 10px; background:#10B981" (click)="publishDraft(ex.id, 'exercise')">
+                  <i class="ti ti-check"></i> Publier
+                </button>
+                <button class="btn-s" style="font-size:11px; padding:4px 10px; border-color:#EF4444; color:#EF4444" (click)="deleteDraft(ex.id, 'exercise')">
+                  <i class="ti ti-trash"></i>
+                </button>
+              </div>
             </div>
           }
         </div>
@@ -443,10 +580,12 @@ export class TeacherQuizzesComponent {
   private db = inject(DatabaseService);
   private dialogService = inject(DialogService);
 
-  activeTab = signal<'create' | 'list' | 'exercises'>('create');
+  activeTab = signal<'create' | 'list' | 'placement' | 'exercises' | 'drafts'>('create');
   selectedQuizId = signal<string | null>(null);
   quizzes = signal<Quiz[]>([]);
   exercises = signal<Exercise[]>([]);
+  quizDrafts = signal<Quiz[]>([]);
+  exerciseDrafts = signal<Exercise[]>([]);
   currentUser = signal<UserProfile | null>(null);
 
   exerciseCategory = signal<string>('quiz');
@@ -457,9 +596,9 @@ export class TeacherQuizzesComponent {
   level = 'B1';
   points = 10;
   status: 'published' | 'draft' = 'published';
+  youtubeUrl = '';
+  youtubeDescription = '';
 
-  aiTopic = '';
-  aiLoading = signal<boolean>(false);
 
   exerciseTypes = [
     { value: 'quiz', emoji: '📝', label: 'Quiz' },
@@ -476,15 +615,20 @@ export class TeacherQuizzesComponent {
   ];
 
   constructor() {
-    this.db.observeQuizzes().subscribe(list => this.quizzes.set(list));
-    this.db.observeExercises().subscribe(list => this.exercises.set(list));
+    this.db.observeQuizzes().subscribe(list => {
+      this.quizzes.set(list.filter(q => q.status === 'published'));
+      this.quizDrafts.set(list.filter(q => q.status === 'draft'));
+    });
+    this.db.observeExercises().subscribe(list => {
+      this.exercises.set(list.filter(e => e.status === 'published'));
+      this.exerciseDrafts.set(list.filter(e => e.status === 'draft'));
+    });
     this.db.observeCurrentUser().subscribe(u => this.currentUser.set(u));
   }
 
   setExerciseCategory(val: string) {
     this.exerciseCategory.set(val);
     if (val !== 'quiz') {
-      // Auto-set matching type defaults
       if (val === 'vocal' || val === 'pronunciation') this.type = 'Oral Practice';
       else if (val === 'essay') this.type = 'Essay';
       else if (val === 'listening') this.type = 'Audio Question';
@@ -510,7 +654,6 @@ export class TeacherQuizzesComponent {
     if (this.type === 'Matching') q.matchPairs = [{ left: '', right: '' }, { left: '', right: '' }];
     if (this.type === 'Ordering') q.orderItems = ['', '', ''];
     this.questions.push(q);
-    // Scroll to bottom after adding
     setTimeout(() => {
       const el = document.querySelector('.add-question-btn');
       el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -559,16 +702,75 @@ export class TeacherQuizzesComponent {
     return this.questions.every(q => q.question.trim().length > 0);
   }
 
+  saveAsDraft() {
+    if (!this.title.trim()) return;
+
+    const user = this.currentUser();
+    const quizData: any = {
+      title: this.title,
+      type: this.type,
+      timeLimit: this.timeLimit,
+      level: this.level,
+      points: this.points,
+      status: 'draft',
+      authorId: user?.id || 'teacher',
+      authorName: user?.name || 'Teacher',
+      youtubeUrl: this.youtubeUrl,
+      youtubeDescription: this.youtubeDescription,
+      questions: this.questions.map(q => ({
+        question: q.question,
+        options: this.type === 'Oral Practice' || this.type === 'Essay' ? [] : q.options.filter(o => o.trim().length > 0),
+        correctOption: (this.type === 'Oral Practice' || this.type === 'Essay') ? 'A' : q.correctOption,
+        matchPairs: q.matchPairs,
+        orderItems: q.orderItems,
+        audioPrompt: q.audioPrompt
+      }))
+    };
+
+    const id = this.selectedQuizId();
+    if (id) {
+      this.db.updateQuiz(id, quizData);
+      this.dialogService.alert('Succès', 'Brouillon mis à jour !', 'success');
+    } else {
+      this.db.addQuiz(quizData);
+      this.dialogService.alert('Succès', 'Brouillon sauvegardé !', 'success');
+    }
+    this.resetForm();
+  }
+
   editQuiz(quiz: Quiz) {
     this.selectedQuizId.set(quiz.id);
     this.title = quiz.title;
     this.type = quiz.type;
     this.timeLimit = quiz.timeLimit;
+    this.level = quiz.level || 'B1';
+    this.points = quiz.points || 10;
+    this.status = quiz.status || 'published';
+    this.youtubeUrl = quiz.youtubeUrl || '';
+    this.youtubeDescription = quiz.youtubeDescription || '';
     this.questions = quiz.questions.map(q => ({
       question: q.question,
       questionType: 'multiple_choice' as any,
       options: [q.options[0] || '', q.options[1] || '', q.options[2] || ''],
       correctOption: q.correctOption
+    }));
+    this.activeTab.set('create');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  editExercise(ex: Exercise) {
+    this.selectedQuizId.set(ex.id);
+    this.title = ex.title;
+    this.exerciseCategory.set(ex.type);
+    this.level = ex.level;
+    this.points = ex.points;
+    this.status = ex.status;
+    this.timeLimit = ex.timeLimit || '15 minutes';
+    this.questions = (ex.questions || []).map(q => ({
+      question: q.question || '',
+      questionType: 'multiple_choice' as any,
+      options: q.options || ['', '', ''],
+      correctOption: q.correctOption || 'A'
     }));
     this.activeTab.set('create');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -588,6 +790,27 @@ export class TeacherQuizzesComponent {
     });
   }
 
+  publishDraft(id: string, type: 'quiz' | 'exercise') {
+    if (type === 'quiz') {
+      this.db.updateQuiz(id, { status: 'published' });
+      this.dialogService.alert('Succès', 'Quiz publié avec succès !', 'success');
+    } else {
+      this.db.updateExercise(id, { status: 'published' });
+      this.dialogService.alert('Succès', 'Exercice publié avec succès !', 'success');
+    }
+  }
+
+  async deleteDraft(id: string, type: 'quiz' | 'exercise') {
+    this.dialogService.confirm('Supprimer', 'Êtes-vous sûr de vouloir supprimer ce brouillon ?', async () => {
+      if (type === 'quiz') {
+        await this.db.deleteQuiz(id);
+      } else {
+        await this.db.deleteExercise(id);
+      }
+      this.dialogService.alert('Supprimé', 'Brouillon supprimé.', 'success');
+    });
+  }
+
   publishQuiz() {
     if (!this.isValid()) return;
 
@@ -601,6 +824,8 @@ export class TeacherQuizzesComponent {
       status: this.status,
       authorId: user?.id || 'teacher',
       authorName: user?.name || 'Teacher',
+      youtubeUrl: this.youtubeUrl,
+      youtubeDescription: this.youtubeDescription,
       questions: this.questions.map(q => ({
         question: q.question,
         options: this.type === 'Oral Practice' || this.type === 'Essay' ? [] : q.options.filter(o => o.trim().length > 0),
@@ -613,7 +838,6 @@ export class TeacherQuizzesComponent {
 
     const id = this.selectedQuizId();
 
-    // Also save as Exercise if it's not a quiz category
     if (this.exerciseCategory() !== 'quiz') {
       const exerciseData = {
         title: this.title,
@@ -636,14 +860,15 @@ export class TeacherQuizzesComponent {
       this.db.addQuiz(quizData);
       this.dialogService.alert('Succès', 'Quiz publié avec succès !', 'success');
 
-      // Send notification to students
-      this.db.sendNotification({
-        recipientId: 'all',
-        recipientRole: 'student',
-        type: 'quiz_available',
-        title: '📝 Nouveau quiz disponible',
-        message: `"${this.title}" a été publié par ${user?.name || 'votre professeur'}`,
-      });
+      if (this.status === 'published') {
+        this.db.sendNotification({
+          recipientId: 'all',
+          recipientRole: 'student',
+          type: 'quiz_available',
+          title: '📝 Nouveau quiz disponible',
+          message: `"${this.title}" a été publié par ${user?.name || 'votre professeur'}`,
+        });
+      }
     }
     this.resetForm();
   }
@@ -655,6 +880,8 @@ export class TeacherQuizzesComponent {
     this.level = 'B1';
     this.points = 10;
     this.status = 'published';
+    this.youtubeUrl = '';
+    this.youtubeDescription = '';
     this.questions = [{ question: '', questionType: 'multiple_choice', options: ['', '', ''], correctOption: 'A' }];
   }
 
@@ -684,40 +911,6 @@ export class TeacherQuizzesComponent {
     }
   }
 
-  async generateQuizWithAI() {
-    if (!this.aiTopic.trim()) return;
-
-    if (!this.db.getGeminiApiKey()) {
-      const key = prompt('Clé API Google Gemini requise :\nObtenir une clé gratuite sur https://aistudio.google.com/');
-      if (key?.trim()) this.db.setGeminiApiKey(key);
-      else return;
-    }
-
-    this.aiLoading.set(true);
-    const systemInstruction = `You are SpeakUp Teacher Quiz Assistant. Generate English learning quiz questions.
-    Return a JSON array of questions:
-    [{ "question": "...", "options": ["A", "B", "C"], "correctOption": "A" }]
-    Rules: ${this.type === 'Oral Practice' ? 'Return empty options [].' : 'Return 3 options, correctOption is A, B or C.'}
-    Do NOT wrap in markdown code blocks. Return ONLY the JSON array.`;
-
-    try {
-      const res = await this.db.callGemini(systemInstruction, `Topic: "${this.aiTopic.trim()}" | Type: "${this.type}"`);
-      const data = JSON.parse(res);
-      this.questions = data.map((q: any) => ({ ...q, questionType: 'multiple_choice' }));
-      this.title = `Quiz IA: ${this.aiTopic.trim()}`;
-      this.aiTopic = '';
-      this.dialogService.alert('IA Terminé', `${data.length} questions générées avec succès !`, 'success');
-    } catch (e) {
-      console.warn('AI failed, using fallback:', e);
-      this.questions = [
-        { question: `Expliquez le concept de "${this.aiTopic}". Donnez un exemple.`, questionType: 'multiple_choice', options: [`La pratique de ${this.aiTopic}`, 'Un aspect mineur', 'Une conjugaison irrégulière'], correctOption: 'A' }
-      ];
-      this.title = `Quiz: ${this.aiTopic.trim()}`;
-      this.aiTopic = '';
-    } finally {
-      this.aiLoading.set(false);
-    }
-  }
 
   getExerciseEmoji(type: string): string {
     const map: Record<string, string> = {
@@ -731,5 +924,13 @@ export class TeacherQuizzesComponent {
       quiz: 'Quiz', written: 'Exercice écrit', vocal: 'Exercice vocal', translation: 'Traduction', essay: 'Rédaction', listening: 'Écoute', pronunciation: 'Prononciation'
     };
     return map[type] || type;
+  }
+
+  getPlacementTest(): Quiz | undefined {
+    return this.quizzes().find(q => q.id === 'placement-test');
+  }
+
+  getOptionLetter(idx: number): string {
+    return ['A', 'B', 'C', 'D'][idx] || 'A';
   }
 }

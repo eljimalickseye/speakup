@@ -1,12 +1,11 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DatabaseService, LiveClass, UserProfile } from '../../services/database.service';
-import { JitsiMeet } from '../jitsi-meet/jitsi-meet';
 
 @Component({
   selector: 'app-student-live',
   standalone: true,
-  imports: [CommonModule, JitsiMeet],
+  imports: [CommonModule],
   template: `
     <div class="page" style="height: 100%; padding:0">
       @if (!activeMeeting()) {
@@ -225,21 +224,18 @@ import { JitsiMeet } from '../jitsi-meet/jitsi-meet';
           }
         </div>
       } @else {
-        <!-- JITSI MEET INLINE IFRAME VIEW -->
-        <div style="height: 100%; display:flex; flex-direction:column; gap:12px; padding:16px; background:#111827">
-          <button class="btn-s" style="align-self: flex-start; border-color:#374151; color:#9CA3AF; background:#1F2937" (click)="exitMeeting()">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-            Exit Video Call
+        <!-- LIVE SESSION PERSISTENT CALL CARD -->
+        <div style="height: 100%; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:16px; padding:40px; text-align:center; background:#111827; color:#FFF">
+          <div style="width:64px; height:64px; border-radius:50%; background:rgba(239, 68, 68, 0.1); border:1px solid #EF4444; display:flex; align-items:center; justify-content:center">
+            <span style="width:16px; height:16px; border-radius:50%; background:#EF4444; display:inline-block"></span>
+          </div>
+          <div>
+            <h3 style="font-size:16px; font-weight:700; color:#FFF">Vous êtes en cours live !</h3>
+            <p style="font-size:12.5px; color:#9CA3AF; max-width:320px; margin:6px auto 0">Le cours virtuel s'affiche en plein écran. Vous pouvez participer et échanger en direct avec votre professeur.</p>
+          </div>
+          <button class="btn-s" style="border-color:#374151; color:#9CA3AF; background:#1F2937" (click)="exitMeeting()">
+            Quitter le cours
           </button>
-          
-          <app-jitsi-meet 
-            style="flex: 1"
-            [roomName]="activeMeeting()!.jitsiRoom"
-            [isTeacher]="false"
-            [userName]="currentUser()?.name || 'English Student'"
-            [userEmail]="currentUser()?.id + '@speakup.com'"
-            (onMeetingLeave)="exitMeeting()">
-          </app-jitsi-meet>
         </div>
       }
     </div>
@@ -682,7 +678,15 @@ export class StudentLiveClassesComponent {
   private db = inject(DatabaseService);
 
   activeTab = signal<'calendar' | 'list'>('calendar');
-  classes = signal<LiveClass[]>([]);
+  allSchedules = signal<LiveClass[]>([]);
+  classes = computed(() => {
+    const list = this.allSchedules();
+    const user = this.currentUser();
+    return list.filter(c => {
+      if (!c.studentId) return true;
+      return user && c.studentId === user.id;
+    });
+  });
   currentUser = signal<UserProfile | null>(null);
   activeMeeting = signal<LiveClass | null>(null);
 
@@ -763,7 +767,7 @@ export class StudentLiveClassesComponent {
 
   constructor() {
     this.db.observeSchedules().subscribe(list => {
-      this.classes.set(list);
+      this.allSchedules.set(list);
 
       // Keep active calendar details in sync
       const active = this.selectedClass();

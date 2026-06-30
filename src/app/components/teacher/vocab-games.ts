@@ -120,8 +120,11 @@ import { DialogService } from '../../services/dialog.service';
           </div>
 
           <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:20px; padding-top:16px; border-top:1px solid var(--border-weak)">
+            @if (selectedGameId()) {
+              <button class="btn-s" (click)="resetForm()">Annuler</button>
+            }
             <button class="btn-p" [disabled]="!isValid()" (click)="saveGame()" style="background:#F59E0B; border-color:#F59E0B">
-              <i class="ti ti-check"></i> Publier le jeu
+              <i class="ti ti-check"></i> {{ selectedGameId() ? 'Mettre à jour le jeu' : 'Publier le jeu' }}
             </button>
           </div>
         </div>
@@ -143,9 +146,14 @@ import { DialogService } from '../../services/dialog.service';
                 </div>
               </div>
             </div>
-            <button class="btn-s" style="font-size:11px; padding:4px 10px; border-color:#EF4444; color:#EF4444" (click)="deleteGame(game.id)">
-              <i class="ti ti-trash"></i>
-            </button>
+            <div style="display:flex; gap:6px">
+              <button class="btn-s" style="font-size:11px; padding:4px 10px" (click)="editGame(game)">
+                <i class="ti ti-edit"></i>
+              </button>
+              <button class="btn-s" style="font-size:11px; padding:4px 10px; border-color:#EF4444; color:#EF4444" (click)="deleteGame(game.id)">
+                <i class="ti ti-trash"></i>
+              </button>
+            </div>
           </div>
         }
         @if (games().length === 0) {
@@ -203,6 +211,8 @@ export class TeacherVocabGamesComponent {
   games = signal<VocabGame[]>([]);
   currentUser = signal<UserProfile | null>(null);
 
+  selectedGameId = signal<string | null>(null);
+
   gameTitle = '';
   gameType: VocabGame['gameType'] = 'flashcards';
   gameDifficulty: VocabGame['difficulty'] = 'medium';
@@ -234,27 +244,48 @@ export class TeacherVocabGamesComponent {
   async saveGame() {
     const user = this.currentUser();
     const validWords = this.words.filter(w => w.word.trim() && w.definition.trim());
-    await this.db.addVocabGame({
+    const id = this.selectedGameId();
+    const gameData = {
       title: this.gameTitle,
       gameType: this.gameType,
       difficulty: this.gameDifficulty,
-      authorId: user?.id || 'teacher',
       words: validWords
-    });
+    };
 
-    await this.db.sendNotification({
-      recipientId: 'all', recipientRole: 'student',
-      type: 'quiz_available',
-      title: '🎮 Nouveau jeu de vocabulaire',
-      message: `"${this.gameTitle}" est disponible !`
-    });
+    if (id) {
+      await this.db.updateVocabGame(id, gameData);
+      this.dialogService.alert('Jeu mis à jour !', `"${this.gameTitle}" a été mis à jour avec ${validWords.length} mots.`, 'success');
+    } else {
+      await this.db.addVocabGame({
+        ...gameData,
+        authorId: user?.id || 'teacher',
+        words: validWords
+      });
 
-    this.dialogService.alert('Jeu créé !', `"${this.gameTitle}" a été publié avec ${validWords.length} mots.`, 'success');
+      await this.db.sendNotification({
+        recipientId: 'all', recipientRole: 'student',
+        type: 'quiz_available',
+        title: '🎮 Nouveau jeu de vocabulaire',
+        message: `"${this.gameTitle}" est disponible !`
+      });
+
+      this.dialogService.alert('Jeu créé !', `"${this.gameTitle}" a été publié avec ${validWords.length} mots.`, 'success');
+    }
     this.resetForm();
     this.activeTab.set('list');
   }
 
+  editGame(game: VocabGame) {
+    this.selectedGameId.set(game.id);
+    this.gameTitle = game.title;
+    this.gameType = game.gameType;
+    this.gameDifficulty = game.difficulty;
+    this.words = game.words.map(w => ({ ...w }));
+    this.activeTab.set('create');
+  }
+
   resetForm() {
+    this.selectedGameId.set(null);
     this.gameTitle = '';
     this.gameType = 'flashcards';
     this.gameDifficulty = 'medium';

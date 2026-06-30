@@ -68,6 +68,11 @@ import { DatabaseService, AppNotification, UserProfile } from '../../services/da
     }
   `,
   styles: [`
+    :host {
+      position: relative;
+      display: inline-block;
+    }
+
     .notif-bell-wrapper {
       position: relative;
       display: flex;

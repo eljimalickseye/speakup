@@ -1,7 +1,7 @@
 import { Component, inject, Output, EventEmitter, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { DatabaseService, LiveClass } from '../../services/database.service';
+import { DatabaseService, LiveClass, UserProfile } from '../../services/database.service';
 import { DialogService } from '../../services/dialog.service';
 
 @Component({
@@ -63,18 +63,21 @@ import { DialogService } from '../../services/dialog.service';
                      [class.is-today]="day.isToday">
                   <span class="day-num">{{ day.dayNum }}</span>
                   
-                  <div class="calendar-events-list">
-                    @for (c of day.classes; track c.id) {
-                      <div class="calendar-class-tag" 
-                           [class.waiting]="c.status === 'waiting'"
-                           [class.active]="c.status === 'active'"
-                           [class.completed]="c.status === 'completed'"
-                           (click)="selectClass(c); $event.stopPropagation()">
-                        <i class="ti ti-video" aria-hidden="true" style="font-size:10px"></i>
-                        <span>{{ c.time }} · {{ c.title }}</span>
-                      </div>
-                    }
-                  </div>
+                   <div class="calendar-events-list">
+                     @for (c of day.classes; track c.id) {
+                       <div class="calendar-class-tag" 
+                            [class.waiting]="c.status === 'waiting'"
+                            [class.active]="c.status === 'active'"
+                            [class.completed]="c.status === 'completed'"
+                            (click)="selectClass(c); $event.stopPropagation()">
+                         <i class="ti ti-video" aria-hidden="true" style="font-size:10px"></i>
+                         <span style="flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">{{ c.time }} · {{ c.title }}</span>
+                         <button class="btn-delete-tag" (click)="cancelClass(c); $event.stopPropagation()" title="Delete this class">
+                           <i class="ti ti-trash" aria-hidden="true" style="font-size:9px"></i>
+                         </button>
+                       </div>
+                     }
+                   </div>
                 </div>
               }
             </div>
@@ -171,12 +174,32 @@ import { DialogService } from '../../services/dialog.service';
               </select>
             </div>
             <div class="input-row">
-              <label for="cGroup" style="font-size:11px; font-weight:600; color:var(--text-secondary); display:block; margin-bottom:4px">Target Group</label>
-              <select id="cGroup" [(ngModel)]="group" style="width:100%; padding:9px; border:1px solid var(--border); border-radius:var(--radius); font-size:12px">
-                <option value="B1 — All students (18)">B1 — All students</option>
-                <option value="A2 — All students (10)">A2 — All students</option>
+              <label style="font-size:11px; font-weight:600; color:var(--text-secondary); display:block; margin-bottom:4px">Type de session</label>
+              <select [(ngModel)]="sessionType" style="width:100%; padding:9px; border:1px solid var(--border); border-radius:var(--radius); font-size:12px; background:#FFF; color:var(--text-primary)">
+                <option value="group">Classe de groupe (Group Class)</option>
+                <option value="one-to-one">Session 1-à-1 (1-to-1 Call)</option>
               </select>
             </div>
+
+            @if (sessionType === 'group') {
+              <div class="input-row">
+                <label for="cGroup" style="font-size:11px; font-weight:600; color:var(--text-secondary); display:block; margin-bottom:4px">Target Group</label>
+                <select id="cGroup" [(ngModel)]="group" style="width:100%; padding:9px; border:1px solid var(--border); border-radius:var(--radius); font-size:12px; background:#FFF; color:var(--text-primary)">
+                  <option value="B1 — All students (18)">B1 — All students</option>
+                  <option value="A2 — All students (10)">A2 — All students</option>
+                </select>
+              </div>
+            } @else {
+              <div class="input-row">
+                <label style="font-size:11px; font-weight:600; color:var(--text-secondary); display:block; margin-bottom:4px">Sélectionner l'élève</label>
+                <select [(ngModel)]="selectedStudentId" style="width:100%; padding:9px; border:1px solid var(--border); border-radius:var(--radius); font-size:12px; background:#FFF; color:var(--text-primary)">
+                  <option value="" disabled>-- Choisir un étudiant --</option>
+                  @for (s of students(); track s.id) {
+                    <option [value]="s.id">{{ s.name }} ({{ s.level }})</option>
+                  }
+                </select>
+              </div>
+            }
           </div>
 
           <div class="input-row" style="margin-top:12px">
@@ -220,6 +243,9 @@ export class TeacherScheduleComponent {
   duration = '45 minutes';
   group = 'B1 — All students (18)';
   description = 'In this live session, we will practice reported speech in English. Please complete your vocabulary check before joining.';
+  sessionType = 'group';
+  selectedStudentId = '';
+  students = signal<UserProfile[]>([]);
 
   @Output() navigateToTab = new EventEmitter<string>();
 
@@ -300,6 +326,10 @@ export class TeacherScheduleComponent {
         this.selectedClass.set(fresh || null);
       }
     });
+
+    this.db.observeUsers().subscribe(list => {
+      this.students.set(list.filter(u => u.role === 'student'));
+    });
   }
 
   prevMonth() {
@@ -323,13 +353,28 @@ export class TeacherScheduleComponent {
   schedule() {
     if (!this.isValid()) return;
 
+    let targetGroup = this.group;
+    let studentId: string | undefined = undefined;
+
+    if (this.sessionType === 'one-to-one') {
+      const student = this.students().find(s => s.id === this.selectedStudentId);
+      if (student) {
+        targetGroup = `1-to-1: ${student.name}`;
+        studentId = student.id;
+      } else {
+        this.dialogService.alert('Erreur', 'Veuillez sélectionner un étudiant pour la session 1-à-1.', 'info');
+        return;
+      }
+    }
+
     this.db.scheduleClass({
       title: this.title,
       date: this.date,
       time: this.time,
       duration: this.duration,
-      group: this.group,
-      description: this.description
+      group: targetGroup,
+      description: this.description,
+      studentId: studentId
     });
 
     this.dialogService.alert('Class Scheduled', 'Live Class scheduled successfully!', 'success');
@@ -344,19 +389,36 @@ export class TeacherScheduleComponent {
     const dateStr = this.getLocalDateString(today);
     const timeStr = today.toTimeString().split(' ')[0].slice(0, 5);
 
+    let targetGroup = this.group;
+    let studentId: string | undefined = undefined;
+
+    if (this.sessionType === 'one-to-one') {
+      const student = this.students().find(s => s.id === this.selectedStudentId);
+      if (student) {
+        targetGroup = `1-to-1: ${student.name}`;
+        studentId = student.id;
+      } else {
+        this.dialogService.alert('Erreur', 'Veuillez sélectionner un étudiant pour la session 1-à-1.', 'info');
+        return;
+      }
+    }
+
     this.db.scheduleClass({
       title: this.title,
       date: dateStr,
       time: timeStr,
       duration: this.duration,
-      group: this.group,
-      description: this.description
+      group: targetGroup,
+      description: this.description,
+      studentId: studentId
     }, 'active').then(created => {
       if (created) {
         this.db.setActiveJitsiCall(created);
       }
     });
+
     this.resetForm();
+    this.activeTab.set('calendar');
   }
 
   // --- Actions inside calendar preview ---

@@ -42,7 +42,14 @@ import { DialogService } from '../../services/dialog.service';
           <textarea id="eDesc" [(ngModel)]="description" rows="4" placeholder="Describe the activities, language games, etc."></textarea>
         </div>
 
-        <button class="btn-p" style="margin-top:12px" [disabled]="!isValid()" (click)="publish()">Publish Community Event</button>
+        <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:12px">
+          @if (selectedEventId()) {
+            <button class="btn-s" (click)="resetForm()">Cancel Edit</button>
+          }
+          <button class="btn-p" [disabled]="!isValid()" (click)="publish()">
+            {{ selectedEventId() ? 'Update Community Event' : 'Publish Community Event' }}
+          </button>
+        </div>
       </div>
 
       <div class="card" style="margin-top:16px">
@@ -59,7 +66,7 @@ import { DialogService } from '../../services/dialog.service';
                 <th style="padding:8px">Date & Time</th>
                 <th style="padding:8px">Location</th>
                 <th style="padding:8px; text-align:center">Registered</th>
-                <th style="padding:8px; text-align:right">Action</th>
+                <th style="padding:8px; text-align:right">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -71,9 +78,15 @@ import { DialogService } from '../../services/dialog.service';
                   <td style="padding:8px; text-align:center">
                     {{ ev.registeredUsers.length }} / {{ ev.maxParticipants }}
                   </td>
-                  <td style="padding:8px; text-align:right">
+                  <td style="padding:8px; text-align:right; display:flex; gap:4px; justify-content:flex-end">
                     <button class="btn-s" style="padding:4px 8px; font-size:11px" (click)="showRegistrations(ev)">
-                      View Guests
+                      Guests
+                    </button>
+                    <button class="btn-s" style="padding:4px 8px; font-size:11px" (click)="editEvent(ev)">
+                      Edit
+                    </button>
+                    <button class="btn-s" style="padding:4px 8px; font-size:11px; border-color:#EF4444; color:#EF4444" (click)="deleteEvent(ev)">
+                      Delete
                     </button>
                   </td>
                 </tr>
@@ -89,17 +102,53 @@ export class TeacherEventsComponent {
   private db = inject(DatabaseService);
   private dialogService = inject(DialogService);
 
-  name = 'Outdoor English Meetup';
-  date = new Date(Date.now() + 86400000 * 5).toISOString().split('T')[0];
-  time = '10:00 AM';
-  location = 'Plateau Independence Garden';
-  maxParticipants = 30;
-  description = 'Join us for a picnic and practice speaking English in an informal environment.';
+  selectedEventId = signal<string | null>(null);
+
+  name = '';
+  date = '';
+  time = '';
+  location = '';
+  maxParticipants = 10;
+  description = '';
 
   events = signal<EventItem[]>([]);
 
   constructor() {
     this.db.observeEvents().subscribe(list => this.events.set(list));
+  }
+
+  editEvent(ev: EventItem) {
+    this.selectedEventId.set(ev.id);
+    this.name = ev.name;
+    this.date = ev.date;
+    this.time = ev.time;
+    this.location = ev.location;
+    this.maxParticipants = ev.maxParticipants;
+    this.description = ev.description || '';
+  }
+
+  deleteEvent(ev: EventItem) {
+    this.dialogService.confirm(
+      'Delete Event',
+      `Are you sure you want to delete the event "${ev.name}"?`,
+      () => {
+        this.db.deleteEvent(ev.id);
+        this.dialogService.alert('Deleted', 'Event deleted successfully!', 'success');
+        if (this.selectedEventId() === ev.id) {
+          this.resetForm();
+        }
+      }
+    );
+  }
+
+  resetForm() {
+    this.selectedEventId.set(null);
+    this.name = '';
+    this.date = '';
+    this.time = '';
+    this.location = '';
+    this.maxParticipants = 10;
+    this.description = '';
   }
 
   isValid() {
@@ -109,19 +158,24 @@ export class TeacherEventsComponent {
   publish() {
     if (!this.isValid()) return;
 
-    this.db.addEvent({
+    const data = {
       name: this.name,
       date: this.date,
       time: this.time,
       location: this.location,
       maxParticipants: this.maxParticipants,
       description: this.description
-    });
+    };
 
-    this.dialogService.alert('Success', 'English Community Event published successfully!', 'success');
-    this.name = '';
-    this.location = '';
-    this.description = '';
+    const id = this.selectedEventId();
+    if (id) {
+      this.db.updateEvent(id, data);
+      this.dialogService.alert('Success', 'English Community Event updated successfully!', 'success');
+    } else {
+      this.db.addEvent(data);
+      this.dialogService.alert('Success', 'English Community Event published successfully!', 'success');
+    }
+    this.resetForm();
   }
 
   showRegistrations(ev: EventItem) {

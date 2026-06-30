@@ -119,7 +119,20 @@ interface GuestCredentials {
                     </div>
                   </div>
 
-                  <div style="display:flex; gap:6px">
+                  <div style="display:flex; gap:6px; align-items:center">
+                    @if (user.role === 'student' || user.role === 'guest') {
+                      <select [value]="user.level || 'B1'" 
+                              (change)="changeUserGroup(user.id, $any($event.target).value)" 
+                              class="form-select" 
+                              style="font-size:11px; height:30px; padding:2px 8px; border-radius:6px; border:1px solid var(--border-weak); background:#FFF; color:var(--text-primary); cursor:pointer">
+                        <option value="A1">Groupe A1 (Beginner)</option>
+                        <option value="A2">Groupe A2 (Elementary)</option>
+                        <option value="B1">Groupe B1 (Intermediate)</option>
+                        <option value="B2">Groupe B2 (Upper Int.)</option>
+                        <option value="C1">Groupe C1 (Advanced)</option>
+                      </select>
+                    }
+
                     @if (user.role === 'guest' || user.role === 'student') {
                       @if (user.blocked) {
                         <button class="btn-s" (click)="toggleBlock(user)" style="font-size:11px; padding:6px 12px; background:#D1FAE5; border-color:#10B981; color:#065F46; font-weight:700">
@@ -426,6 +439,12 @@ export class TeacherUserManagementComponent {
     const link = `${window.location.origin}/#/guest-login?u=${encodeURIComponent(user.username || '')}&p=${encodeURIComponent(user.password || '')}`;
     navigator.clipboard.writeText(link).then(() => {
       this.dialogService.alert('Lien Copié !', 'Le lien d\'accès direct a été copié. Le visiteur pourra se connecter en un clic !', 'success');
+    });
+  }
+
+  changeUserGroup(userId: string, newLevel: string) {
+    this.db.updateUserProfile(userId, { level: newLevel }).then(() => {
+      this.dialogService.alert('Groupe mis à jour', 'Le groupe/niveau de l\'utilisateur a été modifié avec succès !', 'success');
     });
   }
 

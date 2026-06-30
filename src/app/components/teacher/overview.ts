@@ -1,13 +1,13 @@
 import { Component, Output, EventEmitter, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { combineLatest } from 'rxjs';
-import { DatabaseService, LiveClass, UserProfile, Submission } from '../../services/database.service';
-import { JitsiMeet } from '../jitsi-meet/jitsi-meet';
+import { DatabaseService, LiveClass, UserProfile, Submission, Announcement } from '../../services/database.service';
+import { DialogService } from '../../services/dialog.service';
 
 @Component({
   selector: 'app-teacher-overview',
   standalone: true,
-  imports: [CommonModule, JitsiMeet],
+  imports: [CommonModule],
   template: `
     <div class="page" style="height: 100%">
       @if (!activeMeeting()) {
@@ -107,27 +107,59 @@ import { JitsiMeet } from '../jitsi-meet/jitsi-meet';
           <span class="pill y">Pending</span>
         </div>
 
-      } @else {
-        <!-- JITSI MEET INLINE IFRAME VIEW FOR TEACHER (HOST) -->
-        <div style="height: 100%; display:flex; flex-direction:column; gap:12px">
-          <div style="display:flex; justify-content:space-between; align-items:center">
-            <button class="btn-s" (click)="exitMeeting()">
-              <i class="ti ti-arrow-left"></i> Exit Screen
-            </button>
-            <span style="font-size:12px; color:#EF4444; font-weight:600; text-transform:uppercase">
-              Hosting Class Meeting
-            </span>
+        <!-- RECENT ANNOUNCEMENTS -->
+        @if (recentAnnouncements().length > 0) {
+          <div class="st" style="margin-top:20px">📢 Recent Announcements</div>
+          <div style="display:flex; flex-direction:column; gap:10px">
+            @for (ann of recentAnnouncements(); track ann.id) {
+              <div class="card" style="cursor:pointer; border-left: 4px solid {{ ann.priority === 'Urgent' ? '#EF4444' : (ann.priority === 'Important' ? '#F59E0B' : '#4F46E5') }}; transition: all 0.2s; padding:14px 16px"
+                   (click)="viewAnnouncement(ann)"
+                   onmouseover="this.style.transform='translateX(4px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)'"
+                   onmouseout="this.style.transform='translateX(0)'; this.style.boxShadow='none'">
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:12px">
+                  <div style="flex:1; min-width:0">
+                    <div style="font-size:13px; font-weight:700; color:var(--text-primary); display:flex; align-items:center; gap:6px; margin-bottom:4px">
+                      {{ ann.title }}
+                      <i class="ti ti-chevron-right" style="font-size:12px; color:var(--text-muted)"></i>
+                    </div>
+                    <div style="font-size:11px; color:var(--text-muted); display:flex; align-items:center; gap:6px; flex-wrap:wrap">
+                      <span>📋 {{ ann.sendTo }}</span>
+                      <span>·</span>
+                      <span style="font-size:10px">{{ ann.createdAt | date:'mediumDate' }}</span>
+                    </div>
+                    @if (ann.message) {
+                      <p style="font-size:11.5px; color:var(--text-secondary); margin-top:6px; line-height:1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden">
+                        {{ ann.message }}
+                      </p>
+                    }
+                  </div>
+                  <span class="badge" [style.background]="ann.priority === 'Urgent' ? '#FEE2E2' : (ann.priority === 'Important' ? '#FEF3C7' : '#E0E7FF')" [style.color]="ann.priority === 'Urgent' ? '#991B1B' : (ann.priority === 'Important' ? '#92400E' : '#3730A3')" style="flex-shrink:0">
+                    {{ ann.priority }}
+                  </span>
+                </div>
+              </div>
+            }
           </div>
+        }
 
-          <app-jitsi-meet 
-            style="flex: 1"
-            [roomName]="activeMeeting()!.jitsiRoom"
-            [isTeacher]="true"
-            [userName]="'Teacher (Host)'"
-            [userEmail]="'teacher@speakup.com'"
-            (onMeetingLeave)="exitMeeting()"
-            (onMeetingEnd)="endClass()">
-          </app-jitsi-meet>
+      } @else {
+        <!-- LIVE HOST PERSISTENT CALL CARD -->
+        <div style="height: 100%; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:16px; padding:40px; text-align:center; background:#111827; color:#FFF">
+          <div style="width:64px; height:64px; border-radius:50%; background:rgba(239, 68, 68, 0.1); border:1px solid #EF4444; display:flex; align-items:center; justify-content:center">
+            <span style="width:16px; height:16px; border-radius:50%; background:#EF4444; display:inline-block"></span>
+          </div>
+          <div>
+            <h3 style="font-size:16px; font-weight:700; color:#FFF">Vous animez le cours live !</h3>
+            <p style="font-size:12.5px; color:#9CA3AF; max-width:320px; margin:6px auto 0">La visioconférence s\'affiche en plein écran pour vous et vos élèves.</p>
+          </div>
+          <div style="display:flex; gap:10px; margin-top:8px">
+            <button class="btn-s" style="border-color:#374151; color:#9CA3AF; background:#1F2937" (click)="exitMeeting()">
+              Quitter l\'écran
+            </button>
+            <button class="btn-p" style="background:#EF4444; border-color:#EF4444" (click)="endClass()">
+              Terminer le cours pour tous
+            </button>
+          </div>
         </div>
       }
     </div>
@@ -135,6 +167,7 @@ import { JitsiMeet } from '../jitsi-meet/jitsi-meet';
 })
 export class TeacherOverviewComponent {
   private db = inject(DatabaseService);
+  private dialogService = inject(DialogService);
 
   teacherProfile = signal<UserProfile | null>(null);
   totalStudents = signal<number>(0);
@@ -145,6 +178,7 @@ export class TeacherOverviewComponent {
   needingAttention = signal<any[]>([]);
   todayClasses = signal<LiveClass[]>([]);
   activeMeeting = signal<LiveClass | null>(null);
+  recentAnnouncements = signal<Announcement[]>([]);
 
   @Output() navigateToTab = new EventEmitter<string>();
 
@@ -254,6 +288,11 @@ export class TeacherOverviewComponent {
       const todayString = new Date().toISOString().split('T')[0];
       this.todayClasses.set(list.filter(c => c.date === todayString || c.status === 'active'));
     });
+
+    // Recent announcements
+    this.db.observeAnnouncements().subscribe(list => {
+      this.recentAnnouncements.set(list.slice(0, 3));
+    });
   }
 
   startClass(c: LiveClass) {
@@ -275,5 +314,37 @@ export class TeacherOverviewComponent {
 
   goToHomework() {
     this.navigateToTab.emit('grade-homework');
+  }
+
+  viewAnnouncement(ann: Announcement) {
+    const priorityColor = ann.priority === 'Urgent' ? '#EF4444' : (ann.priority === 'Important' ? '#F59E0B' : '#4F46E5');
+    const priorityBg = ann.priority === 'Urgent' ? '#FEE2E2' : (ann.priority === 'Important' ? '#FEF3C7' : '#E0E7FF');
+    const priorityIcon = ann.priority === 'Urgent' ? '🔴' : (ann.priority === 'Important' ? '🟡' : '🔵');
+    
+    let content = `<div style="padding:4px 0">`;
+    content += `<div style="background:${priorityBg}; border-left:4px solid ${priorityColor}; padding:12px 16px; border-radius:8px; margin-bottom:16px">`;
+    content += `<div style="display:flex; align-items:center; gap:8px; margin-bottom:6px">`;
+    content += `<span style="font-size:18px">${priorityIcon}</span>`;
+    content += `<span style="font-size:12px; font-weight:700; color:${priorityColor}; text-transform:uppercase; letter-spacing:0.5px">${ann.priority}</span>`;
+    content += `</div>`;
+    content += `<div style="font-size:11px; color:var(--text-muted)">📋 Sent to: <strong>${ann.sendTo}</strong></div>`;
+    content += `</div>`;
+    
+    if (ann.imageUrl) {
+      content += `<div style="margin:16px 0; border-radius:10px; overflow:hidden; border:1px solid var(--border-weak); box-shadow:0 2px 8px rgba(0,0,0,0.1)">`;
+      content += `<img src="${ann.imageUrl}" style="width:100%; max-height:280px; object-fit:cover; display:block" />`;
+      content += `</div>`;
+    }
+    
+    content += `<div style="background:var(--surface-1); padding:14px 16px; border-radius:8px; border:1px solid var(--border-weak)">`;
+    content += `<p style="font-size:13.5px; color:var(--text-primary); line-height:1.7; margin:0; white-space:pre-wrap">${ann.message}</p>`;
+    content += `</div>`;
+    
+    content += `<div style="margin-top:12px; padding-top:12px; border-top:1px solid var(--border-weak); text-align:center">`;
+    content += `<span style="font-size:10px; color:var(--text-muted)">📅 Posted recently</span>`;
+    content += `</div>`;
+    content += `</div>`;
+    
+    this.dialogService.alert(ann.title, content, 'info');
   }
 }

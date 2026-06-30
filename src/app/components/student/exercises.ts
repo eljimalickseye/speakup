@@ -1,6 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { DatabaseService, Quiz, UserProfile } from '../../services/database.service';
+import { FormsModule } from '@angular/forms';
+import { DatabaseService, Quiz, UserProfile, VocabGame } from '../../services/database.service';
 
 interface MatchCard {
   id: number;
@@ -15,7 +16,7 @@ interface MatchCard {
 @Component({
   selector: 'app-student-exercises',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   template: `
     <div class="page">
       @if (activeExercise() === 'list') {
@@ -30,25 +31,70 @@ interface MatchCard {
         
         <div class="grid2" style="margin-bottom: 24px">
           
-          <!-- Vocabulary game (Built-in) -->
-          <div class="card exercise-card game-card" (click)="startExercise('game')">
-            <div>
-              <div class="lesson-icon amber" style="margin-bottom:12px; width:40px; height:40px; border-radius:10px; background:#FFFBEB; border:1px solid #FDE68A; display:flex; align-items:center; justify-content:center">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="3" y="3" width="7" height="9" rx="1" />
-                  <rect x="14" y="3" width="7" height="5" rx="1" />
-                  <rect x="14" y="12" width="7" height="9" rx="1" />
-                  <rect x="3" y="16" width="7" height="5" rx="1" />
-                </svg>
+          <!-- Dynamic Vocab Games uploaded by teachers -->
+          @for (game of vocabGames(); track game.id) {
+            <div class="card exercise-card game-card" (click)="playVocabGame(game)">
+              <div>
+                <div class="lesson-icon amber" style="margin-bottom:12px; width:40px; height:40px; border-radius:10px; background:#FFFBEB; border:1px solid #FDE68A; display:flex; align-items:center; justify-content:center">
+                  @if (game.gameType === 'flashcards') {
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect width="12" height="18" x="3" y="3" rx="2" />
+                      <path d="M7 3V21" />
+                      <rect width="12" height="18" x="9" y="3" rx="2" />
+                    </svg>
+                  } @else if (game.gameType === 'matching') {
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                    </svg>
+                  } @else if (game.gameType === 'memory') {
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="3" y="3" width="7" height="7" rx="1" />
+                      <rect x="14" y="3" width="7" height="7" rx="1" />
+                      <rect x="14" y="14" width="7" height="7" rx="1" />
+                      <rect x="3" y="14" width="7" height="7" rx="1" />
+                    </svg>
+                  } @else if (game.gameType === 'word_builder') {
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect width="18" height="18" x="3" y="3" rx="2" />
+                      <path d="M3 9h18" />
+                      <path d="M9 21V9" />
+                    </svg>
+                  } @else {
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polygon points="6 3 20 12 6 21 6 3" />
+                    </svg>
+                  }
+                </div>
+                <div class="card-label" style="color:#D97706; font-weight:700">Jeu de Vocabulaire</div>
+                <div class="card-value" style="font-size:14px; color:var(--text-primary); font-weight:700; margin-top:4px; display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden">{{ game.title }}</div>
+                <p style="font-size:11.5px; color:var(--text-secondary); margin:6px 0 0 0">
+                  {{ game.words.length }} mots · {{ getGameLabel(game.gameType) }} ({{ getDiffLabel(game.difficulty) }})
+                </p>
               </div>
-              <div class="card-label" style="color:#D97706; font-weight:700">Vocabulary Game</div>
-              <div class="card-value" style="font-size:15px; color:var(--text-primary); font-weight:700; margin-top:4px">Word Match (Association)</div>
-              <p style="font-size:12px; color:var(--text-secondary); margin:6px 0 0 0">Match English terms with their French counterparts.</p>
+              <div style="font-size:11px; color:#D97706; font-weight:600; margin-top:12px; display:flex; align-items:center; gap:4px">
+                Jouer au Jeu <i class="ti ti-arrow-right"></i>
+              </div>
             </div>
-            <div style="font-size:11px; color:#D97706; font-weight:600; margin-top:12px; display:flex; align-items:center; gap:4px">
-              Play Game <i class="ti ti-arrow-right"></i>
+          } @empty {
+            <!-- Fallback Default Vocabulary Game (Built-in) -->
+            <div class="card exercise-card game-card" (click)="playDefaultVocabGame()">
+              <div>
+                <div class="lesson-icon amber" style="margin-bottom:12px; width:40px; height:40px; border-radius:10px; background:#FFFBEB; border:1px solid #FDE68A; display:flex; align-items:center; justify-content:center">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                  </svg>
+                </div>
+                <div class="card-label" style="color:#D97706; font-weight:700">Vocabulary Game</div>
+                <div class="card-value" style="font-size:15px; color:var(--text-primary); font-weight:700; margin-top:4px">Word Match (Association)</div>
+                <p style="font-size:12px; color:var(--text-secondary); margin:6px 0 0 0">Match English terms with their French counterparts.</p>
+              </div>
+              <div style="font-size:11px; color:#D97706; font-weight:600; margin-top:12px; display:flex; align-items:center; gap:4px">
+                Play Game <i class="ti ti-arrow-right"></i>
+              </div>
             </div>
-          </div>
+          }
 
           <!-- Dynamic Quizzes uploaded by teachers -->
           @for (quiz of quizzes(); track quiz.id) {
@@ -99,7 +145,11 @@ interface MatchCard {
           </div>
           <div class="card" style="background:#FFF8F1; border:1px solid #FFE4D6; padding:16px 20px; border-radius:12px; margin-bottom: 0; display:flex; flex-direction:column; gap:14px">
             <div style="display:flex; align-items:center; gap:16px">
-              <div style="font-size:32px; animation: bounce-streak 1.5s infinite">🔥</div>
+              <div style="width:40px; height:40px; animation: bounce-streak 1.5s infinite; display:flex; align-items:center; justify-content:center; color:#EF4444">
+                <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
+                </svg>
+              </div>
               <div>
                 <div style="font-size:18px; font-weight:700; color:#D97706">{{ currentUser()?.streak || 0 }} Days Streak</div>
                 <div style="font-size:12px; color:var(--text-secondary)">Practice every day to keep your streak alive and earn extra XP!</div>
@@ -230,16 +280,43 @@ interface MatchCard {
                       }
                     </div>
                   } @else {
-                    <!-- STANDARD MULTIPLE CHOICE OPTIONS -->
-                    <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:20px">
-                      @for (opt of quiz.questions[currentQuestionIdx()].options; track opt; let idx = $index) {
+                    @if (quiz.type === 'True / False') {
+                      <!-- TRUE / FALSE QUIZ OPTIONS -->
+                      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:20px">
                         <button class="quiz-option-btn" 
-                                [class.active]="selectedOption() === getOptionLetter(idx)"
-                                (click)="selectedOption.set(getOptionLetter(idx))">
-                          <span style="font-weight:700; color:#4F46E5; margin-right:8px">{{ getOptionLetter(idx) }}.</span> {{ opt }}
+                                [class.active]="selectedOption() === 'A'"
+                                (click)="selectedOption.set('A')"
+                                style="text-align:center">
+                          Vrai (True)
                         </button>
-                      }
-                    </div>
+                        <button class="quiz-option-btn" 
+                                [class.active]="selectedOption() === 'B'"
+                                (click)="selectedOption.set('B')"
+                                style="text-align:center">
+                          Faux (False)
+                        </button>
+                      </div>
+                    } @else if (quiz.type === 'Essay' || quiz.type === 'written' || quiz.type === 'translation') {
+                      <!-- ESSAY / WRITTEN RESPONSES -->
+                      <div class="input-row" style="margin-top:0; margin-bottom:20px">
+                        <textarea [ngModel]="selectedOption() || ''" 
+                                  (ngModelChange)="selectedOption.set($event)"
+                                  placeholder="Saisissez votre réponse ici..." 
+                                  rows="5" 
+                                  style="width:100%; border:1px solid var(--border); border-radius:8px; padding:12px; font-size:13px; background:#FFF; color:var(--text-primary)"></textarea>
+                      </div>
+                    } @else {
+                      <!-- STANDARD MULTIPLE CHOICE OPTIONS -->
+                      <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:20px">
+                        @for (opt of quiz.questions[currentQuestionIdx()].options; track opt; let idx = $index) {
+                          <button class="quiz-option-btn" 
+                                  [class.active]="selectedOption() === getOptionLetter(idx)"
+                                  (click)="selectedOption.set(getOptionLetter(idx))">
+                            <span style="font-weight:700; color:#4F46E5; margin-right:8px">{{ getOptionLetter(idx) }}.</span> {{ opt }}
+                          </button>
+                        }
+                      </div>
+                    }
                   }
 
                   <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border-weak); padding-top:16px">
@@ -291,34 +368,227 @@ interface MatchCard {
                 }
               }
             } @else if (activeExercise() === 'game') {
-              <!-- TAB 2: VOCABULARY MATCH GAME -->
-              @if (!gameFinished()) {
-                <div style="margin-bottom:12px">
-                  <h3 style="font-size:15px; font-weight:700; color:var(--text-primary); margin:0">Word Match (Association)</h3>
-                  <p style="font-size:11.5px; color:var(--text-muted); margin:4px 0 0 0">Match the English words with their French counterparts.</p>
-                </div>
+               <!-- TAB 2: VOCABULARY MATCH GAME -->
+               @if (!gameFinished()) {
+                 <div style="margin-bottom:16px">
+                   <h3 style="font-size:15px; font-weight:700; color:var(--text-primary); margin:0">{{ activeVocabGame()?.title || 'Jeu de vocabulaire' }}</h3>
+                   <span class="badge" style="background:#FFF9E6; color:#D97706; font-size:10px; font-weight:700; text-transform:uppercase; padding:3px 8px; border-radius:20px; display:inline-block; margin-top:4px">
+                     {{ getGameLabel(activeVocabGame()?.gameType || 'matching') }}
+                   </span>
+                 </div>
 
-                <!-- Cards Grid -->
-                <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:12px; margin-bottom:20px">
-                  @for (card of gameCards(); track card.id) {
-                    <button class="vocab-match-card" 
-                            [class.selected]="card.selected"
-                            [class.matched]="card.matched"
-                            [class.error]="card.error"
-                            [style.pointer-events]="card.matched ? 'none' : 'auto'"
-                            (click)="selectCard(card)">
-                      <div style="display:flex; align-items:center; gap:6px; justify-content:center">
-                        @if (card.matched) {
-                          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                        } @else if (card.error) {
-                          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                        }
-                        <span>{{ card.text }}</span>
-                      </div>
-                    </button>
-                  }
-                </div>
-              } @else {
+                 @if (activeVocabGame()?.gameType === 'matching') {
+                   <!-- Cards Grid -->
+                   <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:12px; margin-bottom:20px">
+                     @for (card of gameCards(); track card.id) {
+                       <button class="vocab-match-card" 
+                               [class.selected]="card.selected"
+                               [class.matched]="card.matched"
+                               [class.error]="card.error"
+                               [style.pointer-events]="card.matched ? 'none' : 'auto'"
+                               (click)="selectCard(card)">
+                         <div style="display:flex; align-items:center; gap:6px; justify-content:center">
+                           @if (card.matched) {
+                             <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                           } @else if (card.error) {
+                             <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                           }
+                           <span>{{ card.text }}</span>
+                         </div>
+                       </button>
+                     }
+                   </div>
+                 }
+
+                 @if (activeVocabGame()?.gameType === 'memory') {
+                   <!-- MEMORY INTERFACE -->
+                   <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; margin-bottom:20px">
+                     @for (card of gameCards(); track card.id) {
+                       <button class="vocab-match-card" 
+                               [class.selected]="card.selected"
+                               [class.matched]="card.matched"
+                               [class.error]="card.error"
+                               [style.pointer-events]="(card.matched || card.selected) ? 'none' : 'auto'"
+                               [style.background]="card.matched ? '#ECFDF5' : (card.selected ? '#EEF2FF' : '#4F46E5')"
+                               [style.border-color]="card.matched ? '#10B981' : (card.selected ? '#4F46E5' : '#4F46E5')"
+                               [style.color]="(card.matched || card.selected) ? 'var(--text-primary)' : 'transparent'"
+                               style="height:80px; font-size:11px; display:flex; align-items:center; justify-content:center; font-weight:700; border-radius:8px; transition: all 0.3s ease; box-shadow:0 2px 4px rgba(0,0,0,0.05)"
+                               (click)="selectCard(card)">
+                         @if (card.matched) {
+                           <div style="color:#059669; font-weight:700; text-align:center">{{ card.text }}</div>
+                         } @else if (card.selected) {
+                           <div style="color:#4F46E5; font-weight:700; text-align:center">{{ card.text }}</div>
+                         } @else {
+                           <span style="color:#FFF; font-size:18px">❓</span>
+                         }
+                       </button>
+                     }
+                   </div>
+                 }
+
+                 @if (activeVocabGame()?.gameType === 'flashcards') {
+                   <!-- FLASHCARDS INTERFACE -->
+                   <div style="display:flex; flex-direction:column; align-items:center; gap:20px; width:100%">
+                     <div style="font-size:12px; color:var(--text-muted)">Carte {{ currentCardIdx() + 1 }} sur {{ activeVocabGame()?.words?.length }}</div>
+                     
+                     <div (click)="flipCard()" 
+                          style="width:100%; max-width:360px; height:220px; perspective: 1000px; cursor:pointer">
+                       <div [style.transform]="isFlipped() ? 'rotateY(180deg)' : 'none'"
+                            style="width:100%; height:100%; position:relative; transform-style:preserve-3d; transition: transform 0.6s; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.1)">
+                         
+                         <!-- Front (English) -->
+                         <div style="position:absolute; width:100%; height:100%; backface-visibility:hidden; background:linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%); border:1.5px solid #4F46E5; border-radius:12px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px">
+                           <span style="font-size:10px; font-weight:700; color:#4F46E5; text-transform:uppercase; letter-spacing:1px">Anglais</span>
+                           <h2 style="font-size:26px; font-weight:800; color:#1E1B4B; margin:8px 0 0 0; text-align:center">{{ activeVocabGame()?.words?.[currentCardIdx()]?.word }}</h2>
+                           <p style="font-size:11px; color:#4F46E5; margin-top:20px; display:flex; align-items:center; gap:4px">
+                             <i class="ti ti-rotate"></i> Cliquer pour retourner
+                           </p>
+                         </div>
+                         
+                         <!-- Back (French & Definition) -->
+                         <div style="position:absolute; width:100%; height:100%; backface-visibility:hidden; background:#FFF; border:1.5px solid #E2E8F0; border-radius:12px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; transform:rotateY(180deg)">
+                           <span style="font-size:10px; font-weight:700; color:#059669; text-transform:uppercase; letter-spacing:1px">Français</span>
+                           <h2 style="font-size:24px; font-weight:800; color:#065F46; margin:8px 0 4px 0; text-align:center">{{ activeVocabGame()?.words?.[currentCardIdx()]?.translation }}</h2>
+                           @if (activeVocabGame()?.words?.[currentCardIdx()]?.definition) {
+                             <p style="font-size:12px; color:var(--text-secondary); text-align:center; max-width:280px; margin:8px 0 0 0; line-height:1.4">
+                               {{ activeVocabGame()?.words?.[currentCardIdx()]?.definition }}
+                             </p>
+                           }
+                         </div>
+                         
+                       </div>
+                     </div>
+
+                     <div style="display:flex; justify-content:space-between; width:100%; max-width:360px; margin-top:12px">
+                       <button class="btn-s" [disabled]="currentCardIdx() === 0" (click)="prevFlashcard()">Précédent</button>
+                       <button class="btn-p" style="background:#4F46E5; border-color:#4F46E5" (click)="nextFlashcard()">
+                         {{ currentCardIdx() + 1 === activeVocabGame()?.words?.length ? 'Terminer' : 'Suivant' }}
+                       </button>
+                     </div>
+                   </div>
+                 }
+
+                 @if (activeVocabGame()?.gameType === 'word_builder') {
+                   <!-- WORD BUILDER INTERFACE -->
+                   <div style="display:flex; flex-direction:column; align-items:center; gap:20px; width:100%">
+                     <div style="font-size:12px; color:var(--text-muted)">Mot {{ wordBuilderIdx() + 1 }} sur {{ activeVocabGame()?.words?.length }}</div>
+                     
+                     <div style="background:var(--surface-2); padding:16px; border-radius:8px; border:1px solid var(--border-weak); text-align:center; width:100%">
+                       <span style="font-size:10px; font-weight:700; color:#D97706; text-transform:uppercase">Traduire le mot :</span>
+                       <h3 style="font-size:18px; font-weight:800; margin:4px 0 0 0; color:var(--text-primary)">
+                         {{ activeVocabGame()?.words?.[wordBuilderIdx()]?.translation }}
+                       </h3>
+                       @if (activeVocabGame()?.words?.[wordBuilderIdx()]?.definition) {
+                         <p style="font-size:12px; color:var(--text-secondary); margin:6px 0 0 0; line-height:1.4">
+                           {{ activeVocabGame()?.words?.[wordBuilderIdx()]?.definition }}
+                         </p>
+                       }
+                     </div>
+
+                     <!-- Spelled word letters slot -->
+                     <div style="display:flex; gap:8px; flex-wrap:wrap; min-height:48px; border-bottom:2px dashed var(--border); padding-bottom:12px; width:100%; justify-content:center">
+                       @for (char of selectedLetters(); track $index; let sIdx = $index) {
+                         <button (click)="clickSelectedLetter(char, sIdx)"
+                                 style="width:36px; height:36px; border-radius:8px; border:1.5px solid #4F46E5; background:#EEF2FF; color:#4F46E5; font-size:16px; font-weight:800; display:flex; align-items:center; justify-content:center; cursor:pointer">
+                           {{ char | uppercase }}
+                         </button>
+                       }
+                     </div>
+
+                     <!-- Scrambled pool options -->
+                     <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center">
+                       @for (char of scrambledLetters(); track $index; let scrIdx = $index) {
+                         <button (click)="clickScrambledLetter(char, scrIdx)"
+                                 style="width:36px; height:36px; border-radius:8px; border:1.5px solid var(--border); background:#FFF; color:var(--text-primary); font-size:16px; font-weight:800; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.05)">
+                           {{ char | uppercase }}
+                         </button>
+                       }
+                     </div>
+
+                     <button class="btn-s" style="margin-top:10px" (click)="resetWordBuilder()">Réinitialiser</button>
+                   </div>
+                 }
+
+                 @if (activeVocabGame()?.gameType === 'hangman') {
+                   <!-- HANGMAN INTERFACE -->
+                   <div style="display:flex; flex-direction:column; align-items:center; gap:16px; width:100%">
+                     <div style="font-size:12px; color:var(--text-muted)">Mot {{ hangmanIdx() + 1 }} sur {{ activeVocabGame()?.words?.length }}</div>
+
+                     <div style="background:var(--surface-2); padding:16px; border-radius:8px; border:1px solid var(--border-weak); text-align:center; width:100%">
+                       <span style="font-size:10px; font-weight:700; color:#EF4444; text-transform:uppercase">Indice / Traduction :</span>
+                       <h3 style="font-size:18px; font-weight:800; margin:4px 0 0 0; color:var(--text-primary)">
+                         {{ activeVocabGame()?.words?.[hangmanIdx()]?.translation }}
+                       </h3>
+                       @if (activeVocabGame()?.words?.[hangmanIdx()]?.definition) {
+                         <p style="font-size:12px; color:var(--text-secondary); margin:6px 0 0 0; line-height:1.4">
+                           {{ activeVocabGame()?.words?.[hangmanIdx()]?.definition }}
+                         </p>
+                       }
+                     </div>
+
+                     <!-- Lives Counter -->
+                     <div style="font-size:13px; font-weight:700; color:#EF4444; display:flex; align-items:center; gap:6px">
+                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#EF4444" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                         <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+                       </svg>
+                       <span>Vies restantes : {{ hangmanLives() }} / 6</span>
+                     </div>
+
+                     <!-- Underscore placeholder word displays -->
+                     <div style="font-size:24px; font-weight:800; letter-spacing:6px; color:#1E1B4B; margin:12px 0; text-align:center; text-transform:uppercase">
+                       {{ getHangmanWordDisplay() }}
+                     </div>
+
+                     <!-- A-Z keyboard buttons -->
+                     <div style="display:grid; grid-template-columns: repeat(7, 1fr); gap:6px; max-width:360px">
+                       @for (letter of ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']; track letter) {
+                         <button [disabled]="hangmanGuesses().includes(letter)"
+                                 (click)="guessHangmanLetter(letter)"
+                                 style="width:36px; height:36px; border-radius:6px; border:1px solid var(--border); font-size:14px; font-weight:700; cursor:pointer; text-transform:uppercase"
+                                 [style.background]="hangmanGuesses().includes(letter) ? '#E2E8F0' : '#FFF'"
+                                 [style.color]="hangmanGuesses().includes(letter) ? '#94A3B8' : 'var(--text-primary)'">
+                           {{ letter }}
+                         </button>
+                       }
+                     </div>
+
+                   </div>
+                 }
+
+                 @if (activeVocabGame()?.gameType === 'multiple_choice') {
+                   <!-- MULTIPLE CHOICE GAME INTERFACE -->
+                   <div style="display:flex; flex-direction:column; gap:16px; width:100%">
+                     <div style="font-size:12px; color:var(--text-muted); text-align:center">Question {{ mcGameIdx() + 1 }} sur {{ activeVocabGame()?.words?.length }}</div>
+
+                     <div style="background:var(--surface-2); padding:16px; border-radius:8px; border:1px solid var(--border-weak); text-align:center; width:100%">
+                       <span style="font-size:10px; font-weight:700; color:#4F46E5; text-transform:uppercase">Définition / Traduction :</span>
+                       <h3 style="font-size:18px; font-weight:800; margin:4px 0 0 0; color:var(--text-primary)">
+                         {{ activeVocabGame()?.words?.[mcGameIdx()]?.translation }}
+                       </h3>
+                       @if (activeVocabGame()?.words?.[mcGameIdx()]?.definition) {
+                         <p style="font-size:12px; color:var(--text-secondary); margin:6px 0 0 0; line-height:1.4">
+                           {{ activeVocabGame()?.words?.[mcGameIdx()]?.definition }}
+                         </p>
+                       }
+                     </div>
+
+                     <!-- Choices Buttons -->
+                     <div style="display:flex; flex-direction:column; gap:8px">
+                       @for (opt of mcOptions(); track opt) {
+                         <button (click)="selectMCOption(opt)"
+                                 [disabled]="mcSelected() !== null"
+                                 style="width:100%; padding:12px; border-radius:8px; border:1.5px solid var(--border); font-size:13px; font-weight:700; text-align:left; cursor:pointer"
+                                 [style.background]="mcSelected() === opt ? (mcIsCorrect() ? '#ECFDF5' : '#FEF2F2') : (mcSelected() !== null && opt === activeVocabGame()?.words?.[mcGameIdx()]?.word ? '#ECFDF5' : '#FFF')"
+                                 [style.border-color]="mcSelected() === opt ? (mcIsCorrect() ? '#10B981' : '#EF4444') : (mcSelected() !== null && opt === activeVocabGame()?.words?.[mcGameIdx()]?.word ? '#10B981' : 'var(--border)')"
+                                 [style.color]="mcSelected() === opt ? (mcIsCorrect() ? '#065F46' : '#991B1B') : (mcSelected() !== null && opt === activeVocabGame()?.words?.[mcGameIdx()]?.word ? '#065F46' : 'var(--text-primary)')">
+                           {{ opt }}
+                         </button>
+                       }
+                     </div>
+
+                   </div>
+                 }
+               } @else {
                 <!-- Game Results -->
                 <div style="text-align:center; padding:20px 0">
                   <div style="width:64px; height:64px; border-radius:50%; background:#FFFBEB; border:1px solid #F59E0B; display:flex; align-items:center; justify-content:center; margin:0 auto 16px auto">
@@ -504,9 +774,36 @@ export class StudentExercisesComponent {
   matchesFound = signal<number>(0);
   gameFinished = signal<boolean>(false);
 
+  vocabGames = signal<VocabGame[]>([]);
+  activeVocabGame = signal<VocabGame | null>(null);
+
+  // Flashcards state
+  currentCardIdx = signal<number>(0);
+  isFlipped = signal<boolean>(false);
+
+  // Memory state
+  memoryFlippedIds = signal<number[]>([]);
+  
+  // Word Builder state
+  scrambledLetters = signal<string[]>([]);
+  selectedLetters = signal<string[]>([]);
+  wordBuilderIdx = signal<number>(0);
+
+  // Hangman state
+  hangmanIdx = signal<number>(0);
+  hangmanGuesses = signal<string[]>([]);
+  hangmanLives = signal<number>(6);
+
+  // Multiple Choice Game state
+  mcGameIdx = signal<number>(0);
+  mcOptions = signal<string[]>([]);
+  mcSelected = signal<string | null>(null);
+  mcIsCorrect = signal<boolean | null>(null);
+
   constructor() {
     this.db.observeQuizzes().subscribe(list => this.quizzes.set(list));
     this.db.observeCurrentUser().subscribe(u => this.currentUser.set(u));
+    this.db.observeVocabGames().subscribe(list => this.vocabGames.set(list));
   }
 
   getWeeklyTrackerDays() {
@@ -566,6 +863,45 @@ export class StudentExercisesComponent {
       this.selectedCard.set(null);
       this.setupGameCards();
     }
+  }
+
+  playVocabGame(game: VocabGame) {
+    this.activeVocabGame.set(game);
+    this.activeExercise.set('game');
+    this.gameFinished.set(false);
+    this.matchesFound.set(0);
+    this.selectedCard.set(null);
+    
+    // Reset all game states
+    this.currentCardIdx.set(0);
+    this.isFlipped.set(false);
+    this.memoryFlippedIds.set([]);
+    this.wordBuilderIdx.set(0);
+    this.hangmanIdx.set(0);
+    this.hangmanGuesses.set([]);
+    this.hangmanLives.set(6);
+    this.mcGameIdx.set(0);
+    this.mcSelected.set(null);
+    this.mcIsCorrect.set(null);
+
+    if (game.gameType === 'matching' || game.gameType === 'memory') {
+      this.setupGameCards(game);
+    } else if (game.gameType === 'word_builder') {
+      this.setupWordBuilder(game, 0);
+    } else if (game.gameType === 'hangman') {
+      this.setupHangman(game, 0);
+    } else if (game.gameType === 'multiple_choice') {
+      this.setupMCGame(game, 0);
+    }
+  }
+
+  playDefaultVocabGame() {
+    this.activeVocabGame.set(null);
+    this.activeExercise.set('game');
+    this.gameFinished.set(false);
+    this.matchesFound.set(0);
+    this.selectedCard.set(null);
+    this.setupGameCards();
   }
 
   exitExercise() {
@@ -713,8 +1049,11 @@ export class StudentExercisesComponent {
   }
 
   // Match Game Card logic
-  setupGameCards() {
-    const rawPairs = [
+  setupGameCards(game?: VocabGame) {
+    const rawPairs = game ? game.words.map((w: any) => ({
+      english: w.word,
+      french: w.translation || w.definition
+    })) : [
       { english: 'hypothesis', french: 'hypothèse' },
       { english: 'if', french: 'si' },
       { english: 'kitchen', french: 'cuisine' },
@@ -722,7 +1061,7 @@ export class StudentExercisesComponent {
     ];
 
     const cards: MatchCard[] = [];
-    rawPairs.forEach((p, idx) => {
+    rawPairs.forEach((p: any, idx: number) => {
       cards.push({
         id: idx * 2,
         text: p.english,
@@ -746,6 +1085,10 @@ export class StudentExercisesComponent {
   }
 
   selectCard(card: MatchCard) {
+    if (this.activeVocabGame()?.gameType === 'memory') {
+      this.selectMemoryCard(card);
+      return;
+    }
     if (card.matched) return;
 
     const list = [...this.gameCards()];
@@ -780,7 +1123,8 @@ export class StudentExercisesComponent {
           this.selectedCard.set(null);
           this.gameCards.set(list);
 
-          if (this.matchesFound() === 4) {
+          const totalPairs = this.gameCards().length / 2;
+          if (this.matchesFound() === totalPairs) {
             this.gameFinished.set(true);
             const user = this.currentUser();
             if (user) {
@@ -806,6 +1150,238 @@ export class StudentExercisesComponent {
           }, 600);
         }
       }
+    }
+  }
+
+  // Multi-game helper methods
+  selectMemoryCard(card: MatchCard) {
+    if (card.matched || card.selected || this.memoryFlippedIds().length >= 2) return;
+
+    // Flip card
+    card.selected = true;
+    const cardsList = [...this.gameCards()];
+    this.gameCards.set(cardsList);
+    this.memoryFlippedIds.update(ids => [...ids, card.id]);
+
+    const flipped = this.memoryFlippedIds();
+    if (flipped.length === 2) {
+      const list = [...this.gameCards()];
+      const first = list.find(c => c.id === flipped[0]);
+      const second = list.find(c => c.id === flipped[1]);
+      if (first && second) {
+        if (first.matchId === second.matchId) {
+          // Match!
+          setTimeout(() => {
+            first.matched = true;
+            second.matched = true;
+            first.selected = false;
+            second.selected = false;
+            this.memoryFlippedIds.set([]);
+            this.gameCards.set(list);
+            
+            // Check if all matched
+            const allMatched = this.gameCards().every(c => c.matched);
+            if (allMatched) {
+              this.gameFinished.set(true);
+              this.db.updateUserXP(this.currentUser()?.id || '', 30, true);
+            }
+          }, 600);
+        } else {
+          // No match, flip back
+          first.error = true;
+          second.error = true;
+          this.gameCards.set(list);
+          setTimeout(() => {
+            const listReset = [...this.gameCards()];
+            const rf1 = listReset.find(c => c.id === flipped[0]);
+            const rf2 = listReset.find(c => c.id === flipped[1]);
+            if (rf1) { rf1.selected = false; rf1.error = false; }
+            if (rf2) { rf2.selected = false; rf2.error = false; }
+            this.memoryFlippedIds.set([]);
+            this.gameCards.set(listReset);
+          }, 1200);
+        }
+      }
+    }
+  }
+
+  flipCard() {
+    this.isFlipped.update(f => !f);
+  }
+
+  nextFlashcard() {
+    const game = this.activeVocabGame();
+    if (!game) return;
+    if (this.currentCardIdx() + 1 === game.words.length) {
+      this.gameFinished.set(true);
+      this.db.updateUserXP(this.currentUser()?.id || '', 30, true);
+    } else {
+      this.currentCardIdx.update(idx => idx + 1);
+      this.isFlipped.set(false);
+    }
+  }
+
+  prevFlashcard() {
+    if (this.currentCardIdx() > 0) {
+      this.currentCardIdx.update(idx => idx - 1);
+      this.isFlipped.set(false);
+    }
+  }
+
+  setupWordBuilder(game: VocabGame, idx: number) {
+    const word = game.words[idx];
+    if (!word) return;
+
+    // Scramble letters
+    const letters = word.word.toLowerCase().split('').filter((c: string) => c !== ' ');
+    for (let i = letters.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [letters[i], letters[j]] = [letters[j], letters[i]];
+    }
+    this.scrambledLetters.set(letters);
+    this.selectedLetters.set([]);
+  }
+
+  clickScrambledLetter(char: string, sIdx: number) {
+    this.selectedLetters.update(sel => [...sel, char]);
+    this.scrambledLetters.update(scr => scr.filter((_, idx) => idx !== sIdx));
+
+    const game = this.activeVocabGame();
+    if (!game) return;
+    const currentWordObj = game.words[this.wordBuilderIdx()];
+    const spellStr = this.selectedLetters().join('');
+    if (spellStr === currentWordObj.word.toLowerCase().replace(/\s/g, '')) {
+      // Correct spelling!
+      setTimeout(() => {
+        if (this.wordBuilderIdx() + 1 === game.words.length) {
+          this.gameFinished.set(true);
+          this.db.updateUserXP(this.currentUser()?.id || '', 30, true);
+        } else {
+          this.wordBuilderIdx.update(i => i + 1);
+          this.setupWordBuilder(game, this.wordBuilderIdx());
+        }
+      }, 800);
+    }
+  }
+
+  clickSelectedLetter(char: string, selIdx: number) {
+    this.selectedLetters.update(sel => sel.filter((_, idx) => idx !== selIdx));
+    this.scrambledLetters.update(scr => [...scr, char]);
+  }
+
+  resetWordBuilder() {
+    const game = this.activeVocabGame();
+    if (game) this.setupWordBuilder(game, this.wordBuilderIdx());
+  }
+
+  setupHangman(game: VocabGame, idx: number) {
+    this.hangmanGuesses.set([]);
+    this.hangmanLives.set(6);
+  }
+
+  guessHangmanLetter(letter: string) {
+    if (this.hangmanGuesses().includes(letter) || this.hangmanLives() <= 0) return;
+
+    this.hangmanGuesses.update(guesses => [...guesses, letter]);
+
+    const game = this.activeVocabGame();
+    if (!game) return;
+    const currentWord = game.words[this.hangmanIdx()].word.toLowerCase();
+    
+    if (!currentWord.includes(letter)) {
+      this.hangmanLives.update(l => l - 1);
+      if (this.hangmanLives() <= 0) {
+        alert(`Perdu ! Le mot était : ${game.words[this.hangmanIdx()].word}`);
+        this.setupHangman(game, this.hangmanIdx());
+        return;
+      }
+    }
+
+    const won = currentWord.split('').every((char: string) => 
+      char === ' ' || this.hangmanGuesses().includes(char)
+    );
+
+    if (won) {
+      setTimeout(() => {
+        if (this.hangmanIdx() + 1 === game.words.length) {
+          this.gameFinished.set(true);
+          this.db.updateUserXP(this.currentUser()?.id || '', 30, true);
+        } else {
+          this.hangmanIdx.update(i => i + 1);
+          this.setupHangman(game, this.hangmanIdx());
+        }
+      }, 800);
+    }
+  }
+
+  getHangmanWordDisplay(): string {
+    const game = this.activeVocabGame();
+    if (!game) return '';
+    const word = game.words[this.hangmanIdx()].word;
+    return word.split('').map((char: string) => {
+      if (char === ' ') return ' ';
+      return this.hangmanGuesses().includes(char.toLowerCase()) ? char : '_';
+    }).join(' ');
+  }
+
+  setupMCGame(game: VocabGame, idx: number) {
+    const correctWord = game.words[idx].word;
+    const allWords = game.words.map((w: any) => w.word).filter((w: string) => w !== correctWord);
+    for (let i = allWords.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [allWords[i], allWords[j]] = [allWords[j], allWords[i]];
+    }
+    const choices = [correctWord, ...allWords.slice(0, 3)];
+    for (let i = choices.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [choices[i], choices[j]] = [choices[j], choices[i]];
+    }
+
+    this.mcOptions.set(choices);
+    this.mcSelected.set(null);
+    this.mcIsCorrect.set(null);
+  }
+
+  selectMCOption(opt: string) {
+    if (this.mcSelected()) return;
+
+    this.mcSelected.set(opt);
+    const game = this.activeVocabGame();
+    if (!game) return;
+    const correctWord = game.words[this.mcGameIdx()].word;
+    
+    const correct = opt === correctWord;
+    this.mcIsCorrect.set(correct);
+
+    setTimeout(() => {
+      if (this.mcGameIdx() + 1 === game.words.length) {
+        this.gameFinished.set(true);
+        this.db.updateUserXP(this.currentUser()?.id || '', 30, true);
+      } else {
+        this.mcGameIdx.update(i => i + 1);
+        this.setupMCGame(game, this.mcGameIdx());
+      }
+    }, 1000);
+  }
+
+  getGameLabel(type: string): string {
+    switch (type) {
+      case 'matching': return 'Association';
+      case 'memory': return 'Jeu de Mémoire';
+      case 'flashcards': return 'Flashcards';
+      case 'word_builder': return 'Reconstruction';
+      case 'hangman': return 'Pendu';
+      case 'multiple_choice': return 'Choix Multiple';
+      default: return 'Jeu';
+    }
+  }
+
+  getDiffLabel(difficulty: string): string {
+    switch (difficulty) {
+      case 'easy': return 'Facile';
+      case 'medium': return 'Moyen';
+      case 'hard': return 'Difficile';
+      default: return difficulty;
     }
   }
 }

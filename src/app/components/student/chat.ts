@@ -67,6 +67,14 @@ interface ChatMember {
               </div>
             }
           </div>
+          @if (!isTeacher()) {
+            <div style="padding:12px; border-top:1px dashed var(--border-weak)">
+              <button (click)="startConversationWithTeacher()" style="width:100%; height:36px; background:#0D9488; border-color:#0D9488; color:white; border:none; border-radius:8px; font-size:11px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 6px rgba(13,148,136,0.12)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                Contacter le Professeur
+              </button>
+            </div>
+          }
         </div>
 
         <!-- Middle Pane: Message Flow & Input -->
@@ -141,7 +149,7 @@ interface ChatMember {
                   </div>
 
                   <div style="display:flex; align-items:center; gap:8px" [style.flex-direction]="msg.senderId === currentUserId() ? 'row-reverse' : 'row'">
-                    <div class="message-bubble" [class.me]="msg.senderId === currentUserId()" [class.audio-msg]="msg.type === 'audio'">
+                    <div class="message-bubble" [class.me]="msg.senderId === currentUserId()" [class.audio-msg]="msg.type === 'audio' || msg.type === 'video'">
                       @if (msg.type === 'audio') {
                         <!-- Voice Message Player -->
                         <div style="display:flex; flex-direction:column; gap:2px; padding:0; min-width:180px">
@@ -183,6 +191,14 @@ interface ChatMember {
                           <div class="audio-transcript">
                             "{{ msg.content }}"
                           </div>
+                        </div>
+                      } @else if (msg.type === 'video') {
+                        <!-- Video Message Player -->
+                        <div style="display:flex; flex-direction:column; gap:6px; min-width:200px">
+                          <video controls style="width:100%; max-width:240px; border-radius:6px; background:#000" [src]="msg.content"></video>
+                          <span style="font-size:9.5px; opacity:0.8; font-weight:700; display:inline-flex; align-items:center; gap:4px">
+                            <i class="ti ti-video"></i> Video message
+                          </span>
                         </div>
                       } @else {
                         {{ msg.content }}
@@ -1142,6 +1158,31 @@ export class StudentChatComponent implements OnDestroy {
       }
     };
     window.addEventListener('local-chat-update', this.localUpdateListener);
+  }
+
+  startConversationWithTeacher() {
+    const uid = this.currentUserId();
+    const uName = this.currentUser?.name || 'Student';
+    const teacher = this.dbUsers().find(u => u.role === 'teacher');
+    if (!teacher) {
+      this.dialogService.alert('Erreur', 'Aucun professeur n\'est disponible pour le moment.', 'info');
+      return;
+    }
+
+    const chanName = `conv-${uName.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+    const exists = this.channels().find(c => c.name === chanName && c.isPrivate && c.members?.includes(uid));
+    if (exists) {
+      this.switchChannel(exists.id);
+      return;
+    }
+
+    this.db.addChannel(chanName, true, [uid, teacher.id]).then(() => {
+      // Find the created channel and switch to it
+      setTimeout(() => {
+        const fresh = this.channels().find(c => c.name === chanName);
+        if (fresh) this.switchChannel(fresh.id);
+      }, 500);
+    });
   }
 
   isTeacher(): boolean {

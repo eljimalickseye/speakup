@@ -123,6 +123,11 @@ import { DatabaseService, Submission, UserProfile, Quiz, ActivityLog } from '../
                     <span style="font-size:10px; font-weight:700; color:#4F46E5">{{ item.percentage }}%</span>
                   </div>
                 }
+                @if (item.percentage !== undefined && item.percentage < 50) {
+                  <div style="margin-top:6px; padding:8px 10px; background:#FEF2F2; border:1px solid #FCA5A5; border-radius:6px; font-size:11px; color:#991B1B">
+                    <strong>💡 Explication:</strong> Tu as échoué à cet exercice. N'hésite pas à revoir la leçon et à réessayer. La pratique est la clé du succès !
+                  </div>
+                }
               </div>
             </div>
 
@@ -158,7 +163,7 @@ import { DatabaseService, Submission, UserProfile, Quiz, ActivityLog } from '../
             @for (sub of submissionHistory(); track sub.id) {
               <div class="card" style="padding:12px 16px; border-left:3px solid {{ sub.graded ? '#059669' : '#F59E0B' }}; display:flex; align-items:center; gap:12px">
                 <div style="width:36px; height:36px; border-radius:8px; background:{{ sub.graded ? '#ECFDF5' : '#FFFBEB' }}; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0">
-                  {{ sub.type === 'audio' ? '🎙️' : '📝' }}
+                  {{ sub.type === 'audio' ? '🎙️' : (sub.type === 'video' ? '📹' : '📝') }}
                 </div>
                 <div style="flex:1">
                   <div style="font-size:13px; font-weight:600; color:var(--text-primary)">{{ sub.lessonTitle }}</div>

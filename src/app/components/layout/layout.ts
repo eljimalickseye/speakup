@@ -372,28 +372,64 @@ import { NotificationsComponent } from '../shared/notifications';
       <!-- GLOBAL MODAL DIALOG -->
       @if (dialogService.activeDialog(); as d) {
         <div class="modal-overlay" (click)="closeDialog()">
-          <div class="modal-card" (click)="$event.stopPropagation()">
-            <div class="modal-header">
-              <i class="ti" [class.ti-circle-check]="d.type === 'success'" [class.ti-info-circle]="d.type === 'info'" [class.ti-alert-circle]="d.type === 'confirm'" [style.color]="d.type === 'success' ? '#10B981' : (d.type === 'confirm' ? '#D97706' : '#4F46E5')" style="font-size:24px"></i>
-              <h3 class="modal-title">{{ d.title }}</h3>
-            </div>
-            <div class="modal-body" style="display:flex; flex-direction:column; gap:12px">
-              @if (d.imageUrl) {
-                <div style="width:100%; max-height:220px; overflow:hidden; border-radius:8px; border:1px solid var(--border-weak); background:#F3F4F6; display:flex; justify-content:center; align-items:center">
-                  <img [src]="d.imageUrl" style="width:100%; height:auto; max-height:220px; object-fit:contain" alt="Announcement Banner">
+          <div class="modal-card" 
+               [style.max-width]="d.imageUrl ? '820px' : '500px'" 
+               [style.padding]="d.imageUrl ? '0' : '20px'" 
+               [style.overflow]="d.imageUrl ? 'hidden' : 'auto'" 
+               (click)="$event.stopPropagation()">
+            
+            @if (d.imageUrl) {
+              <!-- Split Layout for Announcements / Image Dialogs -->
+              <div style="display:grid; grid-template-columns: 1.15fr 1fr; min-height:480px; max-height:85vh">
+                <!-- Left: Beautiful Image Banner with Padded Frame and Blurred Background -->
+                <div style="position:relative; background:#F8FAFC; display:flex; justify-content:center; align-items:center; overflow:hidden; padding:24px">
+                  <img [src]="d.imageUrl" style="width:100%; height:100%; object-fit:cover; filter:blur(16px); opacity:0.25; position:absolute; inset:0" alt="">
+                  <img [src]="d.imageUrl" style="max-width:100%; max-height:100%; object-fit:contain; position:relative; z-index:1; border-radius:10px; box-shadow:0 10px 25px rgba(0,0,0,0.15)" alt="Announcement Banner">
                 </div>
-              }
-              <div style="line-height:1.5; white-space: pre-line;">{{ d.message }}</div>
-            </div>
-            <div class="modal-actions">
-              @if (d.type === 'confirm') {
-                <button class="btn-s" style="padding: 6px 16px; font-size:12px; border-radius:6px" [style.background]="d.buttonColors?.cancel || '#FFFFFF'" [style.border-color]="d.buttonColors?.cancel || '#D1D5DB'" [style.color]="d.buttonColors?.cancelTextColor || (d.buttonColors?.cancel ? '#FFFFFF' : '#1F2937')" (click)="cancelDialog()">{{ d.cancelText || 'Cancel' }}</button>
-              }
-              @if (d.thirdOption) {
-                <button class="btn-s" style="padding: 6px 16px; font-size:12px; border-radius:6px" [style.background]="d.buttonColors?.third || '#FFFFFF'" [style.border-color]="d.buttonColors?.third || '#D1D5DB'" [style.color]="d.buttonColors?.third || '#1F2937'" (click)="thirdOptionDialog()">{{ d.thirdOption.text }}</button>
-              }
-              <button class="btn-p" style="padding: 6px 16px; font-size:12px; border-radius:6px" [style.background]="d.buttonColors?.confirm || (d.type === 'success' ? '#10B981' : (d.type === 'confirm' ? '#D97706' : '#4F46E5'))" [style.border-color]="d.buttonColors?.confirm || (d.type === 'success' ? '#10B981' : (d.type === 'confirm' ? '#D97706' : '#4F46E5'))" (click)="confirmDialog()">{{ d.confirmText || 'OK' }}</button>
-            </div>
+                
+                <!-- Right: Details, HTML Content & Actions -->
+                <div style="display:flex; flex-direction:column; padding:24px; justify-content:space-between; background:var(--surface-1); overflow-y:auto">
+                  <div style="flex:1">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px">
+                      <div style="display:flex; align-items:center; gap:8px">
+                        <i class="ti ti-volume" style="font-size:20px; color:#7E22CE"></i>
+                        <span style="font-size:11px; font-weight:800; color:#7E22CE; text-transform:uppercase; letter-spacing:0.5px">Annonce</span>
+                      </div>
+                      <span style="font-size:10px; color:var(--text-muted)"><i class="ti ti-calendar"></i> Aujourd'hui</span>
+                    </div>
+
+                    <h3 style="font-size:19px; font-weight:800; color:var(--text-primary); margin:0 0 16px 0; line-height:1.35">{{ d.title.replace('📢 Announcement: ', '').replace('📢 ', '') }}</h3>
+                    
+                    <div class="modal-html-content" style="font-size:13.5px; color:var(--text-secondary); line-height:1.6" [innerHTML]="d.message"></div>
+                  </div>
+                  
+                  <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px; border-top:1px solid var(--border-weak); padding-top:16px">
+                    @if (d.type === 'confirm') {
+                      <button class="btn-s" style="padding: 8px 18px; font-size:12.5px; border-radius:8px" (click)="cancelDialog()">{{ d.cancelText || 'Annuler' }}</button>
+                    }
+                    <button class="btn-p" style="padding: 8px 18px; font-size:12.5px; border-radius:8px; background:#7E22CE; border-color:#7E22CE; color:white; font-weight:700" (click)="confirmDialog()">{{ d.confirmText || 'Fermer' }}</button>
+                  </div>
+                </div>
+              </div>
+            } @else {
+              <!-- Standard Dialog Layout -->
+              <div class="modal-header" style="margin-bottom:12px; display:flex; align-items:center; gap:10px">
+                <i class="ti" [class.ti-circle-check]="d.type === 'success'" [class.ti-info-circle]="d.type === 'info'" [class.ti-alert-circle]="d.type === 'confirm'" [style.color]="d.type === 'success' ? '#10B981' : (d.type === 'confirm' ? '#D97706' : '#4F46E5')" style="font-size:24px"></i>
+                <h3 class="modal-title" style="font-size:17px; font-weight:800; color:var(--text-primary); margin:0">{{ d.title }}</h3>
+              </div>
+              <div class="modal-body" style="display:flex; flex-direction:column; gap:12px; margin-bottom:20px">
+                <div class="modal-html-content" style="font-size:13px; color:var(--text-secondary); line-height:1.5" [innerHTML]="d.message"></div>
+              </div>
+              <div class="modal-actions" style="display:flex; justify-content:flex-end; gap:12px">
+                @if (d.type === 'confirm') {
+                  <button class="btn-s" style="padding: 6px 16px; font-size:12px; border-radius:6px" [style.background]="d.buttonColors?.cancel || '#FFFFFF'" [style.border-color]="d.buttonColors?.cancel || '#D1D5DB'" [style.color]="d.buttonColors?.cancelTextColor || (d.buttonColors?.cancel ? '#FFFFFF' : '#1F2937')" (click)="cancelDialog()">{{ d.cancelText || 'Cancel' }}</button>
+                }
+                @if (d.thirdOption) {
+                  <button class="btn-s" style="padding: 6px 16px; font-size:12px; border-radius:6px" [style.background]="d.buttonColors?.third || '#FFFFFF'" [style.border-color]="d.buttonColors?.third || '#D1D5DB'" [style.color]="d.buttonColors?.third || '#1F2937'" (click)="thirdOptionDialog()">{{ d.thirdOption.text }}</button>
+                }
+                <button class="btn-p" style="padding: 6px 16px; font-size:12px; border-radius:6px" [style.background]="d.buttonColors?.confirm || (d.type === 'success' ? '#10B981' : (d.type === 'confirm' ? '#D97706' : '#4F46E5'))" [style.border-color]="d.buttonColors?.confirm || (d.type === 'success' ? '#10B981' : (d.type === 'confirm' ? '#D97706' : '#4F46E5'))" (click)="confirmDialog()">{{ d.confirmText || 'OK' }}</button>
+              </div>
+            }
           </div>
         </div>
       }
@@ -443,18 +479,6 @@ import { NotificationsComponent } from '../shared/notifications';
                   </div>
                 </div>
               }
-
-              <!-- Gemini API Key input -->
-              <div class="input-row" style="background:#FAF5FF; border:1px solid #E9D5FF; padding:12px; border-radius:8px">
-                <label style="color:#7E22CE; font-weight:700; display:flex; align-items:center; gap:4px">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                  <span>Google Gemini API Key</span>
-                </label>
-                <input type="password" [(ngModel)]="profileGeminiKey" placeholder="Paste your API key here" style="margin-top:6px; border-color:#E9D5FF" />
-                <div style="font-size:10px; color:#6B7280; margin-top:4px; line-height:1.4">
-                  Used for real AI coach feedback & quiz generation. Get a free key at <a href="https://aistudio.google.com/" target="_blank" style="color:#7E22CE; font-weight:600; text-decoration:underline">Google AI Studio</a>.
-                </div>
-              </div>
 
             </div>
             <div class="modal-actions" style="border-top:1px solid var(--border-weak); padding-top:12px; margin-top:12px">
@@ -596,35 +620,41 @@ import { NotificationsComponent } from '../shared/notifications';
     .modal-card {
       background: var(--surface-1);
       border: 1px solid var(--border-strong);
-      border-radius: 12px;
-      width: 90%;
-      max-width: 420px;
-      padding: 24px;
+      border-radius: 10px;
+      width: 95%;
+      max-width: 500px;
+      max-height: 90vh;
+      padding: 14px;
       box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
       animation: scaleUp 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+      overflow-y: auto;
     }
     .modal-header {
       display: flex;
       align-items: center;
-      gap: 12px;
-      margin-bottom: 12px;
+      gap: 8px;
+      margin-bottom: 8px;
     }
     .modal-title {
-      font-size: 16px;
+      font-size: 13px;
       font-weight: 700;
       color: var(--text-primary);
     }
     .modal-body {
-      font-size: 13px;
+      font-size: 11px;
       color: var(--text-secondary);
-      line-height: 1.6;
-      margin-bottom: 20px;
-      white-space: pre-line;
+      line-height: 1.4;
+      margin-bottom: 10px;
+    }
+    .modal-body p {
+      margin: 0 0 6px 0;
+      font-size: 11px;
+      line-height: 1.4;
     }
     .modal-actions {
       display: flex;
       justify-content: flex-end;
-      gap: 10px;
+      gap: 6px;
     }
     @keyframes fadeIn {
       from { opacity: 0; }
@@ -634,6 +664,28 @@ import { NotificationsComponent } from '../shared/notifications';
       from { transform: scale(0.95); opacity: 0; }
       to { transform: scale(1); opacity: 1; }
     }
+    
+    .modal-html-content {
+      line-height: 1.4;
+      font-size: 11px;
+    }
+    .modal-html-content img {
+      width: 100%;
+      height: auto;
+      max-height: 350px;
+      border-radius: 6px;
+      margin: 10px 0;
+      object-fit: contain;
+      display: block;
+    }
+    .modal-html-content div {
+      margin-bottom: 6px;
+    }
+    .modal-html-content p {
+      margin: 0 0 6px 0;
+      font-size: 11px;
+      line-height: 1.4;
+    }
   `]
 })
 export class LayoutComponent {
@@ -642,7 +694,7 @@ export class LayoutComponent {
 
   currentUser = signal<UserProfile | null>(null);
   allUsers = signal<UserProfile[]>([]);
-  
+
   activeTab = localStorage.getItem('speak_active_tab') || 'dashboard';
   pageTitle = 'Dashboard';
   isSidebarOpen = signal<boolean>(false);
@@ -680,6 +732,11 @@ export class LayoutComponent {
       this.toasts.set([]);
 
       if (user) {
+        if (user.blocked) {
+          this.dialogService.alert('Compte Suspendu 🚫', 'Votre accès a été révoqué par le professeur. Vous allez être déconnecté.', 'info');
+          this.db.logout();
+          return;
+        }
         this.currentUser.set(user);
         // Sync active tab for roles
         if (user.role === 'teacher' && ['dashboard', 'lessons', 'speaking', 'exercises', 'events', 'live-classes', 'admin-management', 'history', 'exam'].includes(this.activeTab)) {
@@ -708,12 +765,12 @@ export class LayoutComponent {
       }
 
       // Calculate unread announcements count
-      const unreadFiltered = list.filter(ann => 
-        (ann.sendTo === 'all' || 
-         ann.sendTo === 'All students' || 
-         ann.sendTo === user.level || 
-         ann.sendTo === `${user.level} class only` || 
-         ann.sendTo.toLowerCase().includes(user.level.toLowerCase())) && 
+      const unreadFiltered = list.filter(ann =>
+        (ann.sendTo === 'all' ||
+          ann.sendTo === 'All students' ||
+          ann.sendTo === user.level ||
+          ann.sendTo === `${user.level} class only` ||
+          ann.sendTo.toLowerCase().includes(user.level.toLowerCase())) &&
         !ann.readBy.includes(user.id)
       );
       this.unreadAnnouncementsCount.set(unreadFiltered.length);
@@ -721,10 +778,34 @@ export class LayoutComponent {
       // Find any unread announcement targeting this student to trigger popup modal
       const unread = unreadFiltered[0];
       if (unread) {
+        const priorityColor = unread.priority === 'Urgent' ? '#EF4444' : (unread.priority === 'Important' ? '#F59E0B' : '#4F46E5');
+        const priorityBg = unread.priority === 'Urgent' ? '#FEE2E2' : (unread.priority === 'Important' ? '#FEF3C7' : '#E0E7FF');
+        const priorityIcon = unread.priority === 'Urgent' ? '🔴' : (unread.priority === 'Important' ? '🟡' : '🔵');
+
+        const content = `
+          <div style="padding:4px 0">
+            <div style="background:${priorityBg}; border-left:4px solid ${priorityColor}; padding:12px 16px; border-radius:8px; margin-bottom:16px">
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px">
+                <span style="font-size:18px">${priorityIcon}</span>
+                <span style="font-size:12px; font-weight:700; color:${priorityColor}; text-transform:uppercase; letter-spacing:0.5px">${unread.priority}</span>
+              </div>
+              <div style="font-size:11px; color:var(--text-muted)">📋 Sent to: <strong>${unread.sendTo}</strong></div>
+            </div>
+            
+            <div style="background:var(--surface-1); padding:14px 16px; border-radius:8px; border:1px solid var(--border-weak)">
+              <p style="font-size:13.5px; color:var(--text-primary); line-height:1.7; margin:0; white-space:pre-wrap">${unread.message}</p>
+            </div>
+            
+            <div style="margin-top:12px; padding-top:12px; border-top:1px solid var(--border-weak); text-align:center">
+              <span style="font-size:10px; color:var(--text-muted)">📅 Posted on ${new Date(unread.createdAt).toLocaleDateString()}</span>
+            </div>
+          </div>
+        `;
+
         // Pop open a modal alert
         this.dialogService.alert(
-          `📢 Announcement: ${unread.title}`,
-          unread.message,
+          unread.title,
+          content,
           'info',
           () => {
             this.db.markAnnouncementAsRead(unread.id, user.id);
@@ -745,13 +826,12 @@ export class LayoutComponent {
           mySubmissions.forEach(sub => {
             const oldSub = this.lastSubmissions!.find(s => s.id === sub.id);
             if (oldSub && !oldSub.graded && sub.graded) {
-              // Homework was graded! Show success toast!
-              this.showToast({
-                title: 'Devoir corrigé ! 📝',
-                message: `Votre devoir pour "${sub.lessonTitle}" a été noté : "${sub.score}". +${sub.xpReward || 50} XP remportés !`,
-                type: 'success',
-                icon: 'ti-file-check'
-              });
+              // Homework was graded! Show success modal!
+              this.dialogService.alert(
+                'Devoir corrigé ! 📝',
+                `Votre devoir pour <strong>${sub.lessonTitle}</strong> a été noté : <strong>${sub.score}</strong>.<br/>+${sub.xpReward || 50} XP remportés !`,
+                'success'
+              );
             }
           });
         }
@@ -767,17 +847,15 @@ export class LayoutComponent {
       if (user && user.role === 'student') {
         const activeClass = list.find(c => c.status === 'active');
         if (activeClass && (!this.lastActiveClassId || this.lastActiveClassId !== activeClass.id)) {
-          // A new class just went live! Show live toast!
-          this.showToast({
-            title: 'Cours en direct commencé ! 🎥',
-            message: `Le cours "${activeClass.title}" est en cours. Rejoignez la classe virtuelle.`,
-            type: 'live',
-            icon: 'ti-video',
-            action: () => {
+          // A new class just went live! Show live modal!
+          this.dialogService.confirm(
+            'Cours en direct commencé ! 🎥',
+            `Le cours "${activeClass.title}" a commencé. Voulez-vous rejoindre la classe virtuelle maintenant ?`,
+            () => {
               this.setTab('live-classes');
-            },
-            actionText: 'Rejoindre le Live'
-          });
+              this.db.setActiveJitsiCall(activeClass);
+            }
+          );
         }
         this.lastActiveClassId = activeClass ? activeClass.id : null;
       }
@@ -786,7 +864,7 @@ export class LayoutComponent {
     this.db.observeRewards().subscribe(list => {
       const user = this.currentUser();
       if (!user) return;
-      
+
       const unacknowledgedReward = list.find(r => r.assignedTo === user.id && !r.acknowledged);
       if (unacknowledgedReward) {
         this.db.updateReward(unacknowledgedReward.id, { acknowledged: true });
@@ -922,7 +1000,6 @@ export class LayoutComponent {
   profileName = '';
   profileAvatar = '';
   profileDescription = '';
-  profileGeminiKey = '';
   hideTeacherLogin = signal<boolean>(localStorage.getItem('speak_hide_teacher_login') === 'true');
 
   openProfileEditor() {
@@ -931,7 +1008,6 @@ export class LayoutComponent {
     this.profileName = user.name;
     this.profileAvatar = user.avatar;
     this.profileDescription = user.description || '';
-    this.profileGeminiKey = this.db.getGeminiApiKey() || '';
     this.isProfileModalOpen.set(true);
   }
 
@@ -960,7 +1036,6 @@ export class LayoutComponent {
 
     try {
       await this.db.updateUserProfile(user.id, updatedProfile);
-      this.db.setGeminiApiKey(this.profileGeminiKey);
       this.dialogService.alert('Profile Updated', 'Your profile settings have been successfully saved!', 'success');
       this.isProfileModalOpen.set(false);
     } catch (e: any) {

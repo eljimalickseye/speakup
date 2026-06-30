@@ -30,44 +30,8 @@ import { DialogService } from '../../services/dialog.service';
           </h3>
           
           <div style="display:flex; gap:8px">
-            <button class="btn-s" [class.active]="editorMode() === 'ai'" (click)="editorMode.set('ai')" style="font-size:11px; padding:4px 10px; font-weight:700">
-              🤖 Rédacteur IA
-            </button>
-            <button class="btn-s" [class.active]="editorMode() === 'manual'" (click)="editorMode.set('manual')" style="font-size:11px; padding:4px 10px; font-weight:700">
-              ✍️ Rédaction Manuelle
-            </button>
           </div>
         </div>
-
-        <!-- AI Creator -->
-        @if (editorMode() === 'ai') {
-          <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:16px">
-            <p style="font-size:12px; color:var(--text-secondary); margin:0">
-              Saisissez le thème ou le sujet du livre. Notre rédacteur IA va générer un livre structuré avec des chapitres pédagogiques complets en un instant.
-            </p>
-            <div style="display:flex; gap:12px; align-items:center">
-              <input 
-                type="text" 
-                [(ngModel)]="aiTopic" 
-                (keyup.enter)="generateEbookWithAI()"
-                placeholder="Ex: Le guide de l'Accent Anglais, Les Verbes Irréguliers, Vocabulaire pour voyager..." 
-                class="form-input" 
-                style="flex:1; height:40px; font-size:13px; border:1px solid var(--border); border-radius:8px; padding:0 12px; background:#FFF" 
-              />
-              <button 
-                class="btn-p" 
-                [disabled]="!aiTopic.trim() || isGenerating()" 
-                (click)="generateEbookWithAI()" 
-                style="height:40px; padding:0 20px; font-weight:700; background:#7C3AED; border-color:#7C3AED; display:flex; align-items:center; gap:6px">
-                @if (isGenerating()) {
-                  <span>Génération...</span>
-                } @else {
-                  <span>🤖 Rédiger l'Ebook</span>
-                }
-              </button>
-            </div>
-          </div>
-        }
 
         <!-- Manual form / AI Draft details editor -->
         @if (editorMode() === 'manual' || showDraftForm()) {
@@ -168,12 +132,11 @@ export class TeacherEbooksComponent {
   ebooksCount = computed(() => this.ebooks().length);
 
   // States
-  editorMode = signal<'ai' | 'manual'>('ai');
+  editorMode = signal<'manual'>('manual');
   showDraftForm = signal<boolean>(false);
   isGenerating = signal<boolean>(false);
 
   // Form
-  aiTopic = '';
   newTitle = '';
   newLevel = 'All';
   newCoverEmoji = '📘';
@@ -187,58 +150,6 @@ export class TeacherEbooksComponent {
     this.db.observeEbooks().subscribe(list => this.ebooks.set(list));
   }
 
-  async generateEbookWithAI() {
-    const topic = this.aiTopic.trim();
-    if (!topic) return;
-
-    this.isGenerating.set(true);
-    this.showDraftForm.set(false);
-
-    const prompt = `You are a professional educational curriculum designer and English teacher.
-Create a mini educational ebook outline and complete readable content on the topic: "${topic}".
-Write the response in French, but keep English words or sentences where educational.
-Format your output as a raw JSON string like this:
-{
-  "title": "A beautiful, catch title",
-  "level": "Beginner/Intermediate/Advanced/All",
-  "description": "Short description of the ebook summary",
-  "coverEmoji": "📘",
-  "content": "Full detailed content with headers (e.g. Chapter 1, Chapter 2) and paragraphs explaining grammar, vocabulary, context examples, and pronunciation tips."
-}
-Return ONLY the raw JSON block without markdown formatting or backticks.`;
-
-    try {
-      const response = await this.db.callGemini(prompt, 'Drafting ebook content layout...');
-      const cleanJson = response.replace(/```json/g, '').replace(/```/g, '').trim();
-      const parsed = JSON.parse(cleanJson);
-
-      this.newTitle = parsed.title || topic;
-      this.newLevel = parsed.level || 'All';
-      this.newCoverEmoji = parsed.coverEmoji || '📘';
-      this.newDescription = parsed.description || '';
-      this.newContent = parsed.content || '';
-
-      this.showDraftForm.set(true);
-      this.editorMode.set('manual');
-      this.dialogService.alert('IA Ebook Brouillon Rédigé', `Le livre "${this.newTitle}" a été rédigé par l'IA. Vous pouvez le relire, l'éditer et le publier ci-dessous.`, 'success');
-    } catch (e) {
-      console.warn('Gemini ebook generation failed, executing local fallback:', e);
-
-      // Fallback
-      this.newTitle = topic;
-      this.newLevel = 'All';
-      this.newCoverEmoji = '📘';
-      this.newDescription = `Un livre éducatif sur le thème: ${topic}.`;
-      this.newContent = `Chapitre 1 : Introduction à ${topic}\n\n[Contenu rédigé par le professeur]\nCeci est le brouillon du livre. Vous pouvez rédiger ou ajuster son contenu ici avant sa publication dans la bibliothèque.`;
-
-      this.showDraftForm.set(true);
-      this.editorMode.set('manual');
-      this.dialogService.alert('Fallback Activé', 'Le quota de rédaction IA est atteint. Veuillez rédiger le contenu de votre livre manuellement.', 'info');
-    } finally {
-      this.isGenerating.set(false);
-      this.aiTopic = '';
-    }
-  }
 
   publishEbook() {
     if (!this.newTitle || !this.newDescription || !this.newContent) {
@@ -285,6 +196,6 @@ Return ONLY the raw JSON block without markdown formatting or backticks.`;
     this.newDescription = '';
     this.newContent = '';
     this.showDraftForm.set(false);
-    this.editorMode.set('ai');
+    this.editorMode.set('manual');
   }
 }

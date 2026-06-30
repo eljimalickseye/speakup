@@ -86,54 +86,7 @@ interface SpeakingPrompt {
                     {{ isSubmitted() ? 'Submitted Successfully!' : 'Submit to Teacher' }}
                   </button>
 
-                  <button class="btn-s" style="display:flex; align-items:center; gap:6px; padding:8px 16px; border-radius:8px; border-color:#10B981; color:#10B981" (click)="analyzeWithAICoach()" [disabled]="aiLoading() || isSubmitted()">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                      <polygon points="5 3 19 12 5 21 5 3"/>
-                    </svg>
-                    {{ aiLoading() ? 'AI Coach is analyzing...' : 'Get Instant AI Feedback' }}
-                  </button>
                 </div>
-
-                @if (aiLoading()) {
-                  <div style="background:#F0FDF4; border:1px dashed #4ADE80; border-radius:8px; padding:12px; margin-top:10px; text-align:center">
-                    <div style="font-size:12px; font-weight:700; color:#166534">AI Language Coach is analyzing your speech...</div>
-                    <div style="font-size:11px; color:#15803d; margin-top:2px">Evaluating pronunciation, accent, grammar check, and sentence rhythm.</div>
-                  </div>
-                }
-
-                @if (aiFeedback(); as fb) {
-                  <div class="card" style="background:#FFF; border:1px solid #10B981; border-radius:10px; padding:14px; margin-top:12px; box-shadow:0 4px 6px -1px rgba(16, 185, 129, 0.1); margin-bottom:0">
-                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #E8F5E9; padding-bottom:8px; margin-bottom:10px">
-                      <span style="font-weight:800; color:#065F46; font-size:12px; display:flex; align-items:center; gap:6px">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>
-                        AI COACH SPEECH REVIEW
-                      </span>
-                      <span style="font-size:11px; font-weight:700; background:#D1FAE5; color:#065F46; padding:2px 8px; border-radius:10px">
-                        Score: {{ fb.score }}
-                      </span>
-                    </div>
-
-                    <div style="font-size:12px; margin-bottom:8px">
-                      <strong style="color:var(--text-primary)">Speech Transcript draft:</strong>
-                      <p style="color:var(--text-secondary); margin:4px 0; font-style:italic; font-size:12.5px; line-height:1.4">"{{ fb.transcript }}"</p>
-                    </div>
-
-                    <div style="display:flex; flex-direction:column; gap:8px; font-size:11.5px">
-                      <div>
-                        <strong style="color:#0D9488">Pronunciation Tip:</strong>
-                        <p style="color:var(--text-secondary); margin:2px 0">{{ fb.pronunciation }}</p>
-                      </div>
-                      <div>
-                        <strong style="color:#4F46E5">Grammar feedback:</strong>
-                        <p style="color:var(--text-secondary); margin:2px 0">{{ fb.grammar }}</p>
-                      </div>
-                      <div>
-                        <strong style="color:#D97706">Fluency & Flow:</strong>
-                        <p style="color:var(--text-secondary); margin:2px 0">{{ fb.fluency }}</p>
-                      </div>
-                    </div>
-                  </div>
-                }
               </div>
             }
           </div>
@@ -272,10 +225,6 @@ export class StudentSpeakingComponent implements OnDestroy {
   recordTimer = signal<number>(0);
   audioUrl = signal<string | null>(null);
   isSubmitted = signal<boolean>(false);
-  
-  // AI Coach properties
-  aiLoading = signal<boolean>(false);
-  aiFeedback = signal<any | null>(null);
   
   private mediaRecorder: MediaRecorder | null = null;
   private audioChunks: Blob[] = [];
@@ -498,53 +447,55 @@ export class StudentSpeakingComponent implements OnDestroy {
     this.recorderState.set('idle');
     this.audioUrl.set(null);
     this.isSubmitted.set(false);
-    this.aiFeedback.set(null);
-    this.aiLoading.set(false);
   }
 
-  submitSpeakingAnswer() {
+  async submitSpeakingAnswer() {
     if (this.isSubmitted()) return;
     const prompt = this.activePrompt();
-    this.db.submitHomework('speaking-' + prompt.id, 'Speaking: ' + prompt.text, 'audio', this.audioUrl() || 'simulated-audio-data');
+    
+    // Convert audio to base64 for teacher playback
+    let audioData = 'simulated-audio-data';
+    if (this.audioUrl()) {
+      try {
+        audioData = await this.audioUrlToBase64(this.audioUrl()!);
+      } catch (e) {
+        console.warn('Failed to convert audio to base64, using fallback:', e);
+        audioData = this.audioUrl() || 'simulated-audio-data';
+      }
+    }
+    
+    this.db.submitHomework('speaking-' + prompt.id, 'Speaking: ' + prompt.text, 'audio', audioData);
     this.isSubmitted.set(true);
+    this.dialogService.alert('Success', 'Your speaking response has been submitted!', 'success');
   }
 
-  async analyzeWithAICoach() {
-    if (!this.db.getGeminiApiKey()) {
-      const key = prompt('Google Gemini API Key is required.\nGet a free key at https://aistudio.google.com/');
-      if (key?.trim()) this.db.setGeminiApiKey(key);
-      else return;
-    }
-    this.aiLoading.set(true);
-    this.aiFeedback.set(null);
-    const systemInstruction = `You are the SpeakUp AI Speaking Coach. Analyze the student's spoken answer and return JSON:
-    {"score":85,"scoreLabel":"Good","transcript":"...","pronunciation":{"score":80,"comment":"...","problematic_words":["word1"]},"grammar":{"score":85,"comment":"...","corrected_sentence":"..."},"fluency":{"score":88,"comment":"..."},"vocabulary":{"score":82,"comment":"..."},"strengths":["strength1"],"improvements":["area1"],"overall_advice":"..."}
-    Return ONLY valid JSON. No markdown. All scores are 0-100 integers.`;
-    const promptText = `Student is answering: "${this.activePrompt().text}" at level "${this.selectedLevel()}". The student is a French speaker. Simulate a plausible response and evaluate constructively.`;
-    try {
-      const res = await this.db.callGemini(systemInstruction, promptText);
-      this.aiFeedback.set(JSON.parse(res));
-    } catch(e) {
-      this.aiFeedback.set(this.getLocalSpeakingFeedback(this.selectedLevel()));
-    } finally {
-      this.aiLoading.set(false);
-    }
+  private audioUrlToBase64(url: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      // If it's already a data URL, return it
+      if (url.startsWith('data:')) {
+        resolve(url);
+        return;
+      }
+      
+      // If it's a blob URL, fetch and convert
+      if (url.startsWith('blob:')) {
+        fetch(url)
+          .then(res => res.blob())
+          .then(blob => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          })
+          .catch(reject);
+        return;
+      }
+      
+      // Otherwise return as is (might be a path or mock data)
+      resolve(url);
+    });
   }
 
-  getLocalSpeakingFeedback(lvl: string) {
-    const common = {
-      score: 85, scoreLabel: 'Good',
-      fluency: { score: 85, comment: 'Good pacing. Reduce hesitation pauses between sentences.' },
-      vocabulary: { score: 80, comment: 'Solid vocabulary. Try using connectors: "furthermore", "in addition", "as a result".' },
-      strengths: ['Clear sentence structure', 'Correct use of tense'],
-      improvements: ['Add more details', 'Use more varied vocabulary'],
-      overall_advice: 'Practice speaking for 30 seconds on a random topic every day to build fluency!'
-    };
-    if (lvl === 'A1') return { ...common, transcript: 'Hello! My name is Awa. I am twenty years old. I live in Dakar, Senegal.', pronunciation: { score: 75, comment: 'Good effort! Watch word endings (-ed, -s). Stress "na-tio-NAL-i-ty" correctly.', problematic_words: ['nationality', 'years'] }, grammar: { score: 80, comment: 'Good use of "I am" and "I live". Add more details!', corrected_sentence: 'My name is Awa. I am twenty years old and I live in Dakar. I am a student and I enjoy learning English.' } };
-    if (lvl === 'A2') return { ...common, transcript: "Usually I wake up at seven. First I drink coffee. Then I go to work by bus.", pronunciation: { score: 78, comment: 'Clear speech. Watch the word "o\'clock" — stress is on "clock".', problematic_words: ["o'clock", 'usually'] }, grammar: { score: 82, comment: 'Good sequencing. Try adding frequency adverbs: "usually", "sometimes", "rarely".', corrected_sentence: 'I usually wake up at seven o\'clock. First, I drink coffee. Then, I take the bus to work.' } };
-    if (lvl === 'B2') return { ...common, score: 92, scoreLabel: 'Excellent', transcript: 'On the one hand, technology has many benefits. However, a major drawback is excessive screen time.', pronunciation: { score: 90, comment: 'Advanced articulation. Stress second syllable in "advantages": ad-VAN-tages.', problematic_words: ['advantages', 'drawback'] }, grammar: { score: 94, comment: 'Excellent transitions. Very rich sentence structure.', corrected_sentence: 'On the one hand, technology has numerous benefits. However, a major drawback is that we spend excessive time on screens, leading to social isolation.' } };
-    return { ...common, transcript: 'My favorite hobby is playing football. I have been playing for five years with my friends.', pronunciation: { score: 83, comment: 'Very natural! Watch dropping the "h" in "hobby".', problematic_words: ['hobby', 'enjoy'] }, grammar: { score: 87, comment: 'Excellent use of present perfect "have been playing". Avoid repeating "football".', corrected_sentence: 'My favorite hobby is football, which I have been practicing for five years. It helps me relax and bond with friends.' } };
-  }
 
   private cleanUpAudioContext() {
     if (this.animationId !== null) {

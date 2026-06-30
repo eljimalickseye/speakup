@@ -1,6 +1,7 @@
 import { Component, inject, signal, computed, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { DatabaseService, Quiz, UserProfile, ExamAttempt } from '../../services/database.service';
 import { DialogService } from '../../services/dialog.service';
 
@@ -153,6 +154,24 @@ import { DialogService } from '../../services/dialog.service';
 
           <!-- Active Question -->
           @if (currentQuestion(); as q) {
+            @if (activeQuiz()?.youtubeUrl) {
+              <div class="card" style="padding:10px; margin-bottom:16px; background:#000; border-radius:10px; overflow:hidden">
+                <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden">
+                  <iframe 
+                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0"
+                    [src]="getYouTubeEmbedUrl(activeQuiz()?.youtubeUrl)"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowfullscreen>
+                  </iframe>
+                </div>
+                @if (activeQuiz()?.youtubeDescription) {
+                  <p style="font-size: 11.5px; color: #94A3B8; margin-top: 8px; font-style: italic; line-height: 1.4; margin-bottom: 0">
+                    💡 {{ activeQuiz()?.youtubeDescription }}
+                  </p>
+                }
+              </div>
+            }
+
             <div class="question-card" style="animation: fadeIn 0.3s ease">
               <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px">
                 <div style="width:28px; height:28px; background:#4F46E5; border-radius:8px; display:flex; align-items:center; justify-content:center; color:white; font-size:12px; font-weight:700; flex-shrink:0">
@@ -486,6 +505,26 @@ export class StudentExamComponent implements OnDestroy {
     });
   }
 
+  private sanitizer = inject(DomSanitizer);
+
+  getYouTubeEmbedUrl(url: string | undefined): SafeResourceUrl {
+    if (!url) return this.sanitizer.bypassSecurityTrustResourceUrl('');
+    let videoId = '';
+    try {
+      if (url.includes('youtu.be/')) {
+        videoId = url.split('youtu.be/')[1].split(/[?#]/)[0];
+      } else if (url.includes('youtube.com/watch')) {
+        const urlParams = new URLSearchParams(url.split('?')[1]);
+        videoId = urlParams.get('v') || '';
+      } else if (url.includes('youtube.com/embed/')) {
+        videoId = url.split('youtube.com/embed/')[1].split(/[?#]/)[0];
+      }
+    } catch (e) {
+      console.warn('Error parsing YouTube URL', e);
+    }
+    return this.sanitizer.bypassSecurityTrustResourceUrl(`https://www.youtube.com/embed/${videoId}`);
+  }
+
   examQuizzes = computed<Quiz[]>(() =>
     this.quizzes().filter(q => q.timeLimit && q.timeLimit !== 'No limit' && q.questions.length > 0)
   );
@@ -610,6 +649,11 @@ export class StudentExamComponent implements OnDestroy {
     const saved = await this.db.submitExamAttempt(attempt);
     this.lastAttempt.set(saved);
     this.examAttempts.set(this.db.getStudentExamAttempts(user.id));
+
+    // Award XP
+    const xpMax = quiz.points || 100;
+    const xp = percentage >= 60 ? xpMax : Math.round(xpMax * 0.2);
+    this.db.updateUserXP(user.id, xp, true);
 
     // Log activity
     await this.db.logActivity({

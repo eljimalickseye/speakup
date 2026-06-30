@@ -1,7 +1,9 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { DatabaseService, Lesson, Submission, UserProfile } from '../../services/database.service';
+import { DialogService } from '../../services/dialog.service';
 
 @Component({
   selector: 'app-student-lessons',
@@ -111,6 +113,24 @@ import { DatabaseService, Lesson, Submission, UserProfile } from '../../services
 
           <!-- Tab Contents -->
           @if (detailTab() === 'content') {
+            @if (selectedLesson()?.youtubeUrl) {
+              <div class="card" style="padding:14px; margin-bottom:16px; background:#000; border-radius:10px; overflow:hidden">
+                <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden">
+                  <iframe 
+                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0"
+                    [src]="getYouTubeEmbedUrl(selectedLesson()?.youtubeUrl)"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowfullscreen>
+                  </iframe>
+                </div>
+                @if (selectedLesson()?.youtubeDescription) {
+                  <p style="font-size: 12.5px; color: #94A3B8; margin-top: 10px; font-style: italic; line-height: 1.4; margin-bottom: 0">
+                    💡 {{ selectedLesson()?.youtubeDescription }}
+                  </p>
+                }
+              </div>
+            }
+
             <div class="card" style="background:#FFF; border:1px solid var(--border-weak); border-radius:8px; padding:18px; position:relative">
               <button (click)="copyText(selectedLesson()?.content || '')" style="position:absolute; top:12px; right:12px; background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:14px" title="Copy Notes">
                 <i class="ti ti-copy"></i>
@@ -159,25 +179,34 @@ import { DatabaseService, Lesson, Submission, UserProfile } from '../../services
                 <div class="card" style="background:var(--surface-2); margin-top:8px; padding:16px; border-radius:8px">
                   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
                     <h4 style="font-size:12.5px; font-weight:700; margin:0">Your Submission:</h4>
-                    <span class="badge" [style.background]="sub.type === 'audio' ? '#E0F2FE' : '#EEF2FF'" [style.color]="sub.type === 'audio' ? '#0369A1' : '#3730A3'" style="font-size:10px; font-weight:700; text-transform:uppercase">
-                      {{ sub.type }}
-                    </span>
-                  </div>
+                  <span class="badge" 
+                        [style.background]="sub.type === 'audio' ? '#E0F2FE' : (sub.type === 'video' ? '#FAF5FF' : '#EEF2FF')" 
+                        [style.color]="sub.type === 'audio' ? '#0369A1' : (sub.type === 'video' ? '#7E22CE' : '#3730A3')" 
+                        style="font-size:10px; font-weight:700; text-transform:uppercase">
+                    {{ sub.type }}
+                  </span>
+                </div>
 
-                  @if (sub.type === 'audio') {
-                    <!-- Simulated Audio Submission Player -->
-                    <div style="display:flex; align-items:center; gap:12px; background:#FFF; padding:10px; border-radius:8px; border:1px solid var(--border-weak); margin-bottom:12px">
-                      <button style="width:32px; height:32px; border-radius:50%; border:none; background:#0369A1; color:white; display:flex; align-items:center; justify-content:center; cursor:pointer" (click)="speakWord('Playing back your audio homework submission')">
-                        <i class="ti ti-player-play"></i>
-                      </button>
-                      <div style="flex:1">
-                        <div style="font-size:11.5px; font-weight:600; color:var(--text-primary)">Voice Recording Submission</div>
-                        <div style="font-size:10px; color:var(--text-muted)">Audio file attached successfully</div>
-                      </div>
+                @if (sub.type === 'audio') {
+                  <!-- Simulated Audio Submission Player -->
+                  <div style="display:flex; align-items:center; gap:12px; background:#FFF; padding:10px; border-radius:8px; border:1px solid var(--border-weak); margin-bottom:12px">
+                    <button style="width:32px; height:32px; border-radius:50%; border:none; background:#0369A1; color:white; display:flex; align-items:center; justify-content:center; cursor:pointer" (click)="speakWord('Playing back your audio homework submission')">
+                      <i class="ti ti-player-play"></i>
+                    </button>
+                    <div style="flex:1">
+                      <div style="font-size:11.5px; font-weight:600; color:var(--text-primary)">Voice Recording Submission</div>
+                      <div style="font-size:10px; color:var(--text-muted)">Audio file attached successfully</div>
                     </div>
-                  } @else {
-                    <p style="font-size:13px; color:var(--text-secondary); margin:0 0 12px 0; font-style:italic; white-space:pre-line">"{{ sub.content }}"</p>
-                  }
+                  </div>
+                } @else if (sub.type === 'video') {
+                  <!-- Simulated Video Submission Player -->
+                  <div style="display:flex; flex-direction:column; gap:8px; background:#000; padding:10px; border-radius:8px; margin-bottom:12px">
+                    <video controls style="width:100%; max-height:180px; border-radius:6px" src="https://assets.mixkit.co/videos/preview/mixkit-girl-in-neon-sign-smiling-39824-large.mp4"></video>
+                    <div style="font-size:11px; color:#94A3B8; text-align:center"><i class="ti ti-video"></i> Devoir Vidéo Soumis</div>
+                  </div>
+                } @else {
+                  <p style="font-size:13px; color:var(--text-secondary); margin:0 0 12px 0; font-style:italic; white-space:pre-line">"{{ sub.content }}"</p>
+                }
                   
                   @if (sub.graded) {
                     <div style="border-top:1.5px solid var(--border); padding-top:12px; margin-top:12px">
@@ -203,6 +232,9 @@ import { DatabaseService, Lesson, Submission, UserProfile } from '../../services
                   <button (click)="homeworkType = 'audio'" [style.border-bottom]="homeworkType === 'audio' ? '2px solid #4F46E5' : 'none'" [style.color]="homeworkType === 'audio' ? '#4F46E5' : 'var(--text-muted)'" style="background:none; border:none; padding:8px 4px; font-size:13px; font-weight:600; cursor:pointer">
                     🎙️ Voice Recording
                   </button>
+                  <button (click)="homeworkType = 'video'" [style.border-bottom]="homeworkType === 'video' ? '2px solid #4F46E5' : 'none'" [style.color]="homeworkType === 'video' ? '#4F46E5' : 'var(--text-muted)'" style="background:none; border:none; padding:8px 4px; font-size:13px; font-weight:600; cursor:pointer">
+                    📹 Video Submission
+                  </button>
                 </div>
 
                 @if (homeworkType === 'text') {
@@ -213,7 +245,7 @@ import { DatabaseService, Lesson, Submission, UserProfile } from '../../services
                   <button class="btn-p" (click)="submitHomework()" [disabled]="!homeworkContent.trim()" style="align-self:flex-start">
                     <i class="ti ti-send"></i> Submit Homework
                   </button>
-                } @else {
+                } @else if (homeworkType === 'audio') {
                   <!-- AUDIO RECORDER PANEL -->
                   <div class="card" style="background:var(--surface-2); border-radius:8px; padding:20px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px">
                     @if (recordingState() === 'idle') {
@@ -262,6 +294,43 @@ import { DatabaseService, Lesson, Submission, UserProfile } from '../../services
                       </div>
                     }
                   </div>
+                } @else {
+                  <!-- VIDEO RECORDER PANEL -->
+                  <div class="card" style="background:var(--surface-2); border-radius:8px; padding:20px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; width:100%">
+                    @if (videoRecordingState() === 'idle') {
+                      <button (click)="startVideoRecording()" style="width:56px; height:56px; border-radius:50%; background:#4F46E5; color:white; border:none; font-size:24px; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(79,70,229,0.3)">
+                        <i class="ti ti-video"></i>
+                      </button>
+                      <div style="font-size:12.5px; font-weight:600; color:var(--text-primary)">Commencer l'enregistrement vidéo</div>
+                      <div style="font-size:11px; color:var(--text-muted)">Enregistrez votre caméra pour répondre aux consignes</div>
+                    } @else if (videoRecordingState() === 'recording') {
+                      <div style="display:flex; align-items:center; gap:8px">
+                        <span class="recording-pulse"></span>
+                        <span style="font-size:14px; font-weight:700; color:#EF4444">{{ formatDuration(recordSeconds()) }}</span>
+                      </div>
+                      
+                      <!-- Webcam stream element -->
+                      <video id="webcam-preview" autoplay muted style="width: 100%; max-width: 320px; height: 180px; border-radius: 8px; background: #000; border: 1.5px solid #EF4444"></video>
+
+                      <button (click)="stopVideoRecording()" style="width:48px; height:48px; border-radius:50%; background:#EF4444; color:white; border:none; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(239,68,68,0.3)">
+                        <i class="ti ti-square"></i>
+                      </button>
+                      <div style="font-size:12px; color:var(--text-secondary)">Enregistrement en cours... cliquez sur le carré rouge pour stopper</div>
+                    } @else if (videoRecordingState() === 'finished') {
+                      <!-- Recording complete options -->
+                      <div style="display:flex; flex-direction:column; align-items:center; gap:12px; background:#FFF; padding:16px; border-radius:8px; border:1px solid var(--border-weak); width:100%; max-width:360px">
+                        <div style="font-size:12px; font-weight:600; color:var(--text-primary)">🎥 Vidéo enregistrée avec succès !</div>
+                        <video style="width: 100%; border-radius: 8px; background: #000" controls src="https://assets.mixkit.co/videos/preview/mixkit-girl-in-neon-sign-smiling-39824-large.mp4"></video>
+                      </div>
+
+                      <div style="display:flex; gap:10px; margin-top:8px">
+                        <button class="btn-p" (click)="submitVideoHomework()" style="background:#10B981; border-color:#10B981">
+                          <i class="ti ti-send"></i> Soumettre la vidéo
+                        </button>
+                        <button class="btn-s" (click)="resetVideoRecording()">Recommencer</button>
+                      </div>
+                    }
+                  </div>
                 }
               }
             </div>
@@ -301,9 +370,13 @@ export class StudentLessonsComponent {
   searchQuery = '';
 
   // Voice recording state variables
-  homeworkType = 'text'; // 'text' | 'audio'
+  homeworkType = 'text'; // 'text' | 'audio' | 'video'
   recordingState = signal<'idle' | 'recording' | 'finished'>('idle');
+  videoRecordingState = signal<'idle' | 'recording' | 'finished'>('idle');
   recordSeconds = signal<number>(0);
+  private mediaStream: MediaStream | null = null;
+  private sanitizer = inject(DomSanitizer);
+  private dialogService = inject(DialogService);
   private timerInterval: any = null;
   private animInterval: any = null;
   visualizerHeights = signal<number[]>([15, 30, 45, 25, 60, 40, 75, 50, 30, 15]);
@@ -374,8 +447,10 @@ export class StudentLessonsComponent {
     const lesson = this.selectedLesson();
     if (!lesson || !this.homeworkContent.trim()) return;
 
-    this.db.submitHomework(lesson.id, lesson.title, 'text', this.homeworkContent);
+    const xpReward = lesson.points || 50;
+    this.db.submitHomework(lesson.id, lesson.title, 'text', this.homeworkContent, xpReward);
     this.homeworkContent = '';
+    this.dialogService.alert('Succès 🎉', `Votre devoir écrit a été soumis avec succès ! Vous gagnerez ${xpReward} XP après correction.`, 'success');
   }
 
   // Audio recording methods
@@ -413,8 +488,75 @@ export class StudentLessonsComponent {
 
     // Submit a simulated voice recording payload
     const simulatedAudioData = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
-    this.db.submitHomework(lesson.id, lesson.title, 'audio', simulatedAudioData);
+    const xpReward = lesson.points || 50;
+    this.db.submitHomework(lesson.id, lesson.title, 'audio', simulatedAudioData, xpReward);
     this.resetAudioRecording();
+    this.dialogService.alert('Succès 🎉', `Votre devoir oral a été soumis avec succès ! Vous gagnerez ${xpReward} XP après correction.`, 'success');
+  }
+
+  async startVideoRecording() {
+    this.videoRecordingState.set('recording');
+    this.recordSeconds.set(0);
+    this.timerInterval = setInterval(() => {
+      this.recordSeconds.set(this.recordSeconds() + 1);
+    }, 1000);
+    try {
+      this.mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      const videoElement = document.getElementById('webcam-preview') as HTMLVideoElement;
+      if (videoElement) {
+        videoElement.srcObject = this.mediaStream;
+        videoElement.play();
+      }
+    } catch (e) {
+      console.warn('Could not access webcam', e);
+    }
+  }
+
+  stopVideoRecording() {
+    clearInterval(this.timerInterval);
+    this.videoRecordingState.set('finished');
+    if (this.mediaStream) {
+      this.mediaStream.getTracks().forEach(track => track.stop());
+    }
+  }
+
+  resetVideoRecording() {
+    clearInterval(this.timerInterval);
+    this.videoRecordingState.set('idle');
+    this.recordSeconds.set(0);
+    if (this.mediaStream) {
+      this.mediaStream.getTracks().forEach(track => track.stop());
+      this.mediaStream = null;
+    }
+  }
+
+  submitVideoHomework() {
+    const lesson = this.selectedLesson();
+    if (!lesson) return;
+
+    const simulatedVideoData = 'data:video/mp4;base64,AAAA';
+    const xpReward = lesson.points || 50;
+    this.db.submitHomework(lesson.id, lesson.title, 'video', simulatedVideoData, xpReward);
+    this.resetVideoRecording();
+    this.dialogService.alert('Succès 🎉', `Votre devoir vidéo a été soumis avec succès ! Vous gagnerez ${xpReward} XP après correction.`, 'success');
+  }
+
+  getYouTubeEmbedUrl(url: string | undefined): SafeResourceUrl {
+    if (!url) return this.sanitizer.bypassSecurityTrustResourceUrl('');
+    let videoId = '';
+    try {
+      if (url.includes('youtu.be/')) {
+        videoId = url.split('youtu.be/')[1].split(/[?#]/)[0];
+      } else if (url.includes('youtube.com/watch')) {
+        const urlParams = new URLSearchParams(url.split('?')[1]);
+        videoId = urlParams.get('v') || '';
+      } else if (url.includes('youtube.com/embed/')) {
+        videoId = url.split('youtube.com/embed/')[1].split(/[?#]/)[0];
+      }
+    } catch (e) {
+      console.warn('Error parsing YouTube URL', e);
+    }
+    return this.sanitizer.bypassSecurityTrustResourceUrl(`https://www.youtube.com/embed/${videoId}`);
   }
 
   formatDuration(sec: number): string {

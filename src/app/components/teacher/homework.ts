@@ -40,9 +40,11 @@ import { DialogService } from '../../services/dialog.service';
                 
                 <div style="display:flex; align-items:flex-start; gap:12px; width:100%">
                   <!-- Submission Icon -->
-                  <div class="sub-icon-box" [class.audio]="sub.type === 'audio'" [class.text]="sub.type === 'text'">
+                  <div class="sub-icon-box" [class.audio]="sub.type === 'audio'" [class.text]="sub.type === 'text'" [class.video]="sub.type === 'video'">
                     @if (sub.type === 'audio') {
                       <i class="ti ti-microphone" aria-hidden="true"></i>
+                    } @else if (sub.type === 'video') {
+                      <i class="ti ti-video" aria-hidden="true" style="font-size:16px; color:#7E22CE"></i>
                     } @else {
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#185abd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px; height:16px; vertical-align: middle;">
                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" fill="#e2ecf7" stroke="#185abd"/>
@@ -73,8 +75,10 @@ import { DialogService } from '../../services/dialog.service';
                     <div class="content-preview">
                       @if (sub.type === 'text') {
                         "{{ sub.content | slice:0:80 }}{{ sub.content.length > 80 ? '...' : '' }}"
+                      } @else if (sub.type === 'video') {
+                        🎥 Video recording submission
                       } @else {
-                        Audio speech submission
+                        🎙️ Audio speech submission
                       }
                     </div>
                   </div>
@@ -112,6 +116,11 @@ import { DialogService } from '../../services/dialog.service';
                 @if (sub.type === 'text') {
                   <div class="text-submission-content">
                     "{{ sub.content }}"
+                  </div>
+                } @else if (sub.type === 'video') {
+                  <div class="video-submission-content" style="background:#0F172A; border-radius:8px; padding:12px; display:flex; flex-direction:column; align-items:center; gap:8px">
+                    <video style="width:100%; max-width:400px; border-radius:6px; background:#000" controls [src]="getVideoSource(sub.content)"></video>
+                    <div style="font-size:11px; color:#94A3B8; text-align:center"><i class="ti ti-video"></i> Video Submission Playback</div>
                   </div>
                 } @else {
                   <div class="audio-submission-content">
@@ -214,13 +223,6 @@ import { DialogService } from '../../services/dialog.service';
                       <button (click)="applyFeedbackTemplate('grammar')" class="badge" style="background:#EFF6FF; border:1px solid #BFDBFE; color:#1D4ED8; cursor:pointer; font-size:9px" title="Grammar focus template">📝 Grammar</button>
                       <button (click)="applyFeedbackTemplate('pron')" class="badge" style="background:#F0FDFA; border:1px solid #99F6E4; color:#0F766E; cursor:pointer; font-size:9px" title="Pronunciation template">🗣️ Pron</button>
                       <button (click)="applyFeedbackTemplate('incomplete')" class="badge" style="background:#FEF3C7; border:1px solid #FDE68A; color:#92400E; cursor:pointer; font-size:9px" title="Incomplete template">⚠️ Incomplete</button>
-                      <button (click)="draftAIFeedback(sub)" class="badge" style="background:#FAF5FF; border:1px solid #E9D5FF; color:#7E22CE; cursor:pointer; font-size:9px; font-weight:700; display:flex; align-items:center; gap:3px" title="Use AI to analyze submission and draft feedback">
-                        @if (aiLoading()) {
-                          <span>Drafting...</span>
-                        } @else {
-                          <span>🤖 AI Draft</span>
-                        }
-                      </button>
                     </div>
                   </div>
                   <textarea 
@@ -615,7 +617,7 @@ export class TeacherHomeworkComponent {
   pronunciationRating = signal<number>(0);
   grammarRating = signal<number>(0);
   vocabularyRating = signal<number>(0);
-  aiLoading = signal<boolean>(false);
+
 
   constructor() {
     this.db.observeSubmissions().subscribe(list => {
@@ -711,47 +713,12 @@ export class TeacherHomeworkComponent {
     }
   }
 
-  async draftAIFeedback(sub: Submission) {
-    if (!this.db.getGeminiApiKey()) {
-      const key = prompt('Google Gemini API Key is required to run real AI features.\nPlease enter your Gemini API Key (get a free key from https://aistudio.google.com/):');
-      if (key && key.trim()) {
-        this.db.setGeminiApiKey(key);
-      } else {
-        return;
-      }
+
+  getVideoSource(content: string): string {
+    if (content && (content.startsWith('http') || content.startsWith('data:video'))) {
+      return content;
     }
-
-    this.aiLoading.set(true);
-
-    const systemInstruction = `You are the SpeakUp Teacher AI Assistant. Analyze the student's homework submission and draft a helpful, constructive review. Recommend a score (A, B, C, or D) and an XP reward (10 to 100).
-    Return a JSON object with this exact structure:
-    {
-      "feedback": "Constructive comments addressing their errors...",
-      "grade": "B — Good",
-      "xp": 30
-    }
-    Note: The grade value MUST be exactly one of: "A — Excellent", "B — Good", "C — Satisfactory", "D — Needs improvement".
-    Do not wrap the response in markdown code blocks. Return ONLY the JSON object.`;
-
-    const promptText = `Lesson Title: "${sub.lessonTitle}"\nHomework Format: "${sub.type}"\nStudent Submission: "${sub.content}"`;
-
-    try {
-      const res = await this.db.callGemini(systemInstruction, promptText);
-      const data = JSON.parse(res);
-      this.gradeFeedback = data.feedback;
-      this.gradeScore = data.grade || 'B — Good';
-      this.gradeXp = data.xp || 30;
-      this.dialogService.alert('AI Draft Created', 'AI has drafted feedback, assigned a suggested grade, and set the XP reward!', 'success');
-    } catch(e: any) {
-      console.warn('Gemini API call failed, falling back to local simulation:', e);
-      const fallbackData = this.getLocalHomeworkFeedback(sub);
-      this.gradeFeedback = fallbackData.feedback;
-      this.gradeScore = fallbackData.grade;
-      this.gradeXp = fallbackData.xp;
-      this.dialogService.alert('AI Draft Created', 'AI has drafted feedback, assigned a suggested grade, and set the XP reward!', 'success');
-    } finally {
-      this.aiLoading.set(false);
-    }
+    return 'https://assets.mixkit.co/videos/preview/mixkit-girl-in-neon-sign-smiling-39824-large.mp4';
   }
 
   getLocalHomeworkFeedback(sub: Submission) {
