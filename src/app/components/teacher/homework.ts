@@ -758,11 +758,21 @@ export class TeacherHomeworkComponent {
     return { feedback: feedbackText, grade, xp };
   }
 
-  submitGrade() {
+  async submitGrade() {
     const sub = this.selectedSub();
     if (!sub) return;
 
-    this.db.gradeSubmission(sub.id, this.gradeScore, this.gradeFeedback, this.gradeXp);
+    await this.db.gradeSubmission(sub.id, this.gradeScore, this.gradeFeedback, this.gradeXp);
+    
+    // Send notification to student
+    await this.db.sendNotification({
+      recipientId: sub.studentId,
+      recipientRole: 'student',
+      type: 'homework_graded',
+      title: 'Nouvelle note disponible ! 📝',
+      message: `Votre devoir "${sub.lessonTitle}" a été corrigé.\n\nNote: ${this.gradeScore}\nXP gagnés: ${this.gradeXp}\n\nFeedback: ${this.gradeFeedback.substring(0, 100)}${this.gradeFeedback.length > 100 ? '...' : ''}`
+    });
+
     this.dialogService.alert('Success', `Submission graded successfully! ${this.gradeXp} XP awarded to student.`, 'success');
     
     // Automatically close the panel if it has been graded successfully
