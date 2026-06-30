@@ -359,13 +359,124 @@ interface MatchCard {
                       <div style="background:#EEF2FF; padding:8px 16px; border-radius:20px; display:inline-block; font-size:12.5px; font-weight:700; color:#4F46E5; margin-bottom:20px">
                         +{{ quizScore() >= 60 ? '50' : '10' }} XP Earned
                       </div>
+                      
+                      <!-- Explanations for wrong answers -->
+                      @if (quizScore() < 100) {
+                        <div style="margin-top:20px; text-align:left; background:var(--surface-2); border:1px solid var(--border-weak); border-radius:10px; padding:16px; max-width:500px; margin-left:auto; margin-right:auto">
+                          <h4 style="font-size:14px; font-weight:700; color:var(--text-primary); margin:0 0 12px 0; display:flex; align-items:center; gap:6px">
+                            <i class="ti ti-book-open" style="color:#4F46E5"></i>
+                            Corrections & Explications
+                          </h4>
+                          <div style="display:flex; flex-direction:column; gap:10px">
+                            @for (q of quiz.questions; track q; let qi = $index) {
+                              @if (getUserAnswer(qi) !== q.correctOption) {
+                                <div style="background:#FFF; border:1px solid #FCA5A5; border-radius:8px; padding:10px 12px; border-left:3px solid #EF4444">
+                                  <div style="font-size:12px; font-weight:600; color:#991B1B; margin-bottom:4px">
+                                    Question {{ qi + 1 }}: {{ q.question }}
+                                  </div>
+                                  <div style="font-size:11px; color:var(--text-secondary); margin-bottom:3px">
+                                    ❌ Votre réponse: <strong style="color:#EF4444">{{ getUserAnswerText(qi) }}</strong>
+                                  </div>
+                                  <div style="font-size:11px; color:var(--text-secondary); margin-bottom:6px">
+                                    ✅ Bonne réponse: <strong style="color:#059669">{{ getCorrectAnswerText(q) }}</strong>
+                                  </div>
+                                  @if (q.explanation) {
+                                    <div style="font-size:11px; color:#4B5563; background:#FEF3C7; padding:6px 8px; border-radius:6px; margin-top:4px; font-style:italic">
+                                      💡 {{ q.explanation }}
+                                    </div>
+                                  }
+                                </div>
+                              }
+                            }
+                          </div>
+                        </div>
+                      }
                     }
                     
-                    <div style="display:flex; justify-content:center; border-top:1px solid var(--border-weak); padding-top:16px">
+                    <div style="display:flex; justify-content:center; border-top:1px solid var(--border-weak); padding-top:16px; margin-top:{{ quizScore() < 100 && quiz.type !== 'Oral Practice' ? '20px' : '0' }}">
                       <button class="btn-p" [style.background]="quiz.type === 'Oral Practice' ? '#0D9488' : '#4F46E5'" [style.border-color]="quiz.type === 'Oral Practice' ? '#0D9488' : '#4F46E5'" (click)="exitExercise()">Close Window</button>
                     </div>
                   </div>
                 }
+              }
+            } @else if (activeExercise() === 'listening') {
+              <!-- TAB 3: LISTENING EXERCISE -->
+              @if (!listeningFinished()) {
+                <div style="margin-bottom:12px">
+                  <h3 style="font-size:15px; font-weight:700; color:var(--text-primary); margin:0">👂 Listening Comprehension</h3>
+                  <p style="font-size:11.5px; color:var(--text-muted); margin:4px 0 0 0">Listen to the text and answer the questions below.</p>
+                </div>
+
+                <!-- Audio Player -->
+                <div class="card" style="background:linear-gradient(135deg,#F0FDFA,#E6F4EA); border:1px solid #2DD4BF; padding:20px; margin-bottom:20px; border-radius:10px">
+                  <div style="display:flex; align-items:center; gap:16px; margin-bottom:12px">
+                    <button (click)="playListeningText()" style="width:56px; height:56px; border-radius:50%; background:#0D9488; color:white; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 4px 10px rgba(13,148,136,0.3)">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="5 3 19 12 5 21 5 3" />
+                      </svg>
+                    </button>
+                    <div style="flex:1">
+                      <div style="font-size:13px; font-weight:700; color:#0F766E; margin-bottom:4px">Play Audio</div>
+                      <div style="font-size:11px; color:var(--text-muted)">Click to listen to the passage</div>
+                    </div>
+                  </div>
+                  
+                  <!-- Text Display -->
+                  <div style="background:#FFF; padding:14px; border-radius:8px; border:1px solid #2DD4BF; margin-top:10px">
+                    <div style="font-size:11px; font-weight:700; color:#0D9488; margin-bottom:6px; text-transform:uppercase">📄 Text to Read Along:</div>
+                    <p style="font-size:12.5px; color:var(--text-primary); line-height:1.6; margin:0; font-style:italic">
+                      "{{ listeningText() }}"
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Question -->
+                <div class="card" style="background:var(--surface-2); margin-bottom:16px; border:1px solid var(--border-weak); padding:16px">
+                  <div style="font-size:11px; font-weight:700; color:#4F46E5; margin-bottom:8px; text-transform:uppercase">Question {{ currentListeningIdx() + 1 }} of {{ listeningQuestions().length }}</div>
+                  <p style="font-size:13.5px; font-weight:600; color:var(--text-primary); margin:0; line-height:1.4">
+                    {{ listeningQuestions()[currentListeningIdx()].question }}
+                  </p>
+                </div>
+
+                <!-- Options -->
+                <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:20px">
+                  @for (opt of listeningQuestions()[currentListeningIdx()].options; track opt; let idx = $index) {
+                    <button class="quiz-option-btn" 
+                            [class.active]="selectedListeningOption() === idx"
+                            (click)="selectedListeningOption.set(idx)">
+                      <span style="font-weight:700; color:#0D9488; margin-right:8px">{{ getOptionLetter(idx) }}.</span> {{ opt }}
+                    </button>
+                  }
+                </div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border-weak); padding-top:16px">
+                  <button class="btn-s" [disabled]="currentListeningIdx() === 0" (click)="prevListeningQuestion()">Previous</button>
+                  <button class="btn-p" style="background:#0D9488; border-color:#0D9488" (click)="nextListeningQuestion()" [disabled]="selectedListeningOption() === null">
+                    {{ currentListeningIdx() + 1 === listeningQuestions().length ? 'Submit' : 'Next Question' }}
+                  </button>
+                </div>
+              } @else {
+                <!-- Listening Results -->
+                <div style="text-align:center; padding:20px 0">
+                  <div style="width:64px; height:64px; border-radius:50%; background:#F0FDFA; border:1px solid #2DD4BF; display:flex; align-items:center; justify-content:center; margin:0 auto 16px auto">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0D9488" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+                      <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                      <line x1="12" x2="12" y1="19" y2="22" />
+                    </svg>
+                  </div>
+                  
+                  <h3 style="font-size:17px; font-weight:800; color:var(--text-primary); margin-bottom:6px">Listening Exercise Complete! 🎧</h3>
+                  <p style="font-size:13px; color:var(--text-secondary); margin-bottom:16px">
+                    You scored <strong style="color:#0D9488">{{ listeningScore() }}%</strong> ({{ Math.round(listeningScore() / 100 * listeningQuestions().length) }} / {{ listeningQuestions().length }} correct)
+                  </p>
+                  <div style="background:#E6F4EA; padding:8px 16px; border-radius:20px; display:inline-block; font-size:12.5px; font-weight:700; color:#0F766E; margin-bottom:20px">
+                    +{{ listeningScore() >= 60 ? '50' : '10' }} XP Earned
+                  </div>
+                  <div style="display:flex; justify-content:center; border-top:1px solid var(--border-weak); padding-top:16px">
+                    <button class="btn-p" style="background:#0D9488; border-color:#0D9488" (click)="exitExercise()">Close Window</button>
+                  </div>
+                </div>
               }
             } @else if (activeExercise() === 'game') {
                <!-- TAB 2: VOCABULARY MATCH GAME -->
@@ -748,10 +859,19 @@ interface MatchCard {
 export class StudentExercisesComponent {
   private db = inject(DatabaseService);
 
-  activeExercise = signal<'list' | 'quiz' | 'game'>('list');
+  activeExercise = signal<'list' | 'quiz' | 'game' | 'listening'>('list');
   quizzes = signal<Quiz[]>([]);
   activeQuiz = signal<Quiz | null>(null);
   currentUser = signal<UserProfile | null>(null);
+  
+  // Listening Exercise States
+  listeningText = signal<string>('');
+  listeningAudioUrl = signal<string>('');
+  listeningQuestions = signal<{ question: string; options: string[]; correct: number }[]>([]);
+  currentListeningIdx = signal<number>(0);
+  selectedListeningOption = signal<number | null>(null);
+  listeningFinished = signal<boolean>(false);
+  listeningScore = signal<number>(0);
 
   // Quiz States
   currentQuestionIdx = signal<number>(0);
@@ -935,6 +1055,14 @@ export class StudentExercisesComponent {
     const activeLetter = this.selectedOption();
     const correctLetter = quiz.questions[this.currentQuestionIdx()].correctOption;
 
+    // Track user answer
+    if (activeLetter) {
+      this.userAnswers.set({
+        ...this.userAnswers(),
+        [this.currentQuestionIdx()]: activeLetter
+      });
+    }
+
     if (activeLetter === correctLetter) {
       this.quizCorrectCount.update(c => c + 1);
     }
@@ -1045,6 +1173,98 @@ export class StudentExercisesComponent {
       utterance.lang = 'en-US';
       utterance.rate = 0.9;
       window.speechSynthesis.speak(utterance);
+    }
+  }
+
+  // Helper methods for explanations
+  getUserAnswer(questionIndex: number): string | null {
+    return this.selectedOption(); // This will show the last selected option
+  }
+
+  getUserAnswerText(questionIndex: number): string {
+    const quiz = this.activeQuiz();
+    if (!quiz) return '';
+    const userAnswer = this.userAnswers()[questionIndex];
+    if (!userAnswer) return 'Aucune réponse';
+    const idx = userAnswer.charCodeAt(0) - 65; // A=0, B=1, etc.
+    return quiz.questions[questionIndex].options[idx] || userAnswer;
+  }
+
+  getCorrectAnswerText(question: any): string {
+    const idx = question.correctOption.charCodeAt(0) - 65;
+    return question.options[idx] || question.correctOption;
+  }
+
+  // Track user answers for each question
+  private userAnswers = signal<{ [key: number]: string }>({});
+
+  // Listening Exercise Methods
+  startListeningExercise() {
+    this.activeExercise.set('listening');
+    this.listeningFinished.set(false);
+    this.currentListeningIdx.set(0);
+    this.selectedListeningOption.set(null);
+    this.listeningScore.set(0);
+    
+    // Sample listening exercise data
+    this.listeningText.set('The cat sat on the mat. It was a sunny day and the cat was feeling very lazy. The cat decided to take a nap in the warm sunlight.');
+    this.listeningAudioUrl.set(''); // Would be a real audio URL
+    this.listeningQuestions.set([
+      {
+        question: 'Where did the cat sit?',
+        options: ['On the chair', 'On the mat', 'On the table', 'On the bed'],
+        correct: 1
+      },
+      {
+        question: 'How was the weather?',
+        options: ['Rainy', 'Cloudy', 'Sunny', 'Windy'],
+        correct: 2
+      },
+      {
+        question: 'What did the cat decide to do?',
+        options: ['Play', 'Eat', 'Take a nap', 'Run'],
+        correct: 2
+      }
+    ]);
+  }
+
+  playListeningText() {
+    const text = this.listeningText();
+    if (text && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'en-US';
+      utterance.rate = 0.85;
+      window.speechSynthesis.speak(utterance);
+    }
+  }
+
+  prevListeningQuestion() {
+    if (this.currentListeningIdx() > 0) {
+      this.currentListeningIdx.update(i => i - 1);
+      this.selectedListeningOption.set(null);
+    }
+  }
+
+  nextListeningQuestion() {
+    const selected = this.selectedListeningOption();
+    const currentQ = this.listeningQuestions()[this.currentListeningIdx()];
+    
+    if (selected === currentQ.correct) {
+      this.listeningScore.update(s => s + Math.round(100 / this.listeningQuestions().length));
+    }
+
+    if (this.currentListeningIdx() + 1 === this.listeningQuestions().length) {
+      // Finished
+      this.listeningFinished.set(true);
+      const user = this.currentUser();
+      if (user) {
+        const xp = this.listeningScore() >= 60 ? 50 : 10;
+        this.db.updateUserXP(user.id, xp, true);
+      }
+    } else {
+      this.currentListeningIdx.update(i => i + 1);
+      this.selectedListeningOption.set(null);
     }
   }
 
