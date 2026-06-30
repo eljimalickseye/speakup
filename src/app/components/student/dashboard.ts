@@ -260,7 +260,7 @@ import { DialogService } from '../../services/dialog.service';
     }
   `,
   styles: [
-    ...`
+    `
     @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
     @keyframes slideUp { from { transform:translateY(22px); opacity:0 } to { transform:translateY(0); opacity:1 } }
     .ann-dash-card {
@@ -276,9 +276,6 @@ import { DialogService } from '../../services/dialog.service';
       transform: translateY(-2px);
       box-shadow: 0 6px 18px rgba(0,0,0,0.1);
     }
-    `.split('\n').filter(l => !l.includes('...')).join('\n')
-  ]
-  styles: [`
     .grid-content-split {
       display: grid;
       grid-template-columns: 1.2fr 1fr;
@@ -290,7 +287,8 @@ import { DialogService } from '../../services/dialog.service';
         grid-template-columns: 1fr;
       }
     }
-  `]
+    `
+  ]
 })
 export class StudentDashboardComponent {
   private db = inject(DatabaseService);
@@ -472,5 +470,54 @@ export class StudentDashboardComponent {
       `Congratulations! You got ${correctCount}/${totalQuestions} answers correct. Your assigned starting level is ${calculatedLevel} — ${this.getLevelName(calculatedLevel)}!`, 
       'success'
     );
+  }
+
+  // Announcement Priority Helper Methods
+  getDashPriorityColor(priority: string): string {
+    const map: Record<string, string> = {
+      'High': '#EF4444',
+      'Medium': '#F59E0B',
+      'Low': '#10B981',
+      'urgent': '#DC2626',
+      'important': '#D97706',
+      'normal': '#059669'
+    };
+    return map[priority] || '#4F46E5';
+  }
+
+  getDashPriorityGradient(priority: string): string {
+    const map: Record<string, string> = {
+      'High': 'linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%)',
+      'Medium': 'linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%)',
+      'Low': 'linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%)',
+      'urgent': 'linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%)',
+      'important': 'linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%)',
+      'normal': 'linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%)'
+    };
+    return map[priority] || 'linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%)';
+  }
+
+  getDashPriorityBg(priority: string): string {
+    const map: Record<string, string> = {
+      'High': '#FEE2E2',
+      'Medium': '#FEF3C7',
+      'Low': '#D1FAE5',
+      'urgent': '#FEE2E2',
+      'important': '#FEF3C7',
+      'normal': '#D1FAE5'
+    };
+    return map[priority] || '#EEF2FF';
+  }
+
+  getDashPriorityIcon(priority: string): string {
+    const map: Record<string, string> = {
+      'High': '🔴',
+      'Medium': '🟡',
+      'Low': '🟢',
+      'urgent': '⚠️',
+      'important': '📌',
+      'normal': 'ℹ️'
+    };
+    return map[priority] || '📢';
   }
 }
