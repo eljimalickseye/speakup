@@ -137,9 +137,12 @@ interface EnrichedResult {
               </div>
 
               <!-- Actions -->
-              <div style="width:80px; text-align:center" (click)="$event.stopPropagation()">
+              <div style="width:80px; text-align:center; display:flex; gap:4px; justify-content:center" (click)="$event.stopPropagation()">
                 <button class="btn-s" style="font-size:10px; padding:3px 8px; color:#4F46E5; border-color:#4F46E5" (click)="selectResult(item)">
                   Voir
+                </button>
+                <button class="btn-s" style="font-size:10px; padding:3px 8px; color:#EF4444; border-color:#EF4444" (click)="deleteResult(item)" title="Supprimer">
+                  <i class="ti ti-trash" style="font-size:10px"></i>
                 </button>
               </div>
             </div>
@@ -464,5 +467,15 @@ export class TeacherResultsComponent {
 
   goToGrade(item: EnrichedResult) {
     this.dialogService.alert('Navigation', 'Allez dans l\'onglet "Copies" pour corriger cette soumission.', 'info');
+  }
+
+  deleteResult(item: EnrichedResult) {
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer ce résultat pour "${item.student?.name || item.sub.studentName}" ?\n\nCette action est irréversible.`)) {
+      return;
+    }
+
+    this.db.deleteSubmission(item.sub.id);
+    this.selectedResult.set(null);
+    this.dialogService.alert('Supprimé', 'Le résultat a été supprimé avec succès.', 'success');
   }
 }
