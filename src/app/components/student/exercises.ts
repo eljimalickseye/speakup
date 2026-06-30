@@ -13,6 +13,13 @@ interface MatchCard {
   error?: boolean;
 }
 
+interface QuestionWithExplanation {
+  question: string;
+  options: string[];
+  correctOption: string;
+  explanation?: string;
+}
+
 @Component({
   selector: 'app-student-exercises',
   standalone: true,
@@ -468,7 +475,7 @@ interface MatchCard {
                   
                   <h3 style="font-size:17px; font-weight:800; color:var(--text-primary); margin-bottom:6px">Listening Exercise Complete! 🎧</h3>
                   <p style="font-size:13px; color:var(--text-secondary); margin-bottom:16px">
-                    You scored <strong style="color:#0D9488">{{ listeningScore() }}%</strong> ({{ Math.round(listeningScore() / 100 * listeningQuestions().length) }} / {{ listeningQuestions().length }} correct)
+                    You scored <strong style="color:#0D9488">{{ listeningScore() }}%</strong> ({{ roundNumber(listeningScore() / 100 * listeningQuestions().length) }} / {{ listeningQuestions().length }} correct)
                   </p>
                   <div style="background:#E6F4EA; padding:8px 16px; border-radius:20px; display:inline-block; font-size:12.5px; font-weight:700; color:#0F766E; margin-bottom:20px">
                     +{{ listeningScore() >= 60 ? '50' : '10' }} XP Earned
@@ -1193,6 +1200,10 @@ export class StudentExercisesComponent {
   getCorrectAnswerText(question: any): string {
     const idx = question.correctOption.charCodeAt(0) - 65;
     return question.options[idx] || question.correctOption;
+  }
+
+  roundNumber(value: number): number {
+    return Math.round(value);
   }
 
   // Track user answers for each question
