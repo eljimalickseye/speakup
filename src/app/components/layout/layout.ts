@@ -39,6 +39,7 @@ import { TeacherUserManagementComponent } from '../teacher/user-management';
 import { TeacherResultsComponent } from '../teacher/results';
 import { TeacherVocabGamesComponent } from '../teacher/vocab-games';
 import { TeacherExercisesManagerComponent } from '../teacher/exercises-manager';
+import { TeacherPlacementTestsComponent } from '../teacher/placement-tests';
 import { AdminManagementComponent } from '../admin/admin-management';
 import { NotificationsComponent } from '../shared/notifications';
 import { HistoryLogsComponent } from '../shared/history-logs';
@@ -83,6 +84,7 @@ import { HistoryLogsComponent } from '../shared/history-logs';
     TeacherResultsComponent,
     TeacherVocabGamesComponent,
     TeacherExercisesManagerComponent,
+    TeacherPlacementTestsComponent,
     AdminManagementComponent,
     NotificationsComponent,
     HistoryLogsComponent
@@ -250,6 +252,10 @@ import { HistoryLogsComponent } from '../shared/history-logs';
             </button>
             <button class="ni" [class.active]="activeTab === 'create-quiz'" (click)="setTab('create-quiz')">
               <i class="ti ti-list-check" aria-hidden="true"></i>{{ t('Gérer les Quiz', 'Quiz Builder') }}
+            </button>
+            <button class="ni" [class.active]="activeTab === 'placement-tests'" (click)="setTab('placement-tests')">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+              {{ t('Test de Niveau', 'Placement Test') }}
             </button>
             <button class="ni" [class.active]="activeTab === 'exercises-manager'" (click)="setTab('exercises-manager')">
               <i class="ti ti-dumbbell" aria-hidden="true"></i>{{ t('Gérer les Exercices', 'Exercises Manager') }}
@@ -427,6 +433,8 @@ import { HistoryLogsComponent } from '../shared/history-logs';
               <app-teacher-quizzes></app-teacher-quizzes>
             } @else if (activeTab === 'exercises-manager') {
               <app-teacher-exercises-manager></app-teacher-exercises-manager>
+            } @else if (activeTab === 'placement-tests') {
+              <app-teacher-placement-tests></app-teacher-placement-tests>
             } @else if (activeTab === 'vocab-games') {
               <app-teacher-vocab-games></app-teacher-vocab-games>
             } @else if (activeTab === 'grade-homework') {

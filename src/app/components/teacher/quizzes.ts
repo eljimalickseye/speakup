@@ -31,10 +31,6 @@ interface QuestionDraft {
           <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
           Quiz Publiés ({{ quizzes().length }})
         </button>
-        <button class="tab" [class.active]="activeTab() === 'placement'" (click)="activeTab.set('placement')">
-          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
-          Test de Niveau
-        </button>
         <button class="tab" [class.active]="activeTab() === 'drafts'" (click)="activeTab.set('drafts')">
           <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
           Brouillons ({{ quizDrafts().length }})
@@ -350,78 +346,6 @@ interface QuestionDraft {
         </div>
       }
 
-      <!-- PLACEMENT TEST VIEW -->
-      @if (activeTab() === 'placement') {
-        <div>
-          <!-- Category Selector Chips -->
-          <div style="display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 8px;">
-            @for (cat of [
-              { id: 'placement-test', label: 'Général', emoji: '🌟' },
-              { id: 'placement-test-grammar', label: 'Grammaire', emoji: '📝' },
-              { id: 'placement-test-vocabulary', label: 'Vocabulaire', emoji: '📚' },
-              { id: 'placement-test-speaking', label: 'Oral/Expression', emoji: '🎙️' },
-              { id: 'placement-test-listening', label: 'Compréhension Orale', emoji: '👂' },
-              { id: 'placement-test-translation', label: 'Traduction', emoji: '🌍' },
-              { id: 'placement-test-pronunciation', label: 'Prononciation', emoji: '🔊' }
-            ]; track cat.id) {
-              <button (click)="selectedPlacementId.set(cat.id)"
-                      style="padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer; border: 1.5px solid; transition: all 0.2s; display: flex; align-items: center; gap: 6px; white-space: nowrap;"
-                      [style.background]="selectedPlacementId() === cat.id ? '#4F46E5' : 'var(--surface-1)'"
-                      [style.border-color]="selectedPlacementId() === cat.id ? '#4F46E5' : 'var(--border)'"
-                      [style.color]="selectedPlacementId() === cat.id ? '#fff' : 'var(--text-secondary)'">
-                <span>{{ cat.emoji }}</span>
-                <span>{{ cat.label }}</span>
-              </button>
-            }
-          </div>
-
-          @if (getPlacementTest(); as pt) {
-            <div style="background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%); border: 1.5px solid #4F46E5; border-radius: 12px; padding: 24px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px">
-              <div>
-                <span class="badge" style="background:#4F46E5; color:white; font-size:10px; padding:3px 8px; border-radius:20px; font-weight:700">TEST DE NIVEAU : {{ pt.title }}</span>
-                <h3 style="font-size:18px; font-weight:800; color:#1e293b; margin:8px 0 4px 0">{{ pt.title }}</h3>
-                <p style="font-size:13px; color:#475569; margin:0; max-width: 500px">Ce test de niveau est configurable. Modifiez les questions pour affiner l'évaluation automatique de cette catégorie spécifique.</p>
-              </div>
-              <button class="btn-p" style="background:#4F46E5; border-color:#4F46E5; font-size:13px; padding:8px 18px; font-weight: 700" (click)="editQuiz(pt)">
-                <i class="ti ti-edit"></i> Configurer ce Test
-              </button>
-            </div>
-
-            <div class="card" style="margin-top: 16px">
-              <h4 class="st" style="font-size:14px; margin-bottom:12px">Questions configurées ({{ pt.questions.length }})</h4>
-              <div style="display:flex; flex-direction:column; gap:12px">
-                @for (q of pt.questions; track q.question; let idx = $index) {
-                  <div style="background: var(--surface-2); border: 1px solid var(--border-weak); padding: 12px; border-radius: 8px">
-                    <div style="font-weight: 700; font-size: 13px; color: var(--text-primary)">
-                      Q{{ idx + 1 }}. {{ q.question }}
-                    </div>
-                    @if (q.options.length > 0) {
-                      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin-top: 8px">
-                        @for (opt of q.options; track opt; let oIdx = $index) {
-                          <div style="font-size: 12px; padding: 6px 10px; border-radius: 4px; border: 1px solid var(--border-weak)"
-                               [style.background]="getOptionLetter(oIdx) === q.correctOption ? '#ECFDF5' : '#FFF'"
-                               [style.border-color]="getOptionLetter(oIdx) === q.correctOption ? '#10B981' : 'var(--border-weak)'"
-                               [style.color]="getOptionLetter(oIdx) === q.correctOption ? '#065F46' : 'var(--text-secondary)'">
-                            <strong style="margin-right: 4px">{{ getOptionLetter(oIdx) }}</strong> {{ opt }}
-                          </div>
-                        }
-                      </div>
-                    } @else {
-                      <div style="font-size:12px; color:var(--text-muted); margin-top:6px; font-style:italic">
-                        Question ouverte ou enregistrement vocal (aucune option à choix multiples).
-                      </div>
-                    }
-                  </div>
-                }
-              </div>
-            </div>
-          } @else {
-            <div style="text-align:center; padding:40px; border:1px dashed var(--border); border-radius:8px">
-              Chargement du test de niveau de cette catégorie...
-            </div>
-          }
-        </div>
-      }
 
 
 

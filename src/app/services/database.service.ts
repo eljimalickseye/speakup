@@ -83,6 +83,7 @@ export interface UserProfile {
   monthlyFee?: number;
   placementTestTaken?: boolean;
   placementTestScore?: number;
+  placementTestAnswers?: { [key: number]: string };
   voiceChatAllowed?: boolean;
   description?: string;
   username?: string;
@@ -429,6 +430,7 @@ export interface ChatChannel {
 export class DatabaseService {
   private firestore: any = null;
   private useFirebase = false;
+  public openProfileCertificates = false;
 
   // Subjects for local reactive changes
   private users$ = new BehaviorSubject<UserProfile[]>([]);
@@ -476,7 +478,7 @@ export class DatabaseService {
   private currentUser$ = new BehaviorSubject<UserProfile | null>(null);
   private activeJitsiCall$ = new BehaviorSubject<LiveClass | null>(null);
 
-  activeLang = signal<'fr' | 'en'>((localStorage.getItem('speakup_lang') as 'fr' | 'en') || 'fr');
+  activeLang = signal<'fr' | 'en'>((localStorage.getItem('speakup_lang') as 'fr' | 'en') || 'en');
   requestedTabRedirect = signal<string | null>(null);
 
   setLanguage(lang: 'fr' | 'en') {

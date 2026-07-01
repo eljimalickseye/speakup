@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DatabaseService, Quiz, Exercise, UserProfile, VocabGame } from '../../services/database.service';
@@ -184,7 +184,7 @@ const defaultWordsBank = [
         @if (activeSubTab() === 'games') {
           <div style="margin-top: 0px; background: #FFFDF5; border: 1.5px solid #FDE68A; border-radius: 16px; padding: 20px; box-shadow: 0 8px 24px rgba(217, 119, 6, 0.04);">
             <div style="font-size: 13px; font-weight: 800; color: #D97706; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
-              <span style="font-size: 18px;">🎮</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4m-2-2v4m7-2h.01M19 12h.01"/></svg>
               <span>L'Arcade des Jeux de Vocabulaire</span>
             </div>
             
@@ -202,12 +202,21 @@ const defaultWordsBank = [
                       } @else if (game.gameType === 'matching') {
                         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
                       } @else if (game.gameType === 'memory') {
-                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.44 2.5 2.5 0 0 1 0-3.12 3 3 0 0 1 0-3.88 2.5 2.5 0 0 1 0-3.12A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.44 2.5 2.5 0 0 0 0-3.12 3 3 0 0 0 0-3.88 2.5 2.5 0 0 0 0-3.12A2.5 2.5 0 0 0 14.5 2Z"/></svg>
+                      } @else if (game.gameType === 'word_builder') {
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+                      } @else if (game.gameType === 'hangman') {
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22V2h10a2 2 0 0 1 2 2v2"/><circle cx="16" cy="9" r="3"/><path d="M16 12v6m-3-3h6m-5 5h4"/></svg>
+                      } @else if (game.gameType === 'multiple_choice') {
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="m9 12 2 2 4-4"/></svg>
                       } @else {
                         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3" /></svg>
                       }
                     </div>
-                    <div style="font-size: 9px; font-weight: 800; color: #B45309; text-transform: uppercase; background: #FEF3C7; padding: 2px 8px; border-radius: 20px; display: inline-block; letter-spacing: 0.5px;">🎮 Mode Arcade</div>
+                    <div style="font-size: 9px; font-weight: 800; color: #B45309; text-transform: uppercase; background: #FEF3C7; padding: 2px 8px; border-radius: 20px; display: inline-flex; align-items: center; gap: 4px; letter-spacing: 0.5px;">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4m-2-2v4m7-2h.01M19 12h.01"/></svg>
+                      Mode Arcade
+                    </div>
                     <div class="card-value" style="font-size:14px; color:var(--text-primary); font-weight:700; margin-top:8px; display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden">{{ game.title }}</div>
                     <p style="font-size:11.5px; color:var(--text-secondary); margin:6px 0 0 0">
                       {{ game.words.length }} mots · {{ getGameLabel(game.gameType) }} ({{ getDiffLabel(game.difficulty) }})
@@ -590,7 +599,7 @@ const defaultWordsBank = [
                         </div>
 
                         <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%;">
-                          <button (click)="vocabularyActiveIdx.set(vocabularyActiveIdx() - 1)" [disabled]="vocabularyActiveIdx() === 0" class="btn-s" style="flex: 1; padding: 8px 12px;">Précédent</button>
+                          <button (click)="vocabularyActiveIdx.set(vocabularyActiveIdx() - 1)" [disabled]="vocabularyActiveIdx() === 0" class="btn-s" style="flex: 1; padding: 8px 12px;">{{ gameLabels().prevBtn }}</button>
                           <span style="font-size: 12px; color: var(--text-muted); font-weight: 600;">{{ (vocabularyActiveIdx() || 0) + 1 }} / {{ wList.length }}</span>
                           @if ((vocabularyActiveIdx() || 0) + 1 < wList.length) {
                             <button (click)="vocabularyActiveIdx.set(vocabularyActiveIdx() + 1)" class="btn-p" style="flex: 1; background: #4F46E5; border-color: #4F46E5; padding: 8px 12px;">Suivant</button>
@@ -890,10 +899,10 @@ const defaultWordsBank = [
                        <circle cx="12" cy="12" r="3"></circle>
                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
                      </svg>
-                     <span>Configuration du Jeu</span>
+                     <span>{{ gameLabels().configTitle }}</span>
                    </h3>
                    <p style="font-size: 12.5px; color: var(--text-secondary); margin: 0 0 20px 0; text-align: center;">
-                     Personnalisez votre session de jeu avant de commencer !
+                     {{ gameLabels().configDesc }}
                    </p>
 
                    <!-- Difficulty Selection -->
@@ -944,7 +953,7 @@ const defaultWordsBank = [
                                  [style.border-color]="selectedConfigTimer() === t ? '#10B981' : 'var(--border)'"
                                  [style.color]="selectedConfigTimer() === t ? '#065F46' : 'var(--text-primary)'"
                                  style="padding: 10px 4px; border-radius: 8px; border: 1.5px solid; font-size: 12px; font-weight: 700; cursor: pointer; text-align: center; transition: all 0.2s;">
-                           {{ t === 'No limit' ? 'Aucune' : t }}
+                           {{ t === 'No limit' ? gameLabels().noLimitOption : t }}
                          </button>
                        }
                      </div>
@@ -953,7 +962,7 @@ const defaultWordsBank = [
                    <!-- Start Button -->
                    <button (click)="startGameWithConfig()"
                            style="width: 100%; padding: 14px; background: linear-gradient(135deg, #F59E0B, #D97706); color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 12px rgba(217, 119, 6, 0.25); display: flex; align-items: center; justify-content: center; gap: 8px;">
-                     <span>Commencer le Jeu</span>
+                     <span>{{ gameLabels().startGameBtn }}</span>
                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
                      </svg>
@@ -976,7 +985,7 @@ const defaultWordsBank = [
                             <circle cx="12" cy="12" r="10"></circle>
                             <polyline points="12 6 12 12 16 14"></polyline>
                           </svg>
-                          Temps restant : {{ secondsLeft() }}s
+                          {{ gameLabels().timeLeftLabel }} : {{ secondsLeft() }}s
                         </span>
                       </div>
                       <div style="width: 100%; height: 6px; background: #F3F4F6; border-radius: 3px; overflow: hidden; border: 1px solid var(--border-weak);">
@@ -989,30 +998,39 @@ const defaultWordsBank = [
                   }
 
                   @if (activeVocabGame()?.gameType === 'matching') {
-                    <!-- Cards Grid -->
-                    <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:12px; margin-bottom:20px">
+                    <!-- Cards Grid (Association) -->
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:12px; margin-bottom:20px">
                       @for (card of gameCards(); track card.id) {
                         <button class="vocab-match-card" 
                                 [class.selected]="card.selected"
                                 [class.matched]="card.matched"
                                 [class.error]="card.error"
                                 [style.pointer-events]="card.matched ? 'none' : 'auto'"
+                                style="border: 1.5px solid var(--border); border-radius: 12px; padding: 14px; background: var(--surface-1); color: var(--text-primary); font-weight: 600; font-size: 13px; min-height: 64px; cursor: pointer; display: flex; align-items: center; justify-content: center; position: relative; transition: all 0.2s ease-in-out; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);"
+                                [style.border-color]="card.matched ? '#10B981' : (card.error ? '#EF4444' : (card.selected ? '#D97706' : 'var(--border)'))"
+                                [style.background]="card.matched ? '#ECFDF5' : (card.error ? '#FEF2F2' : (card.selected ? '#FEF3C7' : 'var(--surface-1)'))"
+                                [style.color]="card.matched ? '#065F46' : (card.error ? '#991B1B' : (card.selected ? '#92400E' : 'var(--text-primary)'))"
                                 (click)="selectCard(card)">
-                          <div style="display:flex; align-items:center; gap:6px; justify-content:center; width:100%">
-                            @if (card.matched) {
-                              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                            } @else if (card.error) {
-                              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                            }
-                            <span>{{ card.text }}</span>
+                          <div style="display:flex; flex-direction:column; align-items:center; gap:6px; justify-content:center; width:100%">
+                            <div style="display:flex; align-items:center; gap:6px; justify-content:center;">
+                              @if (card.matched) {
+                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                              } @else if (card.error) {
+                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                              }
+                              <span>{{ card.text }}</span>
+                            </div>
                             @if (card.type === 'english' && !card.matched) {
                               <button (click)="speakWord(card.text); $event.stopPropagation()"
-                                      style="background:none; border:none; color:#D97706; cursor:pointer; padding:2px; display:inline-flex; align-items:center; margin-left:4px;"
-                                      title="Prononcer le mot anglais">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                      style="background:rgba(217, 119, 6, 0.08); border:none; color:#D97706; cursor:pointer; padding:3px 8px; display:inline-flex; align-items:center; gap:4px; border-radius:12px; font-size:10px; font-weight:700; transition: background 0.2s;"
+                                      onmouseover="this.style.background='rgba(217, 119, 6, 0.15)'"
+                                      onmouseout="this.style.background='rgba(217, 119, 6, 0.08)'"
+                                      [title]="t('Prononcer le mot anglais', 'Pronounce the English word')">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                   <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
                                   <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
                                 </svg>
+                                {{ gameLabels().listenBtn }}
                               </button>
                             }
                           </div>
@@ -1023,46 +1041,47 @@ const defaultWordsBank = [
 
                   @if (activeVocabGame()?.gameType === 'memory') {
                     <!-- MEMORY INTERFACE -->
-                    <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; margin-bottom:20px">
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap:10px; margin-bottom:20px">
                       @for (card of gameCards(); track card.id) {
-                        <button class="vocab-match-card" 
-                                [class.selected]="card.selected"
-                                [class.matched]="card.matched"
-                                [class.error]="card.error"
-                                [style.pointer-events]="(card.matched || card.selected) ? 'none' : 'auto'"
-                                [style.background]="card.matched ? '#ECFDF5' : (card.selected ? '#EEF2FF' : '#4F46E5')"
-                                [style.border-color]="card.matched ? '#10B981' : (card.selected ? '#4F46E5' : '#4F46E5')"
-                                [style.color]="(card.matched || card.selected) ? 'var(--text-primary)' : 'transparent'"
-                                style="height:80px; font-size:11px; display:flex; align-items:center; justify-content:center; font-weight:700; border-radius:8px; transition: all 0.3s ease; box-shadow:0 2px 4px rgba(0,0,0,0.05)"
-                                (click)="selectCard(card)">
-                          @if (card.matched) {
-                            <div style="color:#059669; font-weight:700; text-align:center; display:flex; align-items:center; gap:4px; justify-content:center;">
-                              <span>{{ card.text }}</span>
-                              @if (card.type === 'english') {
-                                <button (click)="speakWord(card.text); $event.stopPropagation()" style="background:none; border:none; color:#059669; cursor:pointer; padding:2px; display:inline-flex; align-items:center;">
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                                  </svg>
-                                </button>
-                              }
+                        <div style="perspective: 1000px; height: 90px; cursor: pointer;"
+                             [style.pointer-events]="(card.matched || card.selected) ? 'none' : 'auto'"
+                             (click)="selectCard(card)">
+                          
+                          <div [style.transform]="(card.selected || card.matched) ? 'rotateY(180deg)' : 'none'"
+                               style="width:100%; height:100%; position:relative; transform-style:preserve-3d; transition: transform 0.4s; border-radius:10px; box-shadow:0 4px 8px rgba(0,0,0,0.05)">
+                            
+                            <!-- Card Back (Hidden/Face down) -->
+                            <div style="position:absolute; width:100%; height:100%; backface-visibility:hidden; background:linear-gradient(135deg, #4F46E5 0%, #3730A3 100%); border:1.5px solid #4F46E5; border-radius:10px; display:flex; align-items:center; justify-content:center; color:white;">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                                <line x1="12" y1="17" x2="12.01" y2="17"/>
+                              </svg>
                             </div>
-                          } @else if (card.selected) {
-                            <div style="color:#4F46E5; font-weight:700; text-align:center; display:flex; align-items:center; gap:4px; justify-content:center;">
-                              <span>{{ card.text }}</span>
-                              @if (card.type === 'english') {
-                                <button (click)="speakWord(card.text); $event.stopPropagation()" style="background:none; border:none; color:#4F46E5; cursor:pointer; padding:2px; display:inline-flex; align-items:center;">
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                                  </svg>
-                                </button>
-                              }
+
+                            <!-- Card Front (Revealed) -->
+                            <div style="position:absolute; width:100%; height:100%; backface-visibility:hidden; background:#FFF; border:2px solid #E2E8F0; border-radius:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:8px; transform:rotateY(180deg);"
+                                 [style.border-color]="card.matched ? '#10B981' : (card.error ? '#EF4444' : '#4F46E5')"
+                                 [style.background]="card.matched ? '#ECFDF5' : (card.error ? '#FEF2F2' : '#FFF')">
+                              
+                              <div style="font-size:11.5px; font-weight:700; text-align:center; display:flex; flex-direction:column; align-items:center; gap:4px; justify-content:center; width:100%"
+                                   [style.color]="card.matched ? '#065F46' : (card.error ? '#991B1B' : '#1E1B4B')">
+                                <span style="word-break: break-word; line-height: 1.2;">{{ card.text }}</span>
+                                @if (card.type === 'english') {
+                                  <button (click)="speakWord(card.text); $event.stopPropagation()" 
+                                          style="background:rgba(79, 70, 229, 0.06); border:none; color:#4F46E5; cursor:pointer; padding:2px 6px; display:inline-flex; align-items:center; gap:2px; border-radius:8px; font-size:9px; font-weight:700; margin-top:2px;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                                      <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                                    </svg>
+                                    {{ gameLabels().listenBtn }}
+                                  </button>
+                                }
+                              </div>
                             </div>
-                          } @else {
-                            <span style="color:#FFF; font-size:18px">❓</span>
-                          }
-                        </button>
+
+                          </div>
+                        </div>
                       }
                     </div>
                   }
@@ -1070,12 +1089,12 @@ const defaultWordsBank = [
                   @if (activeVocabGame()?.gameType === 'flashcards') {
                     <!-- FLASHCARDS INTERFACE -->
                     <div style="display:flex; flex-direction:column; align-items:center; gap:20px; width:100%">
-                      <div style="font-size:12px; color:var(--text-muted)">Carte {{ currentCardIdx() + 1 }} sur {{ activeWords().length }}</div>
+                      <div style="font-size:12px; color:var(--text-muted)">{{ gameLabels().cardCounter(currentCardIdx() + 1, activeWords().length) }}</div>
                       
                       <div (click)="flipCard()" 
                            style="width:100%; max-width:360px; height:220px; perspective: 1000px; cursor:pointer">
                         <div [style.transform]="isFlipped() ? 'rotateY(180deg)' : 'none'"
-                             style="width:100%; height:100%; position:relative; transform-style:preserve-3d; transition: transform 0.6s; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.1)">
+                             style="width:100%; height:100%; position:relative; transform-style:preserve-3d; transition: transform 0.4s; border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,0.06)">
                           
                           <!-- Front (English) -->
                           <div style="position:absolute; width:100%; height:100%; backface-visibility:hidden; background:linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%); border:1.5px solid #4F46E5; border-radius:12px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px">
@@ -1086,7 +1105,7 @@ const defaultWordsBank = [
                                       style="background:none; border:none; color:#4F46E5; cursor:pointer; padding:6px; display:flex; align-items:center; border-radius:50%; transition: background 0.2s;"
                                       onmouseover="this.style.background='rgba(79, 70, 229, 0.1)'"
                                       onmouseout="this.style.background='none'"
-                                      title="Prononcer le mot anglais">
+                                      [title]="t('Prononcer le mot anglais', 'Pronounce the English word')">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                   <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
                                   <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
@@ -1112,12 +1131,14 @@ const defaultWordsBank = [
                             <!-- Flashcard Interactive revision buttons -->
                             <div style="display:flex; gap:10px; margin-top:10px;" (click)="$event.stopPropagation()">
                               <button (click)="markFlashcardResult(true)"
-                                      style="padding:6px 12px; border-radius:20px; border:none; background:#10B981; color:white; font-size:11.5px; font-weight:700; cursor:pointer;">
-                                Je savais ✅
+                                      style="padding: 8px 16px; border-radius: 20px; border: none; background: #10B981; color: white; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 6px rgba(16,185,129,0.15);">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                {{ t('Je savais', 'I knew it') }}
                               </button>
                               <button (click)="markFlashcardResult(false)"
-                                      style="padding:6px 12px; border-radius:20px; border:none; background:#EF4444; color:white; font-size:11.5px; font-weight:700; cursor:pointer;">
-                                À réviser ❌
+                                      style="padding: 8px 16px; border-radius: 20px; border: none; background: #EF4444; color: white; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 6px rgba(239,68,68,0.15);">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                {{ t('À réviser', 'To review') }}
                               </button>
                             </div>
                           </div>
@@ -1126,9 +1147,9 @@ const defaultWordsBank = [
                       </div>
 
                       <div style="display:flex; justify-content:space-between; width:100%; max-width:360px; margin-top:12px">
-                        <button class="btn-s" [disabled]="currentCardIdx() === 0" (click)="prevFlashcard()">Précédent</button>
+                        <button class="btn-s" [disabled]="currentCardIdx() === 0" (click)="prevFlashcard()">{{ gameLabels().prevBtn }}</button>
                         <button class="btn-p" style="background:#4F46E5; border-color:#4F46E5" (click)="nextFlashcard()">
-                          {{ currentCardIdx() + 1 === activeWords().length ? 'Terminer' : 'Suivant' }}
+                          {{ currentCardIdx() + 1 === activeWords().length ? gameLabels().finishBtn : gameLabels().nextBtn }}
                         </button>
                       </div>
                     </div>
@@ -1137,16 +1158,16 @@ const defaultWordsBank = [
                   @if (activeVocabGame()?.gameType === 'word_builder') {
                     <!-- WORD BUILDER INTERFACE -->
                     <div style="display:flex; flex-direction:column; align-items:center; gap:20px; width:100%">
-                      <div style="font-size:12px; color:var(--text-muted)">Mot {{ wordBuilderIdx() + 1 }} sur {{ activeWords().length }}</div>
+                      <div style="font-size:12px; color:var(--text-muted)">{{ gameLabels().wordCounter(wordBuilderIdx() + 1, activeWords().length) }}</div>
                       
                       <div style="background:var(--surface-2); padding:16px; border-radius:8px; border:1px solid var(--border-weak); text-align:center; width:100%">
-                        <span style="font-size:10px; font-weight:700; color:#D97706; text-transform:uppercase">Traduire le mot :</span>
+                        <span style="font-size:10px; font-weight:700; color:#D97706; text-transform:uppercase">{{ gameLabels().translateWordPrompt }}</span>
                         <h3 style="font-size:18px; font-weight:800; margin:4px 0 0 0; color:var(--text-primary); display:flex; align-items:center; justify-content:center; gap:8px;">
                           <span>{{ activeWords()?.[wordBuilderIdx()]?.translation }}</span>
                           <button (click)="speakWord(activeWords()?.[wordBuilderIdx()]?.word)"
                                   style="background:none; border:none; color:#D97706; cursor:pointer; padding:4px; display:inline-flex; align-items:center;"
-                                  title="Prononcer le mot anglais">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                  [title]="t('Prononcer le mot anglais', 'Pronounce the English word')">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                               <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
                               <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
                             </svg>
@@ -1163,7 +1184,9 @@ const defaultWordsBank = [
                       <div style="display:flex; gap:8px; flex-wrap:wrap; min-height:48px; border-bottom:2px dashed var(--border); padding-bottom:12px; width:100%; justify-content:center">
                         @for (char of selectedLetters(); track $index; let sIdx = $index) {
                           <button (click)="clickSelectedLetter(char, sIdx)"
-                                  style="width:36px; height:36px; border-radius:8px; border:1.5px solid #4F46E5; background:#EEF2FF; color:#4F46E5; font-size:16px; font-weight:800; display:flex; align-items:center; justify-content:center; cursor:pointer">
+                                  style="width:40px; height:40px; border-radius:8px; border:2px solid #3B82F6; background:#EFF6FF; color:#1D4ED8; font-size:17px; font-weight:800; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow: 0 3px 0 #2563EB; transition: all 0.1s;"
+                                  onmousedown="this.style.transform='translateY(2px)'; this.style.boxShadow='0 1px 0 #2563EB'"
+                                  onmouseup="this.style.transform='translateY(0px)'; this.style.boxShadow='0 3px 0 #2563EB'">
                             {{ char | uppercase }}
                           </button>
                         }
@@ -1173,29 +1196,34 @@ const defaultWordsBank = [
                       <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center">
                         @for (char of scrambledLetters(); track $index; let scrIdx = $index) {
                           <button (click)="clickScrambledLetter(char, scrIdx)"
-                                  style="width:36px; height:36px; border-radius:8px; border:1.5px solid var(--border); background:#FFF; color:var(--text-primary); font-size:16px; font-weight:800; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.05)">
+                                  style="width:40px; height:40px; border-radius:8px; border:2px solid #E2E8F0; background:white; color:#334155; font-size:17px; font-weight:800; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow: 0 3px 0 #CBD5E1; transition: all 0.1s;"
+                                  onmousedown="this.style.transform='translateY(2px)'; this.style.boxShadow='0 1px 0 #CBD5E1'"
+                                  onmouseup="this.style.transform='translateY(0px)'; this.style.boxShadow='0 3px 0 #CBD5E1'">
                             {{ char | uppercase }}
                           </button>
                         }
                       </div>
 
-                      <button class="btn-s" style="margin-top:10px" (click)="resetWordBuilder()">Réinitialiser</button>
+                      <button class="btn-s" style="margin-top:10px; display:inline-flex; align-items:center; gap:6px;" (click)="resetWordBuilder()">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                        {{ gameLabels().resetBtn }}
+                      </button>
                     </div>
                   }
 
                   @if (activeVocabGame()?.gameType === 'hangman') {
                     <!-- HANGMAN INTERFACE -->
                     <div style="display:flex; flex-direction:column; align-items:center; gap:16px; width:100%">
-                      <div style="font-size:12px; color:var(--text-muted)">Mot {{ hangmanIdx() + 1 }} sur {{ activeWords().length }}</div>
+                      <div style="font-size:12px; color:var(--text-muted)">{{ gameLabels().wordCounter(hangmanIdx() + 1, activeWords().length) }}</div>
 
                       <div style="background:var(--surface-2); padding:16px; border-radius:8px; border:1px solid var(--border-weak); text-align:center; width:100%">
-                        <span style="font-size:10px; font-weight:700; color:#EF4444; text-transform:uppercase">Indice / Traduction :</span>
+                        <span style="font-size:10px; font-weight:700; color:#EF4444; text-transform:uppercase">{{ gameLabels().definitionTranslationPrompt }}</span>
                         <h3 style="font-size:18px; font-weight:800; margin:4px 0 0 0; color:var(--text-primary); display:flex; align-items:center; justify-content:center; gap:8px;">
                           <span>{{ activeWords()?.[hangmanIdx()]?.translation }}</span>
                           <button (click)="speakWord(activeWords()?.[hangmanIdx()]?.word)"
                                   style="background:none; border:none; color:#EF4444; cursor:pointer; padding:4px; display:inline-flex; align-items:center;"
-                                  title="Prononcer le mot anglais">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                  [title]="t('Prononcer le mot anglais', 'Pronounce the English word')">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                               <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
                               <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
                             </svg>
@@ -1208,16 +1236,56 @@ const defaultWordsBank = [
                         }
                       </div>
 
+                      <!-- SVG Hangman Gallows and Stick Figure -->
+                      <svg width="120" height="120" viewBox="0 0 100 100" style="margin: 10px 0;">
+                        <!-- Gallows (always visible) -->
+                        <line x1="15" y1="95" x2="55" y2="95" stroke="var(--text-primary)" stroke-width="4" stroke-linecap="round" />
+                        <line x1="30" y1="95" x2="30" y2="10" stroke="var(--text-primary)" stroke-width="4" stroke-linecap="round" />
+                        <line x1="30" y1="10" x2="65" y2="10" stroke="var(--text-primary)" stroke-width="4" stroke-linecap="round" />
+                        <line x1="65" y1="10" x2="65" y2="25" stroke="var(--text-primary)" stroke-width="3" stroke-linecap="round" />
+                        <line x1="30" y1="25" x2="45" y2="10" stroke="var(--text-primary)" stroke-width="3" stroke-linecap="round" />
+
+                        <!-- Head (lives <= 5) -->
+                        @if (hangmanLives() <= 5) {
+                          <circle cx="65" cy="33" r="8" fill="none" stroke="#EF4444" stroke-width="3.5" />
+                        }
+                        <!-- Body (lives <= 4) -->
+                        @if (hangmanLives() <= 4) {
+                          <line x1="65" y1="41" x2="65" y2="65" stroke="#EF4444" stroke-width="3.5" stroke-linecap="round" />
+                        }
+                        <!-- Left Arm (lives <= 3) -->
+                        @if (hangmanLives() <= 3) {
+                          <line x1="65" y1="48" x2="50" y2="40" stroke="#EF4444" stroke-width="3" stroke-linecap="round" />
+                        }
+                        <!-- Right Arm (lives <= 2) -->
+                        @if (hangmanLives() <= 2) {
+                          <line x1="65" y1="48" x2="80" y2="40" stroke="#EF4444" stroke-width="3" stroke-linecap="round" />
+                        }
+                        <!-- Left Leg (lives <= 1) -->
+                        @if (hangmanLives() <= 1) {
+                          <line x1="65" y1="65" x2="52" y2="82" stroke="#EF4444" stroke-width="3" stroke-linecap="round" />
+                        }
+                        <!-- Right Leg (lives <= 0) -->
+                        @if (hangmanLives() <= 0) {
+                          <line x1="65" y1="65" x2="78" y2="82" stroke="#EF4444" stroke-width="3" stroke-linecap="round" />
+                          <!-- Dead eyes inside head -->
+                          <line x1="62" y1="31" x2="64" y2="33" stroke="#EF4444" stroke-width="1.5" />
+                          <line x1="64" y1="31" x2="62" y2="33" stroke="#EF4444" stroke-width="1.5" />
+                          <line x1="66" y1="31" x2="68" y2="33" stroke="#EF4444" stroke-width="1.5" />
+                          <line x1="68" y1="31" x2="66" y2="33" stroke="#EF4444" stroke-width="1.5" />
+                        }
+                      </svg>
+
                       <!-- Lives Counter -->
                       <div style="font-size:13px; font-weight:700; color:#EF4444; display:flex; align-items:center; gap:6px">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#EF4444" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                           <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
                         </svg>
-                        <span>Vies restantes : {{ hangmanLives() }} / 6</span>
+                        <span>{{ gameLabels().livesLeftLabel }} : {{ hangmanLives() }} / 6</span>
                       </div>
 
                       <!-- Underscore placeholder word displays -->
-                      <div style="font-size:24px; font-weight:800; letter-spacing:6px; color:#1E1B4B; margin:12px 0; text-align:center; text-transform:uppercase">
+                      <div style="font-size:26px; font-weight:800; letter-spacing:8px; color:#1E1B4B; margin:16px 0; text-align:center; text-transform:uppercase">
                         {{ getHangmanWordDisplay() }}
                       </div>
 
@@ -1226,9 +1294,11 @@ const defaultWordsBank = [
                         @for (letter of ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']; track letter) {
                           <button [disabled]="hangmanGuesses().includes(letter)"
                                   (click)="guessHangmanLetter(letter)"
-                                  style="width:36px; height:36px; border-radius:6px; border:1px solid var(--border); font-size:14px; font-weight:700; cursor:pointer; text-transform:uppercase"
-                                  [style.background]="hangmanGuesses().includes(letter) ? '#E2E8F0' : '#FFF'"
-                                  [style.color]="hangmanGuesses().includes(letter) ? '#94A3B8' : 'var(--text-primary)'">
+                                  style="width:38px; height:38px; border-radius:8px; border:2px solid #E2E8F0; font-size:14px; font-weight:800; cursor:pointer; text-transform:uppercase; transition: all 0.2s;"
+                                  [style.background]="hangmanGuesses().includes(letter) ? '#F1F5F9' : 'white'"
+                                  [style.border-color]="hangmanGuesses().includes(letter) ? '#E2E8F0' : '#E2E8F0'"
+                                  [style.color]="hangmanGuesses().includes(letter) ? '#94A3B8' : '#334155'"
+                                  [style.box-shadow]="hangmanGuesses().includes(letter) ? 'none' : '0 2px 0 #E2E8F0'">
                             {{ letter }}
                           </button>
                         }
@@ -1240,11 +1310,11 @@ const defaultWordsBank = [
                   @if (activeVocabGame()?.gameType === 'multiple_choice') {
                     <!-- MULTIPLE CHOICE GAME INTERFACE -->
                     <div style="display:flex; flex-direction:column; gap:16px; width:100%">
-                      <div style="font-size:12px; color:var(--text-muted); text-align:center">Question {{ mcGameIdx() + 1 }} sur {{ activeWords().length }}</div>
+                      <div style="font-size:12px; color:var(--text-muted); text-align:center">{{ gameLabels().questionCounter(mcGameIdx() + 1, activeWords().length) }}</div>
 
                       <div style="background:var(--surface-2); padding:16px; border-radius:8px; border:1px solid var(--border-weak); text-align:center; width:100%">
                         @if (hasDefinitionOrContext(activeWords()?.[mcGameIdx()])) {
-                          <span style="font-size:10px; font-weight:700; color:#4F46E5; text-transform:uppercase">Complétez la phrase :</span>
+                          <span style="font-size:10px; font-weight:700; color:#4F46E5; text-transform:uppercase">{{ gameLabels().completeSentencePrompt }}</span>
                           <h3 style="font-size:18px; font-weight:800; margin:4px 0 0 0; color:var(--text-primary)">
                             {{ getMCQuestionPhrase(activeWords()?.[mcGameIdx()]) }}
                           </h3>
@@ -1252,7 +1322,7 @@ const defaultWordsBank = [
                             Traduction : {{ activeWords()?.[mcGameIdx()]?.translation }}
                           </p>
                         } @else {
-                          <span style="font-size:10px; font-weight:700; color:#4F46E5; text-transform:uppercase">Définition / Traduction :</span>
+                          <span style="font-size:10px; font-weight:700; color:#4F46E5; text-transform:uppercase">{{ gameLabels().definitionTranslationPrompt }}</span>
                           <h3 style="font-size:18px; font-weight:800; margin:4px 0 0 0; color:var(--text-primary)">
                             {{ activeWords()?.[mcGameIdx()]?.translation }}
                           </h3>
@@ -1265,22 +1335,39 @@ const defaultWordsBank = [
                       </div>
 
                       <!-- Choices Buttons with speaker icons next to options -->
-                      <div style="display:flex; flex-direction:column; gap:8px">
-                        @for (opt of mcOptions(); track opt) {
+                      <div style="display:flex; flex-direction:column; gap:10px">
+                        @for (opt of mcOptions(); track opt; let optIdx = $index) {
                           <div style="display:flex; align-items:center; gap:8px; width:100%">
                             <button (click)="selectMCOption(opt)"
                                     [disabled]="mcSelected() !== null"
-                                    style="flex:1; padding:12px; border-radius:8px; border:1.5px solid var(--border); font-size:13px; font-weight:700; text-align:left; cursor:pointer"
+                                    style="flex:1; padding:14px; border-radius:10px; border:2px solid var(--border); font-size:13.5px; font-weight:700; text-align:left; cursor:pointer; display:flex; align-items:center; transition: all 0.2s;"
                                     [style.background]="mcSelected() === opt ? (mcIsCorrect() ? '#ECFDF5' : '#FEF2F2') : (mcSelected() !== null && opt === activeWords()?.[mcGameIdx()]?.word ? '#ECFDF5' : '#FFF')"
                                     [style.border-color]="mcSelected() === opt ? (mcIsCorrect() ? '#10B981' : '#EF4444') : (mcSelected() !== null && opt === activeWords()?.[mcGameIdx()]?.word ? '#10B981' : 'var(--border)')"
                                     [style.color]="mcSelected() === opt ? (mcIsCorrect() ? '#065F46' : '#991B1B') : (mcSelected() !== null && opt === activeWords()?.[mcGameIdx()]?.word ? '#065F46' : 'var(--text-primary)')">
-                              {{ opt }}
+                              
+                              <div style="width:24px; height:24px; border-radius:50%; background:rgba(79, 70, 229, 0.08); color:#4F46E5; font-size:11px; font-weight:800; display:flex; align-items:center; justify-content:center; margin-right:12px; flex-shrink:0;"
+                                   [style.background]="mcSelected() === opt ? (mcIsCorrect() ? '#10B981' : '#EF4444') : (mcSelected() !== null && opt === activeWords()?.[mcGameIdx()]?.word ? '#10B981' : 'rgba(79, 70, 229, 0.08)')"
+                                   [style.color]="(mcSelected() === opt || (mcSelected() !== null && opt === activeWords()?.[mcGameIdx()]?.word)) ? '#FFF' : '#4F46E5'">
+                                {{ ['A', 'B', 'C', 'D'][optIdx] }}
+                              </div>
+
+                              <span style="flex:1;">{{ opt }}</span>
+
+                              @if (mcSelected() === opt) {
+                                @if (mcIsCorrect()) {
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-left:8px;"><polyline points="20 6 9 17 4 12"/></svg>
+                                } @else {
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-left:8px;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                }
+                              } @else if (mcSelected() !== null && opt === activeWords()?.[mcGameIdx()]?.word) {
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-left:8px;"><polyline points="20 6 9 17 4 12"/></svg>
+                              }
                             </button>
                             <button (click)="speakWord(opt); $event.stopPropagation()"
                                     style="background:none; border:none; color:#4F46E5; cursor:pointer; padding:6px; display:flex; align-items:center; border-radius:50%; transition: background 0.2s;"
                                     onmouseover="this.style.background='rgba(79, 70, 229, 0.1)'"
                                     onmouseout="this.style.background='none'"
-                                    title="Prononcer">
+                                    [title]="t('Prononcer', 'Pronounce')">
                               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                 <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
                                 <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
@@ -1289,10 +1376,9 @@ const defaultWordsBank = [
                           </div>
                         }
                       </div>
-
                     </div>
                   }
-               } @else {
+} @else {
                  <!-- Detailed Game Results Overlay -->
                  <div style="text-align:center; padding:10px 0; animation: fadeIn 0.3s ease-out;">
                    <div style="width:64px; height:64px; border-radius:50%; background:#FEF3C7; border:2px solid #F59E0B; display:flex; align-items:center; justify-content:center; margin:0 auto 16px auto; box-shadow: 0 4px 10px rgba(245, 158, 11, 0.2);">
@@ -1303,47 +1389,47 @@ const defaultWordsBank = [
                    </div>
                    
                    <h3 style="font-size:18px; font-weight:800; color:var(--text-primary); margin-bottom:4px">
-                     Session Terminée ! 🎉
+                     {{ gameLabels().resultsTitle }}
                    </h3>
                    <p style="font-size:12.5px; color:var(--text-secondary); margin-bottom:20px">
-                     Voici vos résultats détaillés pour : <strong>{{ activeVocabGame()?.title }}</strong>
+                     {{ gameLabels().resultsDesc }} <strong>{{ activeVocabGame()?.title }}</strong>
                    </p>
 
                    <!-- Grid stats -->
                    <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:12px; margin-bottom:20px;">
                      
                      <div style="background:#F9FAFB; border:1px solid var(--border-weak); border-radius:8px; padding:12px; display:flex; flex-direction:column; align-items:center;">
-                       <span style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Réussite</span>
+                       <span style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">{{ gameLabels().successRateLabel }}</span>
                        <span [style.color]="gameSuccessRate() >= 60 ? '#10B981' : '#EF4444'" style="font-size:20px; font-weight:800;">
                          {{ gameSuccessRate() }}%
                        </span>
                        <span style="font-size:11px; color:var(--text-secondary);">
-                         ({{ gameCorrectCount() }} / {{ activeWords().length }} correct)
+                         ({{ gameCorrectCount() }} / {{ activeWords().length }} {{ t('correct', 'correct') }})
                        </span>
                      </div>
 
                      <div style="background:#F9FAFB; border:1px solid var(--border-weak); border-radius:8px; padding:12px; display:flex; flex-direction:column; align-items:center;">
-                       <span style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Erreurs</span>
+                       <span style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">{{ gameLabels().errorsLabel }}</span>
                        <span [style.color]="gameMistakesCount() > 0 ? '#EF4444' : '#10B981'" style="font-size:20px; font-weight:800;">
                          {{ gameMistakesCount() }}
                        </span>
-                       <span style="font-size:11px; color:var(--text-secondary);">fautes relevées</span>
+                       <span style="font-size:11px; color:var(--text-secondary);">{{ gameLabels().errorsBadge }}</span>
                      </div>
 
                      <div style="background:#F9FAFB; border:1px solid var(--border-weak); border-radius:8px; padding:12px; display:flex; flex-direction:column; align-items:center;">
-                       <span style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Temps Écoulé</span>
+                       <span style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">{{ gameLabels().timeSpentLabel }}</span>
                        <span style="font-size:20px; font-weight:800; color:var(--text-primary);">
                          {{ gameTimeSpent() }}s
                        </span>
-                       <span style="font-size:11px; color:var(--text-secondary);">secondes passées</span>
+                       <span style="font-size:11px; color:var(--text-secondary);">{{ gameLabels().timeSpentBadge }}</span>
                      </div>
 
                      <div style="background:#F9FAFB; border:1px solid var(--border-weak); border-radius:8px; padding:12px; display:flex; flex-direction:column; align-items:center;">
-                       <span style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">XP Remportés</span>
+                       <span style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">{{ gameLabels().xpEarnedLabel }}</span>
                        <span style="font-size:20px; font-weight:800; color:#4F46E5;">
                          +{{ gameXPRewarded() }} XP
                        </span>
-                       <span style="font-size:11px; color:var(--text-secondary);">ajoutés au profil</span>
+                       <span style="font-size:11px; color:var(--text-secondary);">{{ gameLabels().xpEarnedBadge }}</span>
                      </div>
 
                    </div>
@@ -1352,7 +1438,7 @@ const defaultWordsBank = [
                    @if (gameBadges().length > 0) {
                      <div style="margin-bottom:24px;">
                        <h4 style="font-size:12px; font-weight:700; color:var(--text-primary); text-transform:uppercase; margin:0 0 10px 0; text-align:left;">
-                         Badges Décrochés 🎖️
+                         {{ gameLabels().badgesEarnedLabel }}
                        </h4>
                        <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-start;">
                          @for (badge of gameBadges(); track badge) {
@@ -1381,7 +1467,7 @@ const defaultWordsBank = [
                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
                          </svg>
-                         <span>Réviser les erreurs ({{ gameMistakesCount() }} mots)</span>
+                         <span>{{ gameLabels().reviewMistakesBtn(gameMistakesCount()) }}</span>
                        </button>
                      }
                      
@@ -1529,6 +1615,48 @@ const defaultWordsBank = [
 })
 export class StudentExercisesComponent {
   private db = inject(DatabaseService);
+
+  activeLang = this.db.activeLang;
+
+  t(fr: string, en: string): string {
+    return this.activeLang() === 'fr' ? fr : en;
+  }
+
+  gameLabels = computed(() => ({
+    configTitle: this.t("Configuration du Jeu", "Game Configuration"),
+    configDesc: this.t("{{ gameLabels().configDesc }}", "Customize your game session before starting!"),
+    difficultyLabel: this.t("Difficulté", "Difficulty"),
+    categoryLabel: this.t("Catégorie", "Category"),
+    timerLabel: this.t("Limite de Temps (par mot)", "Time Limit (per word)"),
+    noLimitOption: this.t("Aucune", "No limit"),
+    startGameBtn: this.t("Commencer le Jeu", "Start Game"),
+    timeLeftLabel: this.t("Temps restant", "Time remaining"),
+    livesLeftLabel: this.t("Vies restantes", "Lives remaining"),
+    resetBtn: this.t("Réinitialiser", "Reset"),
+    prevBtn: this.t("Précédent", "Previous"),
+    nextBtn: this.t("Suivant", "Next"),
+    finishBtn: this.t("Terminer", "Finish"),
+    cardCounter: (curr: number, total: number) => this.t(`Carte ${curr} sur ${total}`, `Card ${curr} of ${total}`),
+    wordCounter: (curr: number, total: number) => this.t(`Mot ${curr} sur ${total}`, `Word ${curr} of ${total}`),
+    questionCounter: (curr: number, total: number) => this.t(`Question ${curr} sur ${total}`, `Question ${curr} of ${total}`),
+    translateWordPrompt: this.t("Traduire le mot :", "Translate the word:"),
+    completeSentencePrompt: this.t("Complétez la phrase :", "Complete the sentence:"),
+    definitionTranslationPrompt: this.t("Définition / Traduction :", "Definition / Translation:"),
+    listenBtn: this.t("Écouter", "Listen"),
+    wordMatchHint: this.t("Cliquer pour retourner", "Click to flip"),
+    resultsTitle: this.t("{{ gameLabels().resultsTitle }}", "Session Finished! 🎉"),
+    resultsDesc: this.t("{{ gameLabels().resultsDesc }}", "Here are your detailed results for:"),
+    successRateLabel: this.t("Réussite", "Success Rate"),
+    errorsLabel: this.t("Erreurs", "Mistakes"),
+    errorsBadge: this.t("fautes relevées", "mistakes found"),
+    timeSpentLabel: this.t("Temps Écoulé", "Time Spent"),
+    timeSpentBadge: this.t("secondes passées", "seconds spent"),
+    xpEarnedLabel: this.t("XP Remportés", "XP Earned"),
+    xpEarnedBadge: this.t("ajoutés au profil", "added to profile"),
+    badgesEarnedLabel: this.t("{{ gameLabels().badgesEarnedLabel }}", "Badges Earned 🎖️"),
+    reviewMistakesBtn: (count: number) => this.t(`Réviser les erreurs (${count} mots)`, `Review mistakes (${count} words)`),
+    exitBtn: this.t("Quitter", "Exit")
+  }));
 
   activeExercise = signal<'list' | 'quiz' | 'game' | 'listening' | 'exercise'>('list');
   activeSubTab = signal<'quizzes' | 'exercises' | 'games'>('quizzes');
@@ -2884,21 +3012,21 @@ export class StudentExercisesComponent {
 
   getGameLabel(type: string): string {
     switch (type) {
-      case 'matching': return 'Association';
-      case 'memory': return 'Jeu de Mémoire';
-      case 'flashcards': return 'Flashcards';
-      case 'word_builder': return 'Reconstruction';
-      case 'hangman': return 'Pendu';
-      case 'multiple_choice': return 'Choix Multiple';
-      default: return 'Jeu';
+      case 'matching': return this.t('Association', 'Matching');
+      case 'memory': return this.t('Jeu de Mémoire', 'Memory Game');
+      case 'flashcards': return this.t('Flashcards', 'Flashcards');
+      case 'word_builder': return this.t('Reconstruction', 'Word Builder');
+      case 'hangman': return this.t('Pendu', 'Hangman');
+      case 'multiple_choice': return this.t('Choix Multiple', 'Multiple Choice');
+      default: return this.t('Jeu', 'Game');
     }
   }
 
   getDiffLabel(difficulty: string): string {
     switch (difficulty) {
-      case 'easy': return 'Facile';
-      case 'medium': return 'Moyen';
-      case 'hard': return 'Difficile';
+      case 'easy': return this.t('Facile', 'Easy');
+      case 'medium': return this.t('Moyen', 'Medium');
+      case 'hard': return this.t('Difficile', 'Hard');
       default: return difficulty;
     }
   }

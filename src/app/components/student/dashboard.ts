@@ -11,73 +11,98 @@ import { DialogService } from '../../services/dialog.service';
     <div class="page">
       <!-- PLACEMENT TEST ALERT & MODAL -->
       @if (!currentUser()?.placementTestTaken) {
-        <div class="card" style="background: linear-gradient(135deg, #EFF6FF 0%, #E8FFF5 100%); border: 1.5px solid #4F46E5; margin-bottom: 20px; padding: 20px; border-radius: 12px">
-          <div style="display:flex; justify-content:space-between; align-items:center; gap:20px; flex-wrap:wrap">
+        <div class="card" style="background: linear-gradient(135deg, #EEF2FF 0%, #ECFDF5 100%); border: 1.5px solid #4F46E5; margin-bottom: 24px; padding: 24px; border-radius: 16px; box-shadow: 0 10px 25px rgba(79, 70, 229, 0.05); position: relative; overflow: hidden;">
+          <!-- Design details -->
+          <div style="position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; background: rgba(79, 70, 229, 0.03); border-radius: 50%;"></div>
+          
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:20px; flex-wrap:wrap; position: relative; z-index: 1;">
             <div style="flex:1; min-width:250px">
-              <span class="badge" style="background:#4F46E5; color:white; font-size:10px; font-weight:700; padding:2px 8px; border-radius:20px; text-transform:uppercase">Level Assessment</span>
-              <div style="display:flex; align-items:center; gap:8px; margin-top:6px">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
+              <span class="badge" style="background:#4F46E5; color:white; font-size:10px; font-weight:800; padding:3px 10px; border-radius:20px; text-transform:uppercase; letter-spacing: 0.5px">
+                {{ t('Évaluation de Niveau', 'Level Assessment') }}
+              </span>
+              <div style="display:flex; align-items:center; gap:8px; margin-top:8px">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0">
                   <path d="M4.5 16.5c-1.5 1.25-2.5 3.5-2.5 3.5s2.25-1 3.5-2.5" />
                   <path d="M12 9 9 12" />
                   <path d="M13 18H9.3a1.5 1.5 0 0 1-1-.4l-2.4-2.4a1.5 1.5 0 0 1-.4-1V11c0-2 2-4 4-4h2" />
                   <path d="M12 9c2-2 4-2 6 0s2 4 0 6l-3 3" />
                   <path d="M19 5c1.5 1.5 1.5 3.5 0 5s-3.5 1.5-5 0-1.5-3.5 0-5 3.5-1.5 5 0z" />
                 </svg>
-                <h3 style="font-size:16px; font-weight:800; color:#1F2937; margin:0">Determine your starting English Level!</h3>
+                <h3 style="font-size:17px; font-weight:850; color:#1E1B4B; margin:0">{{ t('Évaluez votre niveau d\'anglais !', 'Determine your starting English Level!') }}</h3>
               </div>
-              <p style="font-size:12.5px; color:#4B5563; margin:4px 0 0 0">
-                Take this quick 5-question test to evaluate your level (A1, A2, B1, B2) and unlock matching lessons!
+              <p style="font-size:13px; color:#475569; margin:6px 0 0 0; line-height: 1.4">
+                {{ t('Passez ce test rapide pour évaluer vos compétences (A1, A2, B1, B2) et débloquer les cours correspondants.', 'Take this quick test to evaluate your skills (A1, A2, B1, B2) and unlock matching lessons!') }}
               </p>
             </div>
-            <button class="btn-p" style="background:#4F46E5; border-color:#4F46E5; font-size:12px; padding:8px 16px; border-radius:8px" (click)="startPlacementTest()">
-              Start Test Now
+            <button class="btn-p" style="background:#4F46E5; border-color:#4F46E5; font-size:13px; padding:10px 20px; border-radius:10px; font-weight:700; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);" (click)="startPlacementTest()">
+              {{ t('Commencer le test', 'Start Test Now') }}
             </button>
           </div>
 
-          <!-- Active Test Modal Dialog -->
+          <!-- Active Test Modal Dialog (Upgrade to Glassmorphic design) -->
           @if (showPlacementTest()) {
-            <div style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.65); display:flex; justify-content:center; align-items:center; z-index:99999; padding:16px">
-              <div class="card" style="width:100%; max-width:550px; background:#FFF; border-radius:12px; padding:24px; box-shadow:0 10px 25px rgba(0,0,0,0.25)">
+            <div style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15, 23, 42, 0.4); backdrop-filter: blur(8px); display:flex; justify-content:center; align-items:center; z-index:99999; padding:16px">
+              <div class="card" style="width:100%; max-width:550px; background:#FFF; border-radius:16px; padding:28px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); border: 1px solid var(--border-weak); animation: scaleUp 0.2s ease-out">
+                
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px">
-                  <h3 style="font-size:16px; font-weight:700; color:#4F46E5; margin:0">Level Placement Test</h3>
+                  <h3 style="font-size:17px; font-weight:800; color:#4F46E5; margin:0; display:flex; align-items:center; gap:8px">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+                    {{ t('Test de Niveau', 'Placement Test') }}
+                  </h3>
                   <div style="display:flex; align-items:center; gap:12px">
-                    <span style="font-size:12px; color:var(--text-muted)">Question {{ currentQuestionIndex() + 1 }} of {{ placementQuestions().length }}</span>
-                    <button (click)="showPlacementTest.set(false)" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:16px; line-height:1; padding:4px; display:flex; align-items:center; justify-content:center">
-                      <i class="ti ti-x"></i>
+                    <span style="font-size:12px; color:var(--text-muted); font-weight:600">Question {{ currentQuestionIndex() + 1 }} sur {{ placementQuestions().length }}</span>
+                    <button (click)="showPlacementTest.set(false)" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:18px; line-height:1; padding:4px; display:flex; align-items:center; justify-content:center">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                     </button>
                   </div>
                 </div>
 
-                <!-- Progress Bar -->
-                <div style="width:100%; height:6px; background:#E5E7EB; border-radius:3px; margin-bottom:20px; overflow:hidden">
-                  <div [style.width.%]="((currentQuestionIndex() + 1) / (placementQuestions().length || 1)) * 100" style="height:100%; background:#4F46E5; transition:width 0.3s"></div>
+                <!-- Glowing Progress Bar -->
+                <div style="width:100%; height:8px; background:rgba(0, 0, 0, 0.04); border-radius:10px; margin-bottom:24px; overflow:hidden; border:1.5px solid var(--border-weak)">
+                  <div [style.width.%]="((currentQuestionIndex() + 1) / (placementQuestions().length || 1)) * 100" 
+                       style="height:100%; background: linear-gradient(90deg, #3B82F6, #10B981); box-shadow: 0 0 8px rgba(59, 130, 246, 0.4); transition:width 0.3s; border-radius:10px"></div>
                 </div>
 
                 <!-- Question Body -->
                 @if (placementQuestions()[currentQuestionIndex()]; as q) {
-                  <p style="font-size:14px; font-weight:600; color:#1F2937; margin-bottom:16px; line-height:1.4">{{ q.question }}</p>
+                  <div style="display:flex; align-items:flex-start; gap:8px; margin-bottom:20px">
+                    <p style="font-size:15px; font-weight:750; color:#1F2937; margin:0; line-height:1.4; flex:1">{{ q.question }}</p>
+                    <button (click)="speakQuestion(q.question)"
+                            style="background:none; border:none; color:#4F46E5; cursor:pointer; padding:6px; display:flex; align-items:center; border-radius:50%; transition: background 0.2s"
+                            onmouseover="this.style.background='rgba(79, 70, 229, 0.1)'"
+                            onmouseout="this.style.background='none'"
+                            title="Listen to question">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                      </svg>
+                    </button>
+                  </div>
                   
-                  <div style="display:flex; flex-direction:column; gap:10px">
+                  <div style="display:flex; flex-direction:column; gap:12px">
                     @for (opt of q.options; track opt; let oIdx = $index) {
                       <button 
                         class="row" 
                         [style.background]="selectedAnswers()[currentQuestionIndex()] === getOptionLetter(oIdx) ? '#EFF6FF' : '#FFF'"
                         [style.border-color]="selectedAnswers()[currentQuestionIndex()] === getOptionLetter(oIdx) ? '#4F46E5' : 'var(--border)'"
-                        style="text-align:left; cursor:pointer; font-weight:500; font-size:13px; margin:0; padding:12px; border-radius:8px; display:block; width:100%"
+                        [style.box-shadow]="selectedAnswers()[currentQuestionIndex()] === getOptionLetter(oIdx) ? '0 3px 0 #2563EB' : '0 3px 0 #CBD5E1'"
+                        style="text-align:left; cursor:pointer; font-weight:700; font-size:13.5px; margin:0; padding:14px; border:2px solid; border-radius:10px; display:flex; width:100%; transition:all 0.1s"
+                        onmousedown="this.style.transform='translateY(2px)'; this.style.boxShadow='none'"
+                        onmouseup="this.style.transform='translateY(0px)'; this.style.boxShadow=this.style.borderColor==='#4F46E5'?'0 3px 0 #2563EB':'0 3px 0 #CBD5E1'"
                         (click)="selectAnswer(getOptionLetter(oIdx))">
-                        <strong style="color:#4F46E5; margin-right:6px">{{ getOptionLetter(oIdx) }}.</strong> {{ opt }}
+                        <strong style="color:#4F46E5; margin-right:8px; background:rgba(79, 70, 229, 0.08); width:20px; height:20px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center">{{ getOptionLetter(oIdx) }}</strong> {{ opt }}
                       </button>
                     }
                   </div>
                 }
 
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-top:24px; border-top:1px solid var(--border-weak); padding-top:16px">
-                  <button class="btn-s" [disabled]="currentQuestionIndex() === 0" (click)="prevQuestion()">Previous</button>
+                  <button class="btn-s" [disabled]="currentQuestionIndex() === 0" (click)="prevQuestion()">{{ t('Précédent', 'Previous') }}</button>
                   
                   @if (currentQuestionIndex() < placementQuestions().length - 1) {
-                    <button class="btn-p" style="background:#4F46E5; border-color:#4F46E5" [disabled]="!selectedAnswers()[currentQuestionIndex()]" (click)="nextQuestion()">Next</button>
+                    <button class="btn-p" style="background:#4F46E5; border-color:#4F46E5" [disabled]="!selectedAnswers()[currentQuestionIndex()]" (click)="nextQuestion()">{{ t('Suivant', 'Next') }}</button>
                   } @else {
-                    <button class="btn-p" style="background:#10B981; border-color:#10B981" [disabled]="!selectedAnswers()[currentQuestionIndex()] || placementQuestions().length === 0" (click)="submitPlacementTest()">Submit Test</button>
+                    <button class="btn-p" style="background:#10B981; border-color:#10B981" [disabled]="!selectedAnswers()[currentQuestionIndex()] || placementQuestions().length === 0" (click)="submitPlacementTest()">{{ t('Soumettre le Test', 'Submit Test') }}</button>
                   }
                 </div>
               </div>
@@ -85,7 +110,6 @@ import { DialogService } from '../../services/dialog.service';
           }
         </div>
       }
-
       <!-- Welcome Banner -->
       <div class="welcome" style="display:flex; justify-content:space-between; align-items:center; gap:20px; flex-wrap:wrap">
         <div style="flex:1; min-width:250px">
@@ -148,6 +172,39 @@ import { DialogService } from '../../services/dialog.service';
           <div class="card-label">Fluency level</div>
           <div class="card-value">{{ currentUser()?.level || 'B1' }}</div>
           <div class="card-sub">{{ getLevelName(currentUser()?.level) }}</div>
+        </div>
+      </div>
+
+      <!-- CERTIFICATE SYSTEM PRESENTATION WIDGET -->
+      <div class="card" style="background: linear-gradient(135deg, #FAF5FF 0%, #F3E8FF 100%); border: 1.5px solid #C084FC; padding: 20px; border-radius: 14px; margin-top: 20px; position:relative; overflow:hidden">
+        <!-- background decorative badge -->
+        <div style="position:absolute; right:-10px; bottom:-10px; opacity:0.04; color:#8B5CF6">
+          <svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 3 3 6 3s6-1 6-3v-5"/></svg>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:20px; flex-wrap:wrap">
+          <div style="flex:1">
+            <span class="badge" style="background:#8B5CF6; color:white; font-size:10px; font-weight:800; padding:2px 8px; border-radius:20px; text-transform:uppercase">
+              {{ t('Parcours Académique', 'Academic Certificates') }}
+            </span>
+            <h3 style="font-size:15.5px; font-weight:800; color:#4C1D95; margin:6px 0 4px 0">
+              {{ t('Obtenez vos Certificats Officiels SpeakUp', 'Unlock Official SpeakUp Certificates') }}
+            </h3>
+            <p style="font-size:12.5px; color:#5B21B6; margin:0; line-height:1.4">
+              {{ t('Validez chaque niveau d\\'anglais (A1, A2, B1, B2) pour obtenir un certificat de compétence verifiable et l\\'ajouter directement à votre profil LinkedIn.', 'Pass each English level evaluation (A1, A2, B1, B2) to get a verifiable certificate of proficiency and add it directly to your LinkedIn profile.') }}
+            </p>
+          </div>
+
+          <!-- Progress indicator -->
+          <div style="display:flex; align-items:center; gap:12px; background:white; padding:8px 14px; border-radius:10px; border:1px solid #E9D5FF">
+            <div style="text-align:left">
+              <span style="font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase">{{ t('Niveau actuel', 'Current level') }}</span>
+              <div style="font-size:14px; font-weight:800; color:#8B5CF6">{{ currentUser()?.level || 'A1' }}</div>
+            </div>
+            <button class="btn-p" style="background:#8B5CF6; border-color:#8B5CF6; font-size:11.5px; padding:6px 12px; border-radius:6px; font-weight:700" (click)="navigateToProfileCertificates()">
+              {{ t('Mes Certificats', 'My Certificates') }}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -299,6 +356,11 @@ export class StudentDashboardComponent {
   private db = inject(DatabaseService);
   private dialogService = inject(DialogService);
   currentUser = signal<UserProfile | null>(null);
+  activeLang = this.db.activeLang;
+
+  t(fr: string, en: string): string {
+    return this.activeLang() === 'fr' ? fr : en;
+  }
 
   lessons = signal<Lesson[]>([]);
   quizzes = signal<Quiz[]>([]);
@@ -442,6 +504,20 @@ export class StudentDashboardComponent {
     }
   }
 
+  speakQuestion(text: string) {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'en-US';
+      window.speechSynthesis.speak(utterance);
+    }
+  }
+
+  navigateToProfileCertificates() {
+    this.db.openProfileCertificates = true;
+    this.navigateToTab.emit('profile');
+  }
+
   submitPlacementTest() {
     const questions = this.placementQuestions();
     const answers = this.selectedAnswers();
@@ -462,10 +538,11 @@ export class StudentDashboardComponent {
     else if (scorePct >= 60) calculatedLevel = 'B1';
     else if (scorePct >= 40) calculatedLevel = 'A2';
     
-    // Update user profile
+    // Update user profile with detailed answers
     this.db.updateCurrentUserProfile({
       placementTestTaken: true,
       placementTestScore: scorePct,
+      placementTestAnswers: answers,
       level: calculatedLevel
     });
 

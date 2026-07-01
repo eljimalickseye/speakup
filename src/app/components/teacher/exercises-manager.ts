@@ -17,14 +17,14 @@ import { DialogService } from '../../services/dialog.service';
                 [style.color]="activeTab() === 'list' ? 'var(--text-primary)' : 'var(--text-muted)'"
                 [style.border-bottom-color]="activeTab() === 'list' ? '#059669' : 'transparent'">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 6px;"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-          Liste des Exercices ({{ filteredExercises().length }})
+          {{ labels().tabList }} ({{ filteredExercises().length }})
         </button>
         <button class="tab" [class.active]="activeTab() === 'create'" (click)="setTab('create')"
                 style="padding: 10px 16px; border: none; background: none; cursor: pointer; font-weight: 600; color: var(--text-muted); border-bottom: 2px solid transparent; transition: all 0.2s;"
                 [style.color]="activeTab() === 'create' ? 'var(--text-primary)' : 'var(--text-muted)'"
                 [style.border-bottom-color]="activeTab() === 'create' ? '#059669' : 'transparent'">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 6px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          {{ selectedExerciseId() ? "Modifier l'Exercice" : "Créer un Exercice" }}
+          {{ labels().tabCreate }}
         </button>
       </div>
 
@@ -34,12 +34,12 @@ import { DialogService } from '../../services/dialog.service';
           <!-- Filters & Header -->
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
             <div>
-              <h3 style="font-size: 18px; font-weight: 700; margin: 0 0 4px 0; color: var(--text-primary);">Exercices d'Entraînement Autonomes</h3>
-              <p style="font-size: 12px; color: var(--text-muted); margin: 0;">Créez et publiez des activités d'entraînement indépendantes pour vos élèves.</p>
+              <h3 style="font-size: 18px; font-weight: 700; margin: 0 0 4px 0; color: var(--text-primary);">{{ labels().exercisesTitle }}</h3>
+              <p style="font-size: 12px; color: var(--text-muted); margin: 0;">{{ labels().exercisesDesc }}</p>
             </div>
             <button (click)="startNew()" style="background: #059669; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Nouvel Exercice
+              {{ labels().newExercise }}
             </button>
           </div>
 
@@ -49,15 +49,22 @@ import { DialogService } from '../../services/dialog.service';
                     style="padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); transition: all 0.2s;"
                     [style.background]="filterType() === 'all' ? '#059669' : 'var(--surface-2)'"
                     [style.color]="filterType() === 'all' ? '#fff' : 'var(--text-secondary)'">
-              Tous les types
+              {{ labels().allTypes }}
             </button>
-            @for (t of typesList; track t.value) {
-              <button (click)="filterType.set(t.value)"
+            @for (typeItem of typesList; track typeItem.value) {
+              <button (click)="filterType.set(typeItem.value)"
                       style="padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); display: flex; align-items: center; gap: 4px; transition: all 0.2s;"
-                      [style.background]="filterType() === t.value ? t.color : 'var(--surface-2)'"
-                      [style.color]="filterType() === t.value ? '#fff' : 'var(--text-secondary)'">
-                <span>{{ t.emoji }}</span>
-                <span>{{ t.label }}</span>
+                      [style.background]="filterType() === typeItem.value ? typeItem.color : 'var(--surface-2)'"
+                      [style.color]="filterType() === typeItem.value ? '#fff' : 'var(--text-secondary)'">
+                <span>{{ typeItem.emoji }}</span>
+                <span>
+                  {{ typeItem.value === 'writing' ? t('Rédaction', 'Writing') : 
+                     typeItem.value === 'speaking' ? t('Expression Orale', 'Speaking') : 
+                     typeItem.value === 'listening' ? t('Compréhension Orale', 'Listening') : 
+                     typeItem.value === 'translation' ? t('Traduction', 'Translation') : 
+                     typeItem.value === 'pronunciation' ? t('Prononciation', 'Pronunciation') : 
+                     t('Vocabulaire', 'Vocabulary') }}
+                </span>
               </button>
             }
           </div>
@@ -73,12 +80,19 @@ import { DialogService } from '../../services/dialog.service';
                       <span [style.background]="getTypeColor(ex.type) + '15'" [style.color]="getTypeColor(ex.type)"
                             style="padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; display: flex; align-items: center; gap: 4px;">
                         <span>{{ getTypeEmoji(ex.type) }}</span>
-                        <span style="text-transform: capitalize;">{{ ex.type }}</span>
+                        <span style="text-transform: capitalize;">
+                          {{ ex.type === 'writing' ? t('Rédaction', 'Writing') : 
+                             ex.type === 'speaking' ? t('Expression Orale', 'Speaking') : 
+                             ex.type === 'listening' ? t('Compréhension Orale', 'Listening') : 
+                             ex.type === 'translation' ? t('Traduction', 'Translation') : 
+                             ex.type === 'pronunciation' ? t('Prononciation', 'Pronunciation') : 
+                             t('Vocabulaire', 'Vocabulary') }}
+                        </span>
                       </span>
                       <span style="font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 600;"
                             [style.background]="ex.status === 'published' ? '#D1FAE5' : '#F3F4F6'"
                             [style.color]="ex.status === 'published' ? '#065F46' : '#374151'">
-                        {{ ex.status === 'published' ? 'Publié' : 'Brouillon' }}
+                        {{ ex.status === 'published' ? t('Publié', 'Published') : t('Brouillon', 'Draft') }}
                       </span>
                     </div>
 
@@ -89,16 +103,16 @@ import { DialogService } from '../../services/dialog.service';
                     <div style="font-size: 12px; color: var(--text-muted); display: flex; flex-direction: column; gap: 4px; margin-bottom: 16px;">
                       <div style="display: flex; align-items: center; gap: 4px;">
                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34"/><path d="M12 2a5 5 0 0 0-5 5v3.42c0 .35.1.69.28 1l1.44 2.48a1 1 0 0 0 .86.48h8.84a1 1 0 0 0 .86-.48l1.44-2.48c.18-.31.28-.65.28-1V7a5 5 0 0 0-5-5z"/></svg>
-                        Niveau: <span style="font-weight: 600; color: var(--text-secondary);">{{ ex.level }}</span>
+                        {{ labels().levelLabel }} <span style="font-weight: 600; color: var(--text-secondary);">{{ ex.level }}</span>
                       </div>
                       <div style="display: flex; align-items: center; gap: 4px;">
                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/></svg>
-                        XP : <span style="font-weight: 600; color: var(--text-secondary);">{{ ex.points }} XP</span>
+                        {{ labels().xpLabel }} <span style="font-weight: 600; color: var(--text-secondary);">{{ ex.points }} XP</span>
                       </div>
                       @if (ex.groupId) {
                         <div style="display: flex; align-items: center; gap: 4px;">
                           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                          Groupe : <span style="font-weight: 600; color: var(--text-secondary);">{{ getGroupName(ex.groupId) }}</span>
+                          {{ labels().groupLabel }} <span style="font-weight: 600; color: var(--text-secondary);">{{ getGroupName(ex.groupId) }}</span>
                         </div>
                       }
                     </div>
@@ -108,14 +122,14 @@ import { DialogService } from '../../services/dialog.service';
                   <div style="display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--border-weak); padding-top: 12px; margin-top: 8px;">
                     @if (ex.status === 'draft') {
                       <button (click)="publishExercise(ex)" style="background: none; border: 1px solid #10B981; color: #10B981; border-radius: 4px; padding: 4px 8px; font-size: 11px; font-weight: 600; cursor: pointer;">
-                        Publier
+                        {{ labels().publishBtn }}
                       </button>
                     }
                     <button (click)="editExercise(ex)" style="background: none; border: 1px solid #3B82F6; color: #3B82F6; border-radius: 4px; padding: 4px 8px; font-size: 11px; font-weight: 600; cursor: pointer;">
-                      Modifier
+                      {{ labels().editBtn }}
                     </button>
                     <button (click)="deleteExercise(ex)" style="background: none; border: 1px solid #EF4444; color: #EF4444; border-radius: 4px; padding: 4px 8px; font-size: 11px; font-weight: 600; cursor: pointer;">
-                      Supprimer
+                      {{ labels().deleteBtn }}
                     </button>
                   </div>
                 </div>
@@ -124,10 +138,10 @@ import { DialogService } from '../../services/dialog.service';
           } @else {
             <div style="text-align: center; padding: 60px 20px; border: 2px dashed var(--border); border-radius: 12px; background: var(--surface-1);">
               <span style="font-size: 36px; display: block; margin-bottom: 12px;">🎯</span>
-              <p style="font-size: 14px; font-weight: 600; color: var(--text-primary); margin: 0 0 4px 0;">Aucun exercice trouvé</p>
-              <p style="font-size: 12px; color: var(--text-muted); margin: 0 0 16px 0;">Commencez par créer votre premier exercice d'entraînement.</p>
+              <p style="font-size: 14px; font-weight: 600; color: var(--text-primary); margin: 0 0 4px 0;">{{ labels().noExercise }}</p>
+              <p style="font-size: 12px; color: var(--text-muted); margin: 0 0 16px 0;">{{ labels().getStarted }}</p>
               <button (click)="setTab('create')" style="background: #059669; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer;">
-                Créer un exercice
+                {{ labels().createBtn }}
               </button>
             </div>
           }
@@ -140,25 +154,47 @@ import { DialogService } from '../../services/dialog.service';
           
           <h3 style="font-size: 16px; font-weight: 700; margin: 0 0 20px 0; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-            {{ selectedExerciseId() ? "Modifier l'Exercice" : "Créer un Nouvel Exercice d'Entraînement" }}
+            {{ labels().tabCreateHeader }}
           </h3>
 
           <!-- STEP 1: CHOOSE TYPE (Only if creating new) -->
           @if (!selectedExerciseId() && currentStep() === 1) {
             <div>
-              <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 12px;">Étape 1 : Sélectionnez le type d'exercice</label>
+              <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 12px;">{{ labels().step1Label }}</label>
               
               <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px;">
-                @for (t of typesList; track t.value) {
-                  <div (click)="selectType(t.value)"
+                @for (typeItem of typesList; track typeItem.value) {
+                  <div (click)="selectType(typeItem.value)"
                        style="border: 2px solid var(--border); border-radius: 12px; padding: 16px; cursor: pointer; transition: all 0.2s; position: relative;"
-                       [style.border-color]="selectedType() === t.value ? t.color : 'var(--border)'"
-                       [style.background]="selectedType() === t.value ? t.color + '0a' : 'var(--surface-2)'">
-                    <div style="font-size: 28px; margin-bottom: 10px;">{{ t.emoji }}</div>
-                    <h4 style="font-size: 14px; font-weight: 700; color: var(--text-primary); margin: 0 0 4px 0;">{{ t.label }}</h4>
-                    <p style="font-size: 11px; color: var(--text-muted); margin: 0; line-height: 1.4;">{{ t.desc }}</p>
+                       [style.border-color]="selectedType() === typeItem.value ? typeItem.color : 'var(--border)'"
+                       [style.background]="selectedType() === typeItem.value ? typeItem.color + '0a' : 'var(--surface-2)'">
+                    <div style="font-size: 28px; margin-bottom: 10px;">{{ typeItem.emoji }}</div>
+                    <h4 style="font-size: 14px; font-weight: 700; color: var(--text-primary); margin: 0 0 4px 0;">
+                      {{ typeItem.value === 'writing' ? t('Rédaction', 'Writing') : 
+                         typeItem.value === 'speaking' ? t('Expression Orale', 'Speaking') : 
+                         typeItem.value === 'listening' ? t('Compréhension Orale', 'Listening') : 
+                         typeItem.value === 'translation' ? t('Traduction', 'Translation') : 
+                         typeItem.value === 'pronunciation' ? t('Prononciation', 'Pronunciation') : 
+                         t('Vocabulaire', 'Vocabulary') }}
+                    </h4>
+                    <p style="font-size: 11px; color: var(--text-muted); margin: 0; line-height: 1.4;">
+                      {{ t(
+                        typeItem.value === 'writing' ? 'Sujets rédigés libres avec correction manuelle.' :
+                        typeItem.value === 'speaking' ? 'Entraînement oraux libres ou audio prompts.' :
+                        typeItem.value === 'listening' ? 'Vidéo YouTube avec résumé/questions ou réponse libre.' :
+                        typeItem.value === 'translation' ? 'Passages FR ➔ EN ou EN ➔ FR à traduire.' :
+                        typeItem.value === 'pronunciation' ? 'Texte à prononcer avec enregistrement audio.' :
+                        'Thème et liste de vocabulaire avec exercices associés.',
+                        typeItem.value === 'writing' ? 'Free writing subjects with manual grading.' :
+                        typeItem.value === 'speaking' ? 'Free speaking practice or audio prompts.' :
+                        typeItem.value === 'listening' ? 'YouTube video with summary/questions or free response.' :
+                        typeItem.value === 'translation' ? 'French ➔ English or English ➔ French passages to translate.' :
+                        typeItem.value === 'pronunciation' ? 'Text to read aloud with audio recording.' :
+                        'Theme and list of vocabulary words with practice exercises.'
+                      ) }}
+                    </p>
                     
-                    @if (selectedType() === t.value) {
+                    @if (selectedType() === typeItem.value) {
                       <div style="position: absolute; top: 12px; right: 12px; width: 18px; height: 18px; border-radius: 50%; background: #059669; display: flex; align-items: center; justify-content: center; color: white;">
                         <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                       </div>
@@ -172,7 +208,7 @@ import { DialogService } from '../../services/dialog.service';
                         style="background: #059669; color: white; border: none; padding: 10px 24px; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;"
                         [style.opacity]="selectedType() ? 1 : 0.5"
                         [style.cursor]="selectedType() ? 'pointer' : 'not-allowed'">
-                  Continuer
+                  {{ labels().continueBtn }}
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                 </button>
               </div>
@@ -183,18 +219,18 @@ import { DialogService } from '../../services/dialog.service';
           @if (selectedExerciseId() || currentStep() === 2) {
             <div style="display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; justify-content: space-between;">
               
-              <!-- Left Column: Form Inputs (width: 55% min-width: 320px) -->
+              <!-- Left Column: Form Inputs -->
               <div style="flex: 1.2; min-width: 320px; display: flex; flex-direction: column; gap: 16px;">
                 <!-- Type Display & Back Button -->
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
                   @if (!selectedExerciseId()) {
                     <button (click)="currentStep.set(1)" style="background: none; border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 4px; color: var(--text-secondary);">
                       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-                      Retour à l'étape 1
+                      {{ labels().backStep1 }}
                     </button>
                   }
                   <div style="font-size: 13px; font-weight: 700; color: var(--text-secondary); display: flex; align-items: center; gap: 6px;">
-                    Type Sélectionné : 
+                    {{ labels().selectedTypeLabel }} 
                     <span [style.color]="getTypeColor(selectedType())" style="text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;">
                       {{ getTypeEmoji(selectedType()) }} {{ selectedType() }}
                     </span>
@@ -203,31 +239,31 @@ import { DialogService } from '../../services/dialog.service';
 
                 <!-- Title -->
                 <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
-                  <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">Titre de l'exercice</label>
-                  <input type="text" [(ngModel)]="formTitle" placeholder="ex. Description de vacances de rêve ou Pratique orale du Past Simple"
+                  <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">{{ labels().exerciseTitleLabel }}</label>
+                  <input type="text" [(ngModel)]="formTitle" [placeholder]="labels().formTitlePlaceholder"
                          style="width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 13px; background: var(--surface-1); color: var(--text-primary);" />
                 </div>
 
                 <!-- Level & XP & Class Group -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
                   <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
-                    <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">Niveau Cible</label>
+                    <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">{{ labels().targetLevelLabel }}</label>
                     <select [(ngModel)]="formLevel" style="width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 13px; background: var(--surface-1); color: var(--text-primary);">
-                      <option value="A1">A1 — Débutant</option>
-                      <option value="A2">A2 — Élémentaire</option>
-                      <option value="B1">B1 — Intermédiaire</option>
-                      <option value="B2">B2 — Intermédiaire Supérieur</option>
-                      <option value="C1">C1 — Avancé</option>
+                      <option value="A1">A1 — {{ t('Débutant', 'Beginner') }}</option>
+                      <option value="A2">A2 — {{ t('Élémentaire', 'Elementary') }}</option>
+                      <option value="B1">B1 — {{ t('Intermédiaire', 'Intermediate') }}</option>
+                      <option value="B2">B2 — {{ t('Intermédiaire Supérieur', 'Upper Intermediate') }}</option>
+                      <option value="C1">C1 — {{ t('Avancé', 'Advanced') }}</option>
                     </select>
                   </div>
                   <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
-                    <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">XP à remporter</label>
+                    <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">{{ labels().xpEarnLabel }}</label>
                     <input type="number" [(ngModel)]="formPoints" style="width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 13px; background: var(--surface-1); color: var(--text-primary);" />
                   </div>
                   <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
-                    <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">Assigner au Groupe</label>
+                    <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">{{ labels().assignGroupLabel }}</label>
                     <select [(ngModel)]="formGroupId" style="width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 13px; background: var(--surface-1); color: var(--text-primary);">
-                      <option value="">Aucun groupe spécifique</option>
+                      <option value="">{{ labels().noGroup }}</option>
                       @for (g of groups(); track g.id) {
                         <option [value]="g.id">{{ g.name }}</option>
                       }
@@ -237,18 +273,18 @@ import { DialogService } from '../../services/dialog.service';
 
                 <!-- Status Selection -->
                 <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
-                  <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">Statut</label>
+                  <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">{{ labels().statusLabel }}</label>
                   <select [(ngModel)]="formStatus" style="width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 13px; background: var(--surface-1); color: var(--text-primary);">
-                    <option value="published">Publié (Visible immédiatement par la classe)</option>
-                    <option value="draft">Brouillon (Sauvegardé sans publier)</option>
+                    <option value="published">{{ labels().statusPublished }}</option>
+                    <option value="draft">{{ labels().statusDraft }}</option>
                   </select>
                 </div>
 
                 <!-- WRITING SPECIFIC FIELD -->
                 @if (selectedType() === 'writing') {
                   <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
-                    <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">Sujet de rédaction / Consigne</label>
-                    <textarea [(ngModel)]="formSubject" rows="4" placeholder="Décrivez le sujet, les consignes et le nombre de mots minimum. ex. Décrivez vos vacances de rêve en 150 mots minimum..."
+                    <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">{{ labels().writingPromptLabel }}</label>
+                    <textarea [(ngModel)]="formSubject" rows="4" [placeholder]="labels().formSubjectPlaceholder"
                               style="width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 13px; background: var(--surface-1); color: var(--text-primary); resize: vertical;"></textarea>
                   </div>
                 }
@@ -256,8 +292,8 @@ import { DialogService } from '../../services/dialog.service';
                 <!-- SPEAKING SPECIFIC FIELD -->
                 @if (selectedType() === 'speaking') {
                   <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
-                    <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">Consigne / Instructions d'expression orale</label>
-                    <textarea [(ngModel)]="formSpeakingPrompt" rows="4" placeholder="ex. Présentez-vous en anglais. Parlez pendant au moins 45 secondes de votre nom, âge, passions et profession."
+                    <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">{{ labels().speakingPromptLabel }}</label>
+                    <textarea [(ngModel)]="formSpeakingPrompt" rows="4" [placeholder]="labels().formSpeakingPlaceholder"
                               style="width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 13px; background: var(--surface-1); color: var(--text-primary); resize: vertical;"></textarea>
                   </div>
                 }
@@ -266,13 +302,13 @@ import { DialogService } from '../../services/dialog.service';
                 @if (selectedType() === 'listening') {
                   <div style="display: flex; flex-direction: column; gap: 12px;">
                     <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
-                      <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">Lien Vidéo YouTube</label>
+                      <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">{{ labels().youtubeLabel }}</label>
                       <input type="text" [(ngModel)]="formYoutubeUrl" placeholder="https://www.youtube.com/watch?v=..."
                              style="width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 13px; background: var(--surface-1); color: var(--text-primary);" />
                     </div>
                     <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
-                      <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">Consignes d'écoute / Questions</label>
-                      <textarea [(ngModel)]="formListeningInstruction" rows="4" placeholder="Instructions : Écoutez la vidéo deux fois et résumez les arguments principaux, ou répondez aux questions suivantes..."
+                      <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">{{ labels().listeningPromptLabel }}</label>
+                      <textarea [(ngModel)]="formListeningInstruction" rows="4" [placeholder]="labels().formListeningPlaceholder"
                                 style="width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 13px; background: var(--surface-1); color: var(--text-primary); resize: vertical;"></textarea>
                     </div>
                   </div>
@@ -282,15 +318,15 @@ import { DialogService } from '../../services/dialog.service';
                 @if (selectedType() === 'translation') {
                   <div style="display: flex; flex-direction: column; gap: 12px;">
                     <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
-                      <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">Direction de la traduction</label>
+                      <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">{{ labels().translationLabel }}</label>
                       <select [(ngModel)]="formTranslationDirection" style="width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 13px; background: var(--surface-1); color: var(--text-primary);">
-                        <option value="fr-en">Français vers Anglais (FR ➔ EN)</option>
-                        <option value="en-fr">Anglais vers Français (EN ➔ FR)</option>
+                        <option value="fr-en">{{ t('Français vers Anglais (FR ➔ EN)', 'French to English (FR ➔ EN)') }}</option>
+                        <option value="en-fr">{{ t('Anglais vers Français (EN ➔ FR)', 'English to French (EN ➔ FR)') }}</option>
                       </select>
                     </div>
                     <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
-                      <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">Texte à traduire</label>
-                      <textarea [(ngModel)]="formTextToTranslate" rows="4" placeholder="Bonjour, je m'appelle David. J'adore voyager dans des pays chauds..."
+                      <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">{{ labels().translateTextLabel }}</label>
+                      <textarea [(ngModel)]="formTextToTranslate" rows="4" [placeholder]="labels().formTranslationPlaceholder"
                                 style="width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 13px; background: var(--surface-1); color: var(--text-primary); resize: vertical;"></textarea>
                     </div>
                   </div>
@@ -299,8 +335,8 @@ import { DialogService } from '../../services/dialog.service';
                 <!-- PRONUNCIATION SPECIFIC FIELD -->
                 @if (selectedType() === 'pronunciation') {
                   <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
-                    <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">Phrase / Paragraphe à prononcer</label>
-                    <textarea [(ngModel)]="formTextToPronounce" rows="3" placeholder="ex. The quick brown fox jumps over the lazy dog."
+                    <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">{{ labels().pronounceLabel }}</label>
+                    <textarea [(ngModel)]="formTextToPronounce" rows="3" [placeholder]="labels().formSpeakingPlaceholder"
                               style="width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 13px; background: var(--surface-1); color: var(--text-primary); resize: vertical;"></textarea>
                   </div>
                 }
@@ -309,12 +345,12 @@ import { DialogService } from '../../services/dialog.service';
                 @if (selectedType() === 'vocabulary') {
                   <div style="display: flex; flex-direction: column; gap: 12px;">
                     <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
-                      <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">Nom du Thème / Catégorie</label>
-                      <input type="text" [(ngModel)]="formTheme" placeholder="ex. Voyage, Affaires, Nourriture, Cuisine"
+                      <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">{{ labels().vocabThemeLabel }}</label>
+                      <input type="text" [(ngModel)]="formTheme" [placeholder]="labels().formThemePlaceholder"
                              style="width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 13px; background: var(--surface-1); color: var(--text-primary);" />
                     </div>
                     <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
-                      <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">Liste de mots (un mot/expression par ligne)</label>
+                      <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">{{ labels().vocabListLabel }}</label>
                       <textarea [(ngModel)]="formWordListRaw" rows="6" placeholder="Airport&#10;Passport&#10;Flight&#10;Boarding Pass"
                                 style="width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 13px; background: var(--surface-1); color: var(--text-primary); resize: vertical; font-family: monospace;"></textarea>
                     </div>
@@ -324,24 +360,24 @@ import { DialogService } from '../../services/dialog.service';
                 <!-- Action buttons -->
                 <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; border-top: 1px solid var(--border-weak); padding-top: 16px;">
                   <button (click)="setTab('list')" style="background: none; border: 1px solid var(--border); padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; color: var(--text-secondary);">
-                    Annuler
+                    {{ labels().cancelBtn }}
                   </button>
                   <button (click)="saveExercise()" style="background: #059669; color: white; border: none; padding: 8px 24px; border-radius: 6px; font-weight: 600; cursor: pointer;">
-                    {{ selectedExerciseId() ? 'Mettre à jour' : 'Enregistrer' }}
+                    {{ labels().saveBtn }}
                   </button>
                 </div>
               </div>
 
-              <!-- Right Column: Live Student Preview (width: 40% min-width: 320px) -->
+              <!-- Right Column: Live Student Preview -->
               <div style="flex: 0.8; min-width: 320px; background: #F9FAFB; border: 1.5px dashed #CBD5E1; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); position: sticky; top: 20px;">
                 <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 16px; border-bottom: 1.5px solid #E5E7EB; padding-bottom: 8px;">
                   <span style="font-size: 16px;">👁️</span>
-                  <span style="font-size: 13px; font-weight: 700; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.5px;">Aperçu Élève (Student Preview)</span>
+                  <span style="font-size: 13px; font-weight: 700; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.5px;">{{ labels().previewTitle }}</span>
                 </div>
 
                 <div style="background: white; border: 1px solid var(--border-weak); border-radius: 12px; padding: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.03);">
                   <h4 style="font-size: 14px; font-weight: 700; color: var(--text-primary); margin: 0 0 10px 0;">
-                    {{ formTitle || 'Titre de l\'exercice' }}
+                    {{ labels().exerciseTitlePreview }}
                   </h4>
                   <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 16px; display: flex; align-items: center; gap: 6px">
                     <span style="background: var(--surface-2); border-radius: 12px; padding: 2px 10px; font-weight: 600;">Level {{ formLevel }}</span>
@@ -351,19 +387,19 @@ import { DialogService } from '../../services/dialog.service';
                   <!-- Writing Preview -->
                   @if (selectedType() === 'writing') {
                     <div style="background: #F5F3FF; border: 1px solid #DDD6FE; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
-                      <div style="font-size: 12.5px; font-weight: 700; color: #6D28D9; margin-bottom: 6px;">✍️ Subject</div>
-                      <p style="font-size: 12px; color: var(--text-primary); line-height: 1.6; margin: 0; white-space: pre-line;">{{ formSubject || 'Saisissez le sujet à gauche...' }}</p>
+                      <div style="font-size: 12.5px; font-weight: 700; color: #6D28D9; margin-bottom: 6px;">✍️ {{ labels().subjectPreviewLabel }}</div>
+                      <p style="font-size: 12px; color: var(--text-primary); line-height: 1.6; margin: 0; white-space: pre-line;">{{ labels().subjectPlaceholder }}</p>
                     </div>
-                    <textarea disabled rows="3" placeholder="L'élève saisira sa réponse ici..."
+                    <textarea disabled rows="3" [placeholder]="labels().studentResponsePlaceholder"
                               style="width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 10px; font-size: 12.5px; resize: none; background: #F9FAFB; cursor: not-allowed;"></textarea>
-                    <button disabled style="margin-top: 12px; background: #7C3AED; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 700; cursor: not-allowed; width: 100%; opacity: 0.8">Submit</button>
+                    <button disabled style="margin-top: 12px; background: #7C3AED; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 700; cursor: not-allowed; width: 100%; opacity: 0.8">{{ labels().submitBtn }}</button>
                   }
 
                   <!-- Speaking Preview -->
                   @else if (selectedType() === 'speaking') {
                     <div style="background: #F0FDF4; border: 1px solid #A7F3D0; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
-                      <div style="font-size: 12.5px; font-weight: 700; color: #065F46; margin-bottom: 6px;">🎙️ Speaking Prompt</div>
-                      <p style="font-size: 12px; color: var(--text-primary); line-height: 1.6; margin: 0; white-space: pre-line;">{{ formSpeakingPrompt || 'Saisissez la consigne orale à gauche...' }}</p>
+                      <div style="font-size: 12.5px; font-weight: 700; color: #065F46; margin-bottom: 6px;">🎙️ {{ labels().speakingPreviewLabel }}</div>
+                      <p style="font-size: 12px; color: var(--text-primary); line-height: 1.6; margin: 0; white-space: pre-line;">{{ labels().speakingPlaceholder }}</p>
                     </div>
                     
                     <!-- Recorder Component -->
@@ -373,11 +409,11 @@ import { DialogService } from '../../services/dialog.service';
                           <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" x2="12" y1="19" y2="22" />
                         </svg>
                       </button>
-                      <div style="font-size:11.5px; font-weight:700; color:#0F766E">Start Oral Recording</div>
-                      <div style="font-size:10px; color:var(--text-muted)">Click to speak and record response</div>
+                      <div style="font-size:11.5px; font-weight:700; color:#0F766E">{{ labels().startRecording }}</div>
+                      <div style="font-size:10px; color:var(--text-muted)">{{ labels().clickToSpeak }}</div>
                     </div>
 
-                    <button disabled style="background: #059669; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 700; cursor: not-allowed; width: 100%; opacity: 0.5">Submit Response</button>
+                    <button disabled style="background: #059669; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 700; cursor: not-allowed; width: 100%; opacity: 0.5">{{ labels().submitResponse }}</button>
                   }
 
                   <!-- Listening Preview -->
@@ -386,35 +422,35 @@ import { DialogService } from '../../services/dialog.service';
                       <div style="border-radius: 8px; overflow: hidden; margin-bottom: 12px; background: #000; display: flex; align-items: center; justify-content: center; padding: 12px;">
                         <span style="color: white; display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 12px;">
                           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FF0000"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-                          Watch on YouTube
+                          {{ labels().watchYoutube }}
                         </span>
                       </div>
                     }
                     <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
-                      <div style="font-size: 12.5px; font-weight: 700; color: #1E40AF; margin-bottom: 6px;">👂 Instructions</div>
-                      <p style="font-size: 12px; color: var(--text-primary); line-height: 1.6; margin: 0; white-space: pre-line;">{{ formListeningInstruction || 'Saisissez les instructions d\'écoute à gauche...' }}</p>
+                      <div style="font-size: 12.5px; font-weight: 700; color: #1E40AF; margin-bottom: 6px;">👂 {{ labels().listeningPreviewLabel }}</div>
+                      <p style="font-size: 12px; color: var(--text-primary); line-height: 1.6; margin: 0; white-space: pre-line;">{{ labels().listeningPlaceholder }}</p>
                     </div>
-                    <textarea disabled rows="3" placeholder="L'élève saisira sa réponse ici..."
+                    <textarea disabled rows="3" [placeholder]="labels().studentResponsePlaceholder"
                               style="width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 10px; font-size: 12.5px; resize: none; background: #F9FAFB; cursor: not-allowed;"></textarea>
-                    <button disabled style="margin-top: 12px; background: #0284C7; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 700; cursor: not-allowed; width: 100%; opacity: 0.8">Submit</button>
+                    <button disabled style="margin-top: 12px; background: #0284C7; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 700; cursor: not-allowed; width: 100%; opacity: 0.8">{{ labels().submitBtn }}</button>
                   }
 
                   <!-- Translation Preview -->
                   @else if (selectedType() === 'translation') {
                     <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
-                      <div style="font-size: 12.5px; font-weight: 700; color: #92400E; margin-bottom: 6px;">🌍 Text to translate ({{ formTranslationDirection === 'fr-en' ? 'FR → EN' : 'EN → FR' }})</div>
-                      <p style="font-size: 13px; color: var(--text-primary); line-height: 1.7; margin: 0; font-style: italic;">{{ formTextToTranslate || 'Saisissez le texte à traduire à gauche...' }}</p>
+                      <div style="font-size: 12.5px; font-weight: 700; color: #92400E; margin-bottom: 6px;">🌍 {{ labels().translationPreviewLabel }} ({{ formTranslationDirection === 'fr-en' ? 'FR → EN' : 'EN → FR' }})</div>
+                      <p style="font-size: 13px; color: var(--text-primary); line-height: 1.7; margin: 0; font-style: italic;">{{ labels().translationPlaceholder }}</p>
                     </div>
-                    <textarea disabled rows="3" placeholder="L'élève saisira sa traduction ici..."
+                    <textarea disabled rows="3" [placeholder]="labels().studentTranslationPlaceholder"
                               style="width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 10px; font-size: 12.5px; resize: none; background: #F9FAFB; cursor: not-allowed;"></textarea>
-                    <button disabled style="margin-top: 12px; background: #D97706; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 700; cursor: not-allowed; width: 100%; opacity: 0.8">Submit Translation</button>
+                    <button disabled style="margin-top: 12px; background: #D97706; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 700; cursor: not-allowed; width: 100%; opacity: 0.8">{{ labels().submitTranslation }}</button>
                   }
 
                   <!-- Pronunciation Preview -->
                   @else if (selectedType() === 'pronunciation') {
                     <div style="text-align: center; padding: 20px; background: #FFF1F2; border: 1px solid #FECDD3; border-radius: 12px; margin-bottom: 16px;">
-                      <div style="font-size: 12.5px; font-weight: 700; color: #9F1239; margin-bottom: 8px;">🔊 Read this aloud:</div>
-                      <p style="font-size: 15px; font-weight: 700; color: var(--text-primary); line-height: 1.6; margin: 0;">{{ formTextToPronounce || 'Saisissez la phrase à prononcer à gauche...' }}</p>
+                      <div style="font-size: 12.5px; font-weight: 700; color: #9F1239; margin-bottom: 8px;">🔊 {{ labels().pronouncePreviewLabel }}</div>
+                      <p style="font-size: 15px; font-weight: 700; color: var(--text-primary); line-height: 1.6; margin: 0;">{{ labels().pronouncePlaceholder }}</p>
                     </div>
 
                     <!-- Recorder Component -->
@@ -424,17 +460,17 @@ import { DialogService } from '../../services/dialog.service';
                           <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" x2="12" y1="19" y2="22" />
                         </svg>
                       </button>
-                      <div style="font-size:11.5px; font-weight:700; color:#9F1239">Start Oral Recording</div>
-                      <div style="font-size:10px; color:var(--text-muted)">Record pronunciation of the text</div>
+                      <div style="font-size:11.5px; font-weight:700; color:#9F1239">{{ labels().startRecording }}</div>
+                      <div style="font-size:10px; color:var(--text-muted)">{{ labels().recordPronunciation }}</div>
                     </div>
 
-                    <button disabled style="background: #DC2626; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 700; cursor: not-allowed; width: 100%; opacity: 0.5">Submit Response</button>
+                    <button disabled style="background: #DC2626; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 700; cursor: not-allowed; width: 100%; opacity: 0.5">{{ labels().submitResponse }}</button>
                   }
 
                   <!-- Vocabulary Preview -->
                   @else if (selectedType() === 'vocabulary') {
                     <div style="background: #EEF2FF; border: 1px solid #C7D2FE; border-radius: 12px; padding: 16px; margin-bottom: 16px; text-align: center;">
-                      <div style="font-size: 10px; font-weight: 700; color: #4F46E5; text-transform: uppercase; margin-bottom: 10px;">📚 Review Mode (Flashcard)</div>
+                      <div style="font-size: 10px; font-weight: 700; color: #4F46E5; text-transform: uppercase; margin-bottom: 10px;">📚 {{ labels().vocabReviewLabel }}</div>
                       
                       @let words = getPreviewWordList();
                       @if (words.length > 0) {
@@ -443,18 +479,18 @@ import { DialogService } from '../../services/dialog.service';
                             <span>{{ words[0] }}</span>
                             <span style="font-size: 14px;">🔊</span>
                           </div>
-                          <span style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Exemple de mot configuré</span>
+                          <span style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">{{ labels().exampleWordLabel }}</span>
                         </div>
                       } @else {
                         <div style="background: white; border: 1.5px dashed #C7D2FE; border-radius: 8px; padding: 18px; min-height: 80px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px;">
-                          <span style="font-size: 12px; color: var(--text-muted); font-style: italic;">Saisissez les mots dans la liste à gauche...</span>
+                          <span style="font-size: 12px; color: var(--text-muted); font-style: italic;">{{ labels().vocabPlaceholder }}</span>
                         </div>
                       }
 
                       <div style="display: flex; justify-content: space-between; align-items: center; gap: 6px; width: 100%;">
-                        <button disabled class="btn-s" style="flex: 1; padding: 6px; font-size: 11px; cursor: not-allowed;">Précédent</button>
+                        <button disabled class="btn-s" style="flex: 1; padding: 6px; font-size: 11px; cursor: not-allowed;">{{ labels().prevBtn }}</button>
                         <span style="font-size: 11px; color: var(--text-muted);">1 / {{ words.length || 1 }}</span>
-                        <button disabled class="btn-p" style="flex: 1; background: #4F46E5; border-color: #4F46E5; padding: 6px; font-size: 11px; cursor: not-allowed; color: white;">Suivant</button>
+                        <button disabled class="btn-p" style="flex: 1; background: #4F46E5; border-color: #4F46E5; padding: 6px; font-size: 11px; cursor: not-allowed; color: white;">{{ labels().nextBtn }}</button>
                       </div>
                     </div>
                   }
@@ -463,7 +499,6 @@ import { DialogService } from '../../services/dialog.service';
 
             </div>
           }
-
         </div>
       }
     </div>
@@ -472,6 +507,87 @@ import { DialogService } from '../../services/dialog.service';
 export class TeacherExercisesManagerComponent {
   private db = inject(DatabaseService);
   private dialogService = inject(DialogService);
+
+  activeLang = this.db.activeLang;
+
+  t(fr: string, en: string): string {
+    return this.activeLang() === 'fr' ? fr : en;
+  }
+
+  labels = computed(() => ({
+    tabList: this.t("Liste des Exercices", "Exercises List"),
+    tabCreate: this.selectedExerciseId() ? this.t("Modifier l'Exercice", "Edit Exercise") : this.t("Créer un Exercice", "Create Exercise"),
+    tabCreateHeader: this.selectedExerciseId() ? this.t("Modifier l'Exercice", "Edit Exercise") : this.t("Créer un Nouvel Exercice d'Entraînement", "Create New Practice Exercise"),
+    exercisesTitle: this.t("Exercices d'Entraînement Autonomes", "Autonomous Practice Exercises"),
+    exercisesDesc: this.t("Créez et publiez des activités d'entraînement indépendantes pour vos élèves.", "Create and publish independent practice activities for your students."),
+    newExercise: this.t("Nouvel Exercice", "New Exercise"),
+    allTypes: this.t("Tous les types", "All types"),
+    levelLabel: this.t("Niveau:", "Level:"),
+    xpLabel: this.t("XP :", "XP:"),
+    groupLabel: this.t("Groupe :", "Group:"),
+    publishBtn: this.t("Publier", "Publish"),
+    editBtn: this.t("Modifier", "Edit"),
+    deleteBtn: this.t("Supprimer", "Delete"),
+    noExercise: this.t("Aucun exercice trouvé", "No exercises found"),
+    getStarted: this.t("Commencez par créer votre premier exercice d'entraînement.", "Get started by creating your first practice exercise."),
+    createBtn: this.t("Créer un exercice", "Create an exercise"),
+    step1Label: this.t("Étape 1 : Sélectionnez le type d'exercice", "Step 1: Select the exercise type"),
+    continueBtn: this.t("Continuer", "Continue"),
+    backStep1: this.t("Retour à l'étape 1", "Back to Step 1"),
+    selectedTypeLabel: this.t("Type Sélectionné :", "Selected Type:"),
+    exerciseTitleLabel: this.t("Titre de l'exercice", "Exercise Title"),
+    targetLevelLabel: this.t("Niveau Cible", "Target Level"),
+    xpEarnLabel: this.t("XP à remporter", "XP to earn"),
+    assignGroupLabel: this.t("Assigner au Groupe", "Assign to Group"),
+    noGroup: this.t("Aucun groupe spécifique", "No specific group"),
+    statusLabel: this.t("Statut", "Status"),
+    statusPublished: this.t("Publié (Visible immédiatement par la classe)", "Published (Visible immediately to class)"),
+    statusDraft: this.t("Brouillon (Sauvegardé sans publier)", "Draft (Saved without publishing)"),
+    writingPromptLabel: this.t("Sujet de rédaction / Consigne", "Writing Subject / Instructions"),
+    speakingPromptLabel: this.t("Consigne / Instructions d'expression orale", "Speaking Instructions / Prompts"),
+    youtubeLabel: this.t("Lien Vidéo YouTube", "YouTube Video Link"),
+    listeningPromptLabel: this.t("Consignes d'écoute / Questions", "Listening Instructions / Questions"),
+    translationLabel: this.t("Direction de la traduction", "Translation Direction"),
+    translateTextLabel: this.t("Texte à traduire", "Text to Translate"),
+    pronounceLabel: this.t("Phrase / Paragraphe à prononcer", "Sentence / Paragraph to Pronounce"),
+    vocabThemeLabel: this.t("Nom du Thème / Catégorie", "Theme Name / Category"),
+    vocabListLabel: this.t("Liste de mots (un mot/expression par ligne)", "Word list (one word/phrase per line)"),
+    cancelBtn: this.t("Annuler", "Cancel"),
+    saveBtn: this.selectedExerciseId() ? this.t("Mettre à jour", "Update") : this.t("Enregistrer", "Save"),
+    previewTitle: this.t("Aperçu Élève", "Student Preview"),
+    exerciseTitlePreview: this.formTitle || this.t("Titre de l'exercice", "Exercise Title"),
+    subjectPreviewLabel: this.t("Sujet", "Subject"),
+    subjectPlaceholder: this.formSubject || this.t("Saisissez le sujet à gauche...", "Enter the subject on the left..."),
+    studentResponsePlaceholder: this.t("L'élève saisira sa réponse ici...", "Student will type their response here..."),
+    submitBtn: this.t("Soumettre", "Submit"),
+    speakingPreviewLabel: this.t("Consigne", "Prompt"),
+    speakingPlaceholder: this.formSpeakingPrompt || this.t("Saisissez la consigne orale à gauche...", "Enter speaking prompt on the left..."),
+    startRecording: this.t("Démarrer l'enregistrement", "Start Oral Recording"),
+    clickToSpeak: this.t("Cliquez pour parler et enregistrer la réponse", "Click to speak and record response"),
+    submitResponse: this.t("Soumettre la réponse", "Submit Response"),
+    watchYoutube: this.t("Regarder sur YouTube", "Watch on YouTube"),
+    listeningPreviewLabel: this.t("Instructions", "Instructions"),
+    listeningPlaceholder: this.formListeningInstruction || this.t("Saisissez les instructions d'écoute à gauche...", "Enter listening instructions on the left..."),
+    translationPreviewLabel: this.t("Texte à traduire", "Text to translate"),
+    translationPlaceholder: this.formTextToTranslate || this.t("Saisissez le texte à traduire à gauche...", "Enter text to translate on the left..."),
+    studentTranslationPlaceholder: this.t("L'élève saisira sa traduction ici...", "Student will type translation here..."),
+    submitTranslation: this.t("Soumettre la traduction", "Submit Translation"),
+    pronouncePreviewLabel: this.t("Lire à voix haute :", "Read this aloud:"),
+    pronouncePlaceholder: this.formTextToPronounce || this.t("Saisissez la phrase à prononcer à gauche...", "Enter sentence to pronounce on the left..."),
+    recordPronunciation: this.t("Enregistrez la prononciation du texte", "Record pronunciation of the text"),
+    vocabReviewLabel: this.t("Mode Révision (Flashcard)", "Review Mode (Flashcard)"),
+    exampleWordLabel: this.t("Exemple de mot configuré", "Example of configured word"),
+    vocabPlaceholder: this.t("Saisissez les mots dans la liste à gauche...", "Enter words in the list on the left..."),
+    prevBtn: this.t("Précédent", "Previous"),
+    nextBtn: this.t("Suivant", "Next"),
+    
+    formTitlePlaceholder: this.t("ex. Description de vacances de rêve ou Pratique orale du Past Simple", "e.g. Dream vacation description or Past Simple speaking practice"),
+    formSubjectPlaceholder: this.t("Décrivez le sujet, les consignes et le nombre de mots minimum. ex. Décrivez vos vacances de rêve en 150 mots minimum...", "Describe the subject, guidelines and minimum word count. e.g. Describe your dream vacation in at least 150 words..."),
+    formSpeakingPlaceholder: this.t("ex. Présentez-vous en anglais. Parlez pendant au moins 45 secondes de votre nom, âge, passions et profession.", "e.g. Introduce yourself in English. Speak for at least 45 seconds about your name, age, hobbies and job."),
+    formListeningPlaceholder: this.t("Instructions : Écoutez la vidéo deux fois et résumez les arguments principaux, ou répondez aux questions suivantes...", "Instructions: Listen to the video twice and summarize the main arguments, or answer the following questions..."),
+    formTranslationPlaceholder: this.t("Bonjour, je m'appelle David. J'adore voyager dans des pays chauds...", "Hello, my name is David. I love traveling to warm countries..."),
+    formThemePlaceholder: this.t("ex. Voyage, Affaires, Nourriture, Cuisine", "e.g. Travel, Business, Food, Cooking")
+  }));
 
   activeTab = signal<'list' | 'create'>('list');
   currentStep = signal<1 | 2>(1);
@@ -583,23 +699,35 @@ export class TeacherExercisesManagerComponent {
 
   async deleteExercise(ex: Exercise) {
     this.dialogService.confirm(
-      'Delete Exercise',
-      `Are you sure you want to delete the exercise "${ex.title}"? This action cannot be undone.`,
+      this.t("Supprimer l'Exercice", "Delete Exercise"),
+      this.t(`Voulez-vous vraiment supprimer l'exercice "${ex.title}" ? Cette action est irréversible.`, `Are you sure you want to delete the exercise "${ex.title}"? This action cannot be undone.`),
       async () => {
         await this.db.deleteExercise(ex.id);
-        this.dialogService.alert('Deleted', 'Exercise deleted successfully.', 'success');
+        this.dialogService.alert(
+          this.t('Supprimé', 'Deleted'),
+          this.t("L'exercice a été supprimé avec succès.", "Exercise deleted successfully."),
+          'success'
+        );
       }
     );
   }
 
   async publishExercise(ex: Exercise) {
     await this.db.updateExercise(ex.id, { status: 'published' });
-    this.dialogService.alert('Published', 'Exercise published successfully!', 'success');
+    this.dialogService.alert(
+      this.t('Publié', 'Published'),
+      this.t("L'exercice a été publié avec succès !", "Exercise published successfully!"),
+      'success'
+    );
   }
 
   async saveExercise() {
     if (!this.formTitle.trim()) {
-      this.dialogService.alert('Error', 'Please enter a title for the exercise.', 'info');
+      this.dialogService.alert(
+        this.t('Erreur', 'Error'),
+        this.t("Veuillez saisir un titre pour l'exercice.", "Please enter a title for the exercise."),
+        'info'
+      );
       return;
     }
 
@@ -646,24 +774,36 @@ export class TeacherExercisesManagerComponent {
     try {
       if (id) {
         await this.db.updateExercise(id, exerciseData);
-        this.dialogService.alert('Success', 'Exercise updated successfully.', 'success');
+        this.dialogService.alert(
+          this.t('Succès', 'Success'),
+          this.t("L'exercice a été mis à jour avec succès.", "Exercise updated successfully."),
+          'success'
+        );
       } else {
         await this.db.addExercise(exerciseData);
-        this.dialogService.alert('Success', 'Exercise created successfully.', 'success');
+        this.dialogService.alert(
+          this.t('Succès', 'Success'),
+          this.t("L'exercice a été créé avec succès.", "Exercise created successfully."),
+          'success'
+        );
 
         if (this.formStatus === 'published') {
           await this.db.sendNotification({
             recipientId: 'all',
             recipientRole: 'student',
             type: 'exercise_assigned',
-            title: '🎯 New exercise available',
-            message: `"${this.formTitle}" has been published by ${user?.name || 'your teacher'}`
+            title: this.t('🎯 Nouvel exercice disponible', '🎯 New exercise available'),
+            message: this.t(`"${this.formTitle}" a été publié par ${user?.name || 'votre professeur'}`, `"${this.formTitle}" has been published by ${user?.name || 'your teacher'}`)
           });
         }
       }
       this.setTab('list');
     } catch (e: any) {
-      this.dialogService.alert('Error', `An error occurred: ${e.message}`, 'info');
+      this.dialogService.alert(
+        this.t('Erreur', 'Error'),
+        this.t(`Une erreur est survenue : ${e.message}`, `An error occurred: ${e.message}`),
+        'info'
+      );
     }
   }
 
@@ -686,7 +826,6 @@ export class TeacherExercisesManagerComponent {
     this.selectedType.set(null);
   }
 
-  // Helper mapping methods for template
   getTypeColor(type: any): string {
     const item = this.typesList.find(t => t.value === type);
     return item ? item.color : '#6B7280';

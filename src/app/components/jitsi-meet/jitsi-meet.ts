@@ -242,6 +242,44 @@ export class JitsiMeet implements AfterViewInit, OnDestroy {
   }
 
   initJitsiWidget(domain: string, constructor: any) {
+    const configOverwrite: any = {
+      startWithAudioMuted: false,
+      startWithVideoMuted: false,
+      prejoinPageEnabled: true,
+      disableDeepLinking: true,
+      whiteboard: {
+        enabled: true
+      }
+    };
+
+    const toolbarButtons = [
+      'microphone', 'camera', 'closedcaptions', 'desktop', 'embedmeeting', 'fullscreen',
+      'fodeviceselection', 'hangup', 'profile', 'chat', 'etherpad', 'sharedvideo', 'settings', 'raisehand',
+      'videoquality', 'filmstrip', 'invite', 'feedback', 'stats', 'shortcuts',
+      'tileview', 'videobackgroundblur', 'download', 'help', 'whiteboard', 'participants-pane'
+    ];
+
+    if (this.isTeacher) {
+      // Teacher gets full host and moderation privileges
+      toolbarButtons.push('mute-everyone', 'mute-video-everyone', 'security', 'recording');
+      configOverwrite.remoteVideoMenu = {
+        disableKick: false,
+        disableGrantModerator: false
+      };
+      configOverwrite.hideModeratorSettingsTab = false;
+      configOverwrite.hideMuteAllButton = false;
+    } else {
+      // Students have guest restrictions: no mute other people, kick others or change settings
+      configOverwrite.remoteVideoMenu = {
+        disableKick: true,
+        disableGrantModerator: true
+      };
+      configOverwrite.hideModeratorSettingsTab = true;
+      configOverwrite.hideMuteAllButton = true;
+    }
+
+    configOverwrite.toolbarButtons = toolbarButtons;
+
     const options = {
       roomName: this.roomName,
       width: '100%',
@@ -251,12 +289,7 @@ export class JitsiMeet implements AfterViewInit, OnDestroy {
         displayName: this.userName,
         email: this.userEmail || `${this.userName.toLowerCase().replace(/\s/g, '')}@speakup.com`
       },
-      configOverwrite: {
-        startWithAudioMuted: false,
-        startWithVideoMuted: false,
-        prejoinPageEnabled: true,
-        disableDeepLinking: true
-      },
+      configOverwrite: configOverwrite,
       interfaceConfigOverwrite: {
         SHOW_JITSI_WATERMARK: false,
         SHOW_WATERMARK_FOR_GUESTS: false,
