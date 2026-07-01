@@ -104,7 +104,7 @@ interface SpeakingPrompt {
       <div class="card" style="margin-bottom:20px; padding:18px; border-radius:12px; border:1px solid var(--border-weak); background:#FFF8F1">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
           <div style="font-size:11px; font-weight:700; color:#D97706; text-transform:uppercase">Word of the Day</div>
-          <button (click)="speakWord('Kitchen')" style="background:none; border:none; color:#D97706; cursor:pointer; display:flex; align-items:center; gap:4px; font-size:12px; font-weight:600" title="Listen Pronunciation">
+          <button (click)="speakWord(wordOfTheDay().word)" style="background:none; border:none; color:#D97706; cursor:pointer; display:flex; align-items:center; gap:4px; font-size:12px; font-weight:600" title="Listen Pronunciation">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
             </svg>
@@ -112,13 +112,19 @@ interface SpeakingPrompt {
           </button>
         </div>
         
-        <div style="font-size:12px; color:#B45309; font-weight:600">noun · /ˈkɪtʃ.ən/</div>
-        <h4 style="font-size:18px; font-weight:800; color:#92400E; margin:2px 0 6px 0">Kitchen (La cuisine)</h4>
-        <p style="font-size:12.5px; color:#4B5563; margin:0 0 10px 0; line-height:1.4">A room or area where food is prepared and cooked.</p>
+        <div style="font-size:12px; color:#B45309; font-weight:600">
+          {{ wordOfTheDay().partOfSpeech }} · {{ wordOfTheDay().phonetic }}
+        </div>
+        <h4 style="font-size:18px; font-weight:800; color:#92400E; margin:2px 0 6px 0">
+          {{ wordOfTheDay().word }} ({{ wordOfTheDay().translation }})
+        </h4>
+        <p style="font-size:12.5px; color:#4B5563; margin:0 0 10px 0; line-height:1.4">
+          {{ wordOfTheDay().definition }}
+        </p>
         
         <div style="background:#FFF; padding:10px; border-radius:8px; border:1px solid #FFE4D6; font-size:12px; color:#78350F; line-height:1.4">
-          <strong>Example:</strong> "We usually eat breakfast in the kitchen."<br>
-          <span style="color:#D97706; font-style:italic">"Nous prenons habituellement notre petit-déjeuner dans la cuisine."</span>
+          <strong>Example:</strong> "{{ wordOfTheDay().example }}"<br>
+          <span style="color:#D97706; font-style:italic">"{{ wordOfTheDay().exampleTranslation }}"</span>
         </div>
       </div>
 
@@ -235,8 +241,21 @@ export class StudentSpeakingComponent implements OnDestroy {
   private animationId: number | null = null;
   
   speakingSubmissions = signal<Submission[]>([]);
+  wordOfTheDay = signal<any>({
+    word: 'Kitchen',
+    phonetic: '/ˈkɪtʃ.ən/',
+    partOfSpeech: 'noun',
+    translation: 'La cuisine',
+    definition: 'A room or area where food is prepared and cooked.',
+    example: 'We usually eat breakfast in the kitchen.',
+    exampleTranslation: 'Nous prenons habituellement notre petit-déjeuner dans la cuisine.'
+  });
 
   constructor() {
+    this.db.observeWordOfTheDay().subscribe(w => {
+      if (w) this.wordOfTheDay.set(w);
+    });
+
     // Determine active level of student to pre-select matching prompt
     this.db.observeCurrentUser().subscribe(u => {
       const lvl = u?.level || 'B1';
@@ -466,8 +485,29 @@ export class StudentSpeakingComponent implements OnDestroy {
     
     this.db.submitHomework('speaking-' + prompt.id, 'Speaking: ' + prompt.text, 'audio', audioData);
     this.isSubmitted.set(true);
+
+    // Log Activity for history
+    let currentUserId = '';
+    this.db.observeCurrentUser().subscribe(u => {
+      currentUserId = u?.id || '';
+    });
+    
+    if (currentUserId) {
+      this.db.logActivity({
+        studentId: currentUserId,
+        title: 'Speaking Practice: ' + prompt.text,
+        type: 'speaking',
+        status: 'pending',
+        xpReward: 30, // Default pending reward XP
+        completedAt: new Date().toISOString(),
+        canRetry: true
+      });
+    }
+    
     this.dialogService.alert('Success', 'Your speaking response has been submitted!', 'success');
   }
+
+
 
   private audioUrlToBase64(url: string): Promise<string> {
     return new Promise((resolve, reject) => {

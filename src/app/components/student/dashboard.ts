@@ -97,7 +97,12 @@ import { DialogService } from '../../services/dialog.service';
             <span>!</span>
           </h2>
           <p>Your English journey is progressing beautifully. Today's challenge is waiting for you.</p>
-          <button class="cta" (click)="goToLiveClass()">Join today's live class →</button>
+          <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap">
+            <button class="cta" (click)="goToLiveClass()">Join today's live class →</button>
+            <button class="cta" style="background:#0D9488; border-color:#0D9488" (click)="onTaskClick('chat-teacher')">
+              <i class="ti ti-messages"></i> Contacter le professeur
+            </button>
+          </div>
         </div>
 
         <!-- Quick Profile flag selector card -->

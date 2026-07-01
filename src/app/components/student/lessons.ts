@@ -380,6 +380,10 @@ export class StudentLessonsComponent {
   videoRecordingState = signal<'idle' | 'recording' | 'finished'>('idle');
   recordSeconds = signal<number>(0);
   private mediaStream: MediaStream | null = null;
+  private videoMediaRecorder: MediaRecorder | null = null;
+  private videoChunks: Blob[] = [];
+  videoBase64 = signal<string | null>(null);
+  
   private sanitizer = inject(DomSanitizer);
   private dialogService = inject(DialogService);
   private timerInterval: any = null;
@@ -502,9 +506,13 @@ export class StudentLessonsComponent {
   async startVideoRecording() {
     this.videoRecordingState.set('recording');
     this.recordSeconds.set(0);
+    this.videoChunks = [];
+    this.videoBase64.set(null);
+    
     this.timerInterval = setInterval(() => {
       this.recordSeconds.set(this.recordSeconds() + 1);
     }, 1000);
+    
     try {
       this.mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
       const videoElement = document.getElementById('webcam-preview') as HTMLVideoElement;
@@ -512,6 +520,22 @@ export class StudentLessonsComponent {
         videoElement.srcObject = this.mediaStream;
         videoElement.play();
       }
+      
+      this.videoMediaRecorder = new MediaRecorder(this.mediaStream);
+      this.videoMediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          this.videoChunks.push(event.data);
+        }
+      };
+      this.videoMediaRecorder.onstop = () => {
+        const videoBlob = new Blob(this.videoChunks, { type: 'video/webm' });
+        const reader = new FileReader();
+        reader.readAsDataURL(videoBlob);
+        reader.onloadend = () => {
+          this.videoBase64.set(reader.result as string);
+        };
+      };
+      this.videoMediaRecorder.start();
     } catch (e) {
       console.warn('Could not access webcam', e);
     }
@@ -520,6 +544,9 @@ export class StudentLessonsComponent {
   stopVideoRecording() {
     clearInterval(this.timerInterval);
     this.videoRecordingState.set('finished');
+    if (this.videoMediaRecorder && this.videoMediaRecorder.state !== 'inactive') {
+      this.videoMediaRecorder.stop();
+    }
     if (this.mediaStream) {
       this.mediaStream.getTracks().forEach(track => track.stop());
     }
@@ -529,6 +556,8 @@ export class StudentLessonsComponent {
     clearInterval(this.timerInterval);
     this.videoRecordingState.set('idle');
     this.recordSeconds.set(0);
+    this.videoChunks = [];
+    this.videoBase64.set(null);
     if (this.mediaStream) {
       this.mediaStream.getTracks().forEach(track => track.stop());
       this.mediaStream = null;
@@ -539,9 +568,9 @@ export class StudentLessonsComponent {
     const lesson = this.selectedLesson();
     if (!lesson) return;
 
-    const simulatedVideoData = 'data:video/mp4;base64,AAAA';
+    const videoData = this.videoBase64() || 'data:video/mp4;base64,AAAA';
     const xpReward = lesson.points || 50;
-    this.db.submitHomework(lesson.id, lesson.title, 'video', simulatedVideoData, xpReward);
+    this.db.submitHomework(lesson.id, lesson.title, 'video', videoData, xpReward);
     this.resetVideoRecording();
     this.dialogService.alert('Succès 🎉', `Votre devoir vidéo a été soumis avec succès ! Vous gagnerez ${xpReward} XP après correction.`, 'success');
   }

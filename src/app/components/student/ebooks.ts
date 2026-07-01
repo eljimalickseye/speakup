@@ -35,6 +35,38 @@ import { DatabaseService, Ebook, UserProfile } from '../../services/database.ser
         </div>
       </div>
 
+      <!-- Most Popular Section -->
+      @if (mostPopularBooks().length > 0) {
+        <div style="margin-top:20px">
+          <div class="section-title" style="display:flex; align-items:center; gap:8px">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" style="vertical-align:middle">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+            </svg>
+            <span style="font-weight:800; color:var(--text-primary); font-size:13.5px">Most Popular eBooks</span>
+          </div>
+          
+          <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:16px; margin-top:10px">
+            @for (book of mostPopularBooks(); track book.id) {
+              <div class="card" style="margin:0; background:linear-gradient(135deg, #FFFDF9 0%, #FFFBEB 100%); border:1.5px solid #FDE68A; display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s" class="book-card">
+                <div>
+                  <div style="display:flex; justify-content:space-between; align-items:flex-start">
+                    <span style="font-size:44px; display:block; margin-bottom:10px">{{ book.coverEmoji }}</span>
+                    <span class="badge" style="background:#F59E0B; color:white; font-size:10px; font-weight:700">🔥 {{ book.views }} views</span>
+                  </div>
+                  <h4 style="font-size:14px; font-weight:800; color:#B45309; margin:0 0 4px 0">{{ book.title }}</h4>
+                  <p style="font-size:10px; color:#D97706; margin-bottom:8px">Par {{ book.author }} · Niveau: {{ book.level }}</p>
+                  <p style="font-size:11.5px; color:#78350F; line-height:1.4; margin:0 0 16px 0">{{ book.description }}</p>
+                </div>
+
+                <button class="btn-p" style="width:100%; height:36px; font-size:12px; font-weight:700; background:#D97706; border-color:#D97706; color:white" (click)="openReadingOverlay(book)">
+                  Lire l'Ebook 📖
+                </button>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
       <!-- Library Grid -->
       @if (filteredBooks().length === 0) {
         <div class="card" style="text-align:center; padding:48px 16px; color:var(--text-muted)">
@@ -152,8 +184,16 @@ export class StudentEbooksComponent {
     return list;
   });
 
+  mostPopularBooks = computed(() => {
+    return [...this.ebooks()]
+      .filter(b => (b.views || 0) > 0)
+      .sort((a, b) => (b.views || 0) - (a.views || 0))
+      .slice(0, 3);
+  });
+
   openReadingOverlay(book: Ebook) {
     this.activeBook.set(book);
+    this.db.incrementEbookViews(book.id);
   }
 
   closeReadingOverlay() {

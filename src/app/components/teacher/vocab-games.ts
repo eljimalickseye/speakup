@@ -43,6 +43,9 @@ import { DialogService } from '../../services/dialog.service';
                 <option value="word_builder">🏗️ Word Builder</option>
                 <option value="hangman">🪢 Pendu</option>
                 <option value="multiple_choice">📝 Choix multiple</option>
+                <option value="word_search">🔍 Mots mêlés</option>
+                <option value="sentence_order">⛓️ Remettre dans l'ordre</option>
+                <option value="error_hunt">🕵️ Chasse aux erreurs</option>
               </select>
             </div>
 
@@ -102,6 +105,15 @@ import { DialogService } from '../../services/dialog.service';
               }
               @case ('multiple_choice') {
                 <div class="ginfo green">📝 <strong>Choix multiple :</strong> Pour chaque définition, choisir le bon mot parmi 4 options.</div>
+              }
+              @case ('word_search') {
+                <div class="ginfo purple">🔍 <strong>Mots mêlés :</strong> Retrouver les mots cachés dans une grille de lettres.</div>
+              }
+              @case ('sentence_order') {
+                <div class="ginfo blue">⛓️ <strong>Remettre dans l'ordre :</strong> Replacer les mots d'une phrase anglaise dans le bon ordre. Le mot anglais servira de phrase (séparé par des espaces) et la traduction servira d'indice.</div>
+              }
+              @case ('error_hunt') {
+                <div class="ginfo red">🕵️ <strong>Chasse aux erreurs :</strong> Trouver et corriger le mot incorrect dans une phrase. Le mot anglais sera la phrase incorrecte, et la traduction sera la phrase correcte.</div>
               }
             }
           </div>
@@ -347,12 +359,12 @@ export class TeacherVocabGamesComponent {
   }
 
   getGameEmoji(t: string): string {
-    const m: any = { flashcards: '🃏', matching: '🔗', memory: '🧠', word_builder: '🏗️', hangman: '🪢', multiple_choice: '📝' };
+    const m: any = { flashcards: '🃏', matching: '🔗', memory: '🧠', word_builder: '🏗️', hangman: '🪢', multiple_choice: '📝', word_search: '🔍', sentence_order: '⛓️', error_hunt: '🕵️' };
     return m[t] || '🎮';
   }
 
   getGameLabel(t: string): string {
-    const m: any = { flashcards: 'Flashcards', matching: 'Association', memory: 'Memory', word_builder: 'Word Builder', hangman: 'Pendu', multiple_choice: 'Choix multiple' };
+    const m: any = { flashcards: 'Flashcards', matching: 'Association', memory: 'Memory', word_builder: 'Word Builder', hangman: 'Pendu', multiple_choice: 'Choix multiple', word_search: 'Mots mêlés', sentence_order: 'Ordre des mots', error_hunt: 'Chasse aux erreurs' };
     return m[t] || t;
   }
 
@@ -362,7 +374,7 @@ export class TeacherVocabGamesComponent {
   }
 
   getGameIconBg(t: string): string {
-    const m: any = { flashcards: 'amber', matching: 'blue', memory: 'teal', word_builder: 'amber', hangman: 'red', multiple_choice: 'green' };
+    const m: any = { flashcards: 'amber', matching: 'blue', memory: 'teal', word_builder: 'amber', hangman: 'red', multiple_choice: 'green', word_search: 'purple', sentence_order: 'blue', error_hunt: 'red' };
     return `game-icon ${m[t] || 'purple'}`;
   }
 }

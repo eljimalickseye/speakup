@@ -19,8 +19,12 @@ import { StudentDictionaryComponent } from '../student/dictionary';
 import { StudentEbooksComponent } from '../student/ebooks';
 import { StudentHistoryComponent } from '../student/history';
 import { StudentExamComponent } from '../student/exam';
+import { StudentProfileComponent } from '../student/profile';
+import { StudentGardenComponent } from '../student/garden';
+import { StudentClubsComponent } from '../student/clubs';
+import { StudentMarketplaceComponent } from '../student/marketplace';
+import { StudentJourneyComponent } from '../student/journey';
 import { TeacherEbooksComponent } from '../teacher/ebooks';
-
 import { TeacherOverviewComponent } from '../teacher/overview';
 import { TeacherStudentsComponent } from '../teacher/students';
 import { TeacherLessonsComponent } from '../teacher/lessons';
@@ -59,6 +63,11 @@ import { HistoryLogsComponent } from '../shared/history-logs';
     StudentEbooksComponent,
     StudentHistoryComponent,
     StudentExamComponent,
+    StudentProfileComponent,
+    StudentGardenComponent,
+    StudentClubsComponent,
+    StudentMarketplaceComponent,
+    StudentJourneyComponent,
     TeacherEbooksComponent,
     TeacherOverviewComponent,
     TeacherStudentsComponent,
@@ -132,13 +141,23 @@ import { HistoryLogsComponent } from '../shared/history-logs';
             <button class="nav-item" [class.active]="activeTab === 'dashboard'" (click)="setTab('dashboard')">
               <i class="ti ti-layout-dashboard" aria-hidden="true"></i>{{ t('Tableau de bord', 'Dashboard') }}
             </button>
+            @if (showGarden()) {
+              <button class="nav-item" [class.active]="activeTab === 'garden'" (click)="setTab('garden')">
+                <i class="ti ti-plant" aria-hidden="true"></i>My Garden
+              </button>
+            }
+            @if (showJourney()) {
+              <button class="nav-item" [class.active]="activeTab === 'journey'" (click)="setTab('journey')">
+                <i class="ti ti-map" aria-hidden="true"></i>SpeakUp Journey
+              </button>
+            }
             <button class="nav-item" [class.active]="activeTab === 'lessons'" (click)="setTab('lessons')">
               <i class="ti ti-book" aria-hidden="true"></i>{{ t('Cours & Leçons', 'Lessons') }}
               @if (newLessonsCount() > 0) {
                 <span class="badge" style="background:#4F46E5; color:white; margin-left:auto">{{ newLessonsCount() }}</span>
               }
             </button>
-            <button class="nav-item" [class.active]="activeTab === 'speaking'" (click)="setTab('speaking')">
+            <button class="nav-item" [class.active]="activeTab === 'speaking'" [class.hidden]="currentUser()?.role === 'guest'" [disabled]="currentUser()?.role === 'guest'" [class.disabled]="currentUser()?.role === 'guest'" [style.opacity]="currentUser()?.role === 'guest' ? '0.5' : '1'" [style.pointer-events]="currentUser()?.role === 'guest' ? 'none' : 'auto'" [attr.title]="currentUser()?.role === 'guest' ? 'Unlock with full account' : null" [class.active]="activeTab === 'speaking'" (click)="setTab('speaking')">
               <i class="ti ti-microphone" aria-hidden="true"></i>{{ t('Pratique Orale', 'Speaking') }}
             </button>
             <button class="nav-item" [class.active]="activeTab === 'exercises'" (click)="setTab('exercises')">
@@ -158,6 +177,11 @@ import { HistoryLogsComponent } from '../shared/history-logs';
                 <span class="badge" style="background:#EF4444; color:white; margin-left:auto">{{ chatUnreadCount() }}</span>
               }
             </button>
+            @if (showBoutique()) {
+              <button class="nav-item" [class.active]="activeTab === 'marketplace'" (click)="setTab('marketplace')">
+                <i class="ti ti-shopping-cart" aria-hidden="true"></i>Boutique
+              </button>
+            }
             <button class="nav-item" [class.active]="activeTab === 'leaderboard'" (click)="setTab('leaderboard')">
               <i class="ti ti-trophy" aria-hidden="true"></i>{{ t('Classement (XP)', 'Leaderboard') }}
             </button>
@@ -185,7 +209,7 @@ import { HistoryLogsComponent } from '../shared/history-logs';
             </button>
             <button class="nav-item" [class.active]="activeTab === 'exam'" (click)="setTab('exam')">
               <i class="ti ti-certificate" aria-hidden="true"></i>{{ t('Mode Examen', 'Exam Mode') }}
-              @if (examModeIsNew()) {
+              @if (examModeIsNew() || showExamNewBadge()) {
                 <span class="badge" style="background:#4F46E5; color:white; font-size:9px; margin-left:auto">NEW</span>
               }
             </button>
@@ -232,6 +256,9 @@ import { HistoryLogsComponent } from '../shared/history-logs';
             </button>
             <button class="ni" [class.active]="activeTab === 'vocab-games'" (click)="setTab('vocab-games')">
               <i class="ti ti-cards" aria-hidden="true"></i>{{ t('Jeux de Vocabulaire', 'Vocabulary Games') }}
+              @if (showVocabNewBadge()) {
+                <span class="badge" style="background:#F59E0B; color:#92400E; font-size:9px; margin-left:auto">NEW</span>
+              }
             </button>
             <button class="ni" [class.active]="activeTab === 'grade-homework'" (click)="setTab('grade-homework')">
               <i class="ti ti-writing" aria-hidden="true"></i>{{ t('Corriger les Devoirs', 'Grade Homework') }}
@@ -241,6 +268,9 @@ import { HistoryLogsComponent } from '../shared/history-logs';
             </button>
             <button class="ni" [class.active]="activeTab === 'results'" (click)="setTab('results')">
               <i class="ti ti-clipboard-data" aria-hidden="true"></i>{{ t('Résultats Élèves', 'Students Results') }}
+              @if (showResultsNewBadge()) {
+                <span class="badge" style="background:#059669; color:white; font-size:9px; margin-left:auto">NEW</span>
+              }
             </button>
             <button class="ni" [class.active]="activeTab === 'ebooks'" (click)="setTab('ebooks')">
               <i class="ti ti-notebook" aria-hidden="true"></i>{{ t('Gérer les Ebooks', 'Manage Ebooks') }}
@@ -308,8 +338,12 @@ import { HistoryLogsComponent } from '../shared/history-logs';
           <!-- Real-time notifications bell -->
           <app-notifications style="margin-right: 12px;"></app-notifications>
           
-          <!-- Reset DB Button (Teacher only) -->
+          <!-- Live Button + Reset DB (Teacher only) -->
           @if (currentUser()?.role === 'teacher') {
+            <button class="btn-s hide-mobile" (click)="triggerInstantLive()" style="font-size:11px; padding:4px 14px; border-radius:20px; display:flex; align-items:center; gap:6px; margin-right:10px; background:#EEF2FF; border-color:#4F46E5; color:#4F46E5; font-weight:700">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7a2 2 0 0 0-2-2H3a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V7Z"/><path d="M12 9v6"/><path d="M9 12h6"/></svg>
+              Activer le Live
+            </button>
             <button class="btn-s hide-mobile" style="font-size: 11px; padding: 4px 12px; border-radius: 20px; display:flex; align-items:center; gap:4px; margin-right: 12px; border-color:#D97706; color:#D97706" (click)="resetDB()">
               <i class="ti ti-refresh" aria-hidden="true"></i> {{ t('Reset DB', 'Reset DB') }}
             </button>
@@ -320,7 +354,7 @@ import { HistoryLogsComponent } from '../shared/history-logs';
             <i class="ti ti-logout" aria-hidden="true"></i> {{ t('Se déconnecter', 'Log Out') }}
           </button>
 
-          <div class="avatar" [style.background]="currentUser()?.role === 'teacher' ? '#3730A3' : '#4F46E5'" style="cursor:pointer; transition: transform 0.2s ease" (click)="openProfileEditor()" [title]="t('Modifier mon profil', 'Edit Profile Settings')">
+          <div class="avatar" [style.background]="currentUser()?.role === 'teacher' ? '#3730A3' : '#4F46E5'" style="cursor:pointer; transition: transform 0.2s ease" (click)="currentUser()?.role === 'student' ? setTab('profile') : openProfileEditor()" [title]="t('Fiche de Personnage / Paramètres', 'Edit Profile Settings')">
             {{ currentUser()?.avatar }}
           </div>
         </div>
@@ -331,6 +365,16 @@ import { HistoryLogsComponent } from '../shared/history-logs';
           @if (currentUser()?.role === 'student' || currentUser()?.role === 'guest') {
             @if (activeTab === 'dashboard') {
               <app-student-dashboard (navigateToTab)="setTab($event)"></app-student-dashboard>
+            } @else if (activeTab === 'profile') {
+              <app-student-profile></app-student-profile>
+            } @else if (activeTab === 'garden') {
+              <app-student-garden></app-student-garden>
+            } @else if (activeTab === 'journey') {
+              <app-student-journey></app-student-journey>
+            } @else if (activeTab === 'clubs') {
+              <app-student-clubs></app-student-clubs>
+            } @else if (activeTab === 'marketplace') {
+              <app-student-marketplace></app-student-marketplace>
             } @else if (activeTab === 'lessons') {
               <app-student-lessons></app-student-lessons>
             } @else if (activeTab === 'speaking') {
@@ -556,13 +600,7 @@ import { HistoryLogsComponent } from '../shared/history-logs';
         </div>
       }
 
-      <!-- Floating Action Button for Teachers: Start Live Class Instantly -->
-      @if (currentUser()?.role === 'teacher') {
-        <button (click)="triggerInstantLive()" class="float-live-btn" title="Activer le Live">
-          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7a2 2 0 0 0-2-2H3a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V7Z"/><path d="M12 9v6"/><path d="M9 12h6"/></svg>
-          <span>Activer le Live</span>
-        </button>
-      }
+
 
       <!-- GLOBAL JITSI MEET fullscreen OVERLAY -->
       @if (activeJitsiCall(); as call) {
@@ -604,43 +642,7 @@ import { HistoryLogsComponent } from '../shared/history-logs';
     }
   `,
   styles: [`
-    .float-live-btn {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      z-index: 99;
-      background: #EEF2FF;
-      border: 1px solid #4F46E5;
-      color: #4F46E5;
-      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.2);
-      border-radius: 30px;
-      padding: 10px 16px;
-      font-size: 12px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      cursor: pointer;
-      transition: transform 0.2s ease, background 0.2s ease;
-    }
-    .float-live-btn:hover {
-      transform: scale(1.04);
-      background: #FFFFFF;
-    }
-    @media (max-width: 768px) {
-      .float-live-btn {
-        bottom: 90px;
-        right: 16px;
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        padding: 0;
-        justify-content: center;
-      }
-      .float-live-btn span {
-        display: none;
-      }
-    }
+
 
     .tester-switcher {
       display: flex;
@@ -767,6 +769,16 @@ export class LayoutComponent {
   pageTitle = 'Dashboard';
   isSidebarOpen = signal<boolean>(false);
 
+  showBoutique = signal<boolean>(false);
+  showGarden = signal<boolean>(false);
+  showJourney = signal<boolean>(false);
+
+  // Badge notification clearing states
+  lastLessonsView = signal<string>(localStorage.getItem('speak_last_lessons_view') || '');
+  showExamNewBadge = signal<boolean>(localStorage.getItem('speak_seen_exam_mode') !== 'true');
+  showVocabNewBadge = signal<boolean>(localStorage.getItem('speak_seen_vocab_games') !== 'true');
+  showResultsNewBadge = signal<boolean>(localStorage.getItem('speak_seen_results') !== 'true');
+
   // Badges stats
   lessonsCount = signal<number>(0);
   pendingHomeworkCount = signal<number>(0);
@@ -791,6 +803,7 @@ export class LayoutComponent {
 
   private lastSubmissions: Submission[] | null = null;
   private lastActiveClassId: string | null = null;
+  activeJitsiCall = signal<LiveClass | null>(null);
 
   activeLang = this.db.activeLang;
 
@@ -847,19 +860,27 @@ export class LayoutComponent {
     });
 
     this.db.observeLessons().subscribe(list => {
-      this.lessonsCount.set(list.length);
-      // Count lessons published since last visit to the lessons tab
-      const lastVisit = localStorage.getItem('speak_lessons_visited_at');
-      if (lastVisit) {
-        const lastVisitTime = new Date(lastVisit).getTime();
-        const newCount = list.filter(l =>
-          l.status === 'published' && new Date(l.createdAt || 0).getTime() > lastVisitTime
-        ).length;
-        this.newLessonsCount.set(newCount);
+      const lastViewStr = this.lastLessonsView();
+      if (!lastViewStr) {
+        this.lessonsCount.set(list.length);
       } else {
-        // First time ever — show the count of published lessons
-        this.newLessonsCount.set(list.filter(l => l.status === 'published').length);
+        const lastViewTime = new Date(lastViewStr).getTime();
+        const newLessons = list.filter(l => new Date(l.createdAt).getTime() > lastViewTime);
+        this.lessonsCount.set(newLessons.length);
+        this.newLessonsCount.set(newLessons.length);
       }
+    });
+
+    this.db.observeShowBoutique().subscribe(val => {
+      this.showBoutique.set(val);
+    });
+
+    this.db.observeShowGarden().subscribe(val => {
+      this.showGarden.set(val);
+    });
+
+    this.db.observeShowJourney().subscribe(val => {
+      this.showJourney.set(val);
     });
 
     this.db.observeAnnouncements().subscribe(list => {
@@ -983,6 +1004,19 @@ export class LayoutComponent {
   }
 
   setTab(tabName: string) {
+    if (tabName === 'chat-teacher') {
+      this.activeTab = 'chat';
+      localStorage.setItem('speak_active_tab', 'chat');
+      this.pageTitle = this.getTabTitle('chat');
+      this.isSidebarOpen.set(false);
+      this.chatUnreadCount.set(0);
+      
+      // Dispatch event to trigger startConversationWithTeacher
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('trigger-teacher-dm'));
+      }, 200);
+      return;
+    }
     this.activeTab = tabName;
     localStorage.setItem('speak_active_tab', tabName);
     this.pageTitle = this.getTabTitle(tabName);
@@ -994,14 +1028,28 @@ export class LayoutComponent {
 
     // Clear "new lessons" badge after visiting lessons tab
     if (tabName === 'lessons') {
-      localStorage.setItem('speak_lessons_visited_at', new Date().toISOString());
+      const nowStr = new Date().toISOString();
+      localStorage.setItem('speak_lessons_visited_at', nowStr);
+      localStorage.setItem('speak_last_lessons_view', nowStr);
+      this.lastLessonsView.set(nowStr);
       this.newLessonsCount.set(0);
+      this.lessonsCount.set(0);
     }
 
     // Clear "NEW" badge on Exam Mode after first visit
     if (tabName === 'exam') {
       localStorage.setItem('speak_exam_visited', 'true');
+      localStorage.setItem('speak_seen_exam_mode', 'true');
       this.examModeIsNew.set(false);
+      this.showExamNewBadge.set(false);
+    }
+
+    if (tabName === 'vocab-games') {
+      localStorage.setItem('speak_seen_vocab_games', 'true');
+      this.showVocabNewBadge.set(false);
+    } else if (tabName === 'results') {
+      localStorage.setItem('speak_seen_results', 'true');
+      this.showResultsNewBadge.set(false);
     }
 
     // Clear notifications corresponding to lessons and exams when visiting these tabs
@@ -1181,7 +1229,7 @@ export class LayoutComponent {
     }
   }
 
-  activeJitsiCall = signal<LiveClass | null>(null);
+
 
   joinLiveCall(c: LiveClass) {
     this.db.setActiveJitsiCall(c);

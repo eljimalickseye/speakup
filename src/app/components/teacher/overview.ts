@@ -1,13 +1,14 @@
 import { Component, Output, EventEmitter, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { combineLatest } from 'rxjs';
-import { DatabaseService, LiveClass, UserProfile, Submission, Announcement } from '../../services/database.service';
+import { FormsModule } from '@angular/forms';
+import { DatabaseService, LiveClass, UserProfile, Submission, Announcement, WordOfTheDay } from '../../services/database.service';
 import { DialogService } from '../../services/dialog.service';
 
 @Component({
   selector: 'app-teacher-overview',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   template: `
     <div class="page" style="height: 100%">
       @if (!activeMeeting()) {
@@ -146,6 +147,119 @@ import { DialogService } from '../../services/dialog.service';
           </div>
         }
 
+        <!-- WORD OF THE DAY SETTINGS CARD -->
+        <div class="card" style="margin-top:24px; border:1.5px solid #F59E0B; background:#FFFBEB; border-radius:12px; padding:18px">
+          <h3 class="st" style="font-size:15px; margin:0 0 12px 0; color:#B45309; display:flex; align-items:center; gap:8px">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle">
+              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/>
+            </svg>
+            <span>Word of the Day Editor (Mot du Jour)</span>
+          </h3>
+
+          <div style="display:flex; flex-direction:column; gap:12px">
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:12px">
+              <div class="input-row" style="margin-bottom:0">
+                <label style="font-size:11px; font-weight:600; color:#B45309; margin-bottom:4px; display:block">Mot en Anglais</label>
+                <input [(ngModel)]="wordOfTheDay().word" placeholder="Ex: Resilience" class="form-input" style="height:36px; font-size:13px; border-color:#FDE68A" />
+              </div>
+              <div class="input-row" style="margin-bottom:0">
+                <label style="font-size:11px; font-weight:600; color:#B45309; margin-bottom:4px; display:block">Traduction Française</label>
+                <input [(ngModel)]="wordOfTheDay().translation" placeholder="Ex: Résilience" class="form-input" style="height:36px; font-size:13px; border-color:#FDE68A" />
+              </div>
+              <div class="input-row" style="margin-bottom:0">
+                <label style="font-size:11px; font-weight:600; color:#B45309; margin-bottom:4px; display:block">Type de mot</label>
+                <select [(ngModel)]="wordOfTheDay().partOfSpeech" class="form-select" style="height:36px; font-size:13px; border-color:#FDE68A">
+                  <option value="noun">Nom (noun)</option>
+                  <option value="verb">Verbe (verb)</option>
+                  <option value="adjective">Adjectif (adjective)</option>
+                  <option value="adverb">Adverbe (adverb)</option>
+                  <option value="phrase">Expression (phrase)</option>
+                </select>
+              </div>
+              <div class="input-row" style="margin-bottom:0">
+                <label style="font-size:11px; font-weight:600; color:#B45309; margin-bottom:4px; display:block">Phonétique</label>
+                <input [(ngModel)]="wordOfTheDay().phonetic" placeholder="Ex: /rɪˈzɪl.jəns/" class="form-input" style="height:36px; font-size:13px; border-color:#FDE68A" />
+              </div>
+            </div>
+
+            <div class="input-row" style="margin-bottom:0">
+              <label style="font-size:11px; font-weight:600; color:#B45309; margin-bottom:4px; display:block">Définition</label>
+              <input [(ngModel)]="wordOfTheDay().definition" placeholder="Ex: The capacity to recover quickly from difficulties..." class="form-input" style="height:36px; font-size:13px; border-color:#FDE68A" />
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; flex-wrap:wrap">
+              <div class="input-row" style="margin-bottom:0">
+                <label style="font-size:11px; font-weight:600; color:#B45309; margin-bottom:4px; display:block">Exemple d'utilisation (Anglais)</label>
+                <input [(ngModel)]="wordOfTheDay().example" placeholder="Ex: She showed great resilience." class="form-input" style="height:36px; font-size:13px; border-color:#FDE68A" />
+              </div>
+              <div class="input-row" style="margin-bottom:0">
+                <label style="font-size:11px; font-weight:600; color:#B45309; margin-bottom:4px; display:block">Exemple d'utilisation (Français)</label>
+                <input [(ngModel)]="wordOfTheDay().exampleTranslation" placeholder="Ex: Elle a fait preuve d'une grande résilience." class="form-input" style="height:36px; font-size:13px; border-color:#FDE68A" />
+              </div>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; margin-top:8px">
+              <button class="btn-p" style="height:36px; padding:0 24px; font-weight:700; background:#D97706; border-color:#D97706" (click)="saveWordOfTheDay()">
+                Mettre à jour le Mot du Jour 🎙️
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- FEATURE CONFIGURATION CARD -->
+        <div class="card" style="margin-top:20px; border:1.5px solid #10B981; background:#F0FDF4; border-radius:12px; padding:18px">
+          <h3 class="st" style="font-size:15px; margin:0 0 12px 0; color:#047857; display:flex; align-items:center; gap:8px">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle">
+              <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>
+            </svg>
+            <span>Configuration des Fonctionnalités (Élèves)</span>
+          </h3>
+
+          <div style="display:flex; flex-direction:column; gap:14px">
+            <!-- Boutique Toggle -->
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px dashed rgba(16, 185, 129, 0.2)">
+              <div>
+                <strong style="font-size:13px; color:#065F46; display:block">Activer la Boutique Virtuelle 🪙</strong>
+                <span style="font-size:11px; color:#047857">Permet aux élèves de dépenser leurs coins dans la boutique d'avatars et thèmes.</span>
+              </div>
+              <label class="switch-toggle" style="position:relative; display:inline-block; width:44px; height:24px">
+                <input type="checkbox" [checked]="showBoutique()" (change)="toggleBoutique(!showBoutique())" style="opacity:0; width:0; height:0" />
+                <span [style.background]="showBoutique() ? '#10B981' : '#CBD5E1'" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; transition:0.3s; border-radius:24px; display:block">
+                  <span [style.transform]="showBoutique() ? 'translateX(20px)' : 'translateX(0px)'" style="position:absolute; content:''; height:18px; width:18px; left:3px; bottom:3px; background-color:white; transition:0.3s; border-radius:50%; display:block"></span>
+                </span>
+              </label>
+            </div>
+
+            <!-- Garden Toggle -->
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px dashed rgba(16, 185, 129, 0.2)">
+              <div>
+                <strong style="font-size:13px; color:#065F46; display:block">Activer le Jardin SpeakUp Garden 🌸</strong>
+                <span style="font-size:11px; color:#047857">Permet aux élèves de faire grandir leur forêt et leurs fleurs en étudiant.</span>
+              </div>
+              <label class="switch-toggle" style="position:relative; display:inline-block; width:44px; height:24px">
+                <input type="checkbox" [checked]="showGarden()" (change)="toggleGarden(!showGarden())" style="opacity:0; width:0; height:0" />
+                <span [style.background]="showGarden() ? '#10B981' : '#CBD5E1'" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; transition:0.3s; border-radius:24px; display:block">
+                  <span [style.transform]="showGarden() ? 'translateX(20px)' : 'translateX(0px)'" style="position:absolute; content:''; height:18px; width:18px; left:3px; bottom:3px; background-color:white; transition:0.3s; border-radius:50%; display:block"></span>
+                </span>
+              </label>
+            </div>
+
+            <!-- Journey Toggle -->
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0">
+              <div>
+                <strong style="font-size:13px; color:#065F46; display:block">Activer SpeakUp Journey 🗺️</strong>
+                <span style="font-size:11px; color:#047857">Permet aux élèves d'accomplir des missions de voyage avec une liste d'objectifs.</span>
+              </div>
+              <label class="switch-toggle" style="position:relative; display:inline-block; width:44px; height:24px">
+                <input type="checkbox" [checked]="showJourney()" (change)="toggleJourney(!showJourney())" style="opacity:0; width:0; height:0" />
+                <span [style.background]="showJourney() ? '#10B981' : '#CBD5E1'" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; transition:0.3s; border-radius:24px; display:block">
+                  <span [style.transform]="showJourney() ? 'translateX(20px)' : 'translateX(0px)'" style="position:absolute; content:''; height:18px; width:18px; left:3px; bottom:3px; background-color:white; transition:0.3s; border-radius:50%; display:block"></span>
+                </span>
+              </label>
+            </div>
+          </div>
+        </div>
+
       } @else {
         <!-- LIVE HOST PERSISTENT CALL CARD -->
         <div style="height: 100%; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:16px; padding:40px; text-align:center; background:#111827; color:#FFF">
@@ -183,12 +297,41 @@ export class TeacherOverviewComponent {
   todayClasses = signal<LiveClass[]>([]);
   activeMeeting = signal<LiveClass | null>(null);
   recentAnnouncements = signal<Announcement[]>([]);
+  wordOfTheDay = signal<any>({
+    word: '',
+    phonetic: '',
+    partOfSpeech: 'noun',
+    translation: '',
+    definition: '',
+    example: '',
+    exampleTranslation: ''
+  });
+
+  showBoutique = signal<boolean>(false);
+  showGarden = signal<boolean>(false);
+  showJourney = signal<boolean>(false);
 
   @Output() navigateToTab = new EventEmitter<string>();
 
   constructor() {
     this.db.observeActiveJitsiCall().subscribe(c => {
       this.activeMeeting.set(c);
+    });
+
+    this.db.observeWordOfTheDay().subscribe(w => {
+      if (w) this.wordOfTheDay.set({ ...w });
+    });
+
+    this.db.observeShowBoutique().subscribe(val => {
+      this.showBoutique.set(val);
+    });
+
+    this.db.observeShowGarden().subscribe(val => {
+      this.showGarden.set(val);
+    });
+
+    this.db.observeShowJourney().subscribe(val => {
+      this.showJourney.set(val);
     });
 
     this.db.observeCurrentUser().subscribe(user => {
@@ -350,5 +493,26 @@ export class TeacherOverviewComponent {
     content += `</div>`;
     
     this.dialogService.alert(ann.title, content, 'info');
+  }
+
+  saveWordOfTheDay() {
+    this.db.updateWordOfTheDay(this.wordOfTheDay()).then(() => {
+      this.dialogService.alert('Succès 🎉', 'Le Mot du Jour a été mis à jour avec succès et synchronisé pour tous les élèves.', 'success');
+    });
+  }
+
+  toggleBoutique(val: boolean) {
+    this.db.updateShowBoutique(val);
+    this.dialogService.alert('Configuration mise à jour ⚙️', `La Boutique virtuelle a été ${val ? 'activée' : 'masquée'} pour tous les élèves.`, 'success');
+  }
+
+  toggleGarden(val: boolean) {
+    this.db.updateShowGarden(val);
+    this.dialogService.alert('Configuration mise à jour ⚙️', `Le Jardin SpeakUp Garden a été ${val ? 'activé' : 'masqué'} pour tous les élèves.`, 'success');
+  }
+
+  toggleJourney(val: boolean) {
+    this.db.updateShowJourney(val);
+    this.dialogService.alert('Configuration mise à jour ⚙️', `Le SpeakUp Journey a été ${val ? 'activé' : 'masqué'} pour tous les élèves et une notification leur a été envoyée.`, 'success');
   }
 }

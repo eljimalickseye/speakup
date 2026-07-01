@@ -9,6 +9,61 @@ import { environment } from '../../environments/environment';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { getAuth, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 
+export interface UserGarden {
+  trees: number;
+  flowers: number;
+  wiltedPlants: number;
+  lastLessonDate: string;
+  healthStatus: 'healthy' | 'wilted' | 'flourishing';
+}
+
+export interface ClubPost {
+  id: string;
+  authorId: string;
+  authorName: string;
+  authorAvatar: string;
+  content: string;
+  createdAt: string;
+  likes: string[];
+}
+
+export interface LearningClub {
+  id: string;
+  name: string;
+  description: string;
+  members: string[];
+  weeklyXP: { [userId: string]: number };
+  collectiveChallenge: {
+    title: string;
+    targetXP: number;
+    currentXP: number;
+    reward: number;
+  };
+  discussions: ClubPost[];
+}
+
+export interface MarketplaceItem {
+  id: string;
+  name: string;
+  type: 'avatar' | 'frame' | 'theme';
+  iconOrPreview: string;
+  cost: number;
+}
+
+export interface JourneyMission {
+  id: string;
+  title: string;
+  description: string;
+  requiredTasks: {
+    type: 'words' | 'video' | 'quiz' | 'listening' | 'writing' | 'final';
+    title: string;
+    target: number;
+    current: number;
+  }[];
+  completed: boolean;
+  unlocked: boolean;
+}
+
 export interface UserProfile {
   id: string;
   name: string;
@@ -34,6 +89,17 @@ export interface UserProfile {
   password?: string;
   blocked?: boolean;
   status?: 'pending' | 'approved' | 'rejected' | 'suspended';
+  coins?: number;
+  unlockedBadges?: string[];
+  unlockedFrames?: string[];
+  unlockedAvatars?: string[];
+  unlockedThemes?: string[];
+  activeFrame?: string;
+  activeAvatar?: string;
+  activeTheme?: string;
+  activeTitle?: string;
+  garden?: UserGarden;
+  clubId?: string;
 }
 
 export interface SystemLog {
@@ -88,6 +154,7 @@ export interface Ebook {
   coverEmoji: string;
   content: string;
   createdAt: string;
+  views?: number;
 }
 
 export interface AbuseReport {
@@ -240,6 +307,18 @@ export interface ActivityLog {
   completedAt: string;
   quizId?: string;
   canRetry?: boolean;
+  xpReward?: number;
+}
+
+export interface WordOfTheDay {
+  word: string;
+  phonetic: string;
+  partOfSpeech: string;
+  translation: string;
+  definition: string;
+  example: string;
+  exampleTranslation: string;
+  updatedAt?: string;
 }
 
 export interface AppNotification {
@@ -257,7 +336,7 @@ export interface AppNotification {
 export interface VocabGame {
   id: string;
   title: string;
-  gameType: 'flashcards' | 'matching' | 'memory' | 'word_builder' | 'hangman' | 'multiple_choice';
+  gameType: 'flashcards' | 'matching' | 'memory' | 'word_builder' | 'hangman' | 'multiple_choice' | 'word_search' | 'sentence_order' | 'error_hunt';
   difficulty: 'easy' | 'medium' | 'hard';
   category?: string;
   assignedGroupId?: string;
@@ -376,6 +455,23 @@ export class DatabaseService {
   private vocabGames$ = new BehaviorSubject<VocabGame[]>([]);
   private examAttempts$ = new BehaviorSubject<ExamAttempt[]>([]);
   private vocabGameAttempts$ = new BehaviorSubject<VocabGameAttempt[]>([]);
+  private wordOfTheDay$ = new BehaviorSubject<WordOfTheDay>({
+    word: 'Kitchen',
+    phonetic: '/ˈkɪtʃ.ən/',
+    partOfSpeech: 'noun',
+    translation: 'La cuisine',
+    definition: 'A room or area where food is prepared and cooked.',
+    example: 'We usually eat breakfast in the kitchen.',
+    exampleTranslation: 'Nous prenons habituellement notre petit-déjeuner dans la cuisine.'
+  });
+  
+  private clubs$ = new BehaviorSubject<LearningClub[]>([]);
+  private marketplaceItems$ = new BehaviorSubject<MarketplaceItem[]>([]);
+  private journeyMissions$ = new BehaviorSubject<JourneyMission[]>([]);
+  
+  private showBoutique$ = new BehaviorSubject<boolean>(false);
+  private showGarden$ = new BehaviorSubject<boolean>(false);
+  private showJourney$ = new BehaviorSubject<boolean>(false);
   
   private currentUser$ = new BehaviorSubject<UserProfile | null>(null);
   private activeJitsiCall$ = new BehaviorSubject<LiveClass | null>(null);
@@ -391,6 +487,22 @@ export class DatabaseService {
   constructor() {
     const voiceChatLocal = localStorage.getItem('speak_voice_chat_enabled') !== 'false';
     this.voiceChatEnabled$.next(voiceChatLocal);
+
+    const boutiqueLocal = localStorage.getItem('speak_settings_show_boutique') === 'true';
+    this.showBoutique$.next(boutiqueLocal);
+
+    const gardenLocal = localStorage.getItem('speak_settings_show_garden') === 'true';
+    this.showGarden$.next(gardenLocal);
+
+    const journeyLocal = localStorage.getItem('speak_settings_show_journey') === 'true';
+    this.showJourney$.next(journeyLocal);
+
+    const localWord = localStorage.getItem('speak_word_of_the_day');
+    if (localWord) {
+      try {
+        this.wordOfTheDay$.next(JSON.parse(localWord));
+      } catch (e) {}
+    }
 
     try {
       const app = initializeApp(environment.firebaseConfig);
@@ -648,6 +760,122 @@ export class DatabaseService {
     this.systemLogs$.next(systemLogs);
 
 
+    // --- Gamification Default Seeds ---
+    const defaultClubs: LearningClub[] = [
+      {
+        id: 'club-1',
+        name: 'English Beginners 🔰',
+        description: 'Pour s\'entraider à maîtriser les bases de la langue de Shakespeare dans la joie !',
+        members: ['student'],
+        weeklyXP: { student: 120 },
+        collectiveChallenge: { title: 'Atteindre 1 000 XP collectifs 🚀', targetXP: 1000, currentXP: 120, reward: 250 },
+        discussions: [
+          { id: 'p-1', authorId: 'teacher', authorName: 'AT - Teacher', authorAvatar: 'AT', content: 'Welcome to the Beginners club! Feel free to introduce yourselves here.', createdAt: new Date().toISOString(), likes: [] }
+        ]
+      },
+      {
+        id: 'club-2',
+        name: 'Business English 👔',
+        description: 'Optimisez votre anglais professionnel, CV, entretiens et réunions.',
+        members: [],
+        weeklyXP: {},
+        collectiveChallenge: { title: 'Atteindre 2 000 XP collectifs 💼', targetXP: 2000, currentXP: 0, reward: 500 },
+        discussions: []
+      },
+      {
+        id: 'club-3',
+        name: 'TOEFL Preparation 🎓',
+        description: 'Entraînement intensif et partage d\'astuces pour obtenir le meilleur score possible.',
+        members: [],
+        weeklyXP: {},
+        collectiveChallenge: { title: 'Résoudre 1500 XP collectifs 📚', targetXP: 1500, currentXP: 0, reward: 400 },
+        discussions: []
+      },
+      {
+        id: 'club-4',
+        name: 'Travel English ✈️',
+        description: 'Préparez vos voyages : vocabulaire de l\'aéroport, hôtel, restaurants, directions.',
+        members: [],
+        weeklyXP: {},
+        collectiveChallenge: { title: 'Pratiquer 1000 XP collectifs 🗣️', targetXP: 1000, currentXP: 0, reward: 300 },
+        discussions: []
+      }
+    ];
+
+    const defaultMarketItems: MarketplaceItem[] = [
+      { id: 'avatar-ninja', name: 'Cyber Ninja Avatar', type: 'avatar', iconOrPreview: '🥷', cost: 150 },
+      { id: 'avatar-astronaut', name: 'Astro Explorer Avatar', type: 'avatar', iconOrPreview: '👨‍🚀', cost: 250 },
+      { id: 'avatar-wizard', name: 'Magic Wizard Avatar', type: 'avatar', iconOrPreview: '🧙‍♂️', cost: 350 },
+      { id: 'avatar-dragon', name: 'Golden Dragon Avatar', type: 'avatar', iconOrPreview: '🐉', cost: 500 },
+      { id: 'frame-neon', name: 'Neon Frame', type: 'frame', iconOrPreview: 'border: 3px solid #00F5FF; box-shadow: 0 0 8px #00F5FF', cost: 100 },
+      { id: 'frame-gold', name: 'Royal Gold Frame', type: 'frame', iconOrPreview: 'border: 3px solid #FFD700; box-shadow: 0 0 10px #FFD700', cost: 300 },
+      { id: 'frame-rainbow', name: 'Rainbow Pulse Frame', type: 'frame', iconOrPreview: 'border: 3px solid; border-image: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet) 1; box-shadow: 0 0 12px rgba(255,105,180,0.6)', cost: 500 },
+      { id: 'theme-dark', name: 'Midnight Black Theme', type: 'theme', iconOrPreview: '#0B0F19', cost: 200 },
+      { id: 'theme-forest', name: 'Forest Green Theme', type: 'theme', iconOrPreview: '#064E3B', cost: 200 },
+      { id: 'theme-lavender', name: 'Lavender Dreams Theme', type: 'theme', iconOrPreview: '#4C1D95', cost: 250 }
+    ];
+
+    const defaultMissions: JourneyMission[] = [
+      {
+        id: 'mission-london',
+        title: '🎯 Mission 1 : Préparer un voyage à Londres',
+        description: 'Validez toutes les étapes pour être prêt pour votre premier vol vers le Royaume-Uni !',
+        requiredTasks: [
+          { type: 'words', title: 'Apprendre 30 mots de voyage dans le dictionnaire', target: 30, current: 0 },
+          { type: 'video', title: 'Regarder la vidéo pédagogique sur l\'aéroport', target: 1, current: 0 },
+          { type: 'quiz', title: 'Réussir le quiz de grammaire de voyage', target: 1, current: 0 },
+          { type: 'listening', title: 'Écouter le dialogue de commande de ticket', target: 1, current: 0 },
+          { type: 'writing', title: 'Écrire un court mail de réservation d\'hôtel', target: 1, current: 0 }
+        ],
+        completed: false,
+        unlocked: true
+      },
+      {
+        id: 'mission-interview',
+        title: '🎯 Mission 2 : Décrocher un job à New York',
+        description: 'Maîtrisez l\'anglais des affaires pour réussir votre entretien d\'embauche outre-Atlantique.',
+        requiredTasks: [
+          { type: 'words', title: 'Apprendre 20 mots de Business English', target: 20, current: 0 },
+          { type: 'quiz', title: 'Réussir le quiz d\'entretien de recrutement', target: 1, current: 0 },
+          { type: 'writing', title: 'Rédiger une lettre de motivation professionnelle', target: 1, current: 0 }
+        ],
+        completed: false,
+        unlocked: false
+      }
+    ];
+
+    const clubs = getLocal('speak_clubs', defaultClubs);
+    this.clubs$.next(clubs);
+
+    const marketItems = getLocal('speak_market_items', defaultMarketItems);
+    this.marketplaceItems$.next(marketItems);
+
+    const missions = getLocal('speak_missions', defaultMissions);
+    this.journeyMissions$.next(missions);
+
+    // Gamify student users on start
+    users.forEach((u: UserProfile) => {
+      if (u.role === 'student' || u.role === 'guest') {
+        if (u.coins === undefined) u.coins = 350;
+        if (!u.unlockedBadges) u.unlockedBadges = [];
+        if (!u.unlockedFrames) u.unlockedFrames = [];
+        if (!u.unlockedAvatars) u.unlockedAvatars = [];
+        if (!u.unlockedThemes) u.unlockedThemes = [];
+        if (!u.activeTitle) u.activeTitle = 'Explorer';
+        if (!u.clubId && u.id === 'student') u.clubId = 'club-1';
+        if (!u.garden) {
+          u.garden = {
+            trees: 1,
+            flowers: 2,
+            wiltedPlants: 0,
+            lastLessonDate: new Date().toISOString(),
+            healthStatus: 'healthy'
+          };
+        }
+      }
+    });
+    localStorage.setItem('speak_users', JSON.stringify(users));
+
     this.users$.next(users);
     this.lessons$.next(lessons);
     this.quizzes$.next(quizzes);
@@ -716,6 +944,10 @@ export class DatabaseService {
         // Write rewards
         for (const reward of this.rewards$.value) {
           await setDoc(doc(this.firestore, 'rewards', reward.id), reward);
+        }
+        // Write default channels so #general always exists in Firestore
+        for (const chan of this.channels$.value) {
+          await setDoc(doc(this.firestore, 'channels', chan.id), chan);
         }
 
         console.log('Firestore seeded successfully.');
@@ -911,11 +1143,71 @@ export class DatabaseService {
     });
 
     // 11. Subscribe to Channels
-    onSnapshot(collection(this.firestore, 'channels'), (snap) => {
+    onSnapshot(collection(this.firestore, 'channels'), async (snap) => {
       const list: ChatChannel[] = [];
-      snap.forEach(doc => list.push(doc.data() as ChatChannel));
+      for (const d of snap.docs) {
+        const raw = d.data() as any;
+        const docId = d.id;
+        const rawName = raw.name || docId;
+        // Auto-detect DM channels even if isPrivate flag was lost
+        const inferredPrivate = raw.isPrivate === true
+          || rawName.startsWith('conv-')
+          || docId.startsWith('dm-')
+          || docId.startsWith('chan-');
+        const chan: ChatChannel = {
+          id: raw.id || docId,
+          name: rawName,
+          isPrivate: inferredPrivate,
+          members: raw.members || [],
+          createdById: raw.createdById,
+          createdByRole: raw.createdByRole
+        };
+        // Auto-patch malformed or incomplete documents in Firestore
+        const needsPatch = !raw.id || !raw.name || (inferredPrivate && !raw.isPrivate);
+        if (needsPatch) {
+          try {
+            await setDoc(doc(this.firestore, 'channels', docId), chan, { merge: true });
+          } catch (e) {
+            console.warn('Could not patch channel', docId, e);
+          }
+        }
+        list.push(chan);
+      }
       if (list.length > 0) {
+        // Ensure the 4 default public channels always exist (add missing ones)
+        const defaults: ChatChannel[] = [
+          { id: 'general', name: 'general' },
+          { id: 'group-a', name: 'study-group-a' },
+          { id: 'travel', name: 'travel-dialogue' },
+          { id: 'debate', name: 'debate-club' }
+        ];
+        for (const def of defaults) {
+          if (!list.find(c => c.id === def.id)) {
+            list.push(def);
+            try {
+              await setDoc(doc(this.firestore, 'channels', def.id), def);
+            } catch (e) {
+              console.warn('Could not add missing default channel', def.id, e);
+            }
+          }
+        }
         this.channels$.next(list);
+      } else {
+        // Firestore channels collection is empty: seed default channels
+        const defaults: ChatChannel[] = [
+          { id: 'general', name: 'general' },
+          { id: 'group-a', name: 'study-group-a' },
+          { id: 'travel', name: 'travel-dialogue' },
+          { id: 'debate', name: 'debate-club' }
+        ];
+        for (const chan of defaults) {
+          try {
+            await setDoc(doc(this.firestore, 'channels', chan.id), chan);
+          } catch (e) {
+            console.warn('Could not seed default channel', chan.id, e);
+          }
+        }
+        this.channels$.next(defaults);
       }
     });
 
@@ -939,6 +1231,43 @@ export class DatabaseService {
       const list: VocabGameAttempt[] = [];
       snap.forEach(doc => list.push(doc.data() as VocabGameAttempt));
       this.vocabGameAttempts$.next(list.sort((a, b) => b.completedAt.localeCompare(a.completedAt)));
+    });
+
+    // 18. Subscribe to settings/word_of_the_day
+    onSnapshot(doc(this.firestore, 'settings', 'word_of_the_day'), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data() as WordOfTheDay;
+        this.wordOfTheDay$.next(data);
+        this.saveLocal('speak_word_of_the_day', data);
+      }
+    });
+
+    // 19. Subscribe to settings/show_boutique & show_garden & show_journey
+    onSnapshot(doc(this.firestore, 'settings', 'show_boutique'), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        const value = !!data['value'];
+        this.showBoutique$.next(value);
+        localStorage.setItem('speak_settings_show_boutique', String(value));
+      }
+    });
+
+    onSnapshot(doc(this.firestore, 'settings', 'show_garden'), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        const value = !!data['value'];
+        this.showGarden$.next(value);
+        localStorage.setItem('speak_settings_show_garden', String(value));
+      }
+    });
+
+    onSnapshot(doc(this.firestore, 'settings', 'show_journey'), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        const value = !!data['value'];
+        this.showJourney$.next(value);
+        localStorage.setItem('speak_settings_show_journey', String(value));
+      }
     });
   }
 
@@ -1454,10 +1783,14 @@ export class DatabaseService {
     const userIndex = list.findIndex(u => u.id === userId);
     if (userIndex !== -1) {
       const user = list[userIndex];
+      const newCoins = (user.coins || 0) + xpToAdd; // 1 Coin per 1 XP
+      const newStreak = addStreak ? user.streak + 1 : user.streak;
+      
       const updated = {
         ...user,
         xp: user.xp + xpToAdd,
-        streak: addStreak ? user.streak + 1 : user.streak,
+        coins: newCoins,
+        streak: newStreak,
         lastActive: 'Today'
       };
       
@@ -1469,10 +1802,50 @@ export class DatabaseService {
         this.currentUser$.next(updated);
       }
 
+      // Check streak badges
+      if (newStreak >= 10) {
+        this.unlockBadgeForUser(userId, 'streak-10');
+      }
+      if (newStreak >= 100) {
+        this.unlockBadgeForUser(userId, 'streak-100');
+      }
+
+      // Update club weekly XP and collective challenge progress
+      if (updated.clubId) {
+        const clubsList = [...this.clubs$.value];
+        const club = clubsList.find(c => c.id === updated.clubId);
+        if (club) {
+          club.weeklyXP[userId] = (club.weeklyXP[userId] || 0) + xpToAdd;
+          club.collectiveChallenge.currentXP = Math.min(
+            club.collectiveChallenge.targetXP,
+            club.collectiveChallenge.currentXP + xpToAdd
+          );
+
+          // Check if collective challenge is met
+          if (club.collectiveChallenge.currentXP >= club.collectiveChallenge.targetXP) {
+            // Reward all club members with challenge coins!
+            club.members.forEach(mId => {
+              this.addCoinsToUser(mId, club.collectiveChallenge.reward);
+            });
+            // Reset collective challenge with new objective
+            club.collectiveChallenge = {
+              title: 'Défi Club : Atteindre un nouveau sommet ! 🚀',
+              targetXP: club.collectiveChallenge.targetXP + 500,
+              currentXP: 0,
+              reward: club.collectiveChallenge.reward + 100
+            };
+          }
+
+          this.clubs$.next(clubsList);
+          this.saveLocal('speak_clubs', clubsList);
+        }
+      }
+
       if (this.useFirebase) {
         try {
           await updateDoc(doc(this.firestore, 'users', userId), {
             xp: updated.xp,
+            coins: updated.coins,
             streak: updated.streak,
             lastActive: updated.lastActive
           });
@@ -2283,6 +2656,25 @@ export class DatabaseService {
     }
   }
 
+  async incrementEbookViews(ebookId: string) {
+    const list = [...this.ebooks$.value];
+    const idx = list.findIndex(b => b.id === ebookId);
+    if (idx !== -1) {
+      const views = (list[idx].views || 0) + 1;
+      const updated = { ...list[idx], views };
+      list[idx] = updated;
+      this.ebooks$.next(list);
+      this.saveLocal('speak_ebooks', list);
+      if (this.useFirebase) {
+        try {
+          await setDoc(doc(this.firestore, 'ebooks', ebookId), updated);
+        } catch (e) {
+          console.warn('Firestore increment ebook views failed:', e);
+        }
+      }
+    }
+  }
+
   // --- ABUSE REPORTS OPERATIONS ---
   observeReports(): Observable<AbuseReport[]> {
     return this.reports$.asObservable();
@@ -2580,6 +2972,23 @@ export class DatabaseService {
         }
       }
       await this.logAction('create_group', `Membre retiré du groupe #${channel.name}`, channelId);
+    }
+  }
+
+  async addChannelWithId(id: string, chan: ChatChannel) {
+    // Don't add duplicates
+    if (this.channels$.value.find(c => c.id === id)) return;
+
+    const list = [...this.channels$.value, chan];
+    this.channels$.next(list);
+    this.saveLocal('speak_channels', list);
+
+    if (this.useFirebase) {
+      try {
+        await setDoc(doc(this.firestore, 'channels', id), chan);
+      } catch (e) {
+        console.warn('Firestore addChannelWithId failed.', e);
+      }
     }
   }
 
@@ -3024,6 +3433,402 @@ export class DatabaseService {
       return `${diffDays}d ago`;
     } catch (e) {
       return 'Never';
+    }
+  }
+
+  // --- WORD OF THE DAY OPERATIONS ---
+  observeWordOfTheDay(): Observable<WordOfTheDay> {
+    return this.wordOfTheDay$.asObservable();
+  }
+
+  async updateWordOfTheDay(w: WordOfTheDay): Promise<void> {
+    const updated = { ...w, updatedAt: new Date().toISOString() };
+    this.wordOfTheDay$.next(updated);
+    this.saveLocal('speak_word_of_the_day', updated);
+    if (this.useFirebase) {
+      try {
+        await setDoc(doc(this.firestore, 'settings', 'word_of_the_day'), updated);
+      } catch (e) {
+        console.warn('Failed to update word of the day in Firestore:', e);
+      }
+    }
+  }
+
+  // --- CLUBS OPERATIONS ---
+  observeClubs(): Observable<LearningClub[]> {
+    return this.clubs$.asObservable();
+  }
+
+  async joinClub(clubId: string, userId: string) {
+    const list = [...this.clubs$.value];
+    
+    // Remove user from any other club first
+    list.forEach(c => {
+      c.members = c.members.filter(m => m !== userId);
+      if (c.weeklyXP[userId]) {
+        delete c.weeklyXP[userId];
+      }
+    });
+
+    // Add user to the new club
+    const club = list.find(c => c.id === clubId);
+    if (club) {
+      if (!club.members.includes(userId)) {
+        club.members.push(userId);
+      }
+      club.weeklyXP[userId] = 0;
+    }
+
+    this.clubs$.next(list);
+    this.saveLocal('speak_clubs', list);
+
+    // Update user profile clubId
+    const usersList = [...this.users$.value];
+    const uIdx = usersList.findIndex(u => u.id === userId);
+    if (uIdx !== -1) {
+      usersList[uIdx] = { ...usersList[uIdx], clubId };
+      this.users$.next(usersList);
+      this.saveLocal('speak_users', usersList);
+      
+      const active = this.currentUser$.value;
+      if (active && active.id === userId) {
+        this.currentUser$.next(usersList[uIdx]);
+      }
+    }
+  }
+
+  async addClubPost(clubId: string, userId: string, content: string) {
+    const list = [...this.clubs$.value];
+    const club = list.find(c => c.id === clubId);
+    const user = this.users$.value.find(u => u.id === userId);
+    
+    if (club && user) {
+      const newPost: ClubPost = {
+        id: 'post-' + Date.now(),
+        authorId: user.id,
+        authorName: user.name,
+        authorAvatar: user.avatar,
+        content,
+        createdAt: new Date().toISOString(),
+        likes: []
+      };
+      club.discussions = [newPost, ...club.discussions];
+      this.clubs$.next(list);
+      this.saveLocal('speak_clubs', list);
+    }
+  }
+
+  async likeClubPost(clubId: string, postId: string, userId: string) {
+    const list = [...this.clubs$.value];
+    const club = list.find(c => c.id === clubId);
+    if (club) {
+      const post = club.discussions.find(p => p.id === postId);
+      if (post) {
+        if (post.likes.includes(userId)) {
+          post.likes = post.likes.filter(id => id !== userId);
+        } else {
+          post.likes.push(userId);
+        }
+        this.clubs$.next(list);
+        this.saveLocal('speak_clubs', list);
+      }
+    }
+  }
+
+  // --- MARKETPLACE OPERATIONS ---
+  observeMarketplaceItems(): Observable<MarketplaceItem[]> {
+    return this.marketplaceItems$.asObservable();
+  }
+
+  async purchaseMarketplaceItem(itemId: string, userId: string): Promise<boolean> {
+    const item = this.marketplaceItems$.value.find(i => i.id === itemId);
+    const usersList = [...this.users$.value];
+    const uIdx = usersList.findIndex(u => u.id === userId);
+
+    if (item && uIdx !== -1) {
+      const user = usersList[uIdx];
+      const cost = item.cost;
+      const coins = user.coins || 0;
+
+      if (coins >= cost) {
+        // Deduct coins
+        user.coins = coins - cost;
+
+        // Add to unlocked lists based on type
+        if (item.type === 'avatar') {
+          if (!user.unlockedAvatars) user.unlockedAvatars = [];
+          user.unlockedAvatars.push(itemId);
+        } else if (item.type === 'frame') {
+          if (!user.unlockedFrames) user.unlockedFrames = [];
+          user.unlockedFrames.push(itemId);
+        } else if (item.type === 'theme') {
+          if (!user.unlockedThemes) user.unlockedThemes = [];
+          user.unlockedThemes.push(itemId);
+        }
+
+        usersList[uIdx] = { ...user };
+        this.users$.next(usersList);
+        this.saveLocal('speak_users', usersList);
+
+        const active = this.currentUser$.value;
+        if (active && active.id === userId) {
+          this.currentUser$.next(user);
+        }
+        return true;
+      }
+    }
+    return false;
+  }
+
+  async useMarketplaceItem(itemId: string, userId: string) {
+    const item = this.marketplaceItems$.value.find(i => i.id === itemId);
+    const usersList = [...this.users$.value];
+    const uIdx = usersList.findIndex(u => u.id === userId);
+
+    if (item && uIdx !== -1) {
+      const user = { ...usersList[uIdx] };
+      if (item.type === 'avatar') {
+        user.activeAvatar = item.iconOrPreview;
+        user.avatar = item.iconOrPreview;
+      } else if (item.type === 'frame') {
+        user.activeFrame = item.iconOrPreview;
+      } else if (item.type === 'theme') {
+        user.activeTheme = item.iconOrPreview;
+      }
+
+      usersList[uIdx] = user;
+      this.users$.next(usersList);
+      this.saveLocal('speak_users', usersList);
+
+      const active = this.currentUser$.value;
+      if (active && active.id === userId) {
+        this.currentUser$.next(user);
+      }
+    }
+  }
+
+  // --- GARDEN OPERATIONS ---
+  async growPlantInGarden(userId: string, type: 'tree' | 'flower') {
+    const usersList = [...this.users$.value];
+    const uIdx = usersList.findIndex(u => u.id === userId);
+    if (uIdx !== -1) {
+      const user = { ...usersList[uIdx] };
+      const garden = user.garden ? { ...user.garden } : { trees: 0, flowers: 0, wiltedPlants: 0, lastLessonDate: '', healthStatus: 'healthy' as const };
+      
+      if (type === 'tree') {
+        garden.trees = (garden.trees || 0) + 1;
+      } else {
+        garden.flowers = (garden.flowers || 0) + 1;
+      }
+      
+      // Revive any wilted plants
+      if (garden.wiltedPlants > 0) {
+        garden.wiltedPlants = Math.max(0, garden.wiltedPlants - 1);
+        if (type === 'flower') garden.flowers = (garden.flowers || 0) + 1;
+      }
+
+      garden.lastLessonDate = new Date().toISOString();
+      
+      // Determine health
+      const totalPlants = (garden.trees || 0) + (garden.flowers || 0);
+      if (totalPlants >= 30) {
+        garden.healthStatus = 'flourishing';
+      } else {
+        garden.healthStatus = 'healthy';
+      }
+
+      user.garden = garden;
+      usersList[uIdx] = user;
+      this.users$.next(usersList);
+      this.saveLocal('speak_users', usersList);
+
+      const active = this.currentUser$.value;
+      if (active && active.id === userId) {
+        this.currentUser$.next(user);
+      }
+    }
+  }
+
+  async checkAndWiltGarden(userId: string) {
+    const usersList = [...this.users$.value];
+    const uIdx = usersList.findIndex(u => u.id === userId);
+    if (uIdx !== -1) {
+      const user = { ...usersList[uIdx] };
+      if (!user.garden || !user.garden.lastLessonDate) return;
+      
+      const lastDate = new Date(user.garden.lastLessonDate).getTime();
+      const diffDays = Math.floor((Date.now() - lastDate) / (1000 * 60 * 60 * 24));
+      
+      if (diffDays >= 3 && user.garden.healthStatus !== 'wilted') {
+        const garden = { ...user.garden };
+        // Wilt some flowers
+        if (garden.flowers > 0) {
+          const wiltAmount = Math.min(garden.flowers, Math.floor(diffDays / 3));
+          garden.flowers -= wiltAmount;
+          garden.wiltedPlants += wiltAmount;
+          garden.healthStatus = 'wilted';
+          
+          user.garden = garden;
+          usersList[uIdx] = user;
+          this.users$.next(usersList);
+          this.saveLocal('speak_users', usersList);
+
+          const active = this.currentUser$.value;
+          if (active && active.id === userId) {
+            this.currentUser$.next(user);
+          }
+        }
+      }
+    }
+  }
+
+  // --- JOURNEY OPERATIONS ---
+  observeJourneyMissions(): Observable<JourneyMission[]> {
+    return this.journeyMissions$.asObservable();
+  }
+
+  async updateJourneyTaskProgress(userId: string, taskType: string, amount: number) {
+    const list = [...this.journeyMissions$.value];
+    let updated = false;
+
+    list.forEach(mission => {
+      if (mission.unlocked && !mission.completed) {
+        mission.requiredTasks.forEach(task => {
+          if (task.type === taskType) {
+            task.current = Math.min(task.target, task.current + amount);
+            updated = true;
+          }
+        });
+
+        // Check if all tasks completed
+        const allDone = mission.requiredTasks.every(t => t.current >= t.target);
+        if (allDone) {
+          mission.completed = true;
+          
+          // Unlock next mission in list
+          const nextIdx = list.findIndex(m => m.id === mission.id) + 1;
+          if (nextIdx < list.length) {
+            list[nextIdx].unlocked = true;
+          }
+
+          // Award bonus XP and coins
+          this.updateUserXP(userId, 100, true);
+          this.addCoinsToUser(userId, 200);
+        }
+      }
+    });
+
+    if (updated) {
+      this.journeyMissions$.next(list);
+      this.saveLocal('speak_missions', list);
+    }
+  }
+
+  async addCoinsToUser(userId: string, amount: number) {
+    const usersList = [...this.users$.value];
+    const uIdx = usersList.findIndex(u => u.id === userId);
+    if (uIdx !== -1) {
+      const user = { ...usersList[uIdx] };
+      user.coins = (user.coins || 0) + amount;
+      
+      usersList[uIdx] = user;
+      this.users$.next(usersList);
+      this.saveLocal('speak_users', usersList);
+
+      const active = this.currentUser$.value;
+      if (active && active.id === userId) {
+        this.currentUser$.next(user);
+      }
+    }
+  }
+
+  async unlockBadgeForUser(userId: string, badgeId: string) {
+    const usersList = [...this.users$.value];
+    const uIdx = usersList.findIndex(u => u.id === userId);
+    if (uIdx !== -1) {
+      const user = { ...usersList[uIdx] };
+      if (!user.unlockedBadges) user.unlockedBadges = [];
+      if (!user.unlockedBadges.includes(badgeId)) {
+        user.unlockedBadges.push(badgeId);
+        
+        usersList[uIdx] = user;
+        this.users$.next(usersList);
+        this.saveLocal('speak_users', usersList);
+
+        const active = this.currentUser$.value;
+        if (active && active.id === userId) {
+          this.currentUser$.next(user);
+        }
+
+        const badgeNames: { [key: string]: string } = {
+          'streak-10': '10 Days Streak 🔥',
+          'streak-100': '100 Days Streak 👑',
+          'words-1000': '1,000 Words Learned 📚',
+          'dialogue-first': 'First Dialogue Completed 💬',
+          'champion-week': 'Champion of the Week 🏆',
+          'polyglot': 'Polyglotte 🌍'
+        };
+        const name = badgeNames[badgeId] || badgeId;
+        this.sendNotification({
+          recipientId: userId,
+          recipientRole: 'student',
+          type: 'reminder',
+          title: 'Badge Débloqué ! 🏅',
+          message: `Félicitations ! Vous avez débloqué le badge rare : "${name}".`
+        });
+      }
+    }
+  }
+
+  observeShowBoutique(): Observable<boolean> {
+    return this.showBoutique$.asObservable();
+  }
+
+  observeShowGarden(): Observable<boolean> {
+    return this.showGarden$.asObservable();
+  }
+
+  updateShowBoutique(val: boolean) {
+    this.showBoutique$.next(val);
+    localStorage.setItem('speak_settings_show_boutique', String(val));
+    if (this.useFirebase) {
+      try {
+        setDoc(doc(this.firestore, 'settings', 'show_boutique'), { value: val });
+      } catch (e) { console.warn(e); }
+    }
+  }
+
+  updateShowGarden(val: boolean) {
+    this.showGarden$.next(val);
+    localStorage.setItem('speak_settings_show_garden', String(val));
+    if (this.useFirebase) {
+      try {
+        setDoc(doc(this.firestore, 'settings', 'show_garden'), { value: val });
+      } catch (e) { console.warn(e); }
+    }
+  }
+
+  observeShowJourney(): Observable<boolean> {
+    return this.showJourney$.asObservable();
+  }
+
+  updateShowJourney(val: boolean) {
+    this.showJourney$.next(val);
+    localStorage.setItem('speak_settings_show_journey', String(val));
+    if (this.useFirebase) {
+      try {
+        setDoc(doc(this.firestore, 'settings', 'show_journey'), { value: val });
+      } catch (e) { console.warn(e); }
+    }
+
+    if (val) {
+      this.sendNotification({
+        recipientId: 'all',
+        recipientRole: 'student',
+        type: 'reminder',
+        title: 'Nouveau Voyage Disponible ! 🗺️',
+        message: 'Le professeur a activé le SpeakUp Journey ! Cliquez pour explorer vos missions et commencer à apprendre.'
+      });
     }
   }
 }

@@ -1168,7 +1168,9 @@ export class StudentChatComponent implements OnDestroy {
     
     return list.filter(c => {
       if (isTeacher || isAdmin) return true;
-      return c.members?.includes(uid);
+      const isDm = c.isPrivate;
+      if (!isDm) return true;
+      return !!(c.members?.includes(uid));
     });
   });
 
@@ -1209,6 +1211,11 @@ export class StudentChatComponent implements OnDestroy {
       }
     };
     window.addEventListener('local-chat-update', this.localUpdateListener);
+
+    // Listen to trigger-teacher-dm events
+    window.addEventListener('trigger-teacher-dm', () => {
+      this.startConversationWithTeacher();
+    });
   }
 
   startConversationWithTeacher() {
@@ -1220,20 +1227,41 @@ export class StudentChatComponent implements OnDestroy {
       return;
     }
 
+    // Deterministic channel ID so the same DM is never created twice
+    const dmId = `dm-${[uid, teacher.id].sort().join('-')}`;
     const chanName = `conv-${uName.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
-    const exists = this.channels().find(c => c.name === chanName && c.isPrivate && c.members?.includes(uid));
+
+    // Check if channel already exists (by deterministic ID first, then by name)
+    const exists = this.channels().find(c => c.id === dmId)
+      || this.channels().find(c => c.name === chanName && c.isPrivate && c.members?.includes(uid));
+
     if (exists) {
       this.switchChannel(exists.id);
       return;
     }
 
-    this.db.addChannel(chanName, true, [uid, teacher.id]).then(() => {
-      // Find the created channel and switch to it
-      setTimeout(() => {
-        const fresh = this.channels().find(c => c.name === chanName);
-        if (fresh) this.switchChannel(fresh.id);
-      }, 500);
+    // Create with the deterministic ID so it can be found immediately
+    const newChan: any = {
+      id: dmId,
+      name: chanName,
+      createdById: uid,
+      createdByRole: 'student',
+      isPrivate: true,
+      members: [uid, teacher.id]
+    };
+
+    // Add to local state immediately so the student sees it right away
+    const list = [...this.channels(), newChan];
+    this.db['channels$'].next(list);
+    this.db['saveLocal']('speak_channels', list);
+
+    // Persist to Firestore in the background
+    this.db.addChannelWithId(dmId, newChan).then(() => {
+      this.switchChannel(dmId);
     });
+
+    // Switch immediately without waiting for Firestore
+    this.switchChannel(dmId);
   }
 
   isTeacher(): boolean {
