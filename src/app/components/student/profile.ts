@@ -268,8 +268,8 @@ interface BadgeItem {
 
       <!-- FULL SCREEN PRINTABLE CERTIFICATE VIEW MODAL -->
       @if (selectedCertificate(); as lvl) {
-        <div class="modal-overlay" (click)="selectedCertificate.set(null)" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.55); backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; z-index:99999; padding:16px">
-          <div class="modal-card" (click)="$event.stopPropagation()" style="background:white; border-radius:16px; max-width:760px; width:100%; padding:24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.15)">
+        <div class="cert-modal-overlay" (click)="selectedCertificate.set(null)">
+          <div class="cert-modal-card" (click)="$event.stopPropagation()">
             
             <!-- MODAL HEADER ACTIONS -->
             <div class="no-print" style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-weak); padding-bottom:12px; margin-bottom:16px">
@@ -380,6 +380,25 @@ interface BadgeItem {
   `,
   styles: [`
 
+    .cert-modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.55);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 99999;
+      padding: 16px;
+    }
+    .cert-modal-card {
+      background: white;
+      border-radius: 16px;
+      max-width: 760px;
+      width: 100%;
+      padding: 24px;
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.15);
+    }
     @media (max-width: 768px) {
       .profile-layout {
         grid-template-columns: 1fr !important;
@@ -389,13 +408,13 @@ interface BadgeItem {
       body * {
         visibility: hidden !important;
       }
-      .modal-overlay {
+      .cert-modal-overlay {
         position: absolute !important;
         left: 0 !important; top: 0 !important;
         background: none !important;
         backdrop-filter: none !important;
       }
-      .modal-card {
+      .cert-modal-card {
         box-shadow: none !important;
         padding: 0 !important;
         margin: 0 !important;

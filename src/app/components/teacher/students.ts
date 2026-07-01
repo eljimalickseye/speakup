@@ -9,26 +9,38 @@ import { DialogService } from '../../services/dialog.service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   styles: [`
-    .modal-overlay {
+    .ts-modal-overlay {
       position: fixed; top: 0; left: 0; right: 0; bottom: 0;
       background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(4px);
       display: flex; align-items: center; justify-content: center; z-index: 9999;
+      padding: 16px;
     }
-    .modal-card {
-      background: white; border-radius: 12px; max-width: 600px; width: 95%;
-      max-height: 85vh; overflow-y: auto; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+    .ts-modal-card {
+      background: white; border-radius: 12px; max-width: 480px; width: 100%;
+      padding: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+      border: 1px solid var(--border-weak);
+    }
+    .cert-modal-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.55); backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center; z-index: 99999;
+      padding: 16px;
+    }
+    .cert-modal-card {
+      background: white; border-radius: 16px; max-width: 760px; width: 100%;
+      padding: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.15);
     }
     @media print {
       body * {
         visibility: hidden !important;
       }
-      .modal-overlay {
+      .cert-modal-overlay {
         position: absolute !important;
         left: 0 !important; top: 0 !important;
         background: none !important;
         backdrop-filter: none !important;
       }
-      .modal-card {
+      .cert-modal-card {
         box-shadow: none !important;
         padding: 0 !important;
         margin: 0 !important;
@@ -127,8 +139,8 @@ import { DialogService } from '../../services/dialog.service';
 
         <!-- ADD NEW STUDENT MODAL -->
         @if (showAddStudentModal()) {
-          <div class="modal-overlay" (click)="showAddStudentModal.set(false)" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.4); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; z-index:9999; padding:16px">
-            <div class="modal-card" (click)="$event.stopPropagation()" style="background:white; border-radius:12px; max-width:480px; width:100%; padding:24px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.1); border:1px solid var(--border-weak)">
+          <div class="ts-modal-overlay" (click)="showAddStudentModal.set(false)">
+            <div class="ts-modal-card" (click)="$event.stopPropagation()">
               <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-weak); padding-bottom:12px; margin-bottom:16px">
                 <h3 style="margin:0; font-size:15px; font-weight:800; color:#4F46E5; display:flex; align-items:center; gap:6px">
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
@@ -454,8 +466,8 @@ import { DialogService } from '../../services/dialog.service';
       <!-- FULL SCREEN PRINTABLE CERTIFICATE VIEW MODAL FOR TEACHER -->
       @if (selectedCertificate(); as lvl) {
         @if (selectedStudentCert(); as student) {
-          <div class="modal-overlay" (click)="selectedCertificate.set(null); selectedStudentCert.set(null)" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.55); backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; z-index:99999; padding:16px">
-            <div class="modal-card" (click)="$event.stopPropagation()" style="background:white; border-radius:16px; max-width:760px; width:100%; padding:24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.15)">
+          <div class="cert-modal-overlay" (click)="selectedCertificate.set(null); selectedStudentCert.set(null)">
+            <div class="cert-modal-card" (click)="$event.stopPropagation()">
               
               <div class="no-print" style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-weak); padding-bottom:12px; margin-bottom:16px">
                 <h3 style="margin:0; font-size:14px; font-weight:800; color:var(--text-primary)">{{ t('Aperçu du Certificat de l\'élève', 'Student Certificate Preview') }}</h3>
