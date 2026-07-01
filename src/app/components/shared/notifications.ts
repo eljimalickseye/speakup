@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DatabaseService, AppNotification, UserProfile } from '../../services/database.service';
 
@@ -63,6 +63,45 @@ import { DatabaseService, AppNotification, UserProfile } from '../../services/da
               </div>
             }
           }
+        </div>
+      </div>
+    }
+
+    <!-- Real-time Toast Notifications Overlay -->
+    <div class="toast-container">
+      @for (toast of activeToasts(); track toast.id) {
+        <div class="toast-item" (click)="markRead(toast); removeToast(toast.id)">
+          <div class="toast-icon-box" [class]="getNotifIconClass(toast.type)">
+            <i class="ti" [class]="getNotifIcon(toast.type)"></i>
+          </div>
+          <div class="toast-body">
+            <div class="toast-title">{{ toast.title }}</div>
+            <div class="toast-message">{{ toast.message }}</div>
+          </div>
+          <button class="toast-close" (click)="$event.stopPropagation(); removeToast(toast.id)">❌</button>
+        </div>
+      }
+    </div>
+
+    <!-- New Notification Modal -->
+    @if (activeModalNotif(); as modalNotif) {
+      <div class="notif-modal-overlay" (click)="closeModalNotif()">
+        <div class="notif-modal-card" (click)="$event.stopPropagation()">
+          <div class="notif-modal-header" [class]="getNotifIconClass(modalNotif.type)">
+            <span style="font-size:24px">🔔</span>
+            <h4 style="margin:0; font-size:16px; font-weight:800">{{ modalNotif.title }}</h4>
+          </div>
+          
+          <div class="notif-modal-body">
+            <p style="margin:0; font-size:13.5px; color:var(--text-secondary); line-height:1.6">{{ modalNotif.message }}</p>
+          </div>
+          
+          <div class="notif-modal-actions">
+            <button class="notif-btn-secondary" (click)="closeModalNotif()">{{ t('Fermer', 'Close') }}</button>
+            @if (hasRedirectLink(modalNotif)) {
+              <button class="notif-btn-primary" (click)="navigateToNotification(modalNotif)">{{ t('Accéder', 'Go to') }}</button>
+            }
+          </div>
         </div>
       </div>
     }
@@ -271,16 +310,213 @@ import { DatabaseService, AppNotification, UserProfile } from '../../services/da
       flex-shrink: 0;
       margin-top: 4px;
     }
+
+    /* TOAST OVERLAY DESIGN */
+    .toast-container {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 10000;
+      pointer-events: auto;
+    }
+
+    .toast-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #FFF;
+      border: 1px solid var(--border-strong);
+      border-left: 4px solid #4F46E5;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+      padding: 12px 16px;
+      border-radius: 12px;
+      width: 320px;
+      animation: toastSlideIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .toast-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.12);
+    }
+
+    @keyframes toastSlideIn {
+      from { opacity: 0; transform: translateX(100px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .toast-icon-box {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .toast-icon-box.success { background: #ECFDF5; color: #059669; }
+    .toast-icon-box.info { background: #EEF2FF; color: #4F46E5; }
+    .toast-icon-box.warning { background: #FFFBEB; color: #D97706; }
+    .toast-icon-box.danger { background: #FEF2F2; color: #EF4444; }
+    .toast-icon-box.purple { background: #FAF5FF; color: #7C3AED; }
+
+    .toast-body {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .toast-title {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 2px;
+    }
+
+    .toast-message {
+      font-size: 11px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .toast-close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 10px;
+      color: var(--text-muted);
+      padding: 4px;
+    }
+
+    .notif-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10001;
+      animation: fadeIn 0.25s ease-out;
+    }
+
+    .notif-modal-card {
+      background: var(--surface-1);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 440px;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+      border: 1px solid var(--border-weak);
+      overflow: hidden;
+      margin: 16px;
+      animation: modalScaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes modalScaleUp {
+      from { transform: scale(0.9); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .notif-modal-header {
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border-weak);
+    }
+    .notif-modal-header.success { background: #ECFDF5; border-bottom: 2px solid #34D399; }
+    .notif-modal-header.info { background: #EEF2FF; border-bottom: 2px solid #818CF8; }
+    .notif-modal-header.warning { background: #FFFBEB; border-bottom: 2px solid #FBBF24; }
+    .notif-modal-header.danger { background: #FEF2F2; border-bottom: 2px solid #F87171; }
+    .notif-modal-header.purple { background: #FAF5FF; border-bottom: 2px solid #C084FC; }
+
+    .notif-modal-body {
+      padding: 24px 20px;
+    }
+
+    .notif-modal-actions {
+      padding: 16px 20px;
+      background: var(--surface-2);
+      border-top: 1px solid var(--border-weak);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .notif-btn-secondary {
+      background: #FFF;
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .notif-btn-secondary:hover {
+      background: var(--surface-2);
+    }
+
+    .notif-btn-primary {
+      background: #4F46E5;
+      border: 1px solid #4F46E5;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .notif-btn-primary:hover {
+      background: #4338CA;
+    }
   `]
 })
 export class NotificationsComponent {
-  private db = inject(DatabaseService);
+  public db = inject(DatabaseService);
 
   isPanelOpen = signal<boolean>(false);
   currentUser = signal<UserProfile | null>(null);
+  activeToasts = signal<AppNotification[]>([]);
+  activeModalNotif = signal<AppNotification | null>(null);
+  activeLang = this.db.activeLang;
+
+  private previousUnreadCount = 0;
+
+  t(fr: string, en: string): string {
+    return this.activeLang() === 'fr' ? fr : en;
+  }
 
   constructor() {
     this.db.observeCurrentUser().subscribe(u => this.currentUser.set(u));
+
+    // Listen to notification changes to trigger toast alerts and modals
+    this.db.observeNotifications().subscribe(allNotifs => {
+      const currentUnread = this.userNotifications().filter(n => !n.read);
+      
+      // If there are more unread notifications than before, trigger notifications popup
+      if (currentUnread.length > this.previousUnreadCount) {
+        const diffCount = currentUnread.length - this.previousUnreadCount;
+        const newNotifs = currentUnread.slice(0, diffCount);
+        newNotifs.forEach(n => this.onNewNotification(n));
+      }
+      this.previousUnreadCount = currentUnread.length;
+    });
   }
 
   userNotifications = computed<AppNotification[]>(() => {
@@ -299,6 +535,95 @@ export class NotificationsComponent {
 
   closePanel() {
     this.isPanelOpen.set(false);
+  }
+
+  onNewNotification(n: AppNotification) {
+    this.showToast(n);
+    this.playNotificationSound();
+    this.activeModalNotif.set(n);
+  }
+
+  playNotificationSound() {
+    try {
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const now = audioCtx.currentTime;
+      
+      // Pleasant chime tone 1 (C5)
+      const osc1 = audioCtx.createOscillator();
+      const gain1 = audioCtx.createGain();
+      osc1.connect(gain1);
+      gain1.connect(audioCtx.destination);
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(523.25, now);
+      gain1.gain.setValueAtTime(0.15, now);
+      gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+      osc1.start(now);
+      osc1.stop(now + 0.35);
+      
+      // Pleasant chime tone 2 (E5)
+      const osc2 = audioCtx.createOscillator();
+      const gain2 = audioCtx.createGain();
+      osc2.connect(gain2);
+      gain2.connect(audioCtx.destination);
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(659.25, now + 0.12);
+      gain2.gain.setValueAtTime(0.15, now + 0.12);
+      gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.42);
+      osc2.start(now + 0.12);
+      osc2.stop(now + 0.47);
+    } catch (e) {
+      console.warn('Notification sound failed', e);
+    }
+  }
+
+  closeModalNotif() {
+    const modalNotif = this.activeModalNotif();
+    if (modalNotif) {
+      this.markRead(modalNotif);
+    }
+    this.activeModalNotif.set(null);
+  }
+
+  hasRedirectLink(n: AppNotification): boolean {
+    return !!(n.link || this.getTargetTab(n.type));
+  }
+
+  getTargetTab(type: AppNotification['type']): string | null {
+    const role = this.currentUser()?.role;
+    if (role === 'student') {
+      if (type === 'exercise_assigned') return 'exercises';
+      if (type === 'quiz_available') return 'exercises';
+      if (type === 'homework_graded' || type === 'grade_updated') return 'lessons';
+      if (type === 'announcement') return 'announcements';
+      if (type === 'live_started') return 'live-classes';
+      if (type === 'new_comment') return 'chat';
+    } else if (role === 'teacher') {
+      if (type === 'homework_submitted') return 'grade-homework';
+      if (type === 'exam_completed') return 'results';
+    }
+    return null;
+  }
+
+  navigateToNotification(n: AppNotification) {
+    this.markRead(n);
+    this.activeModalNotif.set(null);
+    const tab = n.link || this.getTargetTab(n.type);
+    if (tab) {
+      this.db.requestedTabRedirect.set(tab);
+    }
+  }
+
+  showToast(n: AppNotification) {
+    // Avoid duplicates
+    if (this.activeToasts().some(t => t.id === n.id)) return;
+    this.activeToasts.update(list => [...list, n]);
+    setTimeout(() => {
+      this.removeToast(n.id);
+    }, 4500);
+  }
+
+  removeToast(id: string) {
+    this.activeToasts.update(list => list.filter(t => t.id !== id));
   }
 
   markRead(notif: AppNotification) {

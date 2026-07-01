@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { DatabaseService, VocabGame, UserProfile } from '../../services/database.service';
+import { DatabaseService, VocabGame, UserProfile, ChatChannel } from '../../services/database.service';
 import { DialogService } from '../../services/dialog.service';
 
 @Component({
@@ -53,6 +53,31 @@ import { DialogService } from '../../services/dialog.service';
                 <option value="easy">🟢 Facile</option>
                 <option value="medium">🟡 Moyen</option>
                 <option value="hard">🔴 Difficile</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:12px; margin-bottom:16px">
+            <!-- Category -->
+            <div class="input-row" style="margin:0">
+              <label for="gameCategory">Catégorie</label>
+              <select id="gameCategory" [(ngModel)]="gameCategory" style="width:100%; height:38px; border:1px solid var(--border); border-radius:8px; padding:0 8px; font-size:13px; background:#FFF; color:var(--text-primary)">
+                <option value="general">🌍 Général</option>
+                <option value="food">🍕 Food & Restaurants</option>
+                <option value="travel">✈️ Travel & Places</option>
+                <option value="business">💼 Business & Work</option>
+                <option value="academic">🏫 Academic & Science</option>
+              </select>
+            </div>
+
+            <!-- Group Assignment -->
+            <div class="input-row" style="margin:0">
+              <label for="gameGroup">Assigner au groupe (optionnel)</label>
+              <select id="gameGroup" [(ngModel)]="gameGroup" style="width:100%; height:38px; border:1px solid var(--border); border-radius:8px; padding:0 8px; font-size:13px; background:#FFF; color:var(--text-primary)">
+                <option value="">Tous les groupes</option>
+                @for (c of channels(); track c.id) {
+                  <option [value]="c.id">#{{ c.name }}</option>
+                }
               </select>
             </div>
           </div>
@@ -210,12 +235,15 @@ export class TeacherVocabGamesComponent {
   activeTab = signal<'create' | 'list'>('create');
   games = signal<VocabGame[]>([]);
   currentUser = signal<UserProfile | null>(null);
+  channels = signal<ChatChannel[]>([]);
 
   selectedGameId = signal<string | null>(null);
 
   gameTitle = '';
   gameType: VocabGame['gameType'] = 'flashcards';
   gameDifficulty: VocabGame['difficulty'] = 'medium';
+  gameCategory = 'general';
+  gameGroup = '';
   words: VocabGame['words'] = [
     { word: '', definition: '', translation: '' },
     { word: '', definition: '', translation: '' },
@@ -225,6 +253,7 @@ export class TeacherVocabGamesComponent {
   constructor() {
     this.db.observeVocabGames().subscribe(list => this.games.set(list));
     this.db.observeCurrentUser().subscribe(u => this.currentUser.set(u));
+    this.db.observeChannels().subscribe(list => this.channels.set(list));
   }
 
   addWord() {
@@ -249,6 +278,8 @@ export class TeacherVocabGamesComponent {
       title: this.gameTitle,
       gameType: this.gameType,
       difficulty: this.gameDifficulty,
+      category: this.gameCategory,
+      assignedGroupId: this.gameGroup || undefined,
       words: validWords
     };
 
@@ -263,7 +294,7 @@ export class TeacherVocabGamesComponent {
       });
 
       await this.db.sendNotification({
-        recipientId: 'all', recipientRole: 'student',
+        recipientId: this.gameGroup || 'all', recipientRole: 'student',
         type: 'quiz_available',
         title: '🎮 Nouveau jeu de vocabulaire',
         message: `"${this.gameTitle}" est disponible !`
@@ -280,6 +311,8 @@ export class TeacherVocabGamesComponent {
     this.gameTitle = game.title;
     this.gameType = game.gameType;
     this.gameDifficulty = game.difficulty;
+    this.gameCategory = game.category || 'general';
+    this.gameGroup = game.assignedGroupId || '';
     this.words = game.words.map(w => ({ ...w }));
     this.activeTab.set('create');
   }
@@ -289,6 +322,8 @@ export class TeacherVocabGamesComponent {
     this.gameTitle = '';
     this.gameType = 'flashcards';
     this.gameDifficulty = 'medium';
+    this.gameCategory = 'general';
+    this.gameGroup = '';
     this.words = [{ word: '', definition: '', translation: '' }, { word: '', definition: '', translation: '' }, { word: '', definition: '', translation: '' }];
   }
 

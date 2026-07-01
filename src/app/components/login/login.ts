@@ -204,7 +204,17 @@ import { DialogService } from '../../services/dialog.service';
               </div>
 
               <div class="warm-field">
-                <label class="warm-label">Niveau d'anglais</label>
+                <label class="warm-label">Nom d'utilisateur</label>
+                <input type="text" [(ngModel)]="requestUsername" placeholder="Ex: awandiaye" class="warm-input" style="text-transform: lowercase" />
+              </div>
+
+              <div class="warm-field">
+                <label class="warm-label">Code d'accès / Mot de passe</label>
+                <input type="password" [(ngModel)]="requestPassword" placeholder="Minimum 6 caractères" class="warm-input" />
+              </div>
+
+              <div class="warm-field">
+                <label class="warm-label">Niveau d'anglais / Rôle</label>
                 <select [(ngModel)]="requestLevel" class="warm-input">
                   <option value="A1">A1 — Débutant</option>
                   <option value="A2">A2 — Élémentaire</option>
@@ -247,6 +257,67 @@ import { DialogService } from '../../services/dialog.service';
         </div>
       }
 
+      <!-- BEAUTIFUL REGISTRATION SUCCESS / PENDING STATUS MODAL -->
+      @if (isSuccessModalOpen()) {
+        <div class="modal-backdrop" style="background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999;">
+          <div class="modal-card" style="max-width: 440px; background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); text-align: center; border: 1.5px solid #FCD34D;">
+            <div style="background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%); padding: 30px 20px; position: relative;">
+              <div style="width: 72px; height: 72px; border-radius: 50%; background: #FCD34D; color: #B45309; display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 16px auto; box-shadow: 0 8px 20px -6px rgba(217, 119, 6, 0.4); animation: pulse 2s infinite;">
+                📁
+              </div>
+              <h3 style="font-family: 'Outfit', sans-serif; font-size: 20px; font-weight: 800; color: #78350F; margin: 0 0 8px 0;">Dossier en Cours de Traitement</h3>
+              <p style="font-size: 13px; color: #B45309; margin: 0; line-height: 1.5;">Votre demande d'inscription a bien été transmise à notre équipe pédagogique.</p>
+            </div>
+
+            <div style="padding: 24px 30px; display: flex; flex-direction: column; gap: 20px;">
+              <!-- Visual Step Tracker -->
+              <div style="display: flex; flex-direction: column; gap: 14px; text-align: left;">
+                
+                <!-- Step 1: Completed -->
+                <div style="display: flex; gap: 12px; align-items: flex-start;">
+                  <div style="width: 20px; height: 20px; border-radius: 50%; background: #10B981; color: white; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; flex-shrink: 0; margin-top: 2px;">✓</div>
+                  <div>
+                    <h4 style="font-size: 13px; font-weight: 700; color: var(--text-primary); margin: 0 0 2px 0;">Dossier soumis avec succès</h4>
+                    <p style="font-size: 11px; color: var(--text-secondary); margin: 0;">Vos informations de profil ont été enregistrées.</p>
+                  </div>
+                </div>
+
+                <!-- Step 2: Active / Processing -->
+                <div style="display: flex; gap: 12px; align-items: flex-start;">
+                  <div style="width: 20px; height: 20px; border-radius: 50%; background: #F59E0B; color: white; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; flex-shrink: 0; margin-top: 2px; position: relative;">
+                    ⏱
+                  </div>
+                  <div>
+                    <h4 style="font-size: 13px; font-weight: 700; color: #D97706; margin: 0 0 2px 0;">Vérification de votre dossier</h4>
+                    <p style="font-size: 11px; color: var(--text-secondary); margin: 0;">L'administrateur SpeakUp examine votre demande d'enrôlement.</p>
+                  </div>
+                </div>
+
+                <!-- Step 3: Pending -->
+                <div style="display: flex; gap: 12px; align-items: flex-start; opacity: 0.5;">
+                  <div style="width: 20px; height: 20px; border-radius: 50%; background: #E2E8F0; color: #94A3B8; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; flex-shrink: 0; margin-top: 2px;">3</div>
+                  <div>
+                    <h4 style="font-size: 13px; font-weight: 700; color: var(--text-primary); margin: 0 0 2px 0;">Activation de vos accès</h4>
+                    <p style="font-size: 11px; color: var(--text-secondary); margin: 0;">Vous recevrez un mail ou une notification dès validation.</p>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Friendly message block -->
+              <div style="background: #F8FAFC; border-radius: 10px; padding: 12px 16px; border: 1px solid #E2E8F0; font-size: 11.5px; color: var(--text-muted); line-height: 1.5; text-align: left;">
+                💡 <strong>Besoin d'accélérer l'activation ?</strong> Vous pouvez notifier directement votre professeur ou le secrétariat SpeakUp pour activer votre compte immédiatement.
+              </div>
+
+              <button (click)="isSuccessModalOpen.set(false)" 
+                      style="background: #D97706; color: white; border: none; padding: 12px 24px; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 13px; transition: all 0.2s; box-shadow: 0 4px 12px rgba(217, 119, 6, 0.2); width: 100%;">
+                Compris, j'attends l'activation
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+
     </div>
   `
 })
@@ -262,7 +333,10 @@ export class LoginComponent {
   loginPassword = '';
 
   isRequestModalOpen = signal<boolean>(false);
+  isSuccessModalOpen = signal<boolean>(false);
   requestName = '';
+  requestUsername = '';
+  requestPassword = '';
   requestLevel = 'B1';
   requestCountry = '🇸🇳';
 
@@ -322,27 +396,42 @@ export class LoginComponent {
   }
 
   submitRequest() {
-    if (!this.requestName.trim()) {
+    const name = this.requestName.trim();
+    const username = this.requestUsername.trim().toLowerCase();
+    const password = this.requestPassword.trim();
+    const level = this.requestLevel;
+    const country = this.requestCountry;
+
+    if (!name) {
       this.dialogService.alert('Erreur', 'Veuillez saisir votre nom complet.', 'info');
       return;
     }
-    this.db.submitRegistrationRequest(
-      this.requestName,
-      this.requestLevel,
-      this.requestCountry
-    ).then(() => {
-      this.dialogService.alert(
-        'Demande Envoyée 🎉',
-        `Votre demande d'inscription pour "${this.requestName}" (${this.requestLevel}) a bien été enregistrée.\nUn enseignant validera votre accès très prochainement.`,
-        'success'
-      );
-      this.closeRequestModal();
-    });
+    if (!username) {
+      this.dialogService.alert('Erreur', "Veuillez choisir un nom d'utilisateur.", 'info');
+      return;
+    }
+    if (password.length < 6) {
+      this.dialogService.alert('Erreur', 'Le mot de passe doit comporter au moins 6 caractères.', 'info');
+      return;
+    }
+
+    const role = level === 'Teacher' ? 'teacher' : 'student';
+
+    this.db.registerUserProfile(name, username, password, level, country, role)
+      .then(() => {
+        this.closeRequestModal();
+        this.isSuccessModalOpen.set(true);
+      })
+      .catch((err: any) => {
+        this.dialogService.alert('Erreur', err.message || "Impossible de créer le compte.", 'info');
+      });
   }
 
   closeRequestModal() {
     this.isRequestModalOpen.set(false);
     this.requestName = '';
+    this.requestUsername = '';
+    this.requestPassword = '';
     this.requestLevel = 'B1';
     this.requestCountry = '🇸🇳';
   }

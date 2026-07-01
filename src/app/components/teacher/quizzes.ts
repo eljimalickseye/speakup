@@ -24,19 +24,20 @@ interface QuestionDraft {
       <!-- Tab Selector -->
       <div class="tab-row">
         <button class="tab" [class.active]="activeTab() === 'create'" (click)="activeTab.set('create')">
-          <i class="ti ti-plus"></i> Créer Quiz/Exercice
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          {{ selectedQuizId() ? 'Modifier Quiz' : 'Créer Quiz' }}
         </button>
         <button class="tab" [class.active]="activeTab() === 'list'" (click)="activeTab.set('list')">
-          <i class="ti ti-list"></i> Quiz Publiés ({{ quizzes().length }})
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          Quiz Publiés ({{ quizzes().length }})
         </button>
         <button class="tab" [class.active]="activeTab() === 'placement'" (click)="activeTab.set('placement')">
-          <i class="ti ti-target"></i> Test de Niveau (Placement Test)
-        </button>
-        <button class="tab" [class.active]="activeTab() === 'exercises'" (click)="activeTab.set('exercises')">
-          <i class="ti ti-pencil"></i> Exercices ({{ exercises().length }})
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+          Test de Niveau
         </button>
         <button class="tab" [class.active]="activeTab() === 'drafts'" (click)="activeTab.set('drafts')">
-          <i class="ti ti-file"></i> Brouillons ({{ quizDrafts().length + exerciseDrafts().length }})
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Brouillons ({{ quizDrafts().length }})
         </button>
       </div>
 
@@ -44,25 +45,12 @@ interface QuestionDraft {
       @if (activeTab() === 'create') {
         <div class="card">
           <h3 class="st" style="font-size:16px; margin-bottom:16px; display:flex; align-items:center; gap:8px">
-            <i class="ti ti-edit" style="color:#4F46E5"></i>
-            {{ selectedQuizId() ? 'Modifier' : 'Créer' }} un Quiz / Exercice
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            {{ selectedQuizId() ? 'Modifier le Quiz' : 'Créer un Quiz' }}
           </h3>
-
-          <!-- Exercise Type Selector -->
-          <div style="margin-bottom:20px">
-            <label style="font-size:11px; font-weight:700; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px; display:block; margin-bottom:10px">Type d'activité</label>
-            <div class="exercise-type-grid">
-              @for (et of exerciseTypes; track et.value) {
-                <button 
-                  class="exercise-type-btn"
-                  [class.active]="exerciseCategory() === et.value"
-                  (click)="setExerciseCategory(et.value)"
-                >
-                  <span style="font-size:20px">{{ et.emoji }}</span>
-                  <span class="et-label">{{ et.label }}</span>
-                </button>
-              }
-            </div>
+          <div style="background:#EEF2FF; border:1px solid #C7D2FE; border-radius:8px; padding:10px 14px; margin-bottom:16px; font-size:12px; color:#4338CA; display:flex; align-items:center; gap:6px">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            Les quiz sont utilisés pour évaluer les élèves en cours. Pour créer des exercices d'entraînement, utilisez le module <strong style="margin-left:3px">Gérer les Exercices</strong>.
           </div>
 
           <!-- Quick Templates -->
@@ -365,94 +353,85 @@ interface QuestionDraft {
       <!-- PLACEMENT TEST VIEW -->
       @if (activeTab() === 'placement') {
         <div>
+          <!-- Category Selector Chips -->
+          <div style="display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 8px;">
+            @for (cat of [
+              { id: 'placement-test', label: 'Général', emoji: '🌟' },
+              { id: 'placement-test-grammar', label: 'Grammaire', emoji: '📝' },
+              { id: 'placement-test-vocabulary', label: 'Vocabulaire', emoji: '📚' },
+              { id: 'placement-test-speaking', label: 'Oral/Expression', emoji: '🎙️' },
+              { id: 'placement-test-listening', label: 'Compréhension Orale', emoji: '👂' },
+              { id: 'placement-test-translation', label: 'Traduction', emoji: '🌍' },
+              { id: 'placement-test-pronunciation', label: 'Prononciation', emoji: '🔊' }
+            ]; track cat.id) {
+              <button (click)="selectedPlacementId.set(cat.id)"
+                      style="padding: 8px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; cursor: pointer; border: 1.5px solid; transition: all 0.2s; display: flex; align-items: center; gap: 6px; white-space: nowrap;"
+                      [style.background]="selectedPlacementId() === cat.id ? '#4F46E5' : 'var(--surface-1)'"
+                      [style.border-color]="selectedPlacementId() === cat.id ? '#4F46E5' : 'var(--border)'"
+                      [style.color]="selectedPlacementId() === cat.id ? '#fff' : 'var(--text-secondary)'">
+                <span>{{ cat.emoji }}</span>
+                <span>{{ cat.label }}</span>
+              </button>
+            }
+          </div>
+
           @if (getPlacementTest(); as pt) {
             <div style="background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%); border: 1.5px solid #4F46E5; border-radius: 12px; padding: 24px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px">
               <div>
-                <span class="badge" style="background:#4F46E5; color:white; font-size:10px; padding:3px 8px; border-radius:20px; font-weight:700">TEST DE NIVEAU INITIAL</span>
+                <span class="badge" style="background:#4F46E5; color:white; font-size:10px; padding:3px 8px; border-radius:20px; font-weight:700">TEST DE NIVEAU : {{ pt.title }}</span>
                 <h3 style="font-size:18px; font-weight:800; color:#1e293b; margin:8px 0 4px 0">{{ pt.title }}</h3>
-                <p style="font-size:13px; color:#475569; margin:0; max-width: 500px">Ce test est présenté automatiquement à chaque nouvel élève lors de sa première connexion pour évaluer son niveau de départ (A1, A2, B1, B2).</p>
+                <p style="font-size:13px; color:#475569; margin:0; max-width: 500px">Ce test de niveau est configurable. Modifiez les questions pour affiner l'évaluation automatique de cette catégorie spécifique.</p>
               </div>
               <button class="btn-p" style="background:#4F46E5; border-color:#4F46E5; font-size:13px; padding:8px 18px; font-weight: 700" (click)="editQuiz(pt)">
-                <i class="ti ti-edit"></i> Configurer le Test
+                <i class="ti ti-edit"></i> Configurer ce Test
               </button>
             </div>
 
             <div class="card" style="margin-top: 16px">
-              <h4 class="st" style="font-size:14px; margin-bottom:12px">Questions actuellement configurées ({{ pt.questions.length }})</h4>
+              <h4 class="st" style="font-size:14px; margin-bottom:12px">Questions configurées ({{ pt.questions.length }})</h4>
               <div style="display:flex; flex-direction:column; gap:12px">
                 @for (q of pt.questions; track q.question; let idx = $index) {
                   <div style="background: var(--surface-2); border: 1px solid var(--border-weak); padding: 12px; border-radius: 8px">
                     <div style="font-weight: 700; font-size: 13px; color: var(--text-primary)">
                       Q{{ idx + 1 }}. {{ q.question }}
                     </div>
-                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin-top: 8px">
-                      @for (opt of q.options; track opt; let oIdx = $index) {
-                        <div style="font-size: 12px; padding: 6px 10px; border-radius: 4px; border: 1px solid var(--border-weak)"
-                             [style.background]="getOptionLetter(oIdx) === q.correctOption ? '#ECFDF5' : '#FFF'"
-                             [style.border-color]="getOptionLetter(oIdx) === q.correctOption ? '#10B981' : 'var(--border-weak)'"
-                             [style.color]="getOptionLetter(oIdx) === q.correctOption ? '#065F46' : 'var(--text-secondary)'">
-                          <strong style="margin-right: 4px">{{ getOptionLetter(oIdx) }}</strong> {{ opt }}
-                        </div>
-                      }
-                    </div>
+                    @if (q.options.length > 0) {
+                      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin-top: 8px">
+                        @for (opt of q.options; track opt; let oIdx = $index) {
+                          <div style="font-size: 12px; padding: 6px 10px; border-radius: 4px; border: 1px solid var(--border-weak)"
+                               [style.background]="getOptionLetter(oIdx) === q.correctOption ? '#ECFDF5' : '#FFF'"
+                               [style.border-color]="getOptionLetter(oIdx) === q.correctOption ? '#10B981' : 'var(--border-weak)'"
+                               [style.color]="getOptionLetter(oIdx) === q.correctOption ? '#065F46' : 'var(--text-secondary)'">
+                            <strong style="margin-right: 4px">{{ getOptionLetter(oIdx) }}</strong> {{ opt }}
+                          </div>
+                        }
+                      </div>
+                    } @else {
+                      <div style="font-size:12px; color:var(--text-muted); margin-top:6px; font-style:italic">
+                        Question ouverte ou enregistrement vocal (aucune option à choix multiples).
+                      </div>
+                    }
                   </div>
                 }
               </div>
             </div>
           } @else {
             <div style="text-align:center; padding:40px; border:1px dashed var(--border); border-radius:8px">
-              Chargement du test de niveau...
+              Chargement du test de niveau de cette catégorie...
             </div>
           }
         </div>
       }
 
-      <!-- EXERCISES LIST -->
-      @if (activeTab() === 'exercises') {
-        <div>
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
-            <div class="st">Exercices créés</div>
-            <button class="btn-p" style="font-size:12px; padding:6px 14px" (click)="activeTab.set('create')">
-              <i class="ti ti-plus"></i> Nouvel exercice
-            </button>
-          </div>
-          @for (ex of exercises(); track ex.id) {
-            <div class="row" style="align-items:center; justify-content:space-between">
-              <div style="flex:1">
-                <div style="display:flex; align-items:center; gap:8px">
-                  <span style="font-size:16px">{{ getExerciseEmoji(ex.type) }}</span>
-                  <div>
-                    <strong style="font-size:13px; color:var(--text-primary)">{{ ex.title }}</strong>
-                    <div style="font-size:11px; color:var(--text-muted); margin-top:2px">
-                      {{ getExerciseLabel(ex.type) }} · {{ ex.level }} · {{ ex.points }} pts
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div style="display:flex; gap:6px; align-items:center">
-                <span class="pill" [class]="ex.status === 'published' ? 'g' : 'y'">{{ ex.status === 'published' ? 'Publié' : 'Brouillon' }}</span>
-                <button class="btn-s" style="font-size:11px; padding:4px 8px; border-color:#EF4444; color:#EF4444" (click)="deleteExercise(ex.id)">
-                  <i class="ti ti-trash"></i>
-                </button>
-              </div>
-            </div>
-          }
-          @if (exercises().length === 0) {
-            <div style="font-size:12px; color:var(--text-muted); padding:20px; text-align:center; border:1px dashed var(--border); border-radius:8px">
-              Aucun exercice créé. Utilisez l'onglet "Créer" pour commencer.
-            </div>
-          }
-        </div>
-      }
+
 
       <!-- DRAFTS LIST -->
       @if (activeTab() === 'drafts') {
         <div>
-          <div class="st" style="margin-bottom:12px">Brouillons de Quiz et Exercices</div>
-          
-          @if (quizDrafts().length === 0 && exerciseDrafts().length === 0) {
+          <div class="st" style="margin-bottom:12px">Brouillons de Quiz</div>
+          @if (quizDrafts().length === 0) {
             <div style="font-size:12px; color:var(--text-muted); padding:20px; text-align:center; border:1px dashed var(--border); border-radius:8px">
-              Aucun brouillon. Commencez par créer un quiz ou exercice et sauvegardez-le comme brouillon.
+              Aucun brouillon de quiz.
             </div>
           }
 
@@ -473,37 +452,10 @@ interface QuestionDraft {
                 <button class="btn-s" style="font-size:11px; padding:4px 10px; border-color:#4F46E5; color:#4F46E5" (click)="editQuiz(quiz); activeTab.set('create')">
                   <i class="ti ti-edit"></i> Éditer
                 </button>
-                <button class="btn-p" style="font-size:11px; padding:4px 10px; background:#10B981" (click)="publishDraft(quiz.id, 'quiz')">
+                <button class="btn-p" style="font-size:11px; padding:4px 10px; background:#10B981" (click)="publishDraft(quiz.id)">
                   <i class="ti ti-check"></i> Publier
                 </button>
-                <button class="btn-s" style="font-size:11px; padding:4px 10px; border-color:#EF4444; color:#EF4444" (click)="deleteDraft(quiz.id, 'quiz')">
-                  <i class="ti ti-trash"></i>
-                </button>
-              </div>
-            </div>
-          }
-
-          @for (ex of exerciseDrafts(); track ex.id) {
-            <div class="row" style="font-size:13px; align-items:center; justify-content:space-between; margin-bottom:8px; border-left: 3px solid #F59E0B">
-              <div style="flex:1">
-                <div style="display:flex; align-items:center; gap:8px">
-                  <span style="font-size:16px">{{ getExerciseEmoji(ex.type) }}</span>
-                  <div>
-                    <strong style="font-size:13px; color:var(--text-primary)">{{ ex.title }}</strong>
-                    <div style="font-size:11px; color:var(--text-muted); margin-top:2px">
-                      {{ getExerciseLabel(ex.type) }} · {{ ex.level }} · {{ ex.points }} pts
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div style="display:flex; gap:6px">
-                <button class="btn-s" style="font-size:11px; padding:4px 10px; border-color:#4F46E5; color:#4F46E5" (click)="editExercise(ex); activeTab.set('create')">
-                  <i class="ti ti-edit"></i> Éditer
-                </button>
-                <button class="btn-p" style="font-size:11px; padding:4px 10px; background:#10B981" (click)="publishDraft(ex.id, 'exercise')">
-                  <i class="ti ti-check"></i> Publier
-                </button>
-                <button class="btn-s" style="font-size:11px; padding:4px 10px; border-color:#EF4444; color:#EF4444" (click)="deleteDraft(ex.id, 'exercise')">
+                <button class="btn-s" style="font-size:11px; padding:4px 10px; border-color:#EF4444; color:#EF4444" (click)="deleteDraft(quiz.id)">
                   <i class="ti ti-trash"></i>
                 </button>
               </div>
@@ -580,13 +532,13 @@ export class TeacherQuizzesComponent {
   private db = inject(DatabaseService);
   private dialogService = inject(DialogService);
 
-  activeTab = signal<'create' | 'list' | 'placement' | 'exercises' | 'drafts'>('create');
+  activeTab = signal<'create' | 'list' | 'placement' | 'drafts'>('create');
   selectedQuizId = signal<string | null>(null);
+  rawQuizzes = signal<Quiz[]>([]);
   quizzes = signal<Quiz[]>([]);
-  exercises = signal<Exercise[]>([]);
   quizDrafts = signal<Quiz[]>([]);
-  exerciseDrafts = signal<Exercise[]>([]);
   currentUser = signal<UserProfile | null>(null);
+  selectedPlacementId = signal<string>('placement-test');
 
   exerciseCategory = signal<string>('quiz');
 
@@ -616,12 +568,9 @@ export class TeacherQuizzesComponent {
 
   constructor() {
     this.db.observeQuizzes().subscribe(list => {
-      this.quizzes.set(list.filter(q => q.status === 'published'));
-      this.quizDrafts.set(list.filter(q => q.status === 'draft'));
-    });
-    this.db.observeExercises().subscribe(list => {
-      this.exercises.set(list.filter(e => e.status === 'published'));
-      this.exerciseDrafts.set(list.filter(e => e.status === 'draft'));
+      this.rawQuizzes.set(list);
+      this.quizzes.set(list.filter(q => q.status === 'published' && !q.id.startsWith('placement-test')));
+      this.quizDrafts.set(list.filter(q => q.status === 'draft' && !q.id.startsWith('placement-test')));
     });
     this.db.observeCurrentUser().subscribe(u => this.currentUser.set(u));
   }
@@ -758,24 +707,6 @@ export class TeacherQuizzesComponent {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  editExercise(ex: Exercise) {
-    this.selectedQuizId.set(ex.id);
-    this.title = ex.title;
-    this.exerciseCategory.set(ex.type);
-    this.level = ex.level;
-    this.points = ex.points;
-    this.status = ex.status;
-    this.timeLimit = ex.timeLimit || '15 minutes';
-    this.questions = (ex.questions || []).map(q => ({
-      question: q.question || '',
-      questionType: 'multiple_choice' as any,
-      options: q.options || ['', '', ''],
-      correctOption: q.correctOption || 'A'
-    }));
-    this.activeTab.set('create');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
   async deleteQuiz(id: string) {
     this.dialogService.confirm('Supprimer le quiz', 'Êtes-vous sûr de vouloir supprimer ce quiz ?', async () => {
       await this.db.deleteQuiz(id);
@@ -783,30 +714,14 @@ export class TeacherQuizzesComponent {
     });
   }
 
-  async deleteExercise(id: string) {
-    this.dialogService.confirm('Supprimer l\'exercice', 'Êtes-vous sûr ?', async () => {
-      await this.db.deleteExercise(id);
-      this.dialogService.alert('Supprimé', 'Exercice supprimé.', 'success');
-    });
+  publishDraft(id: string) {
+    this.db.updateQuiz(id, { status: 'published' });
+    this.dialogService.alert('Succès', 'Quiz publié avec succès !', 'success');
   }
 
-  publishDraft(id: string, type: 'quiz' | 'exercise') {
-    if (type === 'quiz') {
-      this.db.updateQuiz(id, { status: 'published' });
-      this.dialogService.alert('Succès', 'Quiz publié avec succès !', 'success');
-    } else {
-      this.db.updateExercise(id, { status: 'published' });
-      this.dialogService.alert('Succès', 'Exercice publié avec succès !', 'success');
-    }
-  }
-
-  async deleteDraft(id: string, type: 'quiz' | 'exercise') {
+  async deleteDraft(id: string) {
     this.dialogService.confirm('Supprimer', 'Êtes-vous sûr de vouloir supprimer ce brouillon ?', async () => {
-      if (type === 'quiz') {
-        await this.db.deleteQuiz(id);
-      } else {
-        await this.db.deleteExercise(id);
-      }
+      await this.db.deleteQuiz(id);
       this.dialogService.alert('Supprimé', 'Brouillon supprimé.', 'success');
     });
   }
@@ -846,9 +761,7 @@ export class TeacherQuizzesComponent {
         authorId: user?.id || 'teacher',
         authorName: user?.name || 'Teacher',
         status: this.status as 'published' | 'draft',
-        points: this.points,
-        timeLimit: this.timeLimit,
-        questions: quizData.questions
+        points: this.points
       };
       this.db.addExercise(exerciseData);
     }
@@ -927,7 +840,7 @@ export class TeacherQuizzesComponent {
   }
 
   getPlacementTest(): Quiz | undefined {
-    return this.quizzes().find(q => q.id === 'placement-test');
+    return this.rawQuizzes().find(q => q.id === this.selectedPlacementId());
   }
 
   getOptionLetter(idx: number): string {

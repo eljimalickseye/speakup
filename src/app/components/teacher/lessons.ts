@@ -11,103 +11,103 @@ import { DialogService } from '../../services/dialog.service';
   template: `
     <div class="page">
       <div class="card">
-        <h3 class="st" style="font-size:16px; margin-bottom:12px">Create New English Lesson</h3>
+        <h3 class="st" style="font-size:16px; margin-bottom:12px">{{ t('Créer un nouveau cours d’anglais', 'Create New English Lesson') }}</h3>
         
         <div class="input-row">
-          <label for="lTitle">Lesson Title</label>
-          <input id="lTitle" type="text" [(ngModel)]="title" placeholder="e.g., Week 9 — Reported speech (Le discours rapporté)" />
+          <label for="lTitle">{{ t('Titre du cours', 'Lesson Title') }}</label>
+          <input id="lTitle" type="text" [(ngModel)]="title" [placeholder]="t('ex. Semaine 9 — Le discours rapporté', 'e.g., Week 9 — Reported speech')" />
         </div>
 
         <div class="g2">
           <div class="input-row">
-            <label for="lLevel">Level</label>
+            <label for="lLevel">{{ t('Niveau', 'Level') }}</label>
             <select id="lLevel" [(ngModel)]="level">
-              <option value="A1">A1 — Beginner</option>
-              <option value="A2">A2 — Elementary</option>
-              <option value="B1">B1 — Intermediate</option>
-              <option value="B2">B2 — Upper Intermediate</option>
+              <option value="A1">A1 — {{ t('Débutant', 'Beginner') }}</option>
+              <option value="A2">A2 — {{ t('Élémentaire', 'Elementary') }}</option>
+              <option value="B1">B1 — {{ t('Intermédiaire', 'Intermediate') }}</option>
+              <option value="B2">B2 — {{ t('Intermédiaire supérieur', 'Upper Intermediate') }}</option>
             </select>
           </div>
           <div class="input-row">
-            <label for="lType">Type</label>
+            <label for="lType">{{ t('Type', 'Type') }}</label>
             <select id="lType" [(ngModel)]="type">
-              <option value="Grammar">Grammar / Conjugation</option>
-              <option value="Vocabulary">Vocabulary List</option>
-              <option value="Reading">Reading / Comprehension</option>
+              <option value="Grammar">{{ t('Grammaire / Conjugaison', 'Grammar / Conjugation') }}</option>
+              <option value="Vocabulary">{{ t('Liste de vocabulaire', 'Vocabulary List') }}</option>
+              <option value="Reading">{{ t('Compréhension écrite', 'Reading / Comprehension') }}</option>
             </select>
           </div>
         </div>
 
         <div class="input-row">
-          <label for="lContent">Lesson Content (Markdown/Text)</label>
-          <textarea id="lContent" [(ngModel)]="content" rows="6" placeholder="Write grammar explanations, notes, reading texts..."></textarea>
+          <label for="lContent">{{ t('Contenu du cours (Texte/Markdown)', 'Lesson Content (Markdown/Text)') }}</label>
+          <textarea id="lContent" [(ngModel)]="content" rows="6" [placeholder]="t('Rédiger le contenu du cours, explications, notes...', 'Write grammar explanations, notes, reading texts...')"></textarea>
         </div>
 
         <div class="input-row">
-          <label for="lVocab">Vocabulary List (One term per line, e.g., 'to speak - parler')</label>
+          <label for="lVocab">{{ t('Mots de Vocabulaire (un terme par ligne, ex. : word - translation)', 'Vocabulary List (One term per line, e.g., word - translation)') }}</label>
           <textarea id="lVocab" [(ngModel)]="vocabText" rows="4" placeholder="word - translation"></textarea>
         </div>
 
         <div class="g2">
           <div class="input-row">
-            <label for="lHomework">Homework Instructions (Writing/Speaking prompts)</label>
-            <textarea id="lHomework" [(ngModel)]="homeworkInstruction" rows="3" placeholder="Describe the task for students..."></textarea>
+            <label for="lHomework">{{ t('Consignes du devoir (expression écrite / orale)', 'Homework Instructions (Writing/Speaking prompts)') }}</label>
+            <textarea id="lHomework" [(ngModel)]="homeworkInstruction" rows="3" [placeholder]="t('Décrire le travail demandé aux élèves...', 'Describe the task for students...')"></textarea>
           </div>
           <div class="input-row">
-            <label for="lDue">Homework Due Date</label>
+            <label for="lDue">{{ t('Date limite de rendu', 'Homework Due Date') }}</label>
             <input id="lDue" type="date" [(ngModel)]="dueDate" />
           </div>
         </div>
 
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px">
           <div class="input-row" style="margin-bottom:0">
-            <label for="lXp">Points XP à remporter</label>
+            <label for="lXp">{{ t('Points XP à remporter', 'XP points to award') }}</label>
             <input id="lXp" type="number" [(ngModel)]="points" placeholder="ex. 30, 50, 100..." style="width:100%; padding:9px; border:1px solid var(--border); border-radius:var(--radius); font-size:12px" />
           </div>
           <div class="input-row" style="margin-bottom:0">
-            <label for="lYoutube">Lien Vidéo YouTube (Optionnel)</label>
+            <label for="lYoutube">{{ t('Lien Vidéo YouTube (Optionnel)', 'YouTube Video URL (Optional)') }}</label>
             <input id="lYoutube" type="text" [(ngModel)]="youtubeUrl" placeholder="https://www.youtube.com/watch?v=..." style="width:100%; padding:9px; border:1px solid var(--border); border-radius:var(--radius); font-size:12px" />
           </div>
         </div>
         
         <div class="input-row" style="margin-bottom:12px">
-          <label for="lYoutubeDesc">Description de la vidéo YouTube (Optionnel)</label>
-          <textarea id="lYoutubeDesc" [(ngModel)]="youtubeDescription" rows="2" placeholder="Description ou instructions sur la vidéo..." style="width:100%; padding:9px; border:1px solid var(--border); border-radius:var(--radius); font-size:12px"></textarea>
+          <label for="lYoutubeDesc">{{ t('Description de la vidéo YouTube (Optionnel)', 'YouTube Video Description (Optional)') }}</label>
+          <textarea id="lYoutubeDesc" [(ngModel)]="youtubeDescription" rows="2" [placeholder]="t('Description ou instructions sur la vidéo...', 'Description or instructions about the video...')" style="width:100%; padding:9px; border:1px solid var(--border); border-radius:var(--radius); font-size:12px"></textarea>
         </div>
 
         <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:12px">
           <button class="btn-s" (click)="saveAsDraft()">
-            Save as Draft
+            {{ t('Enregistrer en Brouillon', 'Save as Draft') }}
           </button>
           <button class="btn-p" [disabled]="!isValid()" (click)="publishLesson()">
-            {{ selectedLessonId() ? 'Update Lesson' : 'Publish Lesson' }}
+            {{ selectedLessonId() ? t('Mettre à jour le cours', 'Update Lesson') : t('Publier le cours', 'Publish Lesson') }}
           </button>
           @if (selectedLessonId()) {
-            <button class="btn-s" (click)="resetForm()">Cancel Edit</button>
+            <button class="btn-s" (click)="resetForm()">{{ t('Annuler la modification', 'Cancel Edit') }}</button>
           }
         </div>
       </div>
 
       <div class="card" style="margin-top:16px">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
-          <h3 class="st" style="font-size:16px; margin:0">Published Lessons</h3>
+          <h3 class="st" style="font-size:16px; margin:0">{{ t('Cours publiés', 'Published Lessons') }}</h3>
           <button class="btn-s" style="font-size:12px" (click)="showDrafts.set(!showDrafts())">
-            {{ showDrafts() ? 'Hide' : 'Show' }} Drafts ({{ drafts().length }})
+            {{ showDrafts() ? t('Masquer les brouillons', 'Hide Drafts') : t('Afficher les brouillons', 'Show Drafts') }} ({{ drafts().length }})
           </button>
         </div>
         @if (lessons().length === 0) {
           <div style="font-size:13px; color:var(--text-secondary); text-align:center; padding:16px 0">
-            No lessons published yet.
+            {{ t('Aucun cours publié pour le moment.', 'No lessons published yet.') }}
           </div>
         } @else {
           <table style="width:100%; border-collapse:collapse; font-size:12px">
             <thead>
               <tr style="text-align:left; border-bottom:2px solid var(--border-weak); color:var(--text-muted)">
-                <th style="padding:8px">Title</th>
-                <th style="padding:8px">Level</th>
-                <th style="padding:8px">Type</th>
-                <th style="padding:8px">Vocab count</th>
-                <th style="padding:8px; text-align:right">Action</th>
+                <th style="padding:8px">{{ t('Titre', 'Title') }}</th>
+                <th style="padding:8px">{{ t('Niveau', 'Level') }}</th>
+                <th style="padding:8px">{{ t('Type', 'Type') }}</th>
+                <th style="padding:8px">{{ t('Mots de vocabulaire', 'Vocab count') }}</th>
+                <th style="padding:8px; text-align:right">{{ t('Action', 'Action') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -115,14 +115,14 @@ import { DialogService } from '../../services/dialog.service';
                 <tr style="border-bottom:1px solid var(--border-weak)">
                   <td style="padding:8px; font-weight:600; color:var(--text-primary)">{{ lesson.title }}</td>
                   <td style="padding:8px"><span class="badge" style="background:#E0E7FF; color:#3730A3">{{ lesson.level }}</span></td>
-                  <td style="padding:8px">{{ lesson.type }}</td>
+                  <td style="padding:8px">{{ lesson.type === 'Grammar' ? t('Grammaire', 'Grammar') : (lesson.type === 'Listening' ? t('Compréhension', 'Listening') : t('Vocabulaire', 'Vocabulary')) }}</td>
                   <td style="padding:8px">{{ lesson.vocabulary.length }} items</td>
                   <td style="padding:8px; text-align:right; display:flex; gap:4px; justify-content:flex-end">
                     <button class="btn-s" style="padding:4px 8px; font-size:11px" (click)="editLesson(lesson)">
-                      Edit
+                      {{ t('Modifier', 'Edit') }}
                     </button>
                     <button class="btn-s" style="padding:4px 8px; font-size:11px; border-color:#EF4444; color:#EF4444" (click)="deleteLesson(lesson)">
-                      Delete
+                      {{ t('Supprimer', 'Delete') }}
                     </button>
                   </td>
                 </tr>
@@ -134,20 +134,20 @@ import { DialogService } from '../../services/dialog.service';
 
       @if (showDrafts()) {
         <div class="card" style="margin-top:16px; border-left: 4px solid #F59E0B">
-          <h3 class="st" style="font-size:16px; margin-bottom:12px; color:#F59E0B">Drafts</h3>
+          <h3 class="st" style="font-size:16px; margin-bottom:12px; color:#F59E0B">{{ t('Brouillons', 'Drafts') }}</h3>
           @if (drafts().length === 0) {
             <div style="font-size:13px; color:var(--text-secondary); text-align:center; padding:16px 0">
-              No drafts saved.
+              {{ t('Aucun brouillon enregistré.', 'No drafts saved.') }}
             </div>
           } @else {
             <table style="width:100%; border-collapse:collapse; font-size:12px">
               <thead>
                 <tr style="text-align:left; border-bottom:2px solid var(--border-weak); color:var(--text-muted)">
-                  <th style="padding:8px">Title</th>
-                  <th style="padding:8px">Level</th>
-                  <th style="padding:8px">Type</th>
-                  <th style="padding:8px">Created</th>
-                  <th style="padding:8px; text-align:right">Actions</th>
+                  <th style="padding:8px">{{ t('Titre', 'Title') }}</th>
+                  <th style="padding:8px">{{ t('Niveau', 'Level') }}</th>
+                  <th style="padding:8px">{{ t('Type', 'Type') }}</th>
+                  <th style="padding:8px">{{ t('Créé le', 'Created') }}</th>
+                  <th style="padding:8px; text-align:right">{{ t('Actions', 'Actions') }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -155,17 +155,17 @@ import { DialogService } from '../../services/dialog.service';
                   <tr style="border-bottom:1px solid var(--border-weak)">
                     <td style="padding:8px; font-weight:600; color:var(--text-primary)">{{ draft.title }}</td>
                     <td style="padding:8px"><span class="badge" style="background:#FEF3C7; color:#92400E">{{ draft.level }}</span></td>
-                    <td style="padding:8px">{{ draft.type }}</td>
+                    <td style="padding:8px">{{ draft.type === 'Grammar' ? t('Grammaire', 'Grammar') : (draft.type === 'Listening' ? t('Compréhension', 'Listening') : t('Vocabulaire', 'Vocabulary')) }}</td>
                     <td style="padding:8px; font-size:11px; color:var(--text-muted)">{{ draft.createdAt | date:'short' }}</td>
                     <td style="padding:8px; text-align:right; display:flex; gap:4px; justify-content:flex-end">
                       <button class="btn-s" style="padding:4px 8px; font-size:11px" (click)="editLesson(draft)">
-                        Edit
+                        {{ t('Modifier', 'Edit') }}
                       </button>
                       <button class="btn-p" style="padding:4px 8px; font-size:11px; background:#10B981" (click)="publishDraft(draft.id)">
-                        Publish
+                        {{ t('Publier', 'Publish') }}
                       </button>
                       <button class="btn-s" style="padding:4px 8px; font-size:11px; border-color:#EF4444; color:#EF4444" (click)="deleteLesson(draft)">
-                        Delete
+                        {{ t('Supprimer', 'Delete') }}
                       </button>
                     </td>
                   </tr>
@@ -179,8 +179,13 @@ import { DialogService } from '../../services/dialog.service';
   `
 })
 export class TeacherLessonsComponent {
-  private db = inject(DatabaseService);
+  public db = inject(DatabaseService);
   private dialogService = inject(DialogService);
+  activeLang = this.db.activeLang;
+
+  t(fr: string, en: string): string {
+    return this.activeLang() === 'fr' ? fr : en;
+  }
 
   selectedLessonId = signal<string | null>(null);
   lessons = signal<Lesson[]>([]);
@@ -207,11 +212,15 @@ export class TeacherLessonsComponent {
 
   deleteLesson(lesson: Lesson) {
     this.dialogService.confirm(
-      'Delete Lesson',
-      `Are you sure you want to delete the lesson "${lesson.title}"?`,
+      this.t('Supprimer le cours', 'Delete Lesson'),
+      this.t('Êtes-vous sûr de vouloir supprimer ce cours ?', 'Are you sure you want to delete this lesson?'),
       () => {
         this.db.deleteLesson(lesson.id);
-        this.dialogService.alert('Deleted', 'Lesson deleted successfully!', 'success');
+        this.dialogService.alert(
+          this.t('Supprimé', 'Deleted'),
+          this.t('Cours supprimé avec succès !', 'Lesson deleted successfully!'),
+          'success'
+        );
         if (this.selectedLessonId() === lesson.id) {
           this.resetForm();
         }
@@ -251,17 +260,29 @@ export class TeacherLessonsComponent {
     const id = this.selectedLessonId();
     if (id) {
       this.db.updateLesson(id, lessonData);
-      this.dialogService.alert('Success', 'Draft updated successfully!', 'success');
+      this.dialogService.alert(
+        this.t('Succès', 'Success'),
+        this.t('Brouillon mis à jour avec succès !', 'Draft updated successfully!'),
+        'success'
+      );
     } else {
       this.db.addLesson(lessonData);
-      this.dialogService.alert('Success', 'Draft saved successfully!', 'success');
+      this.dialogService.alert(
+        this.t('Succès', 'Success'),
+        this.t('Brouillon enregistré avec succès !', 'Draft saved successfully!'),
+        'success'
+      );
     }
     this.resetForm();
   }
 
   publishDraft(draftId: string) {
     this.db.updateLesson(draftId, { status: 'published' });
-    this.dialogService.alert('Success', 'Lesson published successfully!', 'success');
+    this.dialogService.alert(
+      this.t('Succès', 'Success'),
+      this.t('Cours publié avec succès !', 'Lesson published successfully!'),
+      'success'
+    );
   }
 
   editLesson(lesson: Lesson) {
@@ -307,10 +328,18 @@ export class TeacherLessonsComponent {
     const id = this.selectedLessonId();
     if (id) {
       this.db.updateLesson(id, lessonData);
-      this.dialogService.alert('Success', 'English Lesson updated successfully!', 'success');
+      this.dialogService.alert(
+        this.t('Succès', 'Success'),
+        this.t("Cours d'anglais mis à jour avec succès !", 'English Lesson updated successfully!'),
+        'success'
+      );
     } else {
       this.db.addLesson(lessonData);
-      this.dialogService.alert('Success', 'English Lesson published successfully!', 'success');
+      this.dialogService.alert(
+        this.t('Succès', 'Success'),
+        this.t("Cours d'anglais publié avec succès !", 'English Lesson published successfully!'),
+        'success'
+      );
     }
     this.resetForm();
   }

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { initializeApp } from 'firebase/app';
 import { 
   getFirestore, collection, doc, setDoc, getDoc, getDocs, 
@@ -33,7 +33,20 @@ export interface UserProfile {
   username?: string;
   password?: string;
   blocked?: boolean;
+  status?: 'pending' | 'approved' | 'rejected' | 'suspended';
 }
+
+export interface SystemLog {
+  id: string;
+  userId: string;
+  userName: string;
+  userRole: 'student' | 'teacher' | 'guest' | 'admin';
+  action: string;
+  details: string;
+  groupId?: string;
+  createdAt: string;
+}
+
 
 export interface LeaderboardReward {
   id: string;
@@ -119,6 +132,8 @@ export interface Quiz {
   authorName?: string;
   youtubeUrl?: string;
   youtubeDescription?: string;
+  isPlacementTest?: boolean;
+  placementCategory?: string;
   questions: {
     question: string;
     options: string[];
@@ -175,22 +190,40 @@ export interface Announcement {
   imageUrl?: string;
 }
 
-export type ExerciseType = 'quiz' | 'written' | 'vocal' | 'translation' | 'essay' | 'listening' | 'pronunciation';
+export type ExerciseType = 'writing' | 'speaking' | 'listening' | 'translation' | 'pronunciation' | 'vocabulary';
 
 export interface Exercise {
   id: string;
   title: string;
   type: ExerciseType;
   level: string;
+  groupId?: string;
   createdAt: string;
   authorId: string;
   authorName: string;
   status: 'draft' | 'published';
   points: number;
-  description?: string;
-  content?: string;
-  timeLimit?: string;
-  questions?: any[];
+
+  // Writing / Essay
+  subject?: string;
+
+  // Speaking
+  speakingPrompt?: string;
+
+  // Listening
+  youtubeUrl?: string;
+  listeningInstruction?: string;
+
+  // Translation
+  textToTranslate?: string;
+  translationDirection?: 'fr-en' | 'en-fr';
+
+  // Pronunciation
+  textToPronounce?: string;
+
+  // Vocabulary
+  theme?: string;
+  wordList?: string[];
 }
 
 export interface ActivityLog {
@@ -226,6 +259,8 @@ export interface VocabGame {
   title: string;
   gameType: 'flashcards' | 'matching' | 'memory' | 'word_builder' | 'hangman' | 'multiple_choice';
   difficulty: 'easy' | 'medium' | 'hard';
+  category?: string;
+  assignedGroupId?: string;
   authorId: string;
   createdAt: string;
   words: {
@@ -235,6 +270,21 @@ export interface VocabGame {
     imageUrl?: string;
     pronunciation?: string;
   }[];
+}
+
+export interface VocabGameAttempt {
+  id: string;
+  studentId: string;
+  studentName: string;
+  gameId: string;
+  gameTitle: string;
+  score: number;
+  totalWords: number;
+  timeTakenSeconds: number;
+  completedAt: string;
+  difficulty: 'easy' | 'medium' | 'hard';
+  category?: string;
+  missedWords?: string[];
 }
 
 export interface ExamAttempt {
@@ -320,13 +370,23 @@ export class DatabaseService {
   private reports$ = new BehaviorSubject<AbuseReport[]>([]);
   private exercises$ = new BehaviorSubject<Exercise[]>([]);
   private activityLogs$ = new BehaviorSubject<ActivityLog[]>([]);
+  private systemLogs$ = new BehaviorSubject<SystemLog[]>([]);
+
   private notifications$ = new BehaviorSubject<AppNotification[]>([]);
   private vocabGames$ = new BehaviorSubject<VocabGame[]>([]);
   private examAttempts$ = new BehaviorSubject<ExamAttempt[]>([]);
+  private vocabGameAttempts$ = new BehaviorSubject<VocabGameAttempt[]>([]);
   
-  // Current user state
   private currentUser$ = new BehaviorSubject<UserProfile | null>(null);
   private activeJitsiCall$ = new BehaviorSubject<LiveClass | null>(null);
+
+  activeLang = signal<'fr' | 'en'>((localStorage.getItem('speakup_lang') as 'fr' | 'en') || 'fr');
+  requestedTabRedirect = signal<string | null>(null);
+
+  setLanguage(lang: 'fr' | 'en') {
+    this.activeLang.set(lang);
+    localStorage.setItem('speakup_lang', lang);
+  }
 
   constructor() {
     const voiceChatLocal = localStorage.getItem('speak_voice_chat_enabled') !== 'false';
@@ -362,10 +422,10 @@ export class DatabaseService {
   private initializeData() {
     // 1. Users (Pre-established 3 teachers + 1 admin)
     const defaultUsers: UserProfile[] = [
-      { id: 'admin', name: 'AT - Admin', role: 'admin', level: 'C2', xp: 0, streak: 0, lastActive: 'Today', avatar: 'AD', username: 'admin', password: 'adminpassword' },
-      { id: 'teacher', name: 'AT - Teacher', role: 'teacher', level: 'C2', xp: 0, streak: 0, lastActive: 'Today', avatar: 'AT', username: 'teacher', password: 'admin123' },
-      { id: 'teacher-2', name: 'MJ - Teacher Marie', role: 'teacher', level: 'C2', xp: 0, streak: 0, lastActive: 'Today', avatar: 'MJ', username: 'teacher2', password: 'teacher123' },
-      { id: 'teacher-3', name: 'KS - Teacher Karim', role: 'teacher', level: 'C2', xp: 0, streak: 0, lastActive: 'Today', avatar: 'KS', username: 'teacher3', password: 'teacher123' }
+      { id: 'admin', name: 'AT - Admin', role: 'admin', level: 'C2', xp: 0, streak: 0, lastActive: 'Today', avatar: 'AD', username: 'admin', password: 'adminpassword', status: 'approved' },
+      { id: 'teacher', name: 'AT - Teacher', role: 'teacher', level: 'C2', xp: 0, streak: 0, lastActive: 'Today', avatar: 'AT', username: 'teacher', password: 'admin123', status: 'approved' },
+      { id: 'teacher-2', name: 'MJ - Teacher Marie', role: 'teacher', level: 'C2', xp: 0, streak: 0, lastActive: 'Today', avatar: 'MJ', username: 'teacher2', password: 'teacher123', status: 'approved' },
+      { id: 'teacher-3', name: 'KS - Teacher Karim', role: 'teacher', level: 'C2', xp: 0, streak: 0, lastActive: 'Today', avatar: 'KS', username: 'teacher3', password: 'teacher123', status: 'approved' }
     ];
 
     // 2. Lessons (Empty by default)
@@ -393,10 +453,7 @@ export class DatabaseService {
     const defaultEvents: EventItem[] = [];
 
     const defaultChannels: ChatChannel[] = [
-      { id: 'general', name: 'general' },
-      { id: 'group-a', name: 'study-group-a' },
-      { id: 'travel', name: 'travel-dialogue' },
-      { id: 'debate', name: 'debate-club' }
+      { id: 'general', name: 'general' }
     ];
 
     // Read or write from LocalStorage
@@ -440,41 +497,55 @@ export class DatabaseService {
     });
     const lessons = getLocal('speak_lessons', defaultLessons);
     const quizzes = getLocal('speak_quizzes', defaultQuizzes);
+    // Pre-initialize Level Placement Tests for each category
+    const placementCategories = [
+      { id: 'placement-test-grammar', title: 'Grammar Level Placement Test', type: 'Multiple Choice', q1: 'She ___ to school every day.', o1: ['go', 'goes', 'going'], c1: 'B', q2: 'I am interested ___ learning English.', o2: ['in', 'at', 'on'], c2: 'A' },
+      { id: 'placement-test-vocabulary', title: 'Vocabulary Level Placement Test', type: 'Multiple Choice', q1: 'What is the opposite of the word "generous"?', o1: ['stingy', 'kind', 'polite'], c1: 'A', q2: 'A person who designs buildings is an ___.', o2: ['architect', 'builder', 'painter'], c2: 'A' },
+      { id: 'placement-test-speaking', title: 'Speaking Level Placement Test', type: 'Oral Practice', q1: 'Introduce yourself and describe your daily routine in English.', o1: [], c1: 'A', q2: 'Talk about your last vacation. Where did you go and what did you do?', o2: [], c2: 'A' },
+      { id: 'placement-test-listening', title: 'Listening Level Placement Test', type: 'Multiple Choice', q1: 'Listen to the audio instructions and select the correct room number.', o1: ['Room 101', 'Room 202', 'Room 303'], c1: 'B', q2: 'What is the speaker\'s attitude towards online education?', o2: ['Skeptical', 'Enthusiastic', 'Indifferent'], c2: 'B' },
+      { id: 'placement-test-translation', title: 'Translation Level Placement Test', type: 'Essay', q1: 'Translate into English: "Je veux apprendre l\'anglais pour voyager."', o1: [], c1: 'A', q2: 'Translate into French: "Learning a new language opens many doors."', o2: [], c2: 'A' },
+      { id: 'placement-test-pronunciation', title: 'Pronunciation Level Placement Test', type: 'Oral Practice', q1: 'Read aloud: "The quick brown fox jumps over the lazy dog."', o1: [], c1: 'A', q2: 'Read aloud: "She sells seashells by the seashore."', o2: [], c2: 'A' }
+    ];
+
+    let quizzesModified = false;
+    placementCategories.forEach(pt => {
+      if (!quizzes.some((q: any) => q.id === pt.id)) {
+        quizzes.unshift({
+          id: pt.id,
+          title: pt.title,
+          type: pt.type,
+          timeLimit: 'No limit',
+          status: 'published',
+          isPlacementTest: true,
+          questions: pt.o1.length > 0 ? [
+            { question: pt.q1, options: pt.o1, correctOption: pt.c1 },
+            { question: pt.q2, options: pt.o2, correctOption: pt.c2 }
+          ] : [
+            { question: pt.q1, options: [], correctOption: 'A' },
+            { question: pt.q2, options: [], correctOption: 'A' }
+          ]
+        });
+        quizzesModified = true;
+      }
+    });
+
     if (!quizzes.some((q: any) => q.id === 'placement-test')) {
       quizzes.unshift({
         id: 'placement-test',
-        title: 'English Level Placement Test',
+        title: 'English Level Placement Test (General)',
         type: 'Multiple Choice',
         timeLimit: 'No limit',
         status: 'published',
+        isPlacementTest: true,
         questions: [
-          {
-            question: 'Choose the correct form: She ___ to school every day.',
-            options: ['go', 'goes', 'going'],
-            correctOption: 'B'
-          },
-          {
-            question: 'Identify the correct preposition: I am interested ___ learning English.',
-            options: ['in', 'at', 'on'],
-            correctOption: 'A'
-          },
-          {
-            question: 'Which sentence is grammatically correct?',
-            options: ['If it rains, we will stay home.', 'If it will rain, we stay home.', 'If it rains, we would stay home.'],
-            correctOption: 'A'
-          },
-          {
-            question: 'Complete the sentence: By the time the movie ended, we ___ all the popcorn.',
-            options: ['eat', 'have eaten', 'had eaten'],
-            correctOption: 'C'
-          },
-          {
-            question: 'What is the opposite of the word "generous"?',
-            options: ['stingy', 'kind', 'polite'],
-            correctOption: 'A'
-          }
+          { question: 'Choose the correct form: She ___ to school every day.', options: ['go', 'goes', 'going'], correctOption: 'B' },
+          { question: 'Identify the correct preposition: I am interested ___ learning English.', options: ['in', 'at', 'on'], correctOption: 'A' }
         ]
       });
+      quizzesModified = true;
+    }
+
+    if (quizzesModified) {
       localStorage.setItem('speak_quizzes', JSON.stringify(quizzes));
     }
     const submissions = getLocal('speak_submissions', defaultSubmissions);
@@ -483,7 +554,8 @@ export class DatabaseService {
     const announcements = getLocal('speak_announcements', defaultAnnouncements);
     const payments = getLocal('speak_payments', defaultPayments);
     const events = getLocal('speak_events', defaultEvents);
-    const channels = getLocal('speak_channels', defaultChannels);
+    const channels = getLocal('speak_channels', defaultChannels).filter((c: any) => c.id === 'general' || c.isPrivate);
+    localStorage.setItem('speak_channels', JSON.stringify(channels));
 
     const defaultRewards: LeaderboardReward[] = [
       { id: 'reward-1', title: 'Ticket de Cinéma', description: 'Une place de cinéma gratuite au Pathé Dakar.', xpThreshold: 300, assignedTo: null, assignedName: null, acknowledged: false },
@@ -570,6 +642,11 @@ export class DatabaseService {
     this.vocabGames$.next(vocabGames);
     const examAttempts = getLocal('speak_exam_attempts', []);
     this.examAttempts$.next(examAttempts);
+    const vocabGameAttempts = getLocal('speak_vocab_game_attempts', []);
+    this.vocabGameAttempts$.next(vocabGameAttempts);
+    const systemLogs = getLocal('speak_system_logs', []);
+    this.systemLogs$.next(systemLogs);
+
 
     this.users$.next(users);
     this.lessons$.next(lessons);
@@ -646,16 +723,16 @@ export class DatabaseService {
         console.log('Firestore collections detected. Syncing default accounts then subscribing...');
         // Always force-update default/canonical accounts in Firestore (only credential fields)
         const canonicalAccounts = [
-          { id: 'admin',     username: 'admin',    password: 'adminpassword', role: 'admin',   name: 'AT - Admin',          avatar: 'AD' },
-          { id: 'teacher',   username: 'teacher',  password: 'admin123',      role: 'teacher', name: 'AT - Teacher',         avatar: 'AT' },
-          { id: 'teacher-2', username: 'teacher2', password: 'teacher123',    role: 'teacher', name: 'MJ - Teacher Marie',   avatar: 'MJ' },
-          { id: 'teacher-3', username: 'teacher3', password: 'teacher123',    role: 'teacher', name: 'KS - Teacher Karim',   avatar: 'KS' }
+          { id: 'admin',     username: 'admin',    password: 'adminpassword', role: 'admin',   name: 'AT - Admin',          avatar: 'AD', status: 'approved' },
+          { id: 'teacher',   username: 'teacher',  password: 'admin123',      role: 'teacher', name: 'AT - Teacher',         avatar: 'AT', status: 'approved' },
+          { id: 'teacher-2', username: 'teacher2', password: 'teacher123',    role: 'teacher', name: 'MJ - Teacher Marie',   avatar: 'MJ', status: 'approved' },
+          { id: 'teacher-3', username: 'teacher3', password: 'teacher123',    role: 'teacher', name: 'KS - Teacher Karim',   avatar: 'KS', status: 'approved' }
         ];
         for (const acct of canonicalAccounts) {
           try {
             await setDoc(
               doc(this.firestore, 'users', acct.id),
-              { username: acct.username, password: acct.password, role: acct.role, name: acct.name, avatar: acct.avatar },
+              { username: acct.username, password: acct.password, role: acct.role, name: acct.name, avatar: acct.avatar, status: acct.status },
               { merge: true }
             );
           } catch (e2) {
@@ -705,44 +782,52 @@ export class DatabaseService {
       const quizzes: Quiz[] = [];
       snap.forEach(doc => quizzes.push(doc.data() as Quiz));
       
+      const placementCategories = [
+        { id: 'placement-test-grammar', title: 'Grammar Level Placement Test', type: 'Multiple Choice', q1: 'She ___ to school every day.', o1: ['go', 'goes', 'going'], c1: 'B', q2: 'I am interested ___ learning English.', o2: ['in', 'at', 'on'], c2: 'A' },
+        { id: 'placement-test-vocabulary', title: 'Vocabulary Level Placement Test', type: 'Multiple Choice', q1: 'What is the opposite of the word "generous"?', o1: ['stingy', 'kind', 'polite'], c1: 'A', q2: 'A person who designs buildings is an ___.', o2: ['architect', 'builder', 'painter'], c2: 'A' },
+        { id: 'placement-test-speaking', title: 'Speaking Level Placement Test', type: 'Oral Practice', q1: 'Introduce yourself and describe your daily routine in English.', o1: [], c1: 'A', q2: 'Talk about your last vacation. Where did you go and what did you do?', o2: [], c2: 'A' },
+        { id: 'placement-test-listening', title: 'Listening Level Placement Test', type: 'Multiple Choice', q1: 'Listen to the audio instructions and select the correct room number.', o1: ['Room 101', 'Room 202', 'Room 303'], c1: 'B', q2: 'What is the speaker\'s attitude towards online education?', o2: ['Skeptical', 'Enthusiastic', 'Indifferent'], c2: 'B' },
+        { id: 'placement-test-translation', title: 'Translation Level Placement Test', type: 'Essay', q1: 'Translate into English: "Je veux apprendre l\'anglais pour voyager."', o1: [], c1: 'A', q2: 'Translate into French: "Learning a new language opens many doors."', o2: [], c2: 'A' },
+        { id: 'placement-test-pronunciation', title: 'Pronunciation Level Placement Test', type: 'Oral Practice', q1: 'Read aloud: "The quick brown fox jumps over the lazy dog."', o1: [], c1: 'A', q2: 'Read aloud: "She sells seashells by the seashore."', o2: [], c2: 'A' }
+      ];
+
+      placementCategories.forEach(pt => {
+        if (!quizzes.some(q => q.id === pt.id)) {
+          const ptQuiz: Quiz = {
+            id: pt.id,
+            title: pt.title,
+            type: pt.type,
+            timeLimit: 'No limit',
+            status: 'published',
+            isPlacementTest: true,
+            questions: pt.o1.length > 0 ? [
+              { question: pt.q1, options: pt.o1, correctOption: pt.c1 },
+              { question: pt.q2, options: pt.o2, correctOption: pt.c2 }
+            ] : [
+              { question: pt.q1, options: [], correctOption: 'A' },
+              { question: pt.q2, options: [], correctOption: 'A' }
+            ]
+          };
+          quizzes.unshift(ptQuiz);
+          setDoc(doc(this.firestore, 'quizzes', pt.id), ptQuiz).catch(e => console.warn(e));
+        }
+      });
+
       const hasPlacement = quizzes.some(q => q.id === 'placement-test');
       if (!hasPlacement) {
         const ptQuiz: Quiz = {
           id: 'placement-test',
-          title: 'English Level Placement Test',
+          title: 'English Level Placement Test (General)',
           type: 'Multiple Choice',
           timeLimit: 'No limit',
           status: 'published',
+          isPlacementTest: true,
           questions: [
-            {
-              question: 'Choose the correct form: She ___ to school every day.',
-              options: ['go', 'goes', 'going'],
-              correctOption: 'B'
-            },
-            {
-              question: 'Identify the correct preposition: I am interested ___ learning English.',
-              options: ['in', 'at', 'on'],
-              correctOption: 'A'
-            },
-            {
-              question: 'Which sentence is grammatically correct?',
-              options: ['If it rains, we will stay home.', 'If it will rain, we stay home.', 'If it rains, we would stay home.'],
-              correctOption: 'A'
-            },
-            {
-              question: 'Complete the sentence: By the time the movie ended, we ___ all the popcorn.',
-              options: ['eat', 'have eaten', 'had eaten'],
-              correctOption: 'C'
-            },
-            {
-              question: 'What is the opposite of the word "generous"?',
-              options: ['stingy', 'kind', 'polite'],
-              correctOption: 'A'
-            }
+            { question: 'Choose the correct form: She ___ to school every day.', options: ['go', 'goes', 'going'], correctOption: 'B' },
+            { question: 'Identify the correct preposition: I am interested ___ learning English.', options: ['in', 'at', 'on'], correctOption: 'A' }
           ]
         };
         quizzes.unshift(ptQuiz);
-        // Write to Firestore in background
         setDoc(doc(this.firestore, 'quizzes', 'placement-test'), ptQuiz).catch(e => console.warn(e));
       }
       this.quizzes$.next(quizzes);
@@ -841,6 +926,20 @@ export class DatabaseService {
         this.voiceChatEnabled$.next(!!data['enabled']);
       }
     });
+
+    // 16. Subscribe to System Logs
+    onSnapshot(collection(this.firestore, 'system_logs'), (snap) => {
+      const list: SystemLog[] = [];
+      snap.forEach(doc => list.push(doc.data() as SystemLog));
+      this.systemLogs$.next(list.sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
+    });
+
+    // 17. Subscribe to Vocab Game Attempts
+    onSnapshot(collection(this.firestore, 'vocab_game_attempts'), (snap) => {
+      const list: VocabGameAttempt[] = [];
+      snap.forEach(doc => list.push(doc.data() as VocabGameAttempt));
+      this.vocabGameAttempts$.next(list.sort((a, b) => b.completedAt.localeCompare(a.completedAt)));
+    });
   }
 
   // --- LOCAL WRITE HELPERS ---
@@ -857,6 +956,7 @@ export class DatabaseService {
     if (user) {
       this.currentUser$.next(user);
       localStorage.setItem('speak_current_user_id', userId);
+      this.logAction('login', `Connexion à l'application`);
     }
   }
 
@@ -882,13 +982,18 @@ export class DatabaseService {
         xp: 0,
         streak: 0,
         lastActive: 'Today',
-        avatar
+        avatar,
+        status: 'pending'
       };
       
       const list = [...this.users$.value, newProfile];
       this.users$.next(list);
       this.saveLocal('speak_users', list);
       
+      if (desiredRole === 'student') {
+        await this.addStudentToDefaultChannels(uid);
+      }
+
       this.setCurrentUser(uid);
       
       return newProfile;
@@ -921,10 +1026,20 @@ export class DatabaseService {
         xp: 0,
         streak: 0,
         lastActive: 'Today',
-        avatar
+        avatar,
+        status: 'pending'
       };
       
+      const list = [...this.users$.value, newProfile];
+      this.users$.next(list);
+      this.saveLocal('speak_users', list);
+
       await setDoc(doc(this.firestore, 'users', id), newProfile);
+      
+      if (desiredRole === 'student') {
+        await this.addStudentToDefaultChannels(id);
+      }
+
       this.setCurrentUser(id);
       
       return newProfile;
@@ -1058,6 +1173,7 @@ export class DatabaseService {
       username,
       password,
       blocked: false,
+      status: 'approved',
       registeredAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     };
 
@@ -1099,7 +1215,8 @@ export class DatabaseService {
       registeredAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       username: generatedUsername,
       password: generatedPassword,
-      blocked: false
+      blocked: false,
+      status: 'approved'
     };
 
     // Add to users
@@ -1153,7 +1270,86 @@ export class DatabaseService {
         console.warn('Firebase add student failed, working in local mode.', e);
       }
     }
+
+    // Auto add to public channels
+    await this.addStudentToDefaultChannels(id);
+
     return newStudent;
+  }
+
+  async addStudentToDefaultChannels(studentId: string) {
+    const list = [...this.channels$.value];
+    let updated = false;
+    for (let i = 0; i < list.length; i++) {
+      const chan = list[i];
+      if (!chan.isPrivate) {
+        const members = chan.members || [];
+        if (!members.includes(studentId)) {
+          list[i] = { ...chan, members: [...members, studentId] };
+          updated = true;
+          if (this.useFirebase) {
+            try {
+              const { updateDoc, doc } = await import('firebase/firestore');
+              await updateDoc(doc(this.firestore, 'channels', chan.id), {
+                members: arrayUnion(studentId)
+              });
+            } catch(e) {}
+          }
+        }
+      }
+    }
+    if (updated) {
+      this.channels$.next(list);
+      this.saveLocal('speak_channels', list);
+    }
+  }
+
+  async registerUserProfile(name: string, username: string, password: string, level: string, country: string, role: 'student' | 'teacher') {
+    const id = name.toLowerCase().replace(/[^a-z0-9]/g, '') + '-' + Date.now().toString().slice(-4);
+    const avatar = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'US';
+    const generatedUsername = username.trim().toLowerCase();
+    
+    // Check username uniqueness
+    const exists = this.users$.value.find(u => u.username?.toLowerCase() === generatedUsername);
+    if (exists) {
+      throw new Error("Ce nom d'utilisateur est déjà pris.");
+    }
+
+    const newProfile: UserProfile = {
+      id,
+      name,
+      username: generatedUsername,
+      password: password.trim(),
+      level,
+      countryFlag: country,
+      role,
+      status: 'pending',
+      xp: 0,
+      streak: 0,
+      lastActive: 'Never',
+      avatar,
+      blocked: false
+    };
+
+    const users = [...this.users$.value, newProfile];
+    this.users$.next(users);
+    this.saveLocal('speak_users', users);
+
+    if (this.useFirebase) {
+      try {
+        const { setDoc, doc } = await import('firebase/firestore');
+        await setDoc(doc(this.firestore, 'users', id), newProfile);
+      } catch (e) {
+        console.warn('Firestore registerUserProfile failed:', e);
+      }
+    }
+
+    // Auto add to public channels if role is student
+    if (role === 'student') {
+      await this.addStudentToDefaultChannels(id);
+    }
+    
+    return newProfile;
   }
 
   async resetDatabase() {
@@ -1213,8 +1409,8 @@ export class DatabaseService {
 
     // Now re-initialize data with clean defaults
     const defaultUsers: UserProfile[] = [
-      { id: 'admin', name: 'AT - Admin', role: 'admin', level: 'C2', xp: 0, streak: 0, lastActive: 'Today', avatar: 'AD', username: 'admin', password: 'adminpassword' },
-      { id: 'teacher', name: 'AT - Teacher', role: 'teacher', level: 'C2', xp: 0, streak: 0, lastActive: 'Today', avatar: 'AT', username: 'teacher', password: 'admin123' }
+      { id: 'admin', name: 'AT - Admin', role: 'admin', level: 'C2', xp: 0, streak: 0, lastActive: 'Today', avatar: 'AD', username: 'admin', password: 'adminpassword', status: 'approved' },
+      { id: 'teacher', name: 'AT - Teacher', role: 'teacher', level: 'C2', xp: 0, streak: 0, lastActive: 'Today', avatar: 'AT', username: 'teacher', password: 'admin123', status: 'approved' }
     ];
     const defaultPayments: Payment[] = [];
 
@@ -1319,6 +1515,7 @@ export class DatabaseService {
         console.warn(e);
       }
     }
+    await this.logAction('create_lesson', `Cours créé : "${newLesson.title}"`);
   }
 
   async updateLesson(lessonId: string, updatedData: Partial<Lesson>) {
@@ -1340,10 +1537,14 @@ export class DatabaseService {
           console.warn(e);
         }
       }
+      await this.logAction('modify_lesson', `Cours modifié : "${updated.title}"`);
     }
   }
 
   async deleteLesson(lessonId: string) {
+    const deletedLesson = this.lessons$.value.find(l => l.id === lessonId);
+    const title = deletedLesson ? deletedLesson.title : lessonId;
+
     const list = this.lessons$.value.filter(l => l.id !== lessonId);
     this.lessons$.next(list);
     this.saveLocal('speak_lessons', list);
@@ -1355,6 +1556,7 @@ export class DatabaseService {
         console.warn(e);
       }
     }
+    await this.logAction('delete_lesson', `Cours supprimé : "${title}"`);
   }
 
   // --- QUIZ OPERATIONS ---
@@ -1377,6 +1579,7 @@ export class DatabaseService {
         console.warn(e);
       }
     }
+    await this.logAction('create_quiz', `Quiz créé : "${newQuiz.title}"`);
   }
 
   async updateQuiz(quizId: string, updatedData: Partial<Quiz>) {
@@ -1398,10 +1601,14 @@ export class DatabaseService {
           console.warn(e);
         }
       }
+      await this.logAction('modify_quiz', `Quiz modifié : "${updated.title}"`);
     }
   }
 
   async deleteQuiz(quizId: string) {
+    const deletedQuiz = this.quizzes$.value.find(q => q.id === quizId);
+    const title = deletedQuiz ? deletedQuiz.title : quizId;
+
     const list = this.quizzes$.value.filter(q => q.id !== quizId);
     this.quizzes$.next(list);
     this.saveLocal('speak_quizzes', list);
@@ -1413,6 +1620,7 @@ export class DatabaseService {
         console.warn(e);
       }
     }
+    await this.logAction('delete_quiz', `Quiz supprimé : "${title}"`);
   }
 
   // --- SUBMISSIONS OPERATIONS ---
@@ -1446,6 +1654,7 @@ export class DatabaseService {
         console.warn(e);
       }
     }
+    await this.logAction('exercise_completed', `Exercice soumis pour "${lessonTitle}" (Type: ${type})`);
   }
 
   async gradeSubmission(subId: string, score: string, feedback: string, xpReward: number) {
@@ -1474,6 +1683,7 @@ export class DatabaseService {
           console.warn(e);
         }
       }
+      await this.logAction('homework_graded', `Devoir corrigé pour ${sub.studentName} : Note ${score} (XP +${xpReward})`);
     }
   }
 
@@ -2013,9 +2223,13 @@ export class DatabaseService {
         console.warn(e);
       }
     }
+    await this.logAction('add_vocab', `Mot ajouté au dictionnaire : "${newWord.word}" (${newWord.translation})`);
   }
 
   async deleteWordFromDictionary(wordId: string) {
+    const wordObj = this.dictionary$.value.find(w => w.id === wordId);
+    const label = wordObj ? wordObj.word : wordId;
+
     const list = this.dictionary$.value.filter(w => w.id !== wordId);
     this.dictionary$.next(list);
     this.saveLocal('speak_dictionary', list);
@@ -2027,6 +2241,7 @@ export class DatabaseService {
         console.warn(e);
       }
     }
+    await this.logAction('add_vocab', `Mot supprimé du dictionnaire : "${label}"`);
   }
 
   // --- EBOOKS OPERATIONS ---
@@ -2124,6 +2339,17 @@ export class DatabaseService {
 
   // --- REAL-TIME CHAT OPERATIONS ---
   observeChatMessages(channelId: string): Observable<ChatMessage[]> {
+    const user = this.currentUser$.value;
+    if (user && user.role !== 'admin' && user.role !== 'teacher') {
+      const channel = this.channels$.value.find(c => c.id === channelId);
+      if (channel) {
+        const members = channel.members || [];
+        if (!members.includes(user.id)) {
+          return new BehaviorSubject<ChatMessage[]>([]).asObservable();
+        }
+      }
+    }
+
     const chatSubject = new BehaviorSubject<ChatMessage[]>([]);
     
     // Default chat fallback messages (starts empty)
@@ -2184,6 +2410,16 @@ export class DatabaseService {
     const active = this.currentUser$.value;
     if (!active) return;
 
+    if (active.role !== 'admin' && active.role !== 'teacher') {
+      const channel = this.channels$.value.find(c => c.id === channelId);
+      if (channel) {
+        const members = channel.members || [];
+        if (!members.includes(active.id)) {
+          throw new Error("Vous n'êtes pas membre de ce groupe.");
+        }
+      }
+    }
+
     const newMessage: ChatMessage = {
       id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9),
       senderId: active.id,
@@ -2201,6 +2437,7 @@ export class DatabaseService {
       try {
         const messagesCol = collection(this.firestore, 'chat', channelId, 'messages');
         await addDoc(messagesCol, newMessage);
+        await this.logAction('message_sent', `Message envoyé dans #${channelId} (${type === 'audio' ? 'Vocal' : 'Texte'})`, channelId);
         return;
       } catch (e) {
         console.warn('Firestore send message failed. Falling back to local.', e);
@@ -2214,6 +2451,7 @@ export class DatabaseService {
     messages.push(newMessage);
     localStorage.setItem(key, JSON.stringify(messages));
     window.dispatchEvent(new CustomEvent('local-chat-update', { detail: { channelId } }));
+    await this.logAction('message_sent', `Message envoyé dans #${channelId} (${type === 'audio' ? 'Vocal' : 'Texte'})`, channelId);
   }
 
   async deleteChatMessage(channelId: string, messageId: string) {
@@ -2295,9 +2533,60 @@ export class DatabaseService {
         console.warn('Firestore add channel failed.', e);
       }
     }
+    await this.logAction('create_group', `Groupe créé : "#${cleanName}" (${isPrivate ? 'Privé' : 'Public'})`, id);
+  }
+
+  async addMemberToChannel(channelId: string, memberId: string) {
+    const list = [...this.channels$.value];
+    const idx = list.findIndex(c => c.id === channelId);
+    if (idx !== -1) {
+      const channel = { ...list[idx] };
+      if (!channel.members) channel.members = [];
+      if (!channel.members.includes(memberId)) {
+        channel.members.push(memberId);
+      }
+      list[idx] = channel;
+      this.channels$.next(list);
+      this.saveLocal('speak_channels', list);
+
+      if (this.useFirebase) {
+        try {
+          await setDoc(doc(this.firestore, 'channels', channelId), channel);
+        } catch (e) {
+          console.warn('Firestore update channel members failed.', e);
+        }
+      }
+      await this.logAction('create_group', `Membre ajouté au groupe #${channel.name}`, channelId);
+    }
+  }
+
+  async removeMemberFromChannel(channelId: string, memberId: string) {
+    const list = [...this.channels$.value];
+    const idx = list.findIndex(c => c.id === channelId);
+    if (idx !== -1) {
+      const channel = { ...list[idx] };
+      if (channel.members) {
+        channel.members = channel.members.filter(m => m !== memberId);
+      }
+      list[idx] = channel;
+      this.channels$.next(list);
+      this.saveLocal('speak_channels', list);
+
+      if (this.useFirebase) {
+        try {
+          await setDoc(doc(this.firestore, 'channels', channelId), channel);
+        } catch (e) {
+          console.warn('Firestore update channel members failed.', e);
+        }
+      }
+      await this.logAction('create_group', `Membre retiré du groupe #${channel.name}`, channelId);
+    }
   }
 
   async deleteChannel(id: string) {
+    const chan = this.channels$.value.find(c => c.id === id);
+    const name = chan ? chan.name : id;
+
     const list = this.channels$.value.filter(c => c.id !== id);
     this.channels$.next(list);
     this.saveLocal('speak_channels', list);
@@ -2309,6 +2598,7 @@ export class DatabaseService {
         console.warn('Firestore delete channel failed.', e);
       }
     }
+    await this.logAction('create_group', `Groupe supprimé : "#${name}"`, id);
   }
 
   countryCodeToEmoji(code: string): string {
@@ -2543,6 +2833,38 @@ export class DatabaseService {
     return this.activityLogs$.value.filter(l => l.studentId === studentId);
   }
 
+  // --- SYSTEM LOGS OPERATIONS ---
+  observeSystemLogs(): Observable<SystemLog[]> { return this.systemLogs$.asObservable(); }
+
+  async logAction(action: string, details: string, groupId?: string) {
+    const user = this.currentUser$.value;
+    if (!user) return;
+
+    const newLog: SystemLog = {
+      id: 'log-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+      userId: user.id,
+      userName: user.name,
+      userRole: user.role,
+      action,
+      details,
+      groupId,
+      createdAt: new Date().toISOString()
+    };
+
+    const list = [newLog, ...this.systemLogs$.value];
+    this.systemLogs$.next(list);
+    this.saveLocal('speak_system_logs', list);
+
+    if (this.useFirebase) {
+      try {
+        const { setDoc, doc } = await import('firebase/firestore');
+        await setDoc(doc(this.firestore, 'system_logs', newLog.id), newLog);
+      } catch (e) {
+        console.warn('Firestore logAction failed:', e);
+      }
+    }
+  }
+
   // --- NOTIFICATION OPERATIONS ---
   observeNotifications(): Observable<AppNotification[]> { return this.notifications$.asObservable(); }
 
@@ -2600,16 +2922,21 @@ export class DatabaseService {
     if (this.useFirebase) {
       try { await setDoc(doc(this.firestore, 'vocab_games', newGame.id), newGame); } catch(e) { console.warn(e); }
     }
+    await this.logAction('add_vocab', `Jeu de vocabulaire créé : "${newGame.title}"`);
     return newGame;
   }
 
   async deleteVocabGame(id: string) {
+    const game = this.vocabGames$.value.find(g => g.id === id);
+    const title = game ? game.title : id;
+
     const list = this.vocabGames$.value.filter(g => g.id !== id);
     this.vocabGames$.next(list);
     this.saveLocal('speak_vocab_games', list);
     if (this.useFirebase) {
       try { await deleteDoc(doc(this.firestore, 'vocab_games', id)); } catch(e) { console.warn(e); }
     }
+    await this.logAction('add_vocab', `Jeu de vocabulaire supprimé : "${title}"`);
   }
 
   async updateVocabGame(gameId: string, updatedData: Partial<VocabGame>) {
@@ -2628,6 +2955,7 @@ export class DatabaseService {
           console.warn(e);
         }
       }
+      await this.logAction('add_vocab', `Jeu de vocabulaire mis à jour : "${updated.title}"`);
     }
   }
 
@@ -2646,11 +2974,37 @@ export class DatabaseService {
     if (this.useFirebase) {
       try { await setDoc(doc(this.firestore, 'exam_attempts', newAttempt.id), newAttempt); } catch(e) { console.warn(e); }
     }
+    await this.logAction('quiz_completed', `Quiz terminé : "${newAttempt.quizTitle}" (Score: ${newAttempt.score}/${newAttempt.answers.length}, ${newAttempt.percentage}%)`);
     return newAttempt;
   }
 
   getStudentExamAttempts(studentId: string): ExamAttempt[] {
     return this.examAttempts$.value.filter(a => a.studentId === studentId);
+  }
+
+  // --- VOCAB GAME ATTEMPT OPERATIONS ---
+  observeVocabGameAttempts(): Observable<VocabGameAttempt[]> { return this.vocabGameAttempts$.asObservable(); }
+
+  async submitVocabGameAttempt(attempt: Omit<VocabGameAttempt, 'id'>): Promise<VocabGameAttempt> {
+    const newAttempt: VocabGameAttempt = { ...attempt, id: 'vga-' + Date.now() };
+    const list = [newAttempt, ...this.vocabGameAttempts$.value];
+    this.vocabGameAttempts$.next(list);
+    this.saveLocal('speak_vocab_game_attempts', list);
+
+    if (this.useFirebase) {
+      try {
+        const { setDoc, doc } = await import('firebase/firestore');
+        await setDoc(doc(this.firestore, 'vocab_game_attempts', newAttempt.id), newAttempt);
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+    await this.logAction('vocab_game_played', `Partie Vocabulaire terminée sur "${newAttempt.gameTitle}" (Score: ${newAttempt.score}/${newAttempt.totalWords}, ${Math.round((newAttempt.score / newAttempt.totalWords) * 100)}%)`);
+    return newAttempt;
+  }
+
+  getStudentVocabAttempts(studentId: string): VocabGameAttempt[] {
+    return this.vocabGameAttempts$.value.filter(a => a.studentId === studentId);
   }
 
   formatLastActive(lastActive: string): string {

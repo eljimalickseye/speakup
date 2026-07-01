@@ -313,6 +313,13 @@ interface ChatMember {
         <!-- Right Side Pane: Room Active Members list -->
         <div class="chat-members-pane">
           <div class="pane-title">MEMBERS ONLINE ({{ getActiveOnlineCount() }})</div>
+          
+          @if (isChannelPrivateAndManageable()) {
+            <button class="btn-p" (click)="showAddMemberModal.set(true)" style="font-size:11px; padding:6px 12px; margin:8px 12px; width:calc(100% - 24px); font-weight:700; background:#7C3AED; border-color:#7C3AED">
+              ➕ Ajouter un membre
+            </button>
+          }
+          
           <div class="members-list-wrapper">
             
             <!-- Always show current user first -->
@@ -344,10 +351,15 @@ interface ChatMember {
                   }
                 </div>
                 <div style="flex:1; min-width:0">
-                  <div class="member-name" style="display:flex; align-items:center; gap:4px" [style.color]="m.online ? 'var(--text-primary)' : 'var(--text-muted)'">
-                    <span>{{ m.name }}</span>
-                    @if (getFlagUrl(m.countryFlag)) {
-                      <img [src]="getFlagUrl(m.countryFlag)" style="width: 14px; height: 10px; object-fit: contain; border-radius: 1px" alt="flag">
+                  <div class="member-name" style="display:flex; align-items:center; justify-content:space-between; gap:4px" [style.color]="m.online ? 'var(--text-primary)' : 'var(--text-muted)'">
+                    <div style="display:flex; align-items:center; gap:4px">
+                      <span>{{ m.name }}</span>
+                      @if (getFlagUrl(m.countryFlag)) {
+                        <img [src]="getFlagUrl(m.countryFlag)" style="width: 14px; height: 10px; object-fit: contain; border-radius: 1px" alt="flag">
+                      }
+                    </div>
+                    @if (isChannelPrivateAndManageable()) {
+                      <button (click)="removeMember(m.id)" style="background:none; border:none; color:#EF4444; font-size:10px; cursor:pointer; padding:0 4px" title="Retirer du groupe">❌</button>
                     }
                   </div>
                   <div class="member-subtext">
@@ -437,6 +449,44 @@ interface ChatMember {
                   </div>
                 </div>
               }
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Add Member Modal Dialog -->
+      @if (showAddMemberModal()) {
+        <div style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.65); display:flex; justify-content:center; align-items:center; z-index:99999; padding:16px">
+          <div class="card" style="width:100%; max-width:380px; background:#FFF; border-radius:12px; padding:20px; box-shadow:0 10px 25px rgba(0,0,0,0.25); margin:0">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px">
+              <h3 style="font-size:14px; font-weight:800; color:var(--text-primary); margin:0">Ajouter au groupe</h3>
+              <button (click)="showAddMemberModal.set(false)" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:18px; font-weight:700; line-height:1; padding:4px">
+                ×
+              </button>
+            </div>
+            
+            <div style="max-height:240px; overflow-y:auto; display:flex; flex-direction:column; gap:8px">
+              @for (u of getNonChannelUsers(); track u.id) {
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:var(--surface-2); border-radius:8px; border:1px solid var(--border-weak)">
+                  <div style="display:flex; align-items:center; gap:8px">
+                    <span style="font-size:14px">{{ u.avatar || '👤' }}</span>
+                    <div>
+                      <div style="font-size:12.5px; font-weight:700; color:var(--text-primary)">{{ u.name }}</div>
+                      <div style="font-size:10px; color:var(--text-muted)">{{ u.role | titlecase }} · {{ u.level }}</div>
+                    </div>
+                  </div>
+                  
+                  <button class="btn-p" (click)="addMember(u.id)" style="font-size:10.5px; padding:4px 10px; font-weight:700; background:#7C3AED; border-color:#7C3AED">
+                    Ajouter
+                  </button>
+                </div>
+              } @empty {
+                <div style="text-align:center; font-size:12px; color:var(--text-muted); padding:16px">Aucun utilisateur disponible.</div>
+              }
+            </div>
+            
+            <div style="display:flex; justify-content:flex-end; margin-top:16px; border-top:1px solid var(--border-weak); padding-top:12px">
+              <button class="btn-s" (click)="showAddMemberModal.set(false)" style="font-size:11px; padding:6px 12px">Fermer</button>
             </div>
           </div>
         </div>
@@ -1097,6 +1147,7 @@ export class StudentChatComponent implements OnDestroy {
   newChanIsPrivate = false;
   newChanSelectedStudents = signal<string[]>([]);
   showMembersMobile = signal<boolean>(false);
+  showAddMemberModal = signal<boolean>(false);
   
   // Safety & abuse reporting signals
   showSecurityPolicy = signal<boolean>(false);
@@ -1112,11 +1163,11 @@ export class StudentChatComponent implements OnDestroy {
   visibleChannels = computed(() => {
     const list = this.channels();
     const isTeacher = this.isTeacher();
+    const isAdmin = this.currentUser?.role === 'admin';
     const uid = this.currentUserId();
     
     return list.filter(c => {
-      if (isTeacher) return true;
-      if (!c.isPrivate) return true;
+      if (isTeacher || isAdmin) return true;
       return c.members?.includes(uid);
     });
   });
@@ -1190,8 +1241,7 @@ export class StudentChatComponent implements OnDestroy {
   }
 
   isVoiceChatAllowed(): boolean {
-    if (this.isTeacher()) return true;
-    return !!this.currentUser?.voiceChatAllowed;
+    return true;
   }
 
   currentUserId() {
@@ -1292,9 +1342,66 @@ export class StudentChatComponent implements OnDestroy {
     this.dialogService.alert('XP Awarded', `Awarded +10 XP to ${studentName} for great English communication!`, 'success');
   }
 
+  isChannelPrivateAndManageable(): boolean {
+    const channelId = this.activeChannel();
+    const chan = this.channels().find(c => c.id === channelId);
+    if (!chan) return false;
+    
+    const user = this.currentUser;
+    const isTeacherOrAdmin = user?.role === 'teacher' || user?.role === 'admin';
+    const isCreator = chan.createdById === this.currentUserId();
+    
+    return !!(chan.isPrivate && (isTeacherOrAdmin || isCreator));
+  }
+
+  getNonChannelUsers(): UserProfile[] {
+    const channelId = this.activeChannel();
+    const chan = this.channels().find(c => c.id === channelId);
+    if (!chan) return [];
+    
+    return this.dbUsers().filter(u => {
+      if (u.id === this.currentUserId()) return false;
+      if (chan.members && chan.members.includes(u.id)) return false;
+      return true;
+    });
+  }
+
+  addMember(memberId: string) {
+    const channelId = this.activeChannel();
+    this.db.addMemberToChannel(channelId, memberId).then(() => {
+      this.dialogService.alert('Succès', 'Le membre a été ajouté au groupe avec succès.', 'success');
+      this.showAddMemberModal.set(false);
+    });
+  }
+
+  removeMember(memberId: string) {
+    const channelId = this.activeChannel();
+    this.dialogService.show({
+      title: "Retirer du groupe",
+      message: "Voulez-vous vraiment retirer ce membre du groupe ?",
+      type: 'confirm',
+      confirmText: 'Retirer',
+      cancelText: 'Annuler',
+      onConfirm: () => {
+        this.db.removeMemberFromChannel(channelId, memberId).then(() => {
+          this.dialogService.alert('Retiré', 'Le membre a été retiré du groupe.', 'success');
+        });
+      }
+    });
+  }
+
   getChannelMembers(): ChatMember[] {
+    const channelId = this.activeChannel();
+    const chan = this.channels().find(c => c.id === channelId);
+
     return this.dbUsers()
       .filter(u => u.id !== this.currentUserId())
+      .filter(u => {
+        if (chan && chan.isPrivate) {
+          return chan.members?.includes(u.id);
+        }
+        return true;
+      })
       .map(u => ({
         id: u.id,
         name: u.name,
@@ -1362,6 +1469,15 @@ export class StudentChatComponent implements OnDestroy {
   }
 
   subscribeToChat() {
+    const active = this.activeChannel();
+    const visible = this.visibleChannels();
+    const isTeacher = this.isTeacher();
+    const isAdmin = this.currentUser?.role === 'admin';
+    if (!isTeacher && !isAdmin && !visible.some(c => c.id === active)) {
+      const firstVal = visible.length > 0 ? visible[0].id : 'general';
+      this.activeChannel.set(firstVal);
+    }
+
     if (this.chatSub) {
       this.chatSub.unsubscribe();
     }

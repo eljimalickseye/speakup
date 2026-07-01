@@ -1,7 +1,7 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { DatabaseService, UserProfile, RegistrationRequest } from '../../services/database.service';
+import { DatabaseService, UserProfile } from '../../services/database.service';
 import { DialogService } from '../../services/dialog.service';
 
 @Component({
@@ -11,59 +11,67 @@ import { DialogService } from '../../services/dialog.service';
   template: `
     <div class="page" style="animation: fadeIn 0.25s">
       <!-- Top header stats dashboard -->
-      <div class="grid4" style="margin-bottom: 20px">
+      <div class="grid5" style="margin-bottom: 20px">
         <div class="mcard" style="background:#EEF2FF; border:1px solid #C7D2FE; cursor:pointer" [class.active-tab]="activePanel() === 'requests'" (click)="activePanel.set('requests')">
-          <div class="mlabel" style="color:#4338CA">Demandes d'inscription</div>
+          <div class="mlabel" style="color:#4338CA">Demandes en attente</div>
           <div class="mval" style="color:#4F46E5">
             {{ pendingRequests().length }}
             @if (pendingRequests().length > 0) {
               <span class="pulse-badge">!</span>
             }
           </div>
-          <div class="msub" style="color:#4338CA">Élèves & Professeurs en attente</div>
+          <div class="msub" style="color:#4338CA">En attente de validation</div>
         </div>
         <div class="mcard" style="background:#FAF5FF; border:1px solid #E9D5FF; cursor:pointer" [class.active-tab]="activePanel() === 'teachers'" (click)="activePanel.set('teachers')">
-          <div class="mlabel" style="color:#7C3AED">Corps Enseignant</div>
+          <div class="mlabel" style="color:#7C3AED">Professeurs</div>
           <div class="mval" style="color:#9333EA">{{ teachers().length }}</div>
-          <div class="msub" style="color:#7C3AED">Gérer les professeurs</div>
+          <div class="msub" style="color:#7C3AED">Corps enseignant actif</div>
         </div>
-        <div class="mcard" style="background:#ECFDF5; border:1px solid #A7F3D0; cursor:pointer" [class.active-tab]="activePanel() === 'guests'" (click)="activePanel.set('guests')">
-          <div class="mlabel" style="color:#047857">Invités (Guests)</div>
-          <div class="mval" style="color:#10B981">{{ guests().length }}</div>
-          <div class="msub" style="color:#047857">Gérer les comptes temporaires</div>
+        <div class="mcard" style="background:#ECFDF5; border:1px solid #A7F3D0; cursor:pointer" [class.active-tab]="activePanel() === 'students'" (click)="activePanel.set('students')">
+          <div class="mlabel" style="color:#047857">Élèves (Students)</div>
+          <div class="mval" style="color:#10B981">{{ students().length }}</div>
+          <div class="msub" style="color:#047857">Gérer les comptes élèves</div>
+        </div>
+        <div class="mcard" style="background:#FEF3C7; border:1px solid #FDE68A; cursor:pointer" [class.active-tab]="activePanel() === 'guests'" (click)="activePanel.set('guests')">
+          <div class="mlabel" style="color:#B45309">Invités (Guests)</div>
+          <div class="mval" style="color:#D97706">{{ guests().length }}</div>
+          <div class="msub" style="color:#B45309">Comptes temporaires</div>
         </div>
         <div class="mcard" style="background:#FFF1F2; border:1px solid #FECDD3; cursor:pointer" [class.active-tab]="activePanel() === 'admins'" (click)="activePanel.set('admins')">
           <div class="mlabel" style="color:#E11D48">Administrateurs</div>
           <div class="mval" style="color:#BE123C">{{ admins().length }}</div>
-          <div class="msub" style="color:#E11D48">Gérer la sécurité système</div>
+          <div class="msub" style="color:#E11D48">Sécurité & Système</div>
         </div>
       </div>
 
       <!-- Tab selection sub-header -->
-      <div style="display:flex; gap:8px; border-bottom:1px solid var(--border-weak); padding-bottom:10px; margin-bottom: 20px">
+      <div style="display:flex; gap:8px; border-bottom:1px solid var(--border-weak); padding-bottom:10px; margin-bottom: 20px; flex-wrap:wrap">
         <button class="btn-s" [class.active]="activePanel() === 'requests'" (click)="activePanel.set('requests')" style="font-weight:700; font-size:12px; padding:6px 14px">
-          📝 Demandes en attente
+          ⏳ Demandes en attente
           @if (pendingRequests().length > 0) {
             <span style="background:#EF4444; color:white; font-size:9px; font-weight:700; padding:1px 6px; border-radius:10px; margin-left:4px">{{ pendingRequests().length }}</span>
           }
         </button>
         <button class="btn-s" [class.active]="activePanel() === 'teachers'" (click)="activePanel.set('teachers')" style="font-weight:700; font-size:12px; padding:6px 14px">
-          🎓 Gérer les Professeurs
+          🎓 Professeurs
+        </button>
+        <button class="btn-s" [class.active]="activePanel() === 'students'" (click)="activePanel.set('students')" style="font-weight:700; font-size:12px; padding:6px 14px">
+          📖 Élèves
         </button>
         <button class="btn-s" [class.active]="activePanel() === 'guests'" (click)="activePanel.set('guests')" style="font-weight:700; font-size:12px; padding:6px 14px">
-          🔑 Gérer les Invités
+          🔑 Invités
         </button>
         <button class="btn-s" [class.active]="activePanel() === 'admins'" (click)="activePanel.set('admins')" style="font-weight:700; font-size:12px; padding:6px 14px">
-          🛡️ Gérer les Admins
+          🛡️ Admins
         </button>
       </div>
 
       <!-- PANEL 1: PENDING REGISTRATION REQUESTS -->
       @if (activePanel() === 'requests') {
         <div class="card" style="animation: fadeIn 0.2s">
-          <h3 class="st" style="font-size:15px; margin-bottom:12px; color:#4F46E5">Demandes d'inscription reçues</h3>
+          <h3 class="st" style="font-size:15px; margin-bottom:12px; color:#4F46E5">Demandes d'inscription en attente</h3>
           <p style="font-size:12px; color:var(--text-secondary); margin-bottom:16px">
-            Validez ou rejetez les demandes de création de compte pour les étudiants et professeurs. Les comptes approuvés obtiendront automatiquement leurs identifiants de connexion.
+            Approuvez ou rejetez les demandes de création de compte. Les comptes approuvés obtiendront un accès complet immédiat à la plateforme.
           </p>
 
           @if (pendingRequests().length === 0) {
@@ -77,16 +85,14 @@ import { DialogService } from '../../services/dialog.service';
                   <div>
                     <div style="font-size:14px; font-weight:800; color:var(--text-primary); display:flex; align-items:center; gap:6px">
                       {{ req.name }}
-                      @if (req.level === 'Teacher') {
+                      @if (req.role === 'teacher') {
                         <span style="font-size:9px; background:#F3E8FF; color:#7C3AED; padding:2px 6px; border-radius:4px; font-weight:700">PROFESSEUR</span>
-                      } @else if (req.level === 'Guest') {
-                        <span style="font-size:9px; background:#FEF3C7; color:#D97706; padding:2px 6px; border-radius:4px; font-weight:700">INVITÉ</span>
                       } @else {
                         <span style="font-size:9px; background:#E0E7FF; color:#4F46E5; padding:2px 6px; border-radius:4px; font-weight:700">ÉLÈVE ({{ req.level }})</span>
                       }
                     </div>
-                    <div style="font-size:11px; color:var(--text-muted); margin-top:2px">
-                      Demandé le {{ req.requestedAt }} · Pays: {{ req.countryFlag }}
+                    <div style="font-size:11px; color:var(--text-muted); margin-top:4px">
+                      Username: <strong>{{ req.username }}</strong> · Code PIN: <strong>{{ req.password }}</strong> · Pays: {{ req.countryFlag || 'N/A' }}
                     </div>
                   </div>
 
@@ -94,7 +100,7 @@ import { DialogService } from '../../services/dialog.service';
                     <button class="btn-p" (click)="approveRequest(req)" style="font-size:11px; padding:6px 14px; background:#10B981; border-color:#10B981; font-weight:700">
                       Approuver ✅
                     </button>
-                    <button class="btn-s" (click)="rejectRequest(req.id)" style="font-size:11px; padding:6px 14px; background:#FEE2E2; border-color:#EF4444; color:#DC2626; font-weight:700">
+                    <button class="btn-s" (click)="rejectRequest(req)" style="font-size:11px; padding:6px 14px; background:#FEE2E2; border-color:#EF4444; color:#DC2626; font-weight:700">
                       Rejeter ❌
                     </button>
                   </div>
@@ -138,16 +144,16 @@ import { DialogService } from '../../services/dialog.service';
 
           <div style="display:flex; flex-direction:column; gap:8px">
             @for (user of teachers(); track user.id) {
-              <div style="display:flex; align-items:center; gap:12px; padding:12px; background:var(--surface-2); border:1px solid var(--border-weak); border-radius:8px; flex-wrap:wrap; justify-content:space-between">
-                <div style="display:flex; align-items:center; gap:12px">
+              <div class="user-card">
+                <div style="display:flex; align-items:center; gap:12px; flex:1">
                   <div class="avatar" style="width:40px; height:40px; font-size:14px; background:#F3E8FF; color:#7C3AED">
                     {{ user.avatar }}
                   </div>
                   <div>
                     <div style="font-size:14px; font-weight:800; color:var(--text-primary); display:flex; align-items:center; gap:6px">
                       {{ user.name }}
-                      @if (user.blocked) {
-                        <span style="font-size:9px; background:#FEE2E2; color:#EF4444; padding:2px 6px; border-radius:4px; font-weight:700">BLOQUÉ</span>
+                      @if (user.blocked || user.status === 'suspended') {
+                        <span style="font-size:9px; background:#FEE2E2; color:#EF4444; padding:2px 6px; border-radius:4px; font-weight:700">BLOQUÉ / SUSPENDU</span>
                       }
                     </div>
                     @if (user.username && user.password) {
@@ -160,22 +166,21 @@ import { DialogService } from '../../services/dialog.service';
                   </div>
                 </div>
 
-                <div style="display:flex; gap:6px">
-                  @if (user.blocked) {
-                    <button class="btn-s" (click)="toggleBlock(user)" style="font-size:11px; padding:6px 12px; background:#D1FAE5; border-color:#10B981; color:#065F46; font-weight:700">
-                      Débloquer
-                    </button>
-                  } @else {
-                    <button class="btn-s" (click)="toggleBlock(user)" style="font-size:11px; padding:6px 12px; background:#FEE2E2; border-color:#EF4444; color:#DC2626; font-weight:700">
-                      Bloquer
-                    </button>
-                  }
-                  <button class="btn-s" (click)="resetPassword(user)" style="font-size:11px; padding:6px 12px">
-                    Nouveau Code
-                  </button>
-                  <button class="btn-s" (click)="deleteUser(user)" style="font-size:11px; padding:6px 12px; background:#FEE2E2; border-color:#EF4444; color:#DC2626; font-weight:700">
-                    Supprimer
-                  </button>
+                <!-- Status selector & actions -->
+                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap">
+                  <div>
+                    <select [value]="user.status || 'approved'" (change)="updateUserStatus(user, $event)" style="font-size:11px; padding:4px 8px; border-radius:6px; border:1px solid var(--border); background:#FFF">
+                      <option value="pending">⏳ En attente</option>
+                      <option value="approved">✅ Validé</option>
+                      <option value="rejected">❌ Refusé</option>
+                      <option value="suspended">🚫 Suspendu</option>
+                    </select>
+                  </div>
+                  
+                  <div style="display:flex; gap:4px">
+                    <button class="btn-s" (click)="resetPassword(user)" style="font-size:11px; padding:6px 10px">🔑 PIN</button>
+                    <button class="btn-s" (click)="deleteUser(user)" style="font-size:11px; padding:6px 10px; background:#FEE2E2; border-color:#EF4444; color:#DC2626">Supprimer</button>
+                  </div>
                 </div>
               </div>
             }
@@ -183,7 +188,59 @@ import { DialogService } from '../../services/dialog.service';
         </div>
       }
 
-      <!-- PANEL 3: GUESTS MANAGEMENT -->
+      <!-- PANEL 3: STUDENTS MANAGEMENT -->
+      @if (activePanel() === 'students') {
+        <div class="card" style="animation: fadeIn 0.2s">
+          <h3 class="st" style="font-size:15px; margin-bottom:16px; color:#10B981">Élèves (Students)</h3>
+          
+          <div style="display:flex; flex-direction:column; gap:8px">
+            @for (user of students(); track user.id) {
+              <div class="user-card">
+                <div style="display:flex; align-items:center; gap:12px; flex:1">
+                  <div class="avatar" style="width:40px; height:40px; font-size:14px; background:#E0F2FE; color:#0284C7">
+                    {{ user.avatar }}
+                  </div>
+                  <div>
+                    <div style="font-size:14px; font-weight:800; color:var(--text-primary); display:flex; align-items:center; gap:6px">
+                      {{ user.name }} ({{ user.level }})
+                      @if (user.blocked || user.status === 'suspended') {
+                        <span style="font-size:9px; background:#FEE2E2; color:#EF4444; padding:2px 6px; border-radius:4px; font-weight:700">BLOQUÉ / SUSPENDU</span>
+                      }
+                    </div>
+                    @if (user.username && user.password) {
+                      <div style="font-size:10px; color:var(--text-secondary); margin-top:4px; background:var(--surface-1); padding:4px 8px; border-radius:4px; display:inline-flex; align-items:center; gap:8px">
+                        <span>Identifiant: <strong>{{ user.username }}</strong></span>
+                        <span>Code: <strong>{{ user.password }}</strong></span>
+                        <button (click)="copyCredentials(user)" style="background:none; border:none; cursor:pointer; font-size:11px; color:#4F46E5; padding:0" title="Copier les identifiants">📋</button>
+                        <button (click)="copyLoginLink(user)" style="background:none; border:none; cursor:pointer; font-size:11px; color:#4F46E5; padding:0" title="Copier le lien direct">🔗</button>
+                      </div>
+                    }
+                  </div>
+                </div>
+
+                <!-- Status selector & actions -->
+                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap">
+                  <div>
+                    <select [value]="user.status || 'approved'" (change)="updateUserStatus(user, $event)" style="font-size:11px; padding:4px 8px; border-radius:6px; border:1px solid var(--border); background:#FFF">
+                      <option value="pending">⏳ En attente</option>
+                      <option value="approved">✅ Validé</option>
+                      <option value="rejected">❌ Refusé</option>
+                      <option value="suspended">🚫 Suspendu</option>
+                    </select>
+                  </div>
+                  
+                  <div style="display:flex; gap:4px">
+                    <button class="btn-s" (click)="resetPassword(user)" style="font-size:11px; padding:6px 10px">🔑 PIN</button>
+                    <button class="btn-s" (click)="deleteUser(user)" style="font-size:11px; padding:6px 10px; background:#FEE2E2; border-color:#EF4444; color:#DC2626">Supprimer</button>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- PANEL 4: GUESTS MANAGEMENT -->
       @if (activePanel() === 'guests') {
         <div class="card" style="animation: fadeIn 0.2s">
           <div style="display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:16px; flex-wrap:wrap">
@@ -198,60 +255,36 @@ import { DialogService } from '../../services/dialog.service';
             <div style="background:var(--surface-2); padding:16px; border-radius:10px; border:1px solid var(--border-weak); margin-bottom:20px; display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end">
               <div class="input-row" style="flex:2; min-width:180px; margin-bottom:0">
                 <label style="font-size:11px; font-weight:700; color:var(--text-secondary); margin-bottom:4px; display:block">Nom de l'invité</label>
-                <input [(ngModel)]="newGuestName" placeholder="Ex: Paul Sarr" class="form-input" style="height:38px; font-size:13px; background:#FFF" />
-              </div>
-              <div class="input-row" style="flex:1; min-width:140px; margin-bottom:0">
-                <label style="font-size:11px; font-weight:700; color:var(--text-secondary); margin-bottom:4px; display:block">Niveau estimé</label>
-                <select [(ngModel)]="newGuestLevel" class="form-select" style="height:38px; font-size:13px; background:#FFF">
-                  <option value="Beginner">Débutant (Beginner)</option>
-                  <option value="Intermediate">Intermédiaire (Intermediate)</option>
-                  <option value="Advanced">Avancé (Advanced)</option>
-                </select>
+                <input [(ngModel)]="newGuestName" placeholder="Ex: Guest Alpha" class="form-input" style="height:38px; font-size:13px; background:#FFF" />
               </div>
               <button class="btn-p" [disabled]="!newGuestName" (click)="createGuest()" style="height:38px; padding:0 20px; font-weight:700; background:#10B981; border-color:#10B981">
-                Générer
+                Générer l'accès
               </button>
             </div>
           }
 
           <div style="display:flex; flex-direction:column; gap:8px">
             @for (user of guests(); track user.id) {
-              <div style="display:flex; align-items:center; gap:12px; padding:12px; background:var(--surface-2); border:1px solid var(--border-weak); border-radius:8px; flex-wrap:wrap; justify-content:space-between">
-                <div style="display:flex; align-items:center; gap:12px">
+              <div class="user-card">
+                <div style="display:flex; align-items:center; gap:12px; flex:1">
                   <div class="avatar" style="width:40px; height:40px; font-size:14px; background:#E6F4EA; color:#137333">
                     {{ user.avatar }}
                   </div>
                   <div>
-                    <div style="font-size:14px; font-weight:800; color:var(--text-primary); display:flex; align-items:center; gap:6px">
+                    <div style="font-size:14px; font-weight:800; color:var(--text-primary)">
                       {{ user.name }}
-                      @if (user.blocked) {
-                        <span style="font-size:9px; background:#FEE2E2; color:#EF4444; padding:2px 6px; border-radius:4px; font-weight:700">BLOQUÉ</span>
-                      }
                     </div>
                     @if (user.username && user.password) {
                       <div style="font-size:10px; color:var(--text-secondary); margin-top:4px; background:var(--surface-1); padding:4px 8px; border-radius:4px; display:inline-flex; align-items:center; gap:8px">
                         <span>Identifiant: <strong>{{ user.username }}</strong></span>
                         <span>Code: <strong>{{ user.password }}</strong></span>
                         <button (click)="copyCredentials(user)" style="background:none; border:none; cursor:pointer; font-size:11px; color:#4F46E5; padding:0" title="Copier les identifiants">📋</button>
-                        <button (click)="copyLoginLink(user)" style="background:none; border:none; cursor:pointer; font-size:11px; color:#4F46E5; padding:0" title="Copier le lien d'accès direct">🔗</button>
                       </div>
                     }
                   </div>
                 </div>
 
                 <div style="display:flex; gap:6px">
-                  @if (user.blocked) {
-                    <button class="btn-s" (click)="toggleBlock(user)" style="font-size:11px; padding:6px 12px; background:#D1FAE5; border-color:#10B981; color:#065F46; font-weight:700">
-                      Débloquer
-                    </button>
-                  } @else {
-                    <button class="btn-s" (click)="toggleBlock(user)" style="font-size:11px; padding:6px 12px; background:#FEE2E2; border-color:#EF4444; color:#DC2626; font-weight:700">
-                      Bloquer
-                    </button>
-                  }
-                  <button class="btn-s" (click)="resetPassword(user)" style="font-size:11px; padding:6px 12px">
-                    Nouveau Code
-                  </button>
                   <button class="btn-s" (click)="deleteUser(user)" style="font-size:11px; padding:6px 12px; background:#FEE2E2; border-color:#EF4444; color:#DC2626; font-weight:700">
                     Supprimer
                   </button>
@@ -262,7 +295,7 @@ import { DialogService } from '../../services/dialog.service';
         </div>
       }
 
-      <!-- PANEL 4: ADMINS MANAGEMENT -->
+      <!-- PANEL 5: ADMINS MANAGEMENT -->
       @if (activePanel() === 'admins') {
         <div class="card" style="animation: fadeIn 0.2s">
           <div style="display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:16px; flex-wrap:wrap">
@@ -295,17 +328,14 @@ import { DialogService } from '../../services/dialog.service';
 
           <div style="display:flex; flex-direction:column; gap:8px">
             @for (user of admins(); track user.id) {
-              <div style="display:flex; align-items:center; gap:12px; padding:12px; background:var(--surface-2); border:1px solid var(--border-weak); border-radius:8px; flex-wrap:wrap; justify-content:space-between">
-                <div style="display:flex; align-items:center; gap:12px">
+              <div class="user-card">
+                <div style="display:flex; align-items:center; gap:12px; flex:1">
                   <div class="avatar" style="width:40px; height:40px; font-size:14px; background:#FFF1F2; color:#E11D48">
                     {{ user.avatar }}
                   </div>
                   <div>
-                    <div style="font-size:14px; font-weight:800; color:var(--text-primary); display:flex; align-items:center; gap:6px">
+                    <div style="font-size:14px; font-weight:800; color:var(--text-primary)">
                       {{ user.name }}
-                      @if (user.blocked) {
-                        <span style="font-size:9px; background:#FEE2E2; color:#EF4444; padding:2px 6px; border-radius:4px; font-weight:700">BLOQUÉ</span>
-                      }
                     </div>
                     @if (user.username && user.password) {
                       <div style="font-size:10px; color:var(--text-secondary); margin-top:4px; background:var(--surface-1); padding:4px 8px; border-radius:4px; display:inline-flex; align-items:center; gap:8px">
@@ -319,18 +349,6 @@ import { DialogService } from '../../services/dialog.service';
 
                 <div style="display:flex; gap:6px">
                   @if (user.id !== 'admin') {
-                    @if (user.blocked) {
-                      <button class="btn-s" (click)="toggleBlock(user)" style="font-size:11px; padding:6px 12px; background:#D1FAE5; border-color:#10B981; color:#065F46; font-weight:700">
-                        Débloquer
-                      </button>
-                    } @else {
-                      <button class="btn-s" (click)="toggleBlock(user)" style="font-size:11px; padding:6px 12px; background:#FEE2E2; border-color:#EF4444; color:#DC2626; font-weight:700">
-                        Bloquer
-                      </button>
-                    }
-                    <button class="btn-s" (click)="resetPassword(user)" style="font-size:11px; padding:6px 12px">
-                      Nouveau Code
-                    </button>
                     <button class="btn-s" (click)="deleteUser(user)" style="font-size:11px; padding:6px 12px; background:#FEE2E2; border-color:#EF4444; color:#DC2626; font-weight:700">
                       Supprimer
                     </button>
@@ -346,15 +364,32 @@ import { DialogService } from '../../services/dialog.service';
     </div>
   `,
   styles: [`
-    .grid4 {
+    .grid5 {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 12px;
+    }
+    .mcard {
+      padding: 16px;
+      border-radius: 12px;
+      transition: all 0.2s ease-in-out;
+    }
+    .mcard:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
     }
     .mcard.active-tab {
       border-color: #4F46E5 !important;
       box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);
       transform: translateY(-2px);
+    }
+    .mlabel { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+    .mval { font-size: 28px; font-weight: 800; margin: 6px 0; display: flex; align-items: center; }
+    .msub { font-size: 11px; font-weight: 500; }
+    .user-card {
+      display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+      background: var(--surface-1); border: 1px solid var(--border-weak); border-radius: 8px;
+      flex-wrap: wrap; justify-content: space-between;
     }
     .pulse-badge {
       display: inline-block;
@@ -382,10 +417,9 @@ export class AdminManagementComponent {
   private db = inject(DatabaseService);
   private dialogService = inject(DialogService);
 
-  activePanel = signal<'requests' | 'teachers' | 'guests' | 'admins'>('requests');
+  activePanel = signal<'requests' | 'teachers' | 'students' | 'guests' | 'admins'>('requests');
 
   allUsers = signal<UserProfile[]>([]);
-  registrationRequests = signal<RegistrationRequest[]>([]);
 
   // Show Forms triggers
   showAddTeacherForm = signal<boolean>(false);
@@ -398,7 +432,6 @@ export class AdminManagementComponent {
   newTeacherPassword = '';
 
   newGuestName = '';
-  newGuestLevel = 'Beginner';
 
   newAdminName = '';
   newAdminUsername = '';
@@ -406,32 +439,58 @@ export class AdminManagementComponent {
 
   constructor() {
     this.db.observeUsers().subscribe(users => this.allUsers.set(users));
-    this.db.observeRegistrationRequests().subscribe(reqs => this.registrationRequests.set(reqs));
   }
 
   admins = computed(() => this.allUsers().filter(u => u.role === 'admin'));
-  teachers = computed(() => this.allUsers().filter(u => u.role === 'teacher'));
+  teachers = computed(() => this.allUsers().filter(u => u.role === 'teacher' && u.status !== 'pending'));
+  students = computed(() => this.allUsers().filter(u => u.role === 'student' && u.status !== 'pending'));
   guests = computed(() => this.allUsers().filter(u => u.role === 'guest'));
 
   pendingRequests = computed(() => {
-    return this.registrationRequests().filter(r => r.status === 'pending');
+    return this.allUsers().filter(u => u.status === 'pending');
   });
 
-  approveRequest(req: RegistrationRequest) {
-    this.db.approveRegistrationRequest(req.id).then((newUser) => {
-      if (newUser) {
-        this.dialogService.alert(
-          'Inscription Approuvée 🎉',
-          `Le compte pour ${newUser.name} a été créé.\nIdentifiant: ${newUser.username}\nCode d'accès (PIN): ${newUser.password}`,
-          'success'
-        );
+  approveRequest(user: UserProfile) {
+    this.db.updateUserProfile(user.id, { status: 'approved' }).then(() => {
+      this.db.sendNotification({
+        recipientId: user.id,
+        title: "Compte Validé 🎉",
+        message: "Votre compte a été approuvé par l'administrateur ! Vous avez maintenant un accès complet aux groupes.",
+        type: 'reminder'
+      });
+      this.dialogService.alert(
+        'Inscription Approuvée 🎉',
+        `Le compte de ${user.name} a été approuvé avec succès.`,
+        'success'
+      );
+    });
+  }
+
+  rejectRequest(user: UserProfile) {
+    this.dialogService.show({
+      title: "Rejeter l'inscription",
+      message: `Voulez-vous rejeter l'inscription de ${user.name} ? Son compte sera marqué comme refusé.`,
+      type: 'confirm',
+      confirmText: 'Rejeter',
+      cancelText: 'Annuler',
+      onConfirm: () => {
+        this.db.updateUserProfile(user.id, { status: 'rejected' }).then(() => {
+          this.dialogService.alert('Rejeté', 'La demande d\'inscription a été rejetée.', 'info');
+        });
       }
     });
   }
 
-  rejectRequest(requestId: string) {
-    this.db.rejectRegistrationRequest(requestId).then(() => {
-      this.dialogService.alert('Rejeté', 'La demande d\'inscription a été rejetée.', 'info');
+  updateUserStatus(user: UserProfile, event: any) {
+    const status = event.target.value;
+    this.db.updateUserProfile(user.id, { status }).then(() => {
+      this.dialogService.alert('Statut mis à jour', `Le statut de ${user.name} a été changé en : ${status}`, 'success');
+      this.db.sendNotification({
+        recipientId: user.id,
+        title: "Mise à jour du compte",
+        message: `Le statut de votre compte a été changé en : ${status}.`,
+        type: 'reminder'
+      });
     });
   }
 
@@ -466,7 +525,6 @@ export class AdminManagementComponent {
           'success'
         );
         this.newGuestName = '';
-        this.newGuestLevel = 'Beginner';
         this.showAddGuestForm.set(false);
       }
     });
@@ -503,22 +561,6 @@ export class AdminManagementComponent {
     const link = `${window.location.origin}/#/guest-login?u=${encodeURIComponent(user.username || '')}&p=${encodeURIComponent(user.password || '')}`;
     navigator.clipboard.writeText(link).then(() => {
       this.dialogService.alert('Lien Copié !', 'Le lien d\'accès direct a été copié.', 'success');
-    });
-  }
-
-  toggleBlock(user: UserProfile) {
-    const newBlockedState = !user.blocked;
-    this.dialogService.show({
-      title: newBlockedState ? 'Bloquer l\'accès' : 'Débloquer l\'accès',
-      message: `Voulez-vous vraiment ${newBlockedState ? 'bloquer' : 'débloquer'} l'accès de ${user.name} ?`,
-      type: 'confirm',
-      confirmText: newBlockedState ? 'Bloquer' : 'Débloquer',
-      cancelText: 'Annuler',
-      onConfirm: () => {
-        this.db.updateUserProfile(user.id, { blocked: newBlockedState }).then(() => {
-          this.dialogService.alert('Succès', `${user.name} a été ${newBlockedState ? 'bloqué' : 'débloqué'}.`, 'success');
-        });
-      }
     });
   }
 

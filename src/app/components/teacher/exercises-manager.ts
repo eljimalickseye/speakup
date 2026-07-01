@@ -1,0 +1,709 @@
+import { Component, inject, signal, computed } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { DatabaseService, Exercise, ExerciseType, UserProfile } from '../../services/database.service';
+import { DialogService } from '../../services/dialog.service';
+
+@Component({
+  selector: 'app-teacher-exercises-manager',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  template: `
+    <div class="page" style="padding: 20px; max-width: 1200px; margin: 0 auto;">
+      <!-- Tab Selector -->
+      <div class="tab-row" style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--border-weak); padding-bottom: 10px;">
+        <button class="tab" [class.active]="activeTab() === 'list'" (click)="setTab('list')"
+                style="padding: 10px 16px; border: none; background: none; cursor: pointer; font-weight: 600; color: var(--text-muted); border-bottom: 2px solid transparent; transition: all 0.2s;"
+                [style.color]="activeTab() === 'list' ? 'var(--text-primary)' : 'var(--text-muted)'"
+                [style.border-bottom-color]="activeTab() === 'list' ? '#059669' : 'transparent'">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 6px;"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          Liste des Exercices ({{ filteredExercises().length }})
+        </button>
+        <button class="tab" [class.active]="activeTab() === 'create'" (click)="setTab('create')"
+                style="padding: 10px 16px; border: none; background: none; cursor: pointer; font-weight: 600; color: var(--text-muted); border-bottom: 2px solid transparent; transition: all 0.2s;"
+                [style.color]="activeTab() === 'create' ? 'var(--text-primary)' : 'var(--text-muted)'"
+                [style.border-bottom-color]="activeTab() === 'create' ? '#059669' : 'transparent'">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 6px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          {{ selectedExerciseId() ? "Modifier l'Exercice" : "Créer un Exercice" }}
+        </button>
+      </div>
+
+      <!-- LIST TAB -->
+      @if (activeTab() === 'list') {
+        <div>
+          <!-- Filters & Header -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+            <div>
+              <h3 style="font-size: 18px; font-weight: 700; margin: 0 0 4px 0; color: var(--text-primary);">Exercices d'Entraînement Autonomes</h3>
+              <p style="font-size: 12px; color: var(--text-muted); margin: 0;">Créez et publiez des activités d'entraînement indépendantes pour vos élèves.</p>
+            </div>
+            <button (click)="startNew()" style="background: #059669; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Nouvel Exercice
+            </button>
+          </div>
+
+          <!-- Type filter chips -->
+          <div style="display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px;">
+            <button (click)="filterType.set('all')" 
+                    style="padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); transition: all 0.2s;"
+                    [style.background]="filterType() === 'all' ? '#059669' : 'var(--surface-2)'"
+                    [style.color]="filterType() === 'all' ? '#fff' : 'var(--text-secondary)'">
+              Tous les types
+            </button>
+            @for (t of typesList; track t.value) {
+              <button (click)="filterType.set(t.value)"
+                      style="padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); display: flex; align-items: center; gap: 4px; transition: all 0.2s;"
+                      [style.background]="filterType() === t.value ? t.color : 'var(--surface-2)'"
+                      [style.color]="filterType() === t.value ? '#fff' : 'var(--text-secondary)'">
+                <span>{{ t.emoji }}</span>
+                <span>{{ t.label }}</span>
+              </button>
+            }
+          </div>
+
+          <!-- Exercises Grid -->
+          @if (filteredExercises().length > 0) {
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px;">
+              @for (ex of filteredExercises(); track ex.id) {
+                <div class="card" style="border: 1px solid var(--border); border-radius: 12px; padding: 16px; background: var(--surface-1); display: flex; flex-direction: column; justify-content: space-between; position: relative; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                  <div>
+                    <!-- Badge Header -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                      <span [style.background]="getTypeColor(ex.type) + '15'" [style.color]="getTypeColor(ex.type)"
+                            style="padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; display: flex; align-items: center; gap: 4px;">
+                        <span>{{ getTypeEmoji(ex.type) }}</span>
+                        <span style="text-transform: capitalize;">{{ ex.type }}</span>
+                      </span>
+                      <span style="font-size: 11px; padding: 2px 8px; border-radius: 12px; font-weight: 600;"
+                            [style.background]="ex.status === 'published' ? '#D1FAE5' : '#F3F4F6'"
+                            [style.color]="ex.status === 'published' ? '#065F46' : '#374151'">
+                        {{ ex.status === 'published' ? 'Publié' : 'Brouillon' }}
+                      </span>
+                    </div>
+
+                    <!-- Title -->
+                    <h4 style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin: 0 0 8px 0;">{{ ex.title }}</h4>
+                    
+                    <!-- Metadata info -->
+                    <div style="font-size: 12px; color: var(--text-muted); display: flex; flex-direction: column; gap: 4px; margin-bottom: 16px;">
+                      <div style="display: flex; align-items: center; gap: 4px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34"/><path d="M12 2a5 5 0 0 0-5 5v3.42c0 .35.1.69.28 1l1.44 2.48a1 1 0 0 0 .86.48h8.84a1 1 0 0 0 .86-.48l1.44-2.48c.18-.31.28-.65.28-1V7a5 5 0 0 0-5-5z"/></svg>
+                        Niveau: <span style="font-weight: 600; color: var(--text-secondary);">{{ ex.level }}</span>
+                      </div>
+                      <div style="display: flex; align-items: center; gap: 4px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/></svg>
+                        XP : <span style="font-weight: 600; color: var(--text-secondary);">{{ ex.points }} XP</span>
+                      </div>
+                      @if (ex.groupId) {
+                        <div style="display: flex; align-items: center; gap: 4px;">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                          Groupe : <span style="font-weight: 600; color: var(--text-secondary);">{{ getGroupName(ex.groupId) }}</span>
+                        </div>
+                      }
+                    </div>
+                  </div>
+
+                  <!-- Actions -->
+                  <div style="display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--border-weak); padding-top: 12px; margin-top: 8px;">
+                    @if (ex.status === 'draft') {
+                      <button (click)="publishExercise(ex)" style="background: none; border: 1px solid #10B981; color: #10B981; border-radius: 4px; padding: 4px 8px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                        Publier
+                      </button>
+                    }
+                    <button (click)="editExercise(ex)" style="background: none; border: 1px solid #3B82F6; color: #3B82F6; border-radius: 4px; padding: 4px 8px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                      Modifier
+                    </button>
+                    <button (click)="deleteExercise(ex)" style="background: none; border: 1px solid #EF4444; color: #EF4444; border-radius: 4px; padding: 4px 8px; font-size: 11px; font-weight: 600; cursor: pointer;">
+                      Supprimer
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <div style="text-align: center; padding: 60px 20px; border: 2px dashed var(--border); border-radius: 12px; background: var(--surface-1);">
+              <span style="font-size: 36px; display: block; margin-bottom: 12px;">🎯</span>
+              <p style="font-size: 14px; font-weight: 600; color: var(--text-primary); margin: 0 0 4px 0;">Aucun exercice trouvé</p>
+              <p style="font-size: 12px; color: var(--text-muted); margin: 0 0 16px 0;">Commencez par créer votre premier exercice d'entraînement.</p>
+              <button (click)="setTab('create')" style="background: #059669; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer;">
+                Créer un exercice
+              </button>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- CREATE / EDIT TAB -->
+      @if (activeTab() === 'create') {
+        <div class="card" style="border: 1px solid var(--border); border-radius: 12px; padding: 24px; background: var(--surface-1); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+          
+          <h3 style="font-size: 16px; font-weight: 700; margin: 0 0 20px 0; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            {{ selectedExerciseId() ? "Modifier l'Exercice" : "Créer un Nouvel Exercice d'Entraînement" }}
+          </h3>
+
+          <!-- STEP 1: CHOOSE TYPE (Only if creating new) -->
+          @if (!selectedExerciseId() && currentStep() === 1) {
+            <div>
+              <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 12px;">Étape 1 : Sélectionnez le type d'exercice</label>
+              
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px;">
+                @for (t of typesList; track t.value) {
+                  <div (click)="selectType(t.value)"
+                       style="border: 2px solid var(--border); border-radius: 12px; padding: 16px; cursor: pointer; transition: all 0.2s; position: relative;"
+                       [style.border-color]="selectedType() === t.value ? t.color : 'var(--border)'"
+                       [style.background]="selectedType() === t.value ? t.color + '0a' : 'var(--surface-2)'">
+                    <div style="font-size: 28px; margin-bottom: 10px;">{{ t.emoji }}</div>
+                    <h4 style="font-size: 14px; font-weight: 700; color: var(--text-primary); margin: 0 0 4px 0;">{{ t.label }}</h4>
+                    <p style="font-size: 11px; color: var(--text-muted); margin: 0; line-height: 1.4;">{{ t.desc }}</p>
+                    
+                    @if (selectedType() === t.value) {
+                      <div style="position: absolute; top: 12px; right: 12px; width: 18px; height: 18px; border-radius: 50%; background: #059669; display: flex; align-items: center; justify-content: center; color: white;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+
+              <div style="display: flex; justify-content: flex-end;">
+                <button [disabled]="!selectedType()" (click)="currentStep.set(2)"
+                        style="background: #059669; color: white; border: none; padding: 10px 24px; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;"
+                        [style.opacity]="selectedType() ? 1 : 0.5"
+                        [style.cursor]="selectedType() ? 'pointer' : 'not-allowed'">
+                  Continuer
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </button>
+              </div>
+            </div>
+          }
+
+          <!-- STEP 2: FORM BASED ON TYPE -->
+          @if (selectedExerciseId() || currentStep() === 2) {
+            <div style="display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; justify-content: space-between;">
+              
+              <!-- Left Column: Form Inputs (width: 55% min-width: 320px) -->
+              <div style="flex: 1.2; min-width: 320px; display: flex; flex-direction: column; gap: 16px;">
+                <!-- Type Display & Back Button -->
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+                  @if (!selectedExerciseId()) {
+                    <button (click)="currentStep.set(1)" style="background: none; border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 4px; color: var(--text-secondary);">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                      Retour à l'étape 1
+                    </button>
+                  }
+                  <div style="font-size: 13px; font-weight: 700; color: var(--text-secondary); display: flex; align-items: center; gap: 6px;">
+                    Type Sélectionné : 
+                    <span [style.color]="getTypeColor(selectedType())" style="text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;">
+                      {{ getTypeEmoji(selectedType()) }} {{ selectedType() }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Title -->
+                <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
+                  <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">Titre de l'exercice</label>
+                  <input type="text" [(ngModel)]="formTitle" placeholder="ex. Description de vacances de rêve ou Pratique orale du Past Simple"
+                         style="width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 13px; background: var(--surface-1); color: var(--text-primary);" />
+                </div>
+
+                <!-- Level & XP & Class Group -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+                  <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
+                    <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">Niveau Cible</label>
+                    <select [(ngModel)]="formLevel" style="width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 13px; background: var(--surface-1); color: var(--text-primary);">
+                      <option value="A1">A1 — Débutant</option>
+                      <option value="A2">A2 — Élémentaire</option>
+                      <option value="B1">B1 — Intermédiaire</option>
+                      <option value="B2">B2 — Intermédiaire Supérieur</option>
+                      <option value="C1">C1 — Avancé</option>
+                    </select>
+                  </div>
+                  <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
+                    <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">XP à remporter</label>
+                    <input type="number" [(ngModel)]="formPoints" style="width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 13px; background: var(--surface-1); color: var(--text-primary);" />
+                  </div>
+                  <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
+                    <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">Assigner au Groupe</label>
+                    <select [(ngModel)]="formGroupId" style="width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 13px; background: var(--surface-1); color: var(--text-primary);">
+                      <option value="">Aucun groupe spécifique</option>
+                      @for (g of groups(); track g.id) {
+                        <option [value]="g.id">{{ g.name }}</option>
+                      }
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Status Selection -->
+                <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
+                  <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">Statut</label>
+                  <select [(ngModel)]="formStatus" style="width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 13px; background: var(--surface-1); color: var(--text-primary);">
+                    <option value="published">Publié (Visible immédiatement par la classe)</option>
+                    <option value="draft">Brouillon (Sauvegardé sans publier)</option>
+                  </select>
+                </div>
+
+                <!-- WRITING SPECIFIC FIELD -->
+                @if (selectedType() === 'writing') {
+                  <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
+                    <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">Sujet de rédaction / Consigne</label>
+                    <textarea [(ngModel)]="formSubject" rows="4" placeholder="Décrivez le sujet, les consignes et le nombre de mots minimum. ex. Décrivez vos vacances de rêve en 150 mots minimum..."
+                              style="width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 13px; background: var(--surface-1); color: var(--text-primary); resize: vertical;"></textarea>
+                  </div>
+                }
+
+                <!-- SPEAKING SPECIFIC FIELD -->
+                @if (selectedType() === 'speaking') {
+                  <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
+                    <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">Consigne / Instructions d'expression orale</label>
+                    <textarea [(ngModel)]="formSpeakingPrompt" rows="4" placeholder="ex. Présentez-vous en anglais. Parlez pendant au moins 45 secondes de votre nom, âge, passions et profession."
+                              style="width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 13px; background: var(--surface-1); color: var(--text-primary); resize: vertical;"></textarea>
+                  </div>
+                }
+
+                <!-- LISTENING SPECIFIC FIELDS -->
+                @if (selectedType() === 'listening') {
+                  <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
+                      <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">Lien Vidéo YouTube</label>
+                      <input type="text" [(ngModel)]="formYoutubeUrl" placeholder="https://www.youtube.com/watch?v=..."
+                             style="width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 13px; background: var(--surface-1); color: var(--text-primary);" />
+                    </div>
+                    <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
+                      <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">Consignes d'écoute / Questions</label>
+                      <textarea [(ngModel)]="formListeningInstruction" rows="4" placeholder="Instructions : Écoutez la vidéo deux fois et résumez les arguments principaux, ou répondez aux questions suivantes..."
+                                style="width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 13px; background: var(--surface-1); color: var(--text-primary); resize: vertical;"></textarea>
+                    </div>
+                  </div>
+                }
+
+                <!-- TRANSLATION SPECIFIC FIELDS -->
+                @if (selectedType() === 'translation') {
+                  <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
+                      <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">Direction de la traduction</label>
+                      <select [(ngModel)]="formTranslationDirection" style="width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 13px; background: var(--surface-1); color: var(--text-primary);">
+                        <option value="fr-en">Français vers Anglais (FR ➔ EN)</option>
+                        <option value="en-fr">Anglais vers Français (EN ➔ FR)</option>
+                      </select>
+                    </div>
+                    <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
+                      <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">Texte à traduire</label>
+                      <textarea [(ngModel)]="formTextToTranslate" rows="4" placeholder="Bonjour, je m'appelle David. J'adore voyager dans des pays chauds..."
+                                style="width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 13px; background: var(--surface-1); color: var(--text-primary); resize: vertical;"></textarea>
+                    </div>
+                  </div>
+                }
+
+                <!-- PRONUNCIATION SPECIFIC FIELD -->
+                @if (selectedType() === 'pronunciation') {
+                  <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
+                    <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">Phrase / Paragraphe à prononcer</label>
+                    <textarea [(ngModel)]="formTextToPronounce" rows="3" placeholder="ex. The quick brown fox jumps over the lazy dog."
+                              style="width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 13px; background: var(--surface-1); color: var(--text-primary); resize: vertical;"></textarea>
+                  </div>
+                }
+
+                <!-- VOCABULARY SPECIFIC FIELDS -->
+                @if (selectedType() === 'vocabulary') {
+                  <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
+                      <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">Nom du Thème / Catégorie</label>
+                      <input type="text" [(ngModel)]="formTheme" placeholder="ex. Voyage, Affaires, Nourriture, Cuisine"
+                             style="width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 13px; background: var(--surface-1); color: var(--text-primary);" />
+                    </div>
+                    <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
+                      <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">Liste de mots (un mot/expression par ligne)</label>
+                      <textarea [(ngModel)]="formWordListRaw" rows="6" placeholder="Airport&#10;Passport&#10;Flight&#10;Boarding Pass"
+                                style="width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 13px; background: var(--surface-1); color: var(--text-primary); resize: vertical; font-family: monospace;"></textarea>
+                    </div>
+                  </div>
+                }
+
+                <!-- Action buttons -->
+                <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; border-top: 1px solid var(--border-weak); padding-top: 16px;">
+                  <button (click)="setTab('list')" style="background: none; border: 1px solid var(--border); padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; color: var(--text-secondary);">
+                    Annuler
+                  </button>
+                  <button (click)="saveExercise()" style="background: #059669; color: white; border: none; padding: 8px 24px; border-radius: 6px; font-weight: 600; cursor: pointer;">
+                    {{ selectedExerciseId() ? 'Mettre à jour' : 'Enregistrer' }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- Right Column: Live Student Preview (width: 40% min-width: 320px) -->
+              <div style="flex: 0.8; min-width: 320px; background: #F9FAFB; border: 1.5px dashed #CBD5E1; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); position: sticky; top: 20px;">
+                <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 16px; border-bottom: 1.5px solid #E5E7EB; padding-bottom: 8px;">
+                  <span style="font-size: 16px;">👁️</span>
+                  <span style="font-size: 13px; font-weight: 700; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.5px;">Aperçu Élève (Student Preview)</span>
+                </div>
+
+                <div style="background: white; border: 1px solid var(--border-weak); border-radius: 12px; padding: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.03);">
+                  <h4 style="font-size: 14px; font-weight: 700; color: var(--text-primary); margin: 0 0 10px 0;">
+                    {{ formTitle || 'Titre de l\'exercice' }}
+                  </h4>
+                  <div style="font-size: 11px; color: var(--text-muted); margin-bottom: 16px; display: flex; align-items: center; gap: 6px">
+                    <span style="background: var(--surface-2); border-radius: 12px; padding: 2px 10px; font-weight: 600;">Level {{ formLevel }}</span>
+                    <span style="background: var(--surface-2); border-radius: 12px; padding: 2px 10px; font-weight: 600;">{{ formPoints }} XP</span>
+                  </div>
+
+                  <!-- Writing Preview -->
+                  @if (selectedType() === 'writing') {
+                    <div style="background: #F5F3FF; border: 1px solid #DDD6FE; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
+                      <div style="font-size: 12.5px; font-weight: 700; color: #6D28D9; margin-bottom: 6px;">✍️ Subject</div>
+                      <p style="font-size: 12px; color: var(--text-primary); line-height: 1.6; margin: 0; white-space: pre-line;">{{ formSubject || 'Saisissez le sujet à gauche...' }}</p>
+                    </div>
+                    <textarea disabled rows="3" placeholder="L'élève saisira sa réponse ici..."
+                              style="width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 10px; font-size: 12.5px; resize: none; background: #F9FAFB; cursor: not-allowed;"></textarea>
+                    <button disabled style="margin-top: 12px; background: #7C3AED; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 700; cursor: not-allowed; width: 100%; opacity: 0.8">Submit</button>
+                  }
+
+                  <!-- Speaking Preview -->
+                  @else if (selectedType() === 'speaking') {
+                    <div style="background: #F0FDF4; border: 1px solid #A7F3D0; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
+                      <div style="font-size: 12.5px; font-weight: 700; color: #065F46; margin-bottom: 6px;">🎙️ Speaking Prompt</div>
+                      <p style="font-size: 12px; color: var(--text-primary); line-height: 1.6; margin: 0; white-space: pre-line;">{{ formSpeakingPrompt || 'Saisissez la consigne orale à gauche...' }}</p>
+                    </div>
+                    
+                    <!-- Recorder Component -->
+                    <div style="background:#F0FDFA; border:1px dashed #0D9488; border-radius:10px; padding:16px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; margin-bottom:16px">
+                      <button disabled style="width:44px; height:44px; border-radius:50%; background:#0D9488; color:white; border:none; display:flex; align-items:center; justify-content:center; cursor:not-allowed; opacity: 0.8">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" x2="12" y1="19" y2="22" />
+                        </svg>
+                      </button>
+                      <div style="font-size:11.5px; font-weight:700; color:#0F766E">Start Oral Recording</div>
+                      <div style="font-size:10px; color:var(--text-muted)">Click to speak and record response</div>
+                    </div>
+
+                    <button disabled style="background: #059669; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 700; cursor: not-allowed; width: 100%; opacity: 0.5">Submit Response</button>
+                  }
+
+                  <!-- Listening Preview -->
+                  @else if (selectedType() === 'listening') {
+                    @if (formYoutubeUrl) {
+                      <div style="border-radius: 8px; overflow: hidden; margin-bottom: 12px; background: #000; display: flex; align-items: center; justify-content: center; padding: 12px;">
+                        <span style="color: white; display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 12px;">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#FF0000"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                          Watch on YouTube
+                        </span>
+                      </div>
+                    }
+                    <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
+                      <div style="font-size: 12.5px; font-weight: 700; color: #1E40AF; margin-bottom: 6px;">👂 Instructions</div>
+                      <p style="font-size: 12px; color: var(--text-primary); line-height: 1.6; margin: 0; white-space: pre-line;">{{ formListeningInstruction || 'Saisissez les instructions d\'écoute à gauche...' }}</p>
+                    </div>
+                    <textarea disabled rows="3" placeholder="L'élève saisira sa réponse ici..."
+                              style="width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 10px; font-size: 12.5px; resize: none; background: #F9FAFB; cursor: not-allowed;"></textarea>
+                    <button disabled style="margin-top: 12px; background: #0284C7; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 700; cursor: not-allowed; width: 100%; opacity: 0.8">Submit</button>
+                  }
+
+                  <!-- Translation Preview -->
+                  @else if (selectedType() === 'translation') {
+                    <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
+                      <div style="font-size: 12.5px; font-weight: 700; color: #92400E; margin-bottom: 6px;">🌍 Text to translate ({{ formTranslationDirection === 'fr-en' ? 'FR → EN' : 'EN → FR' }})</div>
+                      <p style="font-size: 13px; color: var(--text-primary); line-height: 1.7; margin: 0; font-style: italic;">{{ formTextToTranslate || 'Saisissez le texte à traduire à gauche...' }}</p>
+                    </div>
+                    <textarea disabled rows="3" placeholder="L'élève saisira sa traduction ici..."
+                              style="width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 10px; font-size: 12.5px; resize: none; background: #F9FAFB; cursor: not-allowed;"></textarea>
+                    <button disabled style="margin-top: 12px; background: #D97706; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 700; cursor: not-allowed; width: 100%; opacity: 0.8">Submit Translation</button>
+                  }
+
+                  <!-- Pronunciation Preview -->
+                  @else if (selectedType() === 'pronunciation') {
+                    <div style="text-align: center; padding: 20px; background: #FFF1F2; border: 1px solid #FECDD3; border-radius: 12px; margin-bottom: 16px;">
+                      <div style="font-size: 12.5px; font-weight: 700; color: #9F1239; margin-bottom: 8px;">🔊 Read this aloud:</div>
+                      <p style="font-size: 15px; font-weight: 700; color: var(--text-primary); line-height: 1.6; margin: 0;">{{ formTextToPronounce || 'Saisissez la phrase à prononcer à gauche...' }}</p>
+                    </div>
+
+                    <!-- Recorder Component -->
+                    <div style="background:#FFF1F2; border:1px dashed #E11D48; border-radius:10px; padding:16px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; margin-bottom:16px">
+                      <button disabled style="width:44px; height:44px; border-radius:50%; background:#E11D48; color:white; border:none; display:flex; align-items:center; justify-content:center; cursor:not-allowed; opacity: 0.8">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" x2="12" y1="19" y2="22" />
+                        </svg>
+                      </button>
+                      <div style="font-size:11.5px; font-weight:700; color:#9F1239">Start Oral Recording</div>
+                      <div style="font-size:10px; color:var(--text-muted)">Record pronunciation of the text</div>
+                    </div>
+
+                    <button disabled style="background: #DC2626; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 700; cursor: not-allowed; width: 100%; opacity: 0.5">Submit Response</button>
+                  }
+
+                  <!-- Vocabulary Preview -->
+                  @else if (selectedType() === 'vocabulary') {
+                    <div style="background: #EEF2FF; border: 1px solid #C7D2FE; border-radius: 12px; padding: 16px; margin-bottom: 16px; text-align: center;">
+                      <div style="font-size: 10px; font-weight: 700; color: #4F46E5; text-transform: uppercase; margin-bottom: 10px;">📚 Review Mode (Flashcard)</div>
+                      
+                      @let words = getPreviewWordList();
+                      @if (words.length > 0) {
+                        <div style="background: white; border: 1.5px solid #C7D2FE; border-radius: 8px; padding: 18px; min-height: 80px; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.02)">
+                          <div style="font-size: 18px; font-weight: 800; color: #1E1B4B; display: flex; align-items: center; gap: 6px;">
+                            <span>{{ words[0] }}</span>
+                            <span style="font-size: 14px;">🔊</span>
+                          </div>
+                          <span style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Exemple de mot configuré</span>
+                        </div>
+                      } @else {
+                        <div style="background: white; border: 1.5px dashed #C7D2FE; border-radius: 8px; padding: 18px; min-height: 80px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px;">
+                          <span style="font-size: 12px; color: var(--text-muted); font-style: italic;">Saisissez les mots dans la liste à gauche...</span>
+                        </div>
+                      }
+
+                      <div style="display: flex; justify-content: space-between; align-items: center; gap: 6px; width: 100%;">
+                        <button disabled class="btn-s" style="flex: 1; padding: 6px; font-size: 11px; cursor: not-allowed;">Précédent</button>
+                        <span style="font-size: 11px; color: var(--text-muted);">1 / {{ words.length || 1 }}</span>
+                        <button disabled class="btn-p" style="flex: 1; background: #4F46E5; border-color: #4F46E5; padding: 6px; font-size: 11px; cursor: not-allowed; color: white;">Suivant</button>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+
+            </div>
+          }
+
+        </div>
+      }
+    </div>
+  `
+})
+export class TeacherExercisesManagerComponent {
+  private db = inject(DatabaseService);
+  private dialogService = inject(DialogService);
+
+  activeTab = signal<'list' | 'create'>('list');
+  currentStep = signal<1 | 2>(1);
+
+  // Data signals
+  exercises = signal<Exercise[]>([]);
+  groups = signal<any[]>([]);
+  currentUser = signal<UserProfile | null>(null);
+
+  // Filter signals
+  filterType = signal<string>('all');
+
+  // Form signals/state
+  selectedExerciseId = signal<string | null>(null);
+  selectedType = signal<ExerciseType | null>(null);
+
+  // Common fields
+  formTitle = '';
+  formLevel = 'B1';
+  formPoints = 20;
+  formGroupId = '';
+  formStatus = 'published';
+
+  // Type specific fields
+  formSubject = '';
+  formSpeakingPrompt = '';
+  formYoutubeUrl = '';
+  formListeningInstruction = '';
+  formTranslationDirection: 'fr-en' | 'en-fr' = 'fr-en';
+  formTextToTranslate = '';
+  formTextToPronounce = '';
+  formTheme = '';
+  formWordListRaw = '';
+
+  typesList = [
+    { value: 'writing', emoji: '✍️', color: '#7C3AED', label: 'Writing', desc: 'Sujets rédigés libres avec correction manuelle.' },
+    { value: 'speaking', emoji: '🎙️', color: '#059669', label: 'Speaking', desc: 'Entraînement oraux libres ou audio prompts.' },
+    { value: 'listening', emoji: '👂', color: '#0284C7', label: 'Listening', desc: 'Vidéo YouTube avec résumé/questions ou réponse libre.' },
+    { value: 'translation', emoji: '🌍', color: '#D97706', label: 'Translation', desc: 'Passages FR ➔ EN ou EN ➔ FR à traduire.' },
+    { value: 'pronunciation', emoji: '🔊', color: '#DC2626', label: 'Pronunciation', desc: 'Texte à prononcer avec enregistrement audio.' },
+    { value: 'vocabulary', emoji: '📚', color: '#4F46E5', label: 'Vocabulary', desc: 'Thème et liste de vocabulaire avec exercices associés.' }
+  ];
+
+  filteredExercises = computed(() => {
+    const list = this.exercises();
+    const type = this.filterType();
+    if (type === 'all') return list;
+    return list.filter(ex => ex.type === type);
+  });
+
+  constructor() {
+    this.db.observeExercises().subscribe(list => {
+      this.exercises.set(list);
+    });
+
+    this.db.observeChannels().subscribe(list => {
+      this.groups.set(list);
+    });
+
+    this.db.observeCurrentUser().subscribe(user => {
+      this.currentUser.set(user);
+    });
+  }
+
+  setTab(tab: 'list' | 'create') {
+    this.activeTab.set(tab);
+    if (tab === 'list') {
+      this.resetForm();
+    }
+  }
+
+  selectType(type: any) {
+    this.selectedType.set(type);
+  }
+
+  startNew() {
+    this.resetForm();
+    this.selectedExerciseId.set(null);
+    this.selectedType.set(null);
+    this.currentStep.set(1);
+    this.setTab('create');
+  }
+
+  editExercise(ex: Exercise) {
+    this.selectedExerciseId.set(ex.id);
+    this.selectedType.set(ex.type);
+    
+    // Bind common fields
+    this.formTitle = ex.title;
+    this.formLevel = ex.level;
+    this.formPoints = ex.points;
+    this.formGroupId = ex.groupId || '';
+    this.formStatus = ex.status;
+
+    // Bind specific fields
+    this.formSubject = ex.subject || '';
+    this.formSpeakingPrompt = ex.speakingPrompt || '';
+    this.formYoutubeUrl = ex.youtubeUrl || '';
+    this.formListeningInstruction = ex.listeningInstruction || '';
+    this.formTranslationDirection = ex.translationDirection || 'fr-en';
+    this.formTextToTranslate = ex.textToTranslate || '';
+    this.formTextToPronounce = ex.textToPronounce || '';
+    this.formTheme = ex.theme || '';
+    this.formWordListRaw = (ex.wordList || []).join('\n');
+
+    this.currentStep.set(2);
+    this.setTab('create');
+  }
+
+  async deleteExercise(ex: Exercise) {
+    this.dialogService.confirm(
+      'Delete Exercise',
+      `Are you sure you want to delete the exercise "${ex.title}"? This action cannot be undone.`,
+      async () => {
+        await this.db.deleteExercise(ex.id);
+        this.dialogService.alert('Deleted', 'Exercise deleted successfully.', 'success');
+      }
+    );
+  }
+
+  async publishExercise(ex: Exercise) {
+    await this.db.updateExercise(ex.id, { status: 'published' });
+    this.dialogService.alert('Published', 'Exercise published successfully!', 'success');
+  }
+
+  async saveExercise() {
+    if (!this.formTitle.trim()) {
+      this.dialogService.alert('Error', 'Please enter a title for the exercise.', 'info');
+      return;
+    }
+
+    const type = this.selectedType();
+    if (!type) return;
+
+    const user = this.currentUser();
+
+    const words = this.formWordListRaw
+      .split('\n')
+      .map(w => w.trim())
+      .filter(w => w.length > 0);
+
+    const exerciseData: any = {
+      title: this.formTitle.trim(),
+      type,
+      level: this.formLevel,
+      points: this.formPoints,
+      groupId: this.formGroupId || undefined,
+      status: this.formStatus,
+      authorId: user?.id || 'teacher',
+      authorName: user?.name || 'Teacher'
+    };
+
+    // Set type specific properties
+    if (type === 'writing') {
+      exerciseData.subject = this.formSubject.trim();
+    } else if (type === 'speaking') {
+      exerciseData.speakingPrompt = this.formSpeakingPrompt.trim();
+    } else if (type === 'listening') {
+      exerciseData.youtubeUrl = this.formYoutubeUrl.trim();
+      exerciseData.listeningInstruction = this.formListeningInstruction.trim();
+    } else if (type === 'translation') {
+      exerciseData.translationDirection = this.formTranslationDirection;
+      exerciseData.textToTranslate = this.formTextToTranslate.trim();
+    } else if (type === 'pronunciation') {
+      exerciseData.textToPronounce = this.formTextToPronounce.trim();
+    } else if (type === 'vocabulary') {
+      exerciseData.theme = this.formTheme.trim();
+      exerciseData.wordList = words;
+    }
+
+    const id = this.selectedExerciseId();
+    try {
+      if (id) {
+        await this.db.updateExercise(id, exerciseData);
+        this.dialogService.alert('Success', 'Exercise updated successfully.', 'success');
+      } else {
+        await this.db.addExercise(exerciseData);
+        this.dialogService.alert('Success', 'Exercise created successfully.', 'success');
+
+        if (this.formStatus === 'published') {
+          await this.db.sendNotification({
+            recipientId: 'all',
+            recipientRole: 'student',
+            type: 'exercise_assigned',
+            title: '🎯 New exercise available',
+            message: `"${this.formTitle}" has been published by ${user?.name || 'your teacher'}`
+          });
+        }
+      }
+      this.setTab('list');
+    } catch (e: any) {
+      this.dialogService.alert('Error', `An error occurred: ${e.message}`, 'info');
+    }
+  }
+
+  resetForm() {
+    this.formTitle = '';
+    this.formLevel = 'B1';
+    this.formPoints = 20;
+    this.formGroupId = '';
+    this.formStatus = 'published';
+    this.formSubject = '';
+    this.formSpeakingPrompt = '';
+    this.formYoutubeUrl = '';
+    this.formListeningInstruction = '';
+    this.formTranslationDirection = 'fr-en';
+    this.formTextToTranslate = '';
+    this.formTextToPronounce = '';
+    this.formTheme = '';
+    this.formWordListRaw = '';
+    this.currentStep.set(1);
+    this.selectedType.set(null);
+  }
+
+  // Helper mapping methods for template
+  getTypeColor(type: any): string {
+    const item = this.typesList.find(t => t.value === type);
+    return item ? item.color : '#6B7280';
+  }
+
+  getTypeEmoji(type: any): string {
+    const item = this.typesList.find(t => t.value === type);
+    return item ? item.emoji : '🎯';
+  }
+
+  getGroupName(groupId: string): string {
+    const g = this.groups().find(c => c.id === groupId);
+    return g ? g.name : groupId;
+  }
+
+  getPreviewWordList(): string[] {
+    if (!this.formWordListRaw) return [];
+    return this.formWordListRaw.split('\n').map(w => w.trim()).filter(w => w.length > 0);
+  }
+}

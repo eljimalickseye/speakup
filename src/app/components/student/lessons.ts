@@ -16,16 +16,16 @@ import { DialogService } from '../../services/dialog.service';
         <div class="card" style="margin-bottom: 20px; background: linear-gradient(135deg, #EFF6FF 0%, #FAF5FF 100%); padding: 18px; border-radius: 12px; border: 1px solid var(--border-weak)">
           <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px">
             <div>
-              <h3 style="font-size:15px; font-weight:700; color:var(--text-primary); margin:0">My Lessons Progress</h3>
+              <h3 style="font-size:15px; font-weight:700; color:var(--text-primary); margin:0">{{ t('Progrès de mes Cours', 'My Lessons Progress') }}</h3>
               <p style="font-size:11.5px; color:var(--text-secondary); margin:4px 0 0 0">
-                Level: <strong style="color:#4F46E5">{{ currentUser()?.level || 'B1' }}</strong> · 
-                Completed: <strong>{{ completedCount() }}</strong> / {{ lessons().length }} lessons
+                {{ t('Niveau :', 'Level:') }} <strong style="color:#4F46E5">{{ currentUser()?.level || 'B1' }}</strong> · 
+                {{ t('Complétés :', 'Completed:') }} <strong>{{ completedCount() }}</strong> / {{ lessons().length }} {{ t('cours', 'lessons') }}
               </p>
             </div>
             <div style="display:flex; gap:12px; align-items:center">
               <div style="background:#FFF; padding:6px 12px; border-radius:8px; border:1px solid var(--border); display:flex; align-items:center; gap:6px">
                 <i class="ti ti-search" style="color:var(--text-muted)"></i>
-                <input type="text" [(ngModel)]="searchQuery" placeholder="Search lessons..." style="border:none; outline:none; font-size:12px; width:150px; background:transparent" />
+                <input type="text" [(ngModel)]="searchQuery" [placeholder]="t('Rechercher un cours...', 'Search lessons...')" style="border:none; outline:none; font-size:12px; width:150px; background:transparent" />
               </div>
             </div>
           </div>
@@ -34,8 +34,8 @@ import { DialogService } from '../../services/dialog.service';
         <!-- TABS & TYPE FILTER ROW -->
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px">
           <div class="tab-row" style="margin-bottom:0">
-            <button class="tab" [class.active]="activeTab() === 'all'" (click)="activeTab.set('all')">All Lessons</button>
-            <button class="tab" [class.active]="activeTab() === 'level'" (click)="activeTab.set('level')">My Level ({{ currentUser()?.level || 'B1' }})</button>
+            <button class="tab" [class.active]="activeTab() === 'all'" (click)="activeTab.set('all')">{{ t('Tous les cours', 'All Lessons') }}</button>
+            <button class="tab" [class.active]="activeTab() === 'level'" (click)="activeTab.set('level')">{{ t('Mon Niveau', 'My Level') }} ({{ currentUser()?.level || 'B1' }})</button>
           </div>
           
           <div style="display:flex; gap:6px; flex-wrap:wrap">
@@ -46,7 +46,7 @@ import { DialogService } from '../../services/dialog.service';
                 [style.color]="selectedTypeFilter() === type ? '#FFF' : 'var(--text-secondary)'"
                 [style.border-color]="selectedTypeFilter() === type ? '#4F46E5' : 'var(--border)'"
                 style="padding:5px 12px; font-size:11.5px; border-radius:20px; font-weight:600; cursor:pointer; border:1px solid; transition:all 0.2s">
-                {{ type }}
+                {{ type === 'All' ? t('Tous', 'All') : (type === 'Grammar' ? t('Grammaire', 'Grammar') : (type === 'Listening' ? t('Compréhension', 'Listening') : t('Vocabulaire', 'Vocabulary'))) }}
               </button>
             }
           </div>
@@ -59,28 +59,28 @@ import { DialogService } from '../../services/dialog.service';
               <div>
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
                   <span class="badge" [style.background]="getBadgeBg(lesson.type)" [style.color]="getBadgeColor(lesson.type)" style="font-size:10px; font-weight:700; text-transform:uppercase; padding:2px 8px; border-radius:20px">
-                    {{ lesson.type }}
+                    {{ lesson.type === 'Grammar' ? t('Grammaire', 'Grammar') : (lesson.type === 'Listening' ? t('Compréhension', 'Listening') : t('Vocabulaire', 'Vocabulary')) }}
                   </span>
-                  <span style="font-size:10.5px; color:var(--text-muted)">Due: {{ lesson.dueDate }}</span>
+                  <span style="font-size:10.5px; color:var(--text-muted)">{{ t('Limite :', 'Due:') }} {{ lesson.dueDate }}</span>
                 </div>
                 
                 <h4 style="font-size:14px; font-weight:700; color:var(--text-primary); margin:0 0 6px 0; line-height:1.3">{{ lesson.title }}</h4>
-                <p style="font-size:11.5px; color:var(--text-muted); margin:0 0 12px 0">Level {{ lesson.level }} · Course Study Material</p>
+                <p style="font-size:11.5px; color:var(--text-muted); margin:0 0 12px 0">Level {{ lesson.level }} · {{ t("Matériel d'étude", 'Course Study Material') }}</p>
               </div>
 
               <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border-weak); padding-top:12px; margin-top:12px">
                 <span class="pill" [class.done]="isLessonSubmitted(lesson.id)" [class.new]="!isLessonSubmitted(lesson.id)">
-                  {{ isLessonSubmitted(lesson.id) ? (getSubmissionStatus(lesson.id)) : 'Unsubmitted' }}
+                  {{ isLessonSubmitted(lesson.id) ? (getSubmissionStatus(lesson.id)) : t('Non soumis', 'Unsubmitted') }}
                 </span>
                 <span style="font-size:11.5px; color:#4F46E5; font-weight:600; display:flex; align-items:center; gap:4px">
-                  Open Lesson <i class="ti ti-arrow-right"></i>
+                  {{ t('Ouvrir le cours', 'Open Lesson') }} <i class="ti ti-arrow-right"></i>
                 </span>
               </div>
             </div>
           } @empty {
             <div class="card" style="grid-column: 1 / -1; text-align:center; padding:40px; color:var(--text-muted)">
               <i class="ti ti-book-off" style="font-size:36px; display:block; margin-bottom:12px"></i>
-              <p style="font-size:13px; font-weight:500; margin:0">No lessons found matching the selected filter query.</p>
+              <p style="font-size:13px; font-weight:500; margin:0">{{ t('Aucun cours trouvé pour cette recherche.', 'No lessons found matching the selected filter query.') }}</p>
             </div>
           }
         </div>
@@ -88,7 +88,7 @@ import { DialogService } from '../../services/dialog.service';
         <!-- SELECTED LESSON DETAIL VIEW -->
         <div class="card" style="padding:20px; border-radius:12px">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; border-bottom:1px solid var(--border-weak); padding-bottom:12px">
-            <button class="btn-s" (click)="selectedLesson.set(null)" style="font-size:12px; padding:6px 12px; border-radius:8px"><i class="ti ti-arrow-left"></i> Back to Lessons</button>
+            <button class="btn-s" (click)="selectedLesson.set(null)" style="font-size:12px; padding:6px 12px; border-radius:8px"><i class="ti ti-arrow-left"></i> {{ t('Retour aux cours', 'Back to Lessons') }}</button>
             <span class="pill" [class.done]="isLessonSubmitted(selectedLesson()!.id)" [class.new]="!isLessonSubmitted(selectedLesson()!.id)">
               {{ getSubmissionStatus(selectedLesson()!.id) }}
             </span>
@@ -106,9 +106,9 @@ import { DialogService } from '../../services/dialog.service';
 
           <!-- Detail Tabs -->
           <div class="tab-row" style="margin-bottom:20px">
-            <button class="tab" [class.active]="detailTab() === 'content'" (click)="detailTab.set('content')">Grammar Notes</button>
-            <button class="tab" [class.active]="detailTab() === 'vocab'" (click)="detailTab.set('vocab')">Vocabulary List</button>
-            <button class="tab" [class.active]="detailTab() === 'homework'" (click)="detailTab.set('homework')">Homework Submission</button>
+            <button class="tab" [class.active]="detailTab() === 'content'" (click)="detailTab.set('content')">{{ t('Notes de Grammaire', 'Grammar Notes') }}</button>
+            <button class="tab" [class.active]="detailTab() === 'vocab'" (click)="detailTab.set('vocab')">{{ t('Liste de Vocabulaire', 'Vocabulary List') }}</button>
+            <button class="tab" [class.active]="detailTab() === 'homework'" (click)="detailTab.set('homework')">{{ t('Soumettre mon devoir', 'Homework Submission') }}</button>
           </div>
 
           <!-- Tab Contents -->
@@ -132,7 +132,7 @@ import { DialogService } from '../../services/dialog.service';
             }
 
             <div class="card" style="background:#FFF; border:1px solid var(--border-weak); border-radius:8px; padding:18px; position:relative">
-              <button (click)="copyText(selectedLesson()?.content || '')" style="position:absolute; top:12px; right:12px; background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:14px" title="Copy Notes">
+              <button (click)="copyText(selectedLesson()?.content || '')" style="position:absolute; top:12px; right:12px; background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:14px" [title]="t('Copier les notes', 'Copy Notes')">
                 <i class="ti ti-copy"></i>
               </button>
               <div style="white-space: pre-line; line-height:1.6; font-size:13.5px; color:var(--text-secondary)">
@@ -150,18 +150,18 @@ import { DialogService } from '../../services/dialog.service';
                   
                   <div style="display:flex; gap:6px">
                     <!-- Text-to-speech speak button -->
-                    <button (click)="speakWord(v)" style="background:none; border:none; color:#4F46E5; cursor:pointer; font-size:14px; padding:4px; display:flex; align-items:center" title="Listen Pronunciation">
+                    <button (click)="speakWord(v)" style="background:none; border:none; color:#4F46E5; cursor:pointer; font-size:14px; padding:4px; display:flex; align-items:center" [title]="t('Écouter la prononciation', 'Listen Pronunciation')">
                       <i class="ti ti-volume"></i>
                     </button>
                     <!-- Copy button -->
-                    <button (click)="copyText(v)" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:14px; padding:4px; display:flex; align-items:center" title="Copy Word">
+                    <button (click)="copyText(v)" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:14px; padding:4px; display:flex; align-items:center" [title]="t('Copier le mot', 'Copy Word')">
                       <i class="ti ti-copy"></i>
                     </button>
                   </div>
                 </div>
               } @empty {
                 <div style="grid-column:1/-1; text-align:center; padding:20px; color:var(--text-muted); font-size:12px">
-                  No vocabulary words defined for this lesson.
+                  {{ t('Aucun mot de vocabulaire défini pour cette leçon.', 'No vocabulary words defined for this lesson.') }}
                 </div>
               }
             </div>
@@ -169,7 +169,7 @@ import { DialogService } from '../../services/dialog.service';
             <div style="display:flex; flex-direction:column; gap:16px">
               <div style="background:#EEF2FF; border-left:4px solid #4F46E5; padding:14px; border-radius:8px">
                 <h4 style="font-size:12.5px; font-weight:700; color:#3730A3; margin:0 0 6px 0; display:flex; align-items:center; gap:6px">
-                  <i class="ti ti-info-circle"></i> Homework Instructions:
+                  <i class="ti ti-info-circle"></i> {{ t('Consignes du Devoir :', 'Homework Instructions:') }}
                 </h4>
                 <p style="font-size:13px; color:#4B5563; line-height:1.5; margin:0">{{ selectedLesson()?.homeworkInstruction }}</p>
               </div>
@@ -178,7 +178,7 @@ import { DialogService } from '../../services/dialog.service';
                 <!-- SHOW SUBMITTED HOMEWORK -->
                 <div class="card" style="background:var(--surface-2); margin-top:8px; padding:16px; border-radius:8px">
                   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
-                    <h4 style="font-size:12.5px; font-weight:700; margin:0">Your Submission:</h4>
+                    <h4 style="font-size:12.5px; font-weight:700; margin:0">{{ t('Votre Soumission :', 'Your Submission:') }}</h4>
                   <span class="badge" 
                         [style.background]="sub.type === 'audio' ? '#E0F2FE' : (sub.type === 'video' ? '#FAF5FF' : '#EEF2FF')" 
                         [style.color]="sub.type === 'audio' ? '#0369A1' : (sub.type === 'video' ? '#7E22CE' : '#3730A3')" 
@@ -194,15 +194,15 @@ import { DialogService } from '../../services/dialog.service';
                       <i class="ti ti-player-play"></i>
                     </button>
                     <div style="flex:1">
-                      <div style="font-size:11.5px; font-weight:600; color:var(--text-primary)">Voice Recording Submission</div>
-                      <div style="font-size:10px; color:var(--text-muted)">Audio file attached successfully</div>
+                      <div style="font-size:11.5px; font-weight:600; color:var(--text-primary)">{{ t('Enregistrement Vocal Soumis', 'Voice Recording Submission') }}</div>
+                      <div style="font-size:10px; color:var(--text-muted)">{{ t('Fichier audio attaché avec succès', 'Audio file attached successfully') }}</div>
                     </div>
                   </div>
                 } @else if (sub.type === 'video') {
                   <!-- Simulated Video Submission Player -->
                   <div style="display:flex; flex-direction:column; gap:8px; background:#000; padding:10px; border-radius:8px; margin-bottom:12px">
                     <video controls style="width:100%; max-height:180px; border-radius:6px" src="https://assets.mixkit.co/videos/preview/mixkit-girl-in-neon-sign-smiling-39824-large.mp4"></video>
-                    <div style="font-size:11px; color:#94A3B8; text-align:center"><i class="ti ti-video"></i> Devoir Vidéo Soumis</div>
+                    <div style="font-size:11px; color:#94A3B8; text-align:center"><i class="ti ti-video"></i> {{ t('Devoir Vidéo Soumis', 'Video Homework Submitted') }}</div>
                   </div>
                 } @else {
                   <p style="font-size:13px; color:var(--text-secondary); margin:0 0 12px 0; font-style:italic; white-space:pre-line">"{{ sub.content }}"</p>
@@ -211,15 +211,15 @@ import { DialogService } from '../../services/dialog.service';
                   @if (sub.graded) {
                     <div style="border-top:1.5px solid var(--border); padding-top:12px; margin-top:12px">
                       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
-                        <span style="font-size:13px; font-weight:700; color:#065F46">Grade Score: {{ sub.score }}</span>
+                        <span style="font-size:13px; font-weight:700; color:#065F46">{{ t('Note obtenue :', 'Grade Score:') }} {{ sub.score }}</span>
                         <span style="font-size:11.5px; font-weight:700; color:#4F46E5">+{{ sub.xpReward }} XP Awarded</span>
                       </div>
-                      <h5 style="font-size:12px; font-weight:700; color:var(--text-primary); margin:0 0 4px 0">Teacher Feedback:</h5>
+                      <h5 style="font-size:12px; font-weight:700; color:var(--text-primary); margin:0 0 4px 0">{{ t("Retour de l'enseignant :", 'Teacher Feedback:') }}</h5>
                       <p style="font-size:12.5px; color:var(--text-secondary); margin:0; line-height:1.4">{{ sub.feedback }}</p>
                     </div>
                   } @else {
                     <div style="border-top:1px solid var(--border); padding-top:10px; font-size:12px; color:var(--text-muted); display:flex; align-items:center; gap:4px">
-                      <i class="ti ti-clock"></i> Waiting for teacher grading review.
+                      <i class="ti ti-clock"></i> {{ t("En attente de correction par l'enseignant.", 'Waiting for teacher grading review.') }}
                     </div>
                   }
                 </div>
@@ -227,23 +227,23 @@ import { DialogService } from '../../services/dialog.service';
                 <!-- SUBMIT HOMEWORK FORM -->
                 <div style="display:flex; gap:16px; margin-bottom:12px; border-bottom:1px solid var(--border-weak); padding-bottom:12px">
                   <button (click)="homeworkType = 'text'" [style.border-bottom]="homeworkType === 'text' ? '2px solid #4F46E5' : 'none'" [style.color]="homeworkType === 'text' ? '#4F46E5' : 'var(--text-muted)'" style="background:none; border:none; padding:8px 4px; font-size:13px; font-weight:600; cursor:pointer">
-                    ✍️ Text Submission
+                    ✍️ {{ t('Soumission Écrite', 'Text Submission') }}
                   </button>
                   <button (click)="homeworkType = 'audio'" [style.border-bottom]="homeworkType === 'audio' ? '2px solid #4F46E5' : 'none'" [style.color]="homeworkType === 'audio' ? '#4F46E5' : 'var(--text-muted)'" style="background:none; border:none; padding:8px 4px; font-size:13px; font-weight:600; cursor:pointer">
-                    🎙️ Voice Recording
+                    🎙️ {{ t('Enregistrement Vocal', 'Voice Recording') }}
                   </button>
                   <button (click)="homeworkType = 'video'" [style.border-bottom]="homeworkType === 'video' ? '2px solid #4F46E5' : 'none'" [style.color]="homeworkType === 'video' ? '#4F46E5' : 'var(--text-muted)'" style="background:none; border:none; padding:8px 4px; font-size:13px; font-weight:600; cursor:pointer">
-                    📹 Video Submission
+                    📹 {{ t('Soumission Vidéo', 'Video Submission') }}
                   </button>
                 </div>
 
                 @if (homeworkType === 'text') {
                   <div class="input-row" style="margin-top:0">
-                    <label for="hwAnswer" style="font-weight:600">Your Answer in English:</label>
-                    <textarea id="hwAnswer" [(ngModel)]="homeworkContent" placeholder="Type your English paragraphs or sentences here..." rows="5"></textarea>
+                    <label for="hwAnswer" style="font-weight:600">{{ t('Votre réponse en anglais :', 'Your Answer in English:') }}</label>
+                    <textarea id="hwAnswer" [(ngModel)]="homeworkContent" [placeholder]="t('Saisissez votre texte en anglais ici...', 'Type your English paragraphs or sentences here...')" rows="5"></textarea>
                   </div>
                   <button class="btn-p" (click)="submitHomework()" [disabled]="!homeworkContent.trim()" style="align-self:flex-start">
-                    <i class="ti ti-send"></i> Submit Homework
+                    <i class="ti ti-send"></i> {{ t('Soumettre le devoir', 'Submit Homework') }}
                   </button>
                 } @else if (homeworkType === 'audio') {
                   <!-- AUDIO RECORDER PANEL -->
@@ -252,8 +252,8 @@ import { DialogService } from '../../services/dialog.service';
                       <button (click)="startAudioRecording()" style="width:56px; height:56px; border-radius:50%; background:#4F46E5; color:white; border:none; font-size:24px; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(79,70,229,0.3)">
                         <i class="ti ti-microphone"></i>
                       </button>
-                      <div style="font-size:12.5px; font-weight:600; color:var(--text-primary)">Click to Start Audio Recording</div>
-                      <div style="font-size:11px; color:var(--text-muted)">Record your voice reading or answering the questions</div>
+                      <div style="font-size:12.5px; font-weight:600; color:var(--text-primary)">{{ t("Cliquer pour démarrer l'enregistrement", 'Click to Start Audio Recording') }}</div>
+                      <div style="font-size:11px; color:var(--text-muted)">{{ t('Enregistrez votre voix en lisant ou en répondant aux questions', 'Record your voice reading or answering the questions') }}</div>
                     } @else if (recordingState() === 'recording') {
                       <div style="display:flex; align-items:center; gap:8px">
                         <span class="recording-pulse"></span>
@@ -270,7 +270,7 @@ import { DialogService } from '../../services/dialog.service';
                       <button (click)="stopAudioRecording()" style="width:48px; height:48px; border-radius:50%; background:#EF4444; color:white; border:none; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(239,68,68,0.3)">
                         <i class="ti ti-square"></i>
                       </button>
-                      <div style="font-size:12px; color:var(--text-secondary)">Recording voice... click square to stop</div>
+                      <div style="font-size:12px; color:var(--text-secondary)">{{ t('Enregistrement vocal en cours... cliquez sur le carré pour arrêter', 'Recording voice... click square to stop') }}</div>
                     } @else if (recordingState() === 'finished') {
                       <!-- Recording complete options -->
                       <div style="display:flex; align-items:center; gap:12px; background:#FFF; padding:12px; border-radius:8px; border:1px solid var(--border-weak); width:100%; max-width:360px">
@@ -281,16 +281,16 @@ import { DialogService } from '../../services/dialog.service';
                           <div style="font-size:12px; font-weight:600; color:var(--text-primary)">voice_homework.wav</div>
                           <div style="font-size:10px; color:var(--text-muted)">Duration: {{ formatDuration(recordSeconds()) }}</div>
                         </div>
-                        <button (click)="resetAudioRecording()" style="background:none; border:none; color:#EF4444; font-size:16px; cursor:pointer" title="Delete & Record Again">
+                        <button (click)="resetAudioRecording()" style="background:none; border:none; color:#EF4444; font-size:16px; cursor:pointer" [title]="t('Supprimer et recommencer', 'Delete & Record Again')">
                           <i class="ti ti-trash"></i>
                         </button>
                       </div>
 
                       <div style="display:flex; gap:10px; margin-top:8px">
                         <button class="btn-p" (click)="submitVoiceHomework()" style="background:#10B981; border-color:#10B981">
-                          <i class="ti ti-send"></i> Submit Voice Recording
+                          <i class="ti ti-send"></i> {{ t("Soumettre l'enregistrement vocal", 'Submit Voice Recording') }}
                         </button>
-                        <button class="btn-s" (click)="resetAudioRecording()">Record Again</button>
+                        <button class="btn-s" (click)="resetAudioRecording()">{{ t('Recommencer', 'Record Again') }}</button>
                       </div>
                     }
                   </div>
@@ -301,8 +301,8 @@ import { DialogService } from '../../services/dialog.service';
                       <button (click)="startVideoRecording()" style="width:56px; height:56px; border-radius:50%; background:#4F46E5; color:white; border:none; font-size:24px; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(79,70,229,0.3)">
                         <i class="ti ti-video"></i>
                       </button>
-                      <div style="font-size:12.5px; font-weight:600; color:var(--text-primary)">Commencer l'enregistrement vidéo</div>
-                      <div style="font-size:11px; color:var(--text-muted)">Enregistrez votre caméra pour répondre aux consignes</div>
+                      <div style="font-size:12.5px; font-weight:600; color:var(--text-primary)">{{ t("Démarrer l'enregistrement vidéo", 'Start Video Recording') }}</div>
+                      <div style="font-size:11px; color:var(--text-muted)">{{ t('Enregistrez votre caméra pour répondre aux consignes', 'Record your webcam stream to answer the prompts') }}</div>
                     } @else if (videoRecordingState() === 'recording') {
                       <div style="display:flex; align-items:center; gap:8px">
                         <span class="recording-pulse"></span>
@@ -315,19 +315,19 @@ import { DialogService } from '../../services/dialog.service';
                       <button (click)="stopVideoRecording()" style="width:48px; height:48px; border-radius:50%; background:#EF4444; color:white; border:none; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(239,68,68,0.3)">
                         <i class="ti ti-square"></i>
                       </button>
-                      <div style="font-size:12px; color:var(--text-secondary)">Enregistrement en cours... cliquez sur le carré rouge pour stopper</div>
+                      <div style="font-size:12px; color:var(--text-secondary)">{{ t('Enregistrement en cours... cliquez sur le carré rouge pour stopper', 'Recording in progress... click red square to stop') }}</div>
                     } @else if (videoRecordingState() === 'finished') {
                       <!-- Recording complete options -->
                       <div style="display:flex; flex-direction:column; align-items:center; gap:12px; background:#FFF; padding:16px; border-radius:8px; border:1px solid var(--border-weak); width:100%; max-width:360px">
-                        <div style="font-size:12px; font-weight:600; color:var(--text-primary)">🎥 Vidéo enregistrée avec succès !</div>
+                        <div style="font-size:12px; font-weight:600; color:var(--text-primary)">🎥 {{ t('Vidéo enregistrée avec succès !', 'Video recorded successfully!') }}</div>
                         <video style="width: 100%; border-radius: 8px; background: #000" controls src="https://assets.mixkit.co/videos/preview/mixkit-girl-in-neon-sign-smiling-39824-large.mp4"></video>
                       </div>
 
                       <div style="display:flex; gap:10px; margin-top:8px">
                         <button class="btn-p" (click)="submitVideoHomework()" style="background:#10B981; border-color:#10B981">
-                          <i class="ti ti-send"></i> Soumettre la vidéo
+                          <i class="ti ti-send"></i> {{ t('Soumettre la vidéo', 'Submit Video') }}
                         </button>
-                        <button class="btn-s" (click)="resetVideoRecording()">Recommencer</button>
+                        <button class="btn-s" (click)="resetVideoRecording()">{{ t('Recommencer', 'Record Again') }}</button>
                       </div>
                     }
                   </div>
@@ -356,7 +356,12 @@ import { DialogService } from '../../services/dialog.service';
   `]
 })
 export class StudentLessonsComponent {
-  private db = inject(DatabaseService);
+  public db = inject(DatabaseService);
+  activeLang = this.db.activeLang;
+
+  t(fr: string, en: string): string {
+    return this.activeLang() === 'fr' ? fr : en;
+  }
 
   activeTab = signal<string>('all');
   selectedTypeFilter = signal<string>('All');

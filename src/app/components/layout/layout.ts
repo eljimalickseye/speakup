@@ -34,8 +34,10 @@ import { TeacherEventsComponent } from '../teacher/events';
 import { TeacherUserManagementComponent } from '../teacher/user-management';
 import { TeacherResultsComponent } from '../teacher/results';
 import { TeacherVocabGamesComponent } from '../teacher/vocab-games';
+import { TeacherExercisesManagerComponent } from '../teacher/exercises-manager';
 import { AdminManagementComponent } from '../admin/admin-management';
 import { NotificationsComponent } from '../shared/notifications';
+import { HistoryLogsComponent } from '../shared/history-logs';
 
 @Component({
   selector: 'app-layout',
@@ -71,11 +73,43 @@ import { NotificationsComponent } from '../shared/notifications';
     TeacherUserManagementComponent,
     TeacherResultsComponent,
     TeacherVocabGamesComponent,
+    TeacherExercisesManagerComponent,
     AdminManagementComponent,
-    NotificationsComponent
+    NotificationsComponent,
+    HistoryLogsComponent
   ],
   template: `
-    <div class="shell" [class.sidebar-open]="isSidebarOpen()">
+    @if (currentUser()?.status === 'pending') {
+      <div style="display:flex; justify-content:center; align-items:center; min-height:100vh; background:linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%); padding:20px; text-align:center; width:100%; box-sizing:border-box">
+        <div class="card" style="width:100%; max-width:540px; padding:40px; border-radius:16px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.1); background:#FFF; border-top: 4px solid #4F46E5; box-sizing:border-box">
+          <div style="font-size:64px; margin-bottom:20px">⏳</div>
+          <h2 style="font-size:22px; font-weight:800; color:#1e3a8a; margin:0 0 16px 0">Compte en attente de validation</h2>
+          <div style="font-size:14.5px; color:#475569; line-height:1.7; text-align:left; background:#F8FAFC; border:1px solid #E2E8F0; padding:20px; border-radius:10px; margin-bottom:24px">
+            <p style="margin:0 0 12px 0; font-weight:600; color:#0f172a">Votre demande d'inscription a bien été enregistrée.</p>
+            <p style="margin:0 0 12px 0">Notre équipe étudie actuellement votre dossier afin de garantir la sécurité de la plateforme.</p>
+            <p style="margin:0 0 12px 0">Vous recevrez une notification dès que votre compte sera validé.</p>
+            <p style="margin:0; font-weight:600; color:#4F46E5">Merci de votre patience.</p>
+          </div>
+          <button class="btn-s" style="padding:10px 24px; border-radius:8px; display:inline-flex; align-items:center; gap:8px; border-color:#EF4444; color:#EF4444; cursor:pointer" (click)="logOut()">
+            <i class="ti ti-logout"></i> Se déconnecter
+          </button>
+        </div>
+      </div>
+    } @else if (currentUser()?.status === 'rejected') {
+      <div style="display:flex; justify-content:center; align-items:center; min-height:100vh; background:linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%); padding:20px; text-align:center; width:100%; box-sizing:border-box">
+        <div class="card" style="width:100%; max-width:540px; padding:40px; border-radius:16px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.1); background:#FFF; border-top: 4px solid #EF4444; box-sizing:border-box">
+          <div style="font-size:64px; margin-bottom:20px">❌</div>
+          <h2 style="font-size:22px; font-weight:800; color:#991B1B; margin:0 0 16px 0">Demande d'inscription refusée</h2>
+          <div style="font-size:14.5px; color:#475569; line-height:1.7; text-align:left; background:#F8FAFC; border:1px solid #E2E8F0; padding:20px; border-radius:10px; margin-bottom:24px">
+            <p style="margin:0; font-weight:600; color:#991B1B">Désolé, votre demande d'accès à la plateforme SpeakUp a été rejetée par l'administrateur.</p>
+          </div>
+          <button class="btn-s" style="padding:10px 24px; border-radius:8px; display:inline-flex; align-items:center; gap:8px; border-color:#EF4444; color:#EF4444; cursor:pointer" (click)="logOut()">
+            <i class="ti ti-logout"></i> Se déconnecter
+          </button>
+        </div>
+      </div>
+    } @else {
+      <div class="shell" [class.sidebar-open]="isSidebarOpen()">
       <!-- SIDEBAR BACKDROP (Mobile only) -->
       <div class="sidebar-backdrop" (click)="toggleSidebar(false)"></div>
 
@@ -94,138 +128,147 @@ import { NotificationsComponent } from '../shared/notifications';
         <div class="nav">
           <!-- STUDENT/GUEST SIDEBAR TABS -->
           @if (currentUser()?.role === 'student' || currentUser()?.role === 'guest') {
-            <div class="nav-section">Learn</div>
+            <div class="nav-section">{{ t('Apprendre', 'Learn') }}</div>
             <button class="nav-item" [class.active]="activeTab === 'dashboard'" (click)="setTab('dashboard')">
-              <i class="ti ti-layout-dashboard" aria-hidden="true"></i>Dashboard
+              <i class="ti ti-layout-dashboard" aria-hidden="true"></i>{{ t('Tableau de bord', 'Dashboard') }}
             </button>
             <button class="nav-item" [class.active]="activeTab === 'lessons'" (click)="setTab('lessons')">
-              <i class="ti ti-book" aria-hidden="true"></i>Lessons
-              @if (lessonsCount() > 0) {
-                <span class="badge">{{ lessonsCount() }}</span>
+              <i class="ti ti-book" aria-hidden="true"></i>{{ t('Cours & Leçons', 'Lessons') }}
+              @if (newLessonsCount() > 0) {
+                <span class="badge" style="background:#4F46E5; color:white; margin-left:auto">{{ newLessonsCount() }}</span>
               }
             </button>
             <button class="nav-item" [class.active]="activeTab === 'speaking'" (click)="setTab('speaking')">
-              <i class="ti ti-microphone" aria-hidden="true"></i>Speaking
+              <i class="ti ti-microphone" aria-hidden="true"></i>{{ t('Pratique Orale', 'Speaking') }}
             </button>
             <button class="nav-item" [class.active]="activeTab === 'exercises'" (click)="setTab('exercises')">
-              <i class="ti ti-pencil" aria-hidden="true"></i>Exercises
+              <i class="ti ti-pencil" aria-hidden="true"></i>{{ t('Exercices & Quiz', 'Exercises & Quizzes') }}
             </button>
             <button class="nav-item" [class.active]="activeTab === 'dictionary'" (click)="setTab('dictionary')">
-              <i class="ti ti-bookmarks" aria-hidden="true"></i>Dictionary
+              <i class="ti ti-bookmarks" aria-hidden="true"></i>{{ t('Dictionnaire', 'Dictionary') }}
             </button>
             <button class="nav-item" [class.active]="activeTab === 'ebooks'" (click)="setTab('ebooks')">
-              <i class="ti ti-book" aria-hidden="true"></i>Bibliothèque (Ebooks)
+              <i class="ti ti-book" aria-hidden="true"></i>{{ t('Bibliothèque (Ebooks)', 'Ebooks Library') }}
             </button>
             
-            <div class="nav-section">Community</div>
+            <div class="nav-section">{{ t('Communauté', 'Community') }}</div>
             <button class="nav-item" [class.active]="activeTab === 'chat'" (click)="setTab('chat')">
-              <i class="ti ti-messages" aria-hidden="true"></i>English Chat
+              <i class="ti ti-messages" aria-hidden="true"></i>{{ t('Chat en Anglais', 'English Chat') }}
               @if (chatUnreadCount() > 0) {
                 <span class="badge" style="background:#EF4444; color:white; margin-left:auto">{{ chatUnreadCount() }}</span>
               }
             </button>
             <button class="nav-item" [class.active]="activeTab === 'leaderboard'" (click)="setTab('leaderboard')">
-              <i class="ti ti-trophy" aria-hidden="true"></i>Leaderboard
+              <i class="ti ti-trophy" aria-hidden="true"></i>{{ t('Classement (XP)', 'Leaderboard') }}
             </button>
             <button class="nav-item" [class.active]="activeTab === 'events'" (click)="setTab('events')">
-              <i class="ti ti-calendar-event" aria-hidden="true"></i>Events
+              <i class="ti ti-calendar-event" aria-hidden="true"></i>{{ t('Événements', 'Events') }}
             </button>
             <button class="nav-item" [class.active]="activeTab === 'announcements'" (click)="setTab('announcements')">
-              <i class="ti ti-volume" aria-hidden="true"></i>Announcements
+              <i class="ti ti-volume" aria-hidden="true"></i>{{ t('Annonces', 'Announcements') }}
               @if (unreadAnnouncementsCount() > 0) {
                 <span class="badge red" style="background:#EF4444; color:white; margin-left:auto">{{ unreadAnnouncementsCount() }}</span>
               }
             </button>
             
-            <div class="nav-section">Classes</div>
+            <div class="nav-section">{{ t('Cours en direct', 'Live Classes') }}</div>
             <button class="nav-item" [class.active]="activeTab === 'live-classes'" (click)="setTab('live-classes')">
-              <i class="ti ti-video" aria-hidden="true"></i>Live Classes
+              <i class="ti ti-video" aria-hidden="true"></i>{{ t('Classes en Direct', 'Live Classes') }}
               @if (activeClassAvailable()) {
                 <span class="badge red" style="background:#EF4444; color:white; animation: pulse-live 1.5s infinite">LIVE</span>
               }
             </button>
             
-            <div class="nav-section">Progress</div>
+            <div class="nav-section">{{ t('Progression', 'Progress') }}</div>
             <button class="nav-item" [class.active]="activeTab === 'history'" (click)="setTab('history')">
-              <i class="ti ti-history" aria-hidden="true"></i>Mon Historique
+              <i class="ti ti-history" aria-hidden="true"></i>{{ t('Mon Historique', 'My History') }}
             </button>
             <button class="nav-item" [class.active]="activeTab === 'exam'" (click)="setTab('exam')">
-              <i class="ti ti-certificate" aria-hidden="true"></i>Mode Examen
-              <span class="badge" style="background:#4F46E5; color:white; font-size:9px">NEW</span>
+              <i class="ti ti-certificate" aria-hidden="true"></i>{{ t('Mode Examen', 'Exam Mode') }}
+              @if (examModeIsNew()) {
+                <span class="badge" style="background:#4F46E5; color:white; font-size:9px; margin-left:auto">NEW</span>
+              }
             </button>
           } @else if (currentUser()?.role === 'admin') {
             <!-- ADMIN SIDEBAR TABS -->
-            <div class="ns">Admin Panel</div>
+            <div class="ns">{{ t('Administration', 'Administration') }}</div>
             <button class="ni" [class.active]="activeTab === 'admin-management'" (click)="setTab('admin-management')">
-              <i class="ti ti-settings" aria-hidden="true"></i>Admin Control
+              <i class="ti ti-settings" aria-hidden="true"></i>{{ t('Console Admin', 'Admin Control') }}
             </button>
             <button class="ni" [class.active]="activeTab === 'chat'" (click)="setTab('chat')">
-              <i class="ti ti-messages" aria-hidden="true"></i>English Chat
+              <i class="ti ti-messages" aria-hidden="true"></i>{{ t('Chat en Anglais', 'English Chat') }}
             </button>
             <button class="ni" [class.active]="activeTab === 'announcements'" (click)="setTab('announcements')">
-              <i class="ti ti-speakerphone" aria-hidden="true"></i>Announcements
+              <i class="ti ti-speakerphone" aria-hidden="true"></i>{{ t('Annonces', 'Announcements') }}
+            </button>
+            <button class="ni" [class.active]="activeTab === 'system-history'" (click)="setTab('system-history')">
+              <i class="ti ti-history" aria-hidden="true"></i>{{ t('Logs Système', 'System Logs') }}
             </button>
           } @else {
             <!-- TEACHER SIDEBAR TABS -->
-            <div class="ns">Overview</div>
+            <div class="ns">{{ t('Vue Générale', 'Overview') }}</div>
             <button class="ni" [class.active]="activeTab === 'overview'" (click)="setTab('overview')">
-              <i class="ti ti-layout-dashboard" aria-hidden="true"></i>Overview
+              <i class="ti ti-layout-dashboard" aria-hidden="true"></i>{{ t("Vue d'ensemble", 'Overview') }}
             </button>
             <button class="ni" [class.active]="activeTab === 'chat'" (click)="setTab('chat')">
-              <i class="ti ti-messages" aria-hidden="true"></i>English Chat
+              <i class="ti ti-messages" aria-hidden="true"></i>{{ t('Chat en Anglais', 'English Chat') }}
             </button>
             <button class="ni" [class.active]="activeTab === 'leaderboard'" (click)="setTab('leaderboard')">
-              <i class="ti ti-trophy" aria-hidden="true"></i>Leaderboard & Rewards
+              <i class="ti ti-trophy" aria-hidden="true"></i>{{ t('Classement & Récompenses', 'Leaderboard & Rewards') }}
             </button>
             <button class="ni" [class.active]="activeTab === 'students'" (click)="setTab('students')">
-              <i class="ti ti-users" aria-hidden="true"></i>Students
+              <i class="ti ti-users" aria-hidden="true"></i>{{ t('Mes Élèves', 'Students') }}
             </button>
             
-            <div class="ns">Content</div>
+            <div class="ns">{{ t('Contenus', 'Content') }}</div>
             <button class="ni" [class.active]="activeTab === 'create-lesson'" (click)="setTab('create-lesson')">
-              <i class="ti ti-book" aria-hidden="true"></i>Create lesson
+              <i class="ti ti-book" aria-hidden="true"></i>{{ t('Créer un cours', 'Create Lesson') }}
             </button>
             <button class="ni" [class.active]="activeTab === 'create-quiz'" (click)="setTab('create-quiz')">
-              <i class="ti ti-list-check" aria-hidden="true"></i>Exercices &amp; Quiz
+              <i class="ti ti-list-check" aria-hidden="true"></i>{{ t('Gérer les Quiz', 'Quiz Builder') }}
+            </button>
+            <button class="ni" [class.active]="activeTab === 'exercises-manager'" (click)="setTab('exercises-manager')">
+              <i class="ti ti-dumbbell" aria-hidden="true"></i>{{ t('Gérer les Exercices', 'Exercises Manager') }}
             </button>
             <button class="ni" [class.active]="activeTab === 'vocab-games'" (click)="setTab('vocab-games')">
-              <i class="ti ti-cards" aria-hidden="true"></i>Jeux Vocab
-              <span class="badge" style="background:#F59E0B; color:#92400E; font-size:9px">NEW</span>
+              <i class="ti ti-cards" aria-hidden="true"></i>{{ t('Jeux de Vocabulaire', 'Vocabulary Games') }}
             </button>
             <button class="ni" [class.active]="activeTab === 'grade-homework'" (click)="setTab('grade-homework')">
-              <i class="ti ti-writing" aria-hidden="true"></i>Grade homework
+              <i class="ti ti-writing" aria-hidden="true"></i>{{ t('Corriger les Devoirs', 'Grade Homework') }}
               @if (pendingHomeworkCount() > 0) {
                 <span class="badge" style="background:#FEE2E2; color:#DC2626">{{ pendingHomeworkCount() }}</span>
               }
             </button>
             <button class="ni" [class.active]="activeTab === 'results'" (click)="setTab('results')">
-              <i class="ti ti-clipboard-data" aria-hidden="true"></i>Résultats Élèves
-              <span class="badge" style="background:#059669; color:white; font-size:9px">NEW</span>
+              <i class="ti ti-clipboard-data" aria-hidden="true"></i>{{ t('Résultats Élèves', 'Students Results') }}
             </button>
             <button class="ni" [class.active]="activeTab === 'ebooks'" (click)="setTab('ebooks')">
-              <i class="ti ti-notebook" aria-hidden="true"></i>Gérer les Ebooks
+              <i class="ti ti-notebook" aria-hidden="true"></i>{{ t('Gérer les Ebooks', 'Manage Ebooks') }}
             </button>
             
-            <div class="ns">Classes</div>
+            <div class="ns">{{ t('Classes & Directs', 'Classes & Lives') }}</div>
             <button class="ni" [class.active]="activeTab === 'attendance'" (click)="setTab('attendance')">
-              <i class="ti ti-calendar-check" aria-hidden="true"></i>Attendance
+              <i class="ti ti-calendar-check" aria-hidden="true"></i>{{ t('Feuille de Présences', 'Attendance Sheet') }}
             </button>
             <button class="ni" [class.active]="activeTab === 'schedule-class'" (click)="setTab('schedule-class')">
-              <i class="ti ti-video" aria-hidden="true"></i>Schedule class
+              <i class="ti ti-video" aria-hidden="true"></i>{{ t('Planifier un Direct', 'Schedule Class') }}
             </button>
             
-            <div class="ns">Admin</div>
+            <div class="ns">{{ t('Administration', 'Administration') }}</div>
             <button class="ni" [class.active]="activeTab === 'announcements'" (click)="setTab('announcements')">
-              <i class="ti ti-speakerphone" aria-hidden="true"></i>Announcements
+              <i class="ti ti-speakerphone" aria-hidden="true"></i>{{ t('Annonces Générales', 'Announcements') }}
             </button>
             <button class="ni" [class.active]="activeTab === 'payments'" (click)="setTab('payments')">
-              <i class="ti ti-credit-card" aria-hidden="true"></i>Payments
+              <i class="ti ti-credit-card" aria-hidden="true"></i>{{ t('Suivi des Paiements', 'Payments Tracker') }}
             </button>
             <button class="ni" [class.active]="activeTab === 'teacher-events'" (click)="setTab('teacher-events')">
-              <i class="ti ti-calendar-event" aria-hidden="true"></i>Events
+              <i class="ti ti-calendar-event" aria-hidden="true"></i>{{ t('Événements', 'Events') }}
             </button>
             <button class="ni" [class.active]="activeTab === 'user-management'" (click)="setTab('user-management')">
-              <i class="ti ti-users" aria-hidden="true"></i>User Management
+              <i class="ti ti-users" aria-hidden="true"></i>{{ t('Utilisateurs & Modération', 'Users & Moderation') }}
+            </button>
+            <button class="ni" [class.active]="activeTab === 'system-history'" (click)="setTab('system-history')">
+              <i class="ti ti-history" aria-hidden="true"></i>{{ t('Logs Système', 'System Logs') }}
             </button>
           }
         </div>
@@ -244,22 +287,40 @@ import { NotificationsComponent } from '../shared/notifications';
 
           <span class="topbar-title">{{ pageTitle }}</span>
           
+          <!-- Language Switcher Toggle -->
+          <div style="display:flex; align-items:center; gap:4px; margin-left:auto; margin-right:12px; background:var(--surface-2); padding:3px; border-radius:12px; border:1px solid var(--border-weak)">
+            <button (click)="db.setLanguage('fr')" 
+                    style="border:none; background:transparent; padding:4px 8px; border-radius:8px; font-size:11px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s"
+                    [style.background]="db.activeLang() === 'fr' ? '#4F46E5' : 'transparent'"
+                    [style.color]="db.activeLang() === 'fr' ? 'white' : 'var(--text-secondary)'">
+              <span>🇫🇷</span>
+              <span class="hide-mobile">FR</span>
+            </button>
+            <button (click)="db.setLanguage('en')" 
+                    style="border:none; background:transparent; padding:4px 8px; border-radius:8px; font-size:11px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s"
+                    [style.background]="db.activeLang() === 'en' ? '#4F46E5' : 'transparent'"
+                    [style.color]="db.activeLang() === 'en' ? 'white' : 'var(--text-secondary)'">
+              <span>🇬🇧</span>
+              <span class="hide-mobile">EN</span>
+            </button>
+          </div>
+          
           <!-- Real-time notifications bell -->
-          <app-notifications style="margin-left: auto; margin-right: 12px;"></app-notifications>
+          <app-notifications style="margin-right: 12px;"></app-notifications>
           
           <!-- Reset DB Button (Teacher only) -->
           @if (currentUser()?.role === 'teacher') {
             <button class="btn-s hide-mobile" style="font-size: 11px; padding: 4px 12px; border-radius: 20px; display:flex; align-items:center; gap:4px; margin-right: 12px; border-color:#D97706; color:#D97706" (click)="resetDB()">
-              <i class="ti ti-refresh" aria-hidden="true"></i> Reset DB
+              <i class="ti ti-refresh" aria-hidden="true"></i> {{ t('Reset DB', 'Reset DB') }}
             </button>
           }
 
           <!-- Log Out Button -->
           <button class="btn-s" style="font-size: 11px; padding: 4px 12px; border-radius: 20px; display:flex; align-items:center; gap:4px; margin-right: 12px; border-color:#EF4444; color:#EF4444" (click)="logOut()">
-            <i class="ti ti-logout" aria-hidden="true"></i> Log Out
+            <i class="ti ti-logout" aria-hidden="true"></i> {{ t('Se déconnecter', 'Log Out') }}
           </button>
 
-          <div class="avatar" [style.background]="currentUser()?.role === 'teacher' ? '#3730A3' : '#4F46E5'" style="cursor:pointer; transition: transform 0.2s ease" (click)="openProfileEditor()" title="Edit Profile Settings">
+          <div class="avatar" [style.background]="currentUser()?.role === 'teacher' ? '#3730A3' : '#4F46E5'" style="cursor:pointer; transition: transform 0.2s ease" (click)="openProfileEditor()" [title]="t('Modifier mon profil', 'Edit Profile Settings')">
             {{ currentUser()?.avatar }}
           </div>
         </div>
@@ -305,6 +366,8 @@ import { NotificationsComponent } from '../shared/notifications';
               <app-student-chat></app-student-chat>
             } @else if (activeTab === 'announcements') {
               <app-teacher-announcements></app-teacher-announcements>
+            } @else if (activeTab === 'system-history') {
+              <app-history-logs></app-history-logs>
             }
           }
           
@@ -318,6 +381,8 @@ import { NotificationsComponent } from '../shared/notifications';
               <app-teacher-lessons></app-teacher-lessons>
             } @else if (activeTab === 'create-quiz') {
               <app-teacher-quizzes></app-teacher-quizzes>
+            } @else if (activeTab === 'exercises-manager') {
+              <app-teacher-exercises-manager></app-teacher-exercises-manager>
             } @else if (activeTab === 'vocab-games') {
               <app-teacher-vocab-games></app-teacher-vocab-games>
             } @else if (activeTab === 'grade-homework') {
@@ -342,6 +407,8 @@ import { NotificationsComponent } from '../shared/notifications';
               <app-student-leaderboard></app-student-leaderboard>
             } @else if (activeTab === 'user-management') {
               <app-teacher-user-management></app-teacher-user-management>
+            } @else if (activeTab === 'system-history') {
+              <app-history-logs></app-history-logs>
             }
           }
         </div>
@@ -533,7 +600,8 @@ import { NotificationsComponent } from '../shared/notifications';
           </div>
         </div>
       }
-    </div>
+      </div>
+    }
   `,
   styles: [`
     .float-live-btn {
@@ -689,7 +757,7 @@ import { NotificationsComponent } from '../shared/notifications';
   `]
 })
 export class LayoutComponent {
-  private db = inject(DatabaseService);
+  public db = inject(DatabaseService);
   public dialogService = inject(DialogService);
 
   currentUser = signal<UserProfile | null>(null);
@@ -706,6 +774,10 @@ export class LayoutComponent {
   unreadAnnouncementsCount = signal<number>(0);
   chatUnreadCount = signal<number>(0);
 
+  // "Seen" badges - disappear after first visit
+  examModeIsNew = signal<boolean>(localStorage.getItem('speak_exam_visited') !== 'true');
+  newLessonsCount = signal<number>(0);
+
   // Toasts state
   toasts = signal<{
     id: string;
@@ -720,7 +792,28 @@ export class LayoutComponent {
   private lastSubmissions: Submission[] | null = null;
   private lastActiveClassId: string | null = null;
 
+  activeLang = this.db.activeLang;
+
+  t(fr: string, en: string): string {
+    return this.activeLang() === 'fr' ? fr : en;
+  }
+
   constructor() {
+    effect(() => {
+      // Trigger effect when activeLang changes
+      const lang = this.activeLang();
+      this.pageTitle = this.getTabTitle(this.activeTab);
+    });
+
+    effect(() => {
+      // Listen to requestedTabRedirect signal
+      const tab = this.db.requestedTabRedirect();
+      if (tab) {
+        this.setTab(tab);
+        this.db.requestedTabRedirect.set(null); // Reset redirect signal
+      }
+    });
+
     this.db.observeActiveJitsiCall().subscribe(c => {
       this.activeJitsiCall.set(c);
     });
@@ -741,9 +834,9 @@ export class LayoutComponent {
         // Sync active tab for roles
         if (user.role === 'teacher' && ['dashboard', 'lessons', 'speaking', 'exercises', 'events', 'live-classes', 'admin-management', 'history', 'exam'].includes(this.activeTab)) {
           this.setTab('overview');
-        } else if ((user.role === 'student' || user.role === 'guest') && ['overview', 'students', 'create-lesson', 'create-quiz', 'grade-homework', 'attendance', 'schedule-class', 'payments', 'teacher-events', 'user-management', 'admin-management', 'results', 'vocab-games'].includes(this.activeTab)) {
+        } else if ((user.role === 'student' || user.role === 'guest') && ['overview', 'students', 'create-lesson', 'create-quiz', 'exercises-manager', 'grade-homework', 'attendance', 'schedule-class', 'payments', 'teacher-events', 'user-management', 'admin-management', 'results', 'vocab-games'].includes(this.activeTab)) {
           this.setTab('dashboard');
-        } else if (user.role === 'admin' && ['dashboard', 'lessons', 'speaking', 'exercises', 'events', 'live-classes', 'overview', 'students', 'create-lesson', 'create-quiz', 'grade-homework', 'attendance', 'schedule-class', 'payments', 'teacher-events', 'user-management', 'history', 'exam', 'results', 'vocab-games'].includes(this.activeTab)) {
+        } else if (user.role === 'admin' && ['dashboard', 'lessons', 'speaking', 'exercises', 'events', 'live-classes', 'overview', 'students', 'create-lesson', 'create-quiz', 'exercises-manager', 'grade-homework', 'attendance', 'schedule-class', 'payments', 'teacher-events', 'user-management', 'history', 'exam', 'results', 'vocab-games'].includes(this.activeTab)) {
           this.setTab('admin-management');
         }
       }
@@ -755,6 +848,18 @@ export class LayoutComponent {
 
     this.db.observeLessons().subscribe(list => {
       this.lessonsCount.set(list.length);
+      // Count lessons published since last visit to the lessons tab
+      const lastVisit = localStorage.getItem('speak_lessons_visited_at');
+      if (lastVisit) {
+        const lastVisitTime = new Date(lastVisit).getTime();
+        const newCount = list.filter(l =>
+          l.status === 'published' && new Date(l.createdAt || 0).getTime() > lastVisitTime
+        ).length;
+        this.newLessonsCount.set(newCount);
+      } else {
+        // First time ever — show the count of published lessons
+        this.newLessonsCount.set(list.filter(l => l.status === 'published').length);
+      }
     });
 
     this.db.observeAnnouncements().subscribe(list => {
@@ -886,6 +991,33 @@ export class LayoutComponent {
     if (tabName === 'chat') {
       this.chatUnreadCount.set(0);
     }
+
+    // Clear "new lessons" badge after visiting lessons tab
+    if (tabName === 'lessons') {
+      localStorage.setItem('speak_lessons_visited_at', new Date().toISOString());
+      this.newLessonsCount.set(0);
+    }
+
+    // Clear "NEW" badge on Exam Mode after first visit
+    if (tabName === 'exam') {
+      localStorage.setItem('speak_exam_visited', 'true');
+      this.examModeIsNew.set(false);
+    }
+
+    // Clear notifications corresponding to lessons and exams when visiting these tabs
+    const user = this.currentUser();
+    if (user) {
+      const userNotifs = this.db.getNotificationsForUser(user.id, user.role);
+      userNotifs.forEach(n => {
+        if (!n.read) {
+          if (tabName === 'lessons' && (n.type === 'exercise_assigned' || n.type === 'homework_graded' || n.type === 'grade_updated' || n.type === 'quiz_available')) {
+            this.db.markNotificationRead(n.id);
+          } else if (tabName === 'exam' && n.type === 'exam_completed') {
+            this.db.markNotificationRead(n.id);
+          }
+        }
+      });
+    }
   }
 
   toggleSidebar(open: boolean) {
@@ -965,35 +1097,41 @@ export class LayoutComponent {
   }
 
   private getTabTitle(tab: string): string {
-    const titles: { [key: string]: string } = {
-      dashboard: 'Dashboard',
-      lessons: 'Lessons',
-      speaking: 'Speaking Practice',
-      exercises: 'Exercises',
-      chat: 'English Chat',
-      leaderboard: 'Leaderboard',
-      events: 'Events',
-      'live-classes': 'Live Classes',
-      overview: 'Overview',
-      students: 'Students Manager',
-      'create-lesson': 'Create Lesson',
-      'create-quiz': 'Exercices & Quiz',
-      'grade-homework': 'Grade Homework',
-      attendance: 'Attendance',
-      'schedule-class': 'Schedule Class',
-      announcements: 'Announcements',
-      payments: 'Payments',
-      'teacher-events': 'Events Registry',
-      'admin-management': 'Admin Control',
-      'user-management': 'User Management',
-      dictionary: 'Dictionary',
-      ebooks: 'Bibliothèque Ebooks',
-      history: 'Mon Historique',
-      exam: 'Mode Examen',
-      results: 'Résultats Élèves',
-      'vocab-games': 'Jeux Vocabulaire'
+    const isEn = this.db.activeLang() === 'en';
+    const titles: { [key: string]: { fr: string, en: string } } = {
+      dashboard: { fr: 'Tableau de bord', en: 'Dashboard' },
+      lessons: { fr: 'Cours & Leçons', en: 'Lessons' },
+      speaking: { fr: 'Pratique Orale', en: 'Speaking Practice' },
+      exercises: { fr: 'Exercices & Quiz', en: 'Exercises & Quizzes' },
+      chat: { fr: 'Chat en Anglais', en: 'English Chat' },
+      leaderboard: { fr: 'Classement (XP)', en: 'Leaderboard' },
+      events: { fr: 'Événements', en: 'Events' },
+      'live-classes': { fr: 'Classes en Direct', en: 'Live Classes' },
+      overview: { fr: "Vue d'ensemble", en: 'Overview' },
+      students: { fr: 'Mes Élèves', en: 'Students Manager' },
+      'create-lesson': { fr: 'Créer un cours', en: 'Create Lesson' },
+      'create-quiz': { fr: 'Gérer les Quiz', en: 'Quiz Builder' },
+      'exercises-manager': { fr: 'Gérer les Exercices', en: 'Exercises Manager' },
+      'grade-homework': { fr: 'Corriger les Devoirs', en: 'Grade Homework' },
+      attendance: { fr: 'Feuille de Présences', en: 'Attendance' },
+      'schedule-class': { fr: 'Planifier un Direct', en: 'Schedule Class' },
+      announcements: { fr: 'Annonces Générales', en: 'Announcements' },
+      payments: { fr: 'Suivi des Paiements', en: 'Payments' },
+      'teacher-events': { fr: 'Événements', en: 'Events Registry' },
+      'admin-management': { fr: 'Console Admin', en: 'Admin Control' },
+      'user-management': { fr: 'Utilisateurs & Modération', en: 'User Management' },
+      dictionary: { fr: 'Dictionnaire', en: 'Dictionary' },
+      ebooks: { fr: 'Bibliothèque (Ebooks)', en: 'Ebooks Library' },
+      history: { fr: 'Mon Historique', en: 'My History' },
+      exam: { fr: 'Mode Examen', en: 'Exam Mode' },
+      results: { fr: 'Résultats Élèves', en: 'Students Results' },
+      'vocab-games': { fr: 'Jeux de Vocabulaire', en: 'Vocabulary Games' }
     };
-    return titles[tab] || 'Overview';
+    const val = titles[tab];
+    if (val) {
+      return isEn ? val.en : val.fr;
+    }
+    return isEn ? 'Overview' : "Vue d'ensemble";
   }
 
   isProfileModalOpen = signal<boolean>(false);

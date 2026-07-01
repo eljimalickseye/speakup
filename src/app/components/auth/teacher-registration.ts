@@ -166,7 +166,8 @@ export class TeacherRegistrationComponent {
         description: this.teacherSpecialization || '',
         username: this.teacherEmail.split('@')[0],
         blocked: false,
-        voiceChatAllowed: true
+        voiceChatAllowed: true,
+        status: 'pending' as const
       };
 
       const users = [...(this.db as any).users$.value, newTeacher];
@@ -176,7 +177,7 @@ export class TeacherRegistrationComponent {
       existingUsers.push(newTeacher);
       localStorage.setItem('speak_users', JSON.stringify(existingUsers));
 
-      this.successMessage.set('Account created successfully! You can now log in.');
+      this.successMessage.set('Votre compte a été créé avec succès ! Il est actuellement en attente de validation par l\'administrateur.');
       
       setTimeout(() => {
         this.goToLogin();
