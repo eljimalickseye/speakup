@@ -1,5 +1,5 @@
 import { Component, Output, EventEmitter, inject, signal } from '@angular/core';
-import { DatabaseService, UserProfile, Lesson, Quiz, Announcement } from '../../services/database.service';
+import { DatabaseService, UserProfile, Lesson, Quiz, Announcement, LiveClass } from '../../services/database.service';
 import { CommonModule } from '@angular/common';
 import { DialogService } from '../../services/dialog.service';
 
@@ -172,6 +172,88 @@ import { DialogService } from '../../services/dialog.service';
           <div class="card-label">Fluency level</div>
           <div class="card-value">{{ currentUser()?.level || 'B1' }}</div>
           <div class="card-sub">{{ getLevelName(currentUser()?.level) }}</div>
+        </div>
+      </div>
+
+      <!-- LIVE & AI WORKSPACE PALETTE -->
+      <div class="card live-palette-card" style="background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%); border: 1.5px solid #4F46E5; padding: 22px; border-radius: 16px; margin-top: 24px; color: white; position: relative; overflow: hidden; box-shadow: 0 12px 30px rgba(79, 70, 229, 0.15)">
+        <div style="position: absolute; top: -40px; right: -40px; width: 120px; height: 120px; background: rgba(79, 70, 229, 0.08); border-radius: 50%; filter: blur(20px);"></div>
+        
+        <h3 style="font-size: 15px; font-weight: 850; margin: 0 0 6px 0; color: #38BDF8; display: flex; align-items: center; gap: 8px">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="pulse-live-icon"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+          <span>{{ t('Palette de Sessions en Direct', 'Live Classes & AI Workspace') }}</span>
+        </h3>
+        <p style="font-size: 12px; color: #94A3B8; margin: 0 0 16px 0; line-height: 1.4">
+          {{ t("Accédez instantanément à vos directs de groupe, rejoignez un cours privé one-to-one avec votre prof ou pratiquez l'oral en tête-à-tête avec votre tuteur IA.", "Instantly join group live classes, access private one-to-one calls with your teacher, or practice speaking with your personal AI Tutor.") }}
+        </p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px">
+          <!-- 1. AI Practice Live -->
+          <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); padding: 16px; border-radius: 12px; display: flex; flex-direction: column; justify-content: space-between; gap: 12px">
+            <div>
+              <div style="font-size: 13px; font-weight: 800; color: #E2E8F0; display: flex; align-items: center; gap: 6px">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#A78BFA" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4m0 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM5 8h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2z"/><circle cx="8.5" cy="13.5" r="1.5" fill="#A78BFA"/><circle cx="15.5" cy="13.5" r="1.5" fill="#A78BFA"/><path d="M9 17h6"/></svg>
+                <span>{{ t("Tête-à-tête avec l'IA", "One-on-One with AI") }}</span>
+              </div>
+              <p style="font-size: 11px; color: #94A3B8; margin: 4px 0 0 0">
+                {{ t('Session vocale privée avec speakUp-bot pour parler anglais sans stress.', 'Private voice room with speakUp-bot to practice speaking without stress.') }}
+              </p>
+            </div>
+            <button (click)="startAiPractice()" style="width: 100%; height: 32px; background: linear-gradient(90deg, #7C3AED, #DB2777); border: none; color: white; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 10px rgba(124, 58, 237, 0.25)">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+              <span>{{ t("S'entraîner avec l'IA", "Practice with AI") }}</span>
+            </button>
+          </div>
+
+          <!-- 2. Active Group Live Class -->
+          <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); padding: 16px; border-radius: 12px; display: flex; flex-direction: column; justify-content: space-between; gap: 12px">
+            <div>
+              <div style="font-size: 13px; font-weight: 800; color: #E2E8F0; display: flex; align-items: center; gap: 6px">
+                <span style="width: 8px; height: 8px; border-radius: 50%; background: #EF4444; display: inline-block" [class.pulse-active]="isLiveActive()"></span>
+                <span>{{ t('Cours Collectif', 'Group Live Class') }}</span>
+              </div>
+              <p style="font-size: 11px; color: #94A3B8; margin: 4px 0 0 0">
+                @if (isLiveActive()) {
+                  {{ t('Un cours collectif est actuellement actif. Rejoignez le groupe !', 'A group class is currently active. Join the class!') }}
+                } @else {
+                  {{ t('Aucun cours collectif actif en ce moment.', 'No group class active right now.') }}
+                }
+              </p>
+            </div>
+            <button (click)="goToLiveClass()" 
+                    [style.background]="isLiveActive() ? '#10B981' : '#334155'"
+                    [style.cursor]="isLiveActive() ? 'pointer' : 'not-allowed'"
+                    [disabled]="!isLiveActive()"
+                    style="width: 100%; height: 32px; border: none; color: white; border-radius: 6px; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 6px">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+              <span>{{ isLiveActive() ? t('Rejoindre la Classe', 'Join Class') : t('Aucun Live', 'No Active Live') }}</span>
+            </button>
+          </div>
+
+          <!-- 3. One-to-One Private call with Teacher -->
+          <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); padding: 16px; border-radius: 12px; display: flex; flex-direction: column; justify-content: space-between; gap: 12px">
+            <div>
+              <div style="font-size: 13px; font-weight: 800; color: #E2E8F0; display: flex; align-items: center; gap: 6px">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                <span>{{ t('Cours One-to-One', 'One-to-One Session') }}</span>
+              </div>
+              <p style="font-size: 11px; color: #94A3B8; margin: 4px 0 0 0">
+                @if (isOneToOneActive()) {
+                  {{ t('Votre professeur vous a invité à rejoindre un appel privé.', 'Your teacher invited you to a private live call.') }}
+                } @else {
+                  {{ t('Pas de session privée active. Rejoignez depuis le chat.', 'No active private session. Join from chat messages.') }}
+                }
+              </p>
+            </div>
+            <button (click)="joinOneToOne()" 
+                    [style.background]="isOneToOneActive() ? '#0EA5E9' : '#334155'"
+                    [style.cursor]="isOneToOneActive() ? 'pointer' : 'not-allowed'"
+                    [disabled]="!isOneToOneActive()"
+                    style="width: 100%; height: 32px; border: none; color: white; border-radius: 6px; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 6px">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              <span>{{ isOneToOneActive() ? t("Rejoindre l'Appel", "Join Private Call") : t('Aucun Appel', 'No Private Call') }}</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -349,6 +431,23 @@ import { DialogService } from '../../services/dialog.service';
         grid-template-columns: 1fr;
       }
     }
+    .pulse-live-icon {
+      color: #EF4444;
+      animation: pulse-recording 1.5s infinite;
+    }
+    @keyframes pulse-recording {
+      0% { opacity: 1; }
+      50% { opacity: 0.4; }
+      100% { opacity: 1; }
+    }
+    .pulse-active {
+      box-shadow: 0 0 8px #EF4444;
+      animation: dot-pulse-active 1.2s infinite alternate;
+    }
+    @keyframes dot-pulse-active {
+      from { transform: scale(0.8); opacity: 0.5; }
+      to { transform: scale(1.2); opacity: 1; }
+    }
     `
   ]
 })
@@ -367,6 +466,9 @@ export class StudentDashboardComponent {
   announcements = signal<Announcement[]>([]);
   selectedAnn = signal<Announcement | null>(null);
   allUsers = signal<UserProfile[]>([]);
+
+  // Live Access Palette Signals
+  activeJitsiCall = signal<LiveClass | null>(null);
 
   // Placement Test State
   placementQuestions = signal<any[]>([]);
@@ -401,6 +503,56 @@ export class StudentDashboardComponent {
     this.db.observeAnnouncements().subscribe(() => {
       this.loadAnnouncements();
     });
+
+    this.db.observeActiveJitsiCall().subscribe(c => {
+      this.activeJitsiCall.set(c);
+    });
+  }
+
+  isLiveActive(): boolean {
+    const call = this.activeJitsiCall();
+    if (!call) return false;
+    // Standard group call has status active and does not have the 'Live Call:' private prefix
+    return call.status === 'active' && !call.title.includes('Live Call:');
+  }
+
+  isOneToOneActive(): boolean {
+    const call = this.activeJitsiCall();
+    if (!call) return false;
+    // Private one-to-one calls created from chat will have 'Live Call:' in the title
+    return call.status === 'active' && call.title.includes('Live Call:');
+  }
+
+  async startAiPractice() {
+    const user = this.currentUser();
+    if (!user) return;
+    
+    try {
+      const liveClass = await this.db.startAiPracticeCall(user.name);
+      this.db.setActiveJitsiCall(liveClass);
+      this.navigateToTab.emit('live-classes');
+    } catch (e: any) {
+      this.dialogService.alert('Failed to Start AI Session', e.message || 'Error occurred starting AI live session.', 'info');
+    }
+  }
+
+  joinOneToOne() {
+    const call = this.activeJitsiCall();
+    if (call && this.isOneToOneActive()) {
+      this.db.setActiveJitsiCall(call);
+      this.navigateToTab.emit('live-classes');
+    }
+  }
+
+  goToLiveClass() {
+    const call = this.activeJitsiCall();
+    if (call && this.isLiveActive()) {
+      this.db.setActiveJitsiCall(call);
+      this.navigateToTab.emit('live-classes');
+    } else {
+      // Fallback: navigate to live classes schedules list
+      this.navigateToTab.emit('live-classes');
+    }
   }
 
   private loadAnnouncements() {
@@ -466,9 +618,7 @@ export class StudentDashboardComponent {
     this.db.updateCurrentUserProfile({ countryFlag: select.value });
   }
 
-  goToLiveClass() {
-    this.navigateToTab.emit('live-classes');
-  }
+
 
   onTaskClick(tabName: string) {
     this.navigateToTab.emit(tabName);

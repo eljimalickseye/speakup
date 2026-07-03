@@ -851,6 +851,14 @@ export class LayoutComponent {
       this.activeJitsiCall.set(c);
     });
 
+    window.addEventListener('join-live-call', (event: any) => {
+      const liveClass = event.detail.liveClass;
+      if (liveClass) {
+        this.joinLiveCall(liveClass);
+        this.setTab('live-classes');
+      }
+    });
+
     this.db.observeCurrentUser().subscribe(user => {
       // Clear last known state on user change to prevent toast duplicate triggers
       this.lastSubmissions = null;

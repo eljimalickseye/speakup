@@ -2169,6 +2169,32 @@ export class DatabaseService {
     }, 'active');
   }
 
+  async startAiPracticeCall(studentName: string) {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const timeStr = new Date().toTimeString().split(' ')[0].substring(0, 5);
+    return await this.scheduleClass({
+      title: `AI Practice: ${studentName}`,
+      description: `Private speaking practice room with speakUp-bot`,
+      date: todayStr,
+      time: timeStr,
+      duration: '60 mins',
+      group: 'AI-Practice'
+    }, 'active');
+  }
+
+  async startChannelLiveCall(channelId: string, channelName: string) {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const timeStr = new Date().toTimeString().split(' ')[0].substring(0, 5);
+    return await this.scheduleClass({
+      title: `Live Call: ${channelName}`,
+      description: `Private live session in channel #${channelName}`,
+      date: todayStr,
+      time: timeStr,
+      duration: '60 mins',
+      group: channelName
+    }, 'active');
+  }
+
   // --- ANNOUNCEMENT OPERATIONS ---
   observeAnnouncements(): Observable<Announcement[]> { return this.announcements$.asObservable(); }
 

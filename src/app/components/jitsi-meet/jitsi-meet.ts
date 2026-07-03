@@ -72,7 +72,12 @@ interface ParticipantModel {
               <div class="avatar-placeholder-container">
                 <div class="avatar-placeholder" [class.bot]="p.isBot">
                   @if (p.isBot) {
-                    🤖
+                    <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: white; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));">
+                      <path d="M12 8V4m0 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM5 8h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2z"/>
+                      <circle cx="8.5" cy="13" r="1.5" fill="currentColor"/>
+                      <circle cx="15.5" cy="13" r="1.5" fill="currentColor"/>
+                      <path d="M9 16h6"/>
+                    </svg>
                   } @else {
                     {{ p.name.slice(0,2).toUpperCase() }}
                   }

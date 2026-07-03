@@ -134,6 +134,12 @@ interface ChatMember {
                 </svg>
               </button>
 
+              <!-- Start Call button -->
+              <button (click)="startChannelLiveCall()" style="background:#EEF2FF; border:1px solid #4F46E5; color:#4F46E5; font-size:11px; padding:5px 12px; border-radius:20px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:5px; transition:all 0.2s" onmouseover="this.style.background='#E0DFFF'" onmouseout="this.style.background='#EEF2FF'">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                <span class="hide-mobile">{{ t('Lancer Live', 'Start Call') }}</span>
+              </button>
+
               <!-- Student indicator showing personal voice chat status -->
               @if (!isTeacher()) {
                 <span [style.color]="isVoiceChatAllowed() ? '#0D9488' : '#6B7280'" style="font-size:11px; font-weight:600; display:flex; align-items:center; gap:5px; background:var(--surface-2); padding:3px 8px; border-radius:20px; border:1px solid var(--border-weak)">
@@ -336,10 +342,28 @@ interface ChatMember {
                             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                           </a>
                         </div>
-                        } @else {
                         <div>
-                          <span style="white-space: pre-wrap; word-break: break-word;">{{ msg.content }}</span>
-                          @if (getYoutubeVideoId(msg.content); as ytId) {
+                          @if (msg.content.startsWith('[LIVE_CALL_INVITE:')) {
+                            <!-- Render Live Invite card -->
+                            <div class="live-invite-card" style="margin-top:6px; padding:16px; border-radius:12px; background:linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%); border:2px solid #4F46E5; display:flex; flex-direction:column; gap:12px; max-width:320px; box-shadow:0 8px 16px rgba(79, 70, 229, 0.1)">
+                              <div style="display:flex; align-items:center; gap:8px">
+                                <span style="background:#4F46E5; color:white; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                                </span>
+                                <div>
+                                  <div style="font-size:12px; font-weight:800; color:#1E1B4B">{{ t('Appel Vidéo en Direct', 'Live Video Call') }}</div>
+                                  <div style="font-size:10px; color:#4F46E5; font-weight:600">{{ t('Rejoignez la session maintenant !', 'Join the session now!') }}</div>
+                                </div>
+                              </div>
+                              <button (click)="joinCallFromInvite(msg.content)" style="width:100%; height:34px; background:#10B981; border:none; color:white; border-radius:8px; font-size:11px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 10px rgba(16,185,129,0.2); transition:all 0.2s" onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10B981'">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                                {{ t('Rejoindre le Live', 'Join Live Class') }}
+                              </button>
+                            </div>
+                          } @else {
+                            <span style="white-space: pre-wrap; word-break: break-word;">{{ msg.content }}</span>
+                          }
+                          @if (!msg.content.startsWith('[LIVE_CALL_INVITE:') && getYoutubeVideoId(msg.content); as ytId) {
                             <!-- YouTube Cinema Card -->
                             <div style="margin-top:10px; border-radius:14px; overflow:hidden; width:100%; max-width:340px; position:relative" class="yt-cinema-card">
 
@@ -2126,6 +2150,54 @@ export class StudentChatComponent implements OnDestroy {
         }
       }
     });
+  }
+
+  async startChannelLiveCall() {
+    const channelId = this.activeChannel();
+    const chan = this.channels().find(c => c.id === channelId);
+    if (!chan) return;
+
+    this.dialogService.confirm(
+      this.isTeacher() ? 'Démarrer un Appel Live' : 'Start Live Call',
+      this.isTeacher() 
+        ? `Voulez-vous démarrer un appel vidéo en direct dans le salon #${chan.name} ?` 
+        : `Would you like to start a live video call in #${chan.name}?`,
+      async () => {
+        try {
+          const liveClass = await this.db.startChannelLiveCall(chan.id, chan.name);
+          // Send invite message
+          const inviteText = `[LIVE_CALL_INVITE:${liveClass.id}:${liveClass.jitsiRoom}:${chan.name}]`;
+          await this.db.sendChatMessage(chan.id, inviteText);
+          
+          // Switch local user to the call immediately
+          window.dispatchEvent(new CustomEvent('join-live-call', { detail: { liveClass } }));
+        } catch (e: any) {
+          this.dialogService.alert('Error', e.message || 'Failed to start call.', 'info');
+        }
+      }
+    );
+  }
+
+  joinCallFromInvite(content: string) {
+    // Parse content: [LIVE_CALL_INVITE:classId:roomName:channelName]
+    const parts = content.slice(1, -1).split(':');
+    const classId = parts[1];
+    const roomName = parts[2];
+    const channelName = parts[3];
+
+    const liveClass = {
+      id: classId,
+      title: `Appel Direct - ${channelName}`,
+      description: 'Appel vidéo privé démarré depuis le chat.',
+      date: new Date().toISOString().split('T')[0],
+      time: new Date().toTimeString().split(' ')[0].substring(0, 5),
+      duration: '60 mins',
+      group: channelName,
+      status: 'active',
+      jitsiRoom: roomName
+    };
+
+    window.dispatchEvent(new CustomEvent('join-live-call', { detail: { liveClass } }));
   }
 
   async sendMessage() {
