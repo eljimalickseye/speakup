@@ -11,6 +11,6 @@ export const environment = {
   livekit: {
     url: "wss://anour-rv83fs3g.livekit.cloud",
     apiKey: "APIoCRJ6zVrNLK4",
-    apiSecret: "Abzk7T9VeFp0JplYrYsaRtFwWnsRLJnktmtFdMcw8TH"
+    apiSecret: "Abzk7T9VeFp0JpIYrYsaRtFwWnsRLJnktmtFdMcw8TH"
   }
 };
