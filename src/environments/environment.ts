@@ -7,5 +7,10 @@ export const environment = {
     storageBucket: "speak-upv2.firebasestorage.app",
     messagingSenderId: "930392539960",
     appId: "1:930392539960:web:3a1b716e4197152537b7cd"
+  },
+  livekit: {
+    url: "wss://anour-rv83fs3g.livekit.cloud",
+    apiKey: "APIFzYmZMh8Vhkx",
+    apiSecret: "7fSrcC9GrZrZIMKbRVsT8edfkl6HB3f6t5C8j0uyoqSkC"
   }
 };
