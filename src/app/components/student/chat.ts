@@ -60,15 +60,15 @@ interface ChatMember {
                     <span class="unread-badge">{{ unreadCounts()[chan.id] }}</span>
                   }
                 </button>
-                @if (isTeacher()) {
-                  <div class="channel-actions" style="display:flex; align-items:center; gap:4px; padding-right:6px">
+                @if (isTeacher() && chan.id !== 'general') {
+                  <div class="channel-actions" style="display:flex; align-items:center; gap:6px; padding-right:6px">
                     <button (click)="renameChannelPrompt(chan); $event.stopPropagation()" 
-                            style="background:none; border:none; cursor:pointer; color:#4F46E5; padding:4px; display:flex; align-items:center; border-radius:4px" 
+                            class="chan-action-btn edit-btn" 
                             title="Rename Channel">
                       <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                     </button>
                     <button (click)="removeChannel(chan); $event.stopPropagation()" 
-                            style="background:none; border:none; cursor:pointer; color:#EF4444; padding:4px; display:flex; align-items:center; border-radius:4px" 
+                            class="chan-action-btn delete-btn" 
                             title="Delete Channel">
                       <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                     </button>
@@ -896,6 +896,54 @@ interface ChatMember {
       opacity: 1;
       pointer-events: auto;
       transform: scale(1);
+    }
+
+    .chan-action-btn {
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid var(--border-weak);
+      cursor: pointer;
+      padding: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      width: 22px;
+      height: 22px;
+      transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .chan-action-btn:hover {
+      transform: translateY(-1px) scale(1.08);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .chan-action-btn:active {
+      transform: translateY(0) scale(0.95);
+    }
+
+    .chan-action-btn.edit-btn {
+      color: #4F46E5;
+      background: #EEF2FF;
+      border-color: #C7D2FE;
+    }
+    
+    .chan-action-btn.edit-btn:hover {
+      background: #4F46E5;
+      color: white;
+      border-color: #4F46E5;
+    }
+
+    .chan-action-btn.delete-btn {
+      color: #EF4444;
+      background: #FEF2F2;
+      border-color: #FCA5A5;
+    }
+    
+    .chan-action-btn.delete-btn:hover {
+      background: #EF4444;
+      color: white;
+      border-color: #EF4444;
     }
 
     .unread-badge {
