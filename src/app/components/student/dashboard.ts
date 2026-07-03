@@ -28,7 +28,7 @@ import { DialogService } from '../../services/dialog.service';
                   <path d="M12 9c2-2 4-2 6 0s2 4 0 6l-3 3" />
                   <path d="M19 5c1.5 1.5 1.5 3.5 0 5s-3.5 1.5-5 0-1.5-3.5 0-5 3.5-1.5 5 0z" />
                 </svg>
-                <h3 style="font-size:17px; font-weight:850; color:#1E1B4B; margin:0">{{ t('Évaluez votre niveau d\'anglais !', 'Determine your starting English Level!') }}</h3>
+                <h3 style="font-size:17px; font-weight:850; color:#1E1B4B; margin:0">{{ t("Évaluez votre niveau d'anglais !", "Determine your starting English Level!") }}</h3>
               </div>
               <p style="font-size:13px; color:#475569; margin:6px 0 0 0; line-height: 1.4">
                 {{ t('Passez ce test rapide pour évaluer vos compétences (A1, A2, B1, B2) et débloquer les cours correspondants.', 'Take this quick test to evaluate your skills (A1, A2, B1, B2) and unlock matching lessons!') }}
@@ -272,10 +272,10 @@ import { DialogService } from '../../services/dialog.service';
               {{ t('Parcours Académique', 'Academic Certificates') }}
             </span>
             <h3 style="font-size:15.5px; font-weight:800; color:#4C1D95; margin:6px 0 4px 0">
-              {{ t('Obtenez vos Certificats Officiels SpeakUp', 'Unlock Official SpeakUp Certificates') }}
+              {{ t("Obtenez vos Certificats Officiels SpeakUp", "Unlock Official SpeakUp Certificates") }}
             </h3>
             <p style="font-size:12.5px; color:#5B21B6; margin:0; line-height:1.4">
-              {{ t('Validez chaque niveau d\\'anglais (A1, A2, B1, B2) pour obtenir un certificat de compétence verifiable et l\\'ajouter directement à votre profil LinkedIn.', 'Pass each English level evaluation (A1, A2, B1, B2) to get a verifiable certificate of proficiency and add it directly to your LinkedIn profile.') }}
+              {{ t("Validez chaque niveau d'anglais (A1, A2, B1, B2) pour obtenir un certificat de compétence verifiable et l'ajouter directement à votre profil LinkedIn.", "Pass each English level evaluation (A1, A2, B1, B2) to get a verifiable certificate of proficiency and add it directly to your LinkedIn profile.") }}
             </p>
           </div>
 
