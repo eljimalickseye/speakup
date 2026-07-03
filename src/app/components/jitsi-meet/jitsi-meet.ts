@@ -38,13 +38,19 @@ interface ParticipantModel {
         </span>
         
         <div class="center-status-badge">
-          @if (isBotOnline()) {
-            <span class="status-indicator bot-online">
-              <span class="pulse-dot"></span> AI Assistant Connected
-            </span>
+          @if (expectsBot()) {
+            @if (isBotOnline()) {
+              <span class="status-indicator bot-online">
+                <span class="pulse-dot"></span> AI Assistant Connected
+              </span>
+            } @else {
+              <span class="status-indicator bot-connecting">
+                <span class="loading-spin"></span> AI Agent Starting...
+              </span>
+            }
           } @else {
-            <span class="status-indicator bot-connecting">
-              <span class="loading-spin"></span> AI Agent Starting...
+            <span class="status-indicator active" style="background: rgba(16, 185, 129, 0.15); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.3)">
+              <span class="pulse-dot" style="background: #10B981"></span> Session Active
             </span>
           }
         </div>
@@ -733,6 +739,11 @@ export class JitsiMeet implements AfterViewInit, OnDestroy {
         container.appendChild(el);
       }
     }, 100);
+  }
+
+  expectsBot(): boolean {
+    return this.roomName.toLowerCase().includes('practice') || 
+           this.roomName.toLowerCase().includes('bot');
   }
 
   isBotOnline(): boolean {

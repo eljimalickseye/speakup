@@ -1276,6 +1276,19 @@ export class LayoutComponent {
   }
 
   async triggerInstantLive() {
+    // Check if there is an active live class already
+    const list = await new Promise<LiveClass[]>((resolve) => {
+      const sub = this.db.observeSchedules().subscribe(fresh => {
+        sub.unsubscribe();
+        resolve(fresh);
+      });
+    });
+    const active = list.find(c => c.status === 'active');
+    if (active) {
+      this.joinLiveCall(active);
+      return;
+    }
+
     this.dialogService.confirm(
       'Start Instant Live Class',
       'Would you like to start a live meeting session instantly?',
