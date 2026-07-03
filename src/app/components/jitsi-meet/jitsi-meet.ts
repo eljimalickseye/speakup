@@ -177,7 +177,7 @@ interface ParticipantModel {
       display: flex;
       flex-direction: column;
       height: 100%;
-      min-height: 540px;
+      min-height: 0;
       background: #0B0F19;
       border-radius: 16px;
       overflow: hidden;
