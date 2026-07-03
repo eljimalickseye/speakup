@@ -188,22 +188,24 @@ import { DialogService } from '../../services/dialog.service';
         </p>
 
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px">
-          <!-- 1. AI Practice Live -->
-          <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); padding: 16px; border-radius: 12px; display: flex; flex-direction: column; justify-content: space-between; gap: 12px">
-            <div>
-              <div style="font-size: 13px; font-weight: 800; color: #E2E8F0; display: flex; align-items: center; gap: 6px">
-                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#A78BFA" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4m0 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM5 8h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2z"/><circle cx="8.5" cy="13.5" r="1.5" fill="#A78BFA"/><circle cx="15.5" cy="13.5" r="1.5" fill="#A78BFA"/><path d="M9 17h6"/></svg>
-                <span>{{ t("Tête-à-tête avec l'IA", "One-on-One with AI") }}</span>
+          <!-- 1. AI Practice Live (Hidden during testing) -->
+          @if (false) {
+            <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); padding: 16px; border-radius: 12px; display: flex; flex-direction: column; justify-content: space-between; gap: 12px">
+              <div>
+                <div style="font-size: 13px; font-weight: 800; color: #E2E8F0; display: flex; align-items: center; gap: 6px">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#A78BFA" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4m0 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM5 8h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2z"/><circle cx="8.5" cy="13.5" r="1.5" fill="#A78BFA"/><circle cx="15.5" cy="13.5" r="1.5" fill="#A78BFA"/><path d="M9 17h6"/></svg>
+                  <span>{{ t("Tête-à-tête avec l'IA", "One-on-One with AI") }}</span>
+                </div>
+                <p style="font-size: 11px; color: #94A3B8; margin: 4px 0 0 0">
+                  {{ t('Session vocale privée avec speakUp-bot pour parler anglais sans stress.', 'Private voice room with speakUp-bot to practice speaking without stress.') }}
+                </p>
               </div>
-              <p style="font-size: 11px; color: #94A3B8; margin: 4px 0 0 0">
-                {{ t('Session vocale privée avec speakUp-bot pour parler anglais sans stress.', 'Private voice room with speakUp-bot to practice speaking without stress.') }}
-              </p>
+              <button (click)="startAiPractice()" style="width: 100%; height: 32px; background: linear-gradient(90deg, #7C3AED, #DB2777); border: none; color: white; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 10px rgba(124, 58, 237, 0.25)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+                <span>{{ t("S'entraîner avec l'IA", "Practice with AI") }}</span>
+              </button>
             </div>
-            <button (click)="startAiPractice()" style="width: 100%; height: 32px; background: linear-gradient(90deg, #7C3AED, #DB2777); border: none; color: white; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 10px rgba(124, 58, 237, 0.25)">
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
-              <span>{{ t("S'entraîner avec l'IA", "Practice with AI") }}</span>
-            </button>
-          </div>
+          }
 
           <!-- 2. Active Group Live Class -->
           <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); padding: 16px; border-radius: 12px; display: flex; flex-direction: column; justify-content: space-between; gap: 12px">
