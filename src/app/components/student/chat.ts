@@ -50,7 +50,12 @@ interface ChatMember {
           
           <div class="channel-list">
             @for (chan of visibleChannels(); track chan.id) {
-              <div class="channel-row" [class.active]="activeChannel() === chan.id" style="display:flex; justify-content:space-between; align-items:center; width:100%; position:relative; border-radius:8px; transition:background 0.15s">
+              <div class="channel-row" 
+                   [class.active]="activeChannel() === chan.id" 
+                   [attr.draggable]="isTeacher() ? 'true' : null"
+                   (dragstart)="onChannelDragStart($event, chan)"
+                   (dragend)="onChannelDragEnd($event)"
+                   style="display:flex; justify-content:space-between; align-items:center; width:100%; position:relative; border-radius:8px; transition:background 0.15s; cursor:grab">
                 <button class="channel-btn" style="flex:1; text-align:left; overflow:hidden; text-overflow:ellipsis; border:none; background:transparent" [class.active]="activeChannel() === chan.id" (click)="switchChannel(chan.id)">
                   <span class="hashtag">#</span> {{ chan.name }}
                   @if (chan.isPrivate) {
@@ -77,6 +82,16 @@ interface ChatMember {
               </div>
             }
           </div>
+          @if (isDraggingChannel() && isTeacher()) {
+            <div class="channel-trash-dropzone"
+                 [class.drag-over]="isDragOverTrash()"
+                 (dragover)="onTrashDragOver($event)"
+                 (dragleave)="isDragOverTrash.set(false)"
+                 (drop)="onTrashDrop($event)">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="trash-icon"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+              <span>{{ t('Déposer ici pour supprimer', 'Drop here to delete') }}</span>
+            </div>
+          }
           @if (!isTeacher()) {
             <div style="padding:12px; border-top:1px dashed var(--border-weak)">
               <button (click)="startConversationWithTeacher()" style="width:100%; height:36px; background:#0D9488; border-color:#0D9488; color:white; border:none; border-radius:8px; font-size:11px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; box-shadow:0 4px 6px rgba(13,148,136,0.12)">
@@ -958,6 +973,42 @@ interface ChatMember {
       text-align: center;
     }
 
+    .channel-trash-dropzone {
+      margin: 12px;
+      padding: 16px;
+      border: 2px dashed #EF4444;
+      background: #FEF2F2;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: #EF4444;
+      font-size: 11px;
+      font-weight: 700;
+      transition: all 0.2s ease-in-out;
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.08);
+      animation: pulse-trash 1.5s infinite alternate;
+    }
+
+    .channel-trash-dropzone.drag-over {
+      background: #EF4444 !important;
+      color: white !important;
+      border-style: solid;
+      transform: scale(1.04);
+      box-shadow: 0 6px 16px rgba(239, 68, 68, 0.2);
+    }
+
+    .channel-trash-dropzone.drag-over .trash-icon {
+      transform: scale(1.2);
+    }
+
+    @keyframes pulse-trash {
+      from { border-color: #FCA5A5; }
+      to { border-color: #EF4444; }
+    }
+
     .hashtag {
       font-size: 14px;
       font-weight: 500;
@@ -1622,6 +1673,11 @@ export class StudentChatComponent implements OnDestroy {
   private db = inject(DatabaseService);
   private dialogService = inject(DialogService);
 
+  activeLang = this.db.activeLang;
+  t(fr: string, en: string): string {
+    return this.activeLang() === 'fr' ? fr : en;
+  }
+
   @ViewChild('scrollContainer') private scrollContainer!: ElementRef;
 
   activeChannel = signal<string>('general');
@@ -1642,6 +1698,11 @@ export class StudentChatComponent implements OnDestroy {
   newChanSelectedStudents = signal<string[]>([]);
   showMembersMobile = signal<boolean>(false);
   showAddMemberModal = signal<boolean>(false);
+  
+  // Drag and drop deletion signals
+  isDraggingChannel = signal<boolean>(false);
+  draggedChannel = signal<ChatChannel | null>(null);
+  isDragOverTrash = signal<boolean>(false);
   
   // Safety & abuse reporting signals
   showSecurityPolicy = signal<boolean>(false);
@@ -1844,11 +1905,16 @@ export class StudentChatComponent implements OnDestroy {
   }
 
   removeChannel(chan: ChatChannel) {
+    const isGeneral = chan.id === 'general';
+    const message = isGeneral 
+      ? this.t('⚠️ Attention : Vous êtes sur le point de supprimer le salon Général principal. Tous les messages du canal général seront définitivement effacés. Êtes-vous absolument sûr ?', '⚠️ Warning: You are about to delete the main General channel. All messages inside it will be permanently lost. Are you absolutely sure?')
+      : `Are you sure you want to delete the channel #${chan.name}? This will remove all messages inside it.`;
+
     this.dialogService.show({
-      title: 'Close Chat Room',
-      message: `Are you sure you want to delete the channel #${chan.name}? This will remove all messages inside it.`,
+      title: isGeneral ? '🚨 Delete General Room 🚨' : 'Close Chat Room',
+      message,
       type: 'confirm',
-      confirmText: 'Delete Room',
+      confirmText: isGeneral ? this.t('Oui, supprimer', 'Yes, delete general') : 'Delete Room',
       cancelText: 'Cancel',
       onConfirm: () => {
         const remaining = this.channels().filter(c => c.id !== chan.id);
@@ -1859,6 +1925,33 @@ export class StudentChatComponent implements OnDestroy {
         this.dialogService.alert('Deleted', 'Chat room deleted successfully!', 'success');
       }
     });
+  }
+
+  onChannelDragStart(event: DragEvent, chan: ChatChannel) {
+    event.dataTransfer?.setData('text/plain', chan.id);
+    this.isDraggingChannel.set(true);
+    this.draggedChannel.set(chan);
+  }
+
+  onChannelDragEnd(event: DragEvent) {
+    this.isDraggingChannel.set(false);
+    this.draggedChannel.set(null);
+    this.isDragOverTrash.set(false);
+  }
+
+  onTrashDragOver(event: DragEvent) {
+    event.preventDefault();
+    this.isDragOverTrash.set(true);
+  }
+
+  onTrashDrop(event: DragEvent) {
+    event.preventDefault();
+    this.isDragOverTrash.set(false);
+    this.isDraggingChannel.set(false);
+    const chan = this.draggedChannel();
+    if (chan) {
+      this.removeChannel(chan);
+    }
   }
 
   renameChannelPrompt(chan: ChatChannel) {

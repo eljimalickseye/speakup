@@ -134,7 +134,12 @@ interface QuestionDraft {
 
             <!-- Table Rows -->
             @for (student of testCandidates(); track student.id) {
-              <div class="row-item" style="display:grid; grid-template-columns: 180px 100px 110px 100px 140px 1fr; gap:12px; padding:12px 10px; border-bottom:1px solid var(--border-weak); align-items:center">
+              <div class="row-item" 
+                   draggable="true" 
+                   (dragstart)="onCandidateDragStart($event, student)" 
+                   (dragend)="onCandidateDragEnd($event)"
+                   style="display:grid; grid-template-columns: 180px 100px 110px 100px 140px 1fr; gap:12px; padding:12px 10px; border-bottom:1px solid var(--border-weak); align-items:center; cursor:grab; transition:background 0.15s"
+                   [style.background]="draggedCandidate()?.id === student.id ? 'var(--surface-2)' : 'transparent'">
                 <div style="display:flex; align-items:center; gap:8px">
                   <div class="avatar" style="width:28px; height:28px; font-size:11px; background:#4F46E5; color:white">
                     {{ student.avatar || student.name.slice(0,2).toUpperCase() }}
@@ -191,6 +196,17 @@ interface QuestionDraft {
               </div>
             }
           </div>
+          
+          @if (isDraggingCandidate()) {
+            <div class="candidate-trash-dropzone"
+                 [class.drag-over]="isDragOverTrash()"
+                 (dragover)="onTrashDragOver($event)"
+                 (dragleave)="isDragOverTrash.set(false)"
+                 (drop)="onCandidateTrashDrop($event)">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="trash-icon"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+              <span>{{ t('Glisser l\'étudiant ici pour réinitialiser son test de niveau', 'Drag the student here to reset their placement test') }}</span>
+            </div>
+          }
         </div>
       }
 
@@ -366,6 +382,42 @@ interface QuestionDraft {
       background: white; border-radius: 12px; max-width: 600px; width: 95%;
       max-height: 85vh; overflow-y: auto; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
     }
+
+    .candidate-trash-dropzone {
+      margin-top: 20px;
+      padding: 20px;
+      border: 2px dashed #EF4444;
+      background: #FEF2F2;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: #EF4444;
+      font-size: 13px;
+      font-weight: 700;
+      transition: all 0.2s ease-in-out;
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.08);
+      animation: pulse-trash-test 1.5s infinite alternate;
+    }
+
+    .candidate-trash-dropzone.drag-over {
+      background: #EF4444 !important;
+      color: white !important;
+      border-style: solid;
+      transform: scale(1.02);
+      box-shadow: 0 8px 24px rgba(239, 68, 68, 0.2);
+    }
+
+    .candidate-trash-dropzone.drag-over .trash-icon {
+      transform: scale(1.2);
+    }
+
+    @keyframes pulse-trash-test {
+      from { border-color: #FCA5A5; }
+      to { border-color: #EF4444; }
+    }
   `]
 })
 export class TeacherPlacementTestsComponent {
@@ -377,6 +429,11 @@ export class TeacherPlacementTestsComponent {
   
   quizzes = signal<Quiz[]>([]);
   allUsers = signal<UserProfile[]>([]);
+
+  // Drag and drop candidate reset signals
+  isDraggingCandidate = signal<boolean>(false);
+  draggedCandidate = signal<UserProfile | null>(null);
+  isDragOverTrash = signal<boolean>(false);
   
   activeLang = this.db.activeLang;
 
@@ -562,5 +619,50 @@ export class TeacherPlacementTestsComponent {
       return '#white';
     }
     return '#4F46E5';
+  }
+
+  onCandidateDragStart(event: DragEvent, student: UserProfile) {
+    event.dataTransfer?.setData('text/plain', student.id);
+    this.isDraggingCandidate.set(true);
+    this.draggedCandidate.set(student);
+  }
+
+  onCandidateDragEnd(event: DragEvent) {
+    this.isDraggingCandidate.set(false);
+    this.draggedCandidate.set(null);
+    this.isDragOverTrash.set(false);
+  }
+
+  onTrashDragOver(event: DragEvent) {
+    event.preventDefault();
+    this.isDragOverTrash.set(true);
+  }
+
+  onCandidateTrashDrop(event: DragEvent) {
+    event.preventDefault();
+    this.isDragOverTrash.set(false);
+    this.isDraggingCandidate.set(false);
+    const student = this.draggedCandidate();
+    if (!student) return;
+
+    this.dialogService.show({
+      title: this.t("Réinitialiser le Test", "Reset Test"),
+      message: this.t(`Voulez-vous vraiment réinitialiser les résultats de ${student.name} ? L'étudiant devra repasser le test de niveau.`, `Are you sure you want to reset the test results for ${student.name}? They will have to retake the placement test.`),
+      type: 'confirm',
+      confirmText: this.t('Réinitialiser', 'Reset'),
+      cancelText: this.t('Annuler', 'Cancel'),
+      onConfirm: async () => {
+        await this.db.updateUserProfile(student.id, {
+          placementTestTaken: false,
+          placementTestScore: undefined,
+          placementTestAnswers: undefined
+        });
+        this.dialogService.alert(
+          this.t('Réinitialisé', 'Reset Complete'),
+          this.t('Le test a été réinitialisé avec succès.', 'The test has been successfully reset.'),
+          'success'
+        );
+      }
+    });
   }
 }
