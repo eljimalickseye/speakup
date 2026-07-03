@@ -245,7 +245,7 @@ export class JitsiMeet implements AfterViewInit, OnDestroy {
     const configOverwrite: any = {
       startWithAudioMuted: false,
       startWithVideoMuted: false,
-      prejoinPageEnabled: true,
+      prejoinPageEnabled: false,
       disableDeepLinking: true,
       whiteboard: {
         enabled: true
@@ -300,6 +300,19 @@ export class JitsiMeet implements AfterViewInit, OnDestroy {
     try {
       this.api = new constructor(domain, options);
       this.statusText = 'In progress';
+
+      // Fix microphone/camera access in cross-origin iframe by forcing allow attribute on the generated iframe
+      setTimeout(() => {
+        try {
+          const iframe = this.jitsiContainer.nativeElement.querySelector('iframe');
+          if (iframe) {
+            iframe.setAttribute('allow', 'camera; microphone; display-capture; autoplay; clipboard-write; websocket');
+            console.log('Successfully injected cross-origin media permission policies onto Jitsi iframe.');
+          }
+        } catch (err) {
+          console.warn('Failed to inject permission policies onto Jitsi iframe:', err);
+        }
+      }, 500);
 
       this.api.addEventListeners({
         readyToClose: () => {

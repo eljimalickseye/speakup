@@ -411,8 +411,11 @@ export interface ChatMessage {
   senderName: string;
   content: string;
   timestamp: string;
-  type?: 'text' | 'audio' | 'video';
+  type?: 'text' | 'audio' | 'video' | 'image' | 'file';
   audioUrl?: string;
+  fileName?: string;
+  fileSize?: string;
+  reactions?: { [emoji: string]: string[] }; // emoji -> array of user IDs who reacted
 }
 
 export interface ChatChannel {
@@ -668,7 +671,7 @@ export class DatabaseService {
     const announcements = getLocal('speak_announcements', defaultAnnouncements);
     const payments = getLocal('speak_payments', defaultPayments);
     const events = getLocal('speak_events', defaultEvents);
-    const channels = getLocal('speak_channels', defaultChannels).filter((c: any) => c.id === 'general' || c.isPrivate);
+    const channels = getLocal('speak_channels', defaultChannels);
     localStorage.setItem('speak_channels', JSON.stringify(channels));
 
     const defaultRewards: LeaderboardReward[] = [
@@ -1176,23 +1179,6 @@ export class DatabaseService {
         list.push(chan);
       }
       if (list.length > 0) {
-        // Ensure the 4 default public channels always exist (add missing ones)
-        const defaults: ChatChannel[] = [
-          { id: 'general', name: 'general' },
-          { id: 'group-a', name: 'study-group-a' },
-          { id: 'travel', name: 'travel-dialogue' },
-          { id: 'debate', name: 'debate-club' }
-        ];
-        for (const def of defaults) {
-          if (!list.find(c => c.id === def.id)) {
-            list.push(def);
-            try {
-              await setDoc(doc(this.firestore, 'channels', def.id), def);
-            } catch (e) {
-              console.warn('Could not add missing default channel', def.id, e);
-            }
-          }
-        }
         this.channels$.next(list);
       } else {
         // Firestore channels collection is empty: seed default channels
@@ -2765,7 +2751,10 @@ export class DatabaseService {
               content: data['content'],
               timestamp: data['timestamp'],
               type: data['type'] || 'text',
-              audioUrl: data['audioUrl']
+              audioUrl: data['audioUrl'],
+              fileName: data['fileName'],
+              fileSize: data['fileSize'],
+              reactions: data['reactions']
             });
           });
           chatSubject.next(messages);
@@ -2848,6 +2837,52 @@ export class DatabaseService {
     await this.logAction('message_sent', `Message envoyé dans #${channelId} (${type === 'audio' ? 'Vocal' : 'Texte'})`, channelId);
   }
 
+  async sendChatMessageWithAttachment(channelId: string, content: string, type: 'image' | 'file', fileName: string, fileSize: string) {
+    const active = this.currentUser$.value;
+    if (!active) return;
+
+    if (active.role !== 'admin' && active.role !== 'teacher') {
+      const channel = this.channels$.value.find(c => c.id === channelId);
+      if (channel) {
+        const members = channel.members || [];
+        if (!members.includes(active.id)) {
+          throw new Error("Vous n'êtes pas membre de ce groupe.");
+        }
+      }
+    }
+
+    const newMessage: ChatMessage = {
+      id: 'msg_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9),
+      senderId: active.id,
+      senderName: active.name,
+      content,
+      timestamp: new Date().toISOString(),
+      type,
+      fileName,
+      fileSize
+    };
+
+    if (this.useFirebase) {
+      try {
+        const messagesCol = collection(this.firestore, 'chat', channelId, 'messages');
+        await addDoc(messagesCol, newMessage);
+        await this.logAction('message_sent', `Fichier envoyé dans #${channelId} (${fileName})`, channelId);
+        return;
+      } catch (e) {
+        console.warn('Firestore send file failed. Falling back to local.', e);
+      }
+    }
+
+    // Local Storage Fallback
+    const key = `speak_chat_${channelId}`;
+    const data = localStorage.getItem(key);
+    const messages = data ? JSON.parse(data) : [];
+    messages.push(newMessage);
+    localStorage.setItem(key, JSON.stringify(messages));
+    window.dispatchEvent(new CustomEvent('local-chat-update', { detail: { channelId } }));
+    await this.logAction('message_sent', `Fichier envoyé dans #${channelId} (${fileName})`, channelId);
+  }
+
   async deleteChatMessage(channelId: string, messageId: string) {
     if (this.useFirebase) {
       try {
@@ -2869,6 +2904,67 @@ export class DatabaseService {
       }));
       const filtered = sanitized.filter(m => m.id !== messageId);
       localStorage.setItem(key, JSON.stringify(filtered));
+      window.dispatchEvent(new CustomEvent('local-chat-update', { detail: { channelId } }));
+    }
+  }
+
+  async toggleMessageReaction(channelId: string, messageId: string, emoji: string, userId: string): Promise<void> {
+    if (this.useFirebase) {
+      try {
+        const msgDocRef = doc(this.firestore, 'chat', channelId, 'messages', messageId);
+        const snap = await getDoc(msgDocRef);
+        if (snap.exists()) {
+          const data = snap.data() as any;
+          const reactions = { ...(data.reactions || {}) };
+          const existed = (data.reactions?.[emoji] || []).includes(userId);
+
+          // Clear user from all other reactions
+          Object.keys(reactions).forEach(k => {
+            reactions[k] = (reactions[k] || []).filter((id: string) => id !== userId);
+            if (reactions[k].length === 0) {
+              delete reactions[k];
+            }
+          });
+
+          // Toggle current one
+          if (!existed) {
+            if (!reactions[emoji]) reactions[emoji] = [];
+            reactions[emoji].push(userId);
+          }
+
+          await updateDoc(msgDocRef, { reactions });
+        }
+        return;
+      } catch (e) {
+        console.warn('Firestore reaction failed. Falling back to local.', e);
+      }
+    }
+
+    // Local Storage Fallback
+    const key = `speak_chat_${channelId}`;
+    const data = localStorage.getItem(key);
+    if (data) {
+      const messages: ChatMessage[] = JSON.parse(data);
+      const msg = messages.find(m => m.id === messageId);
+      if (msg) {
+        if (!msg.reactions) msg.reactions = {};
+        const existed = (msg.reactions[emoji] || []).includes(userId);
+
+        // Clear user from all other reactions
+        Object.keys(msg.reactions).forEach(k => {
+          msg.reactions![k] = (msg.reactions![k] || []).filter(id => id !== userId);
+          if (msg.reactions![k].length === 0) {
+            delete msg.reactions![k];
+          }
+        });
+
+        // Toggle current one
+        if (!existed) {
+          if (!msg.reactions[emoji]) msg.reactions[emoji] = [];
+          msg.reactions[emoji].push(userId);
+        }
+      }
+      localStorage.setItem(key, JSON.stringify(messages));
       window.dispatchEvent(new CustomEvent('local-chat-update', { detail: { channelId } }));
     }
   }
@@ -3010,6 +3106,21 @@ export class DatabaseService {
       }
     }
     await this.logAction('create_group', `Groupe supprimé : "#${name}"`, id);
+  }
+
+  async renameChannel(id: string, newName: string) {
+    const list = this.channels$.value.map(c => c.id === id ? { ...c, name: newName } : c);
+    this.channels$.next(list);
+    this.saveLocal('speak_channels', list);
+
+    if (this.useFirebase) {
+      try {
+        await updateDoc(doc(this.firestore, 'channels', id), { name: newName });
+      } catch (e) {
+        console.warn('Firestore rename channel failed.', e);
+      }
+    }
+    await this.logAction('create_group', `Groupe renommé en : "#${newName}"`, id);
   }
 
   countryCodeToEmoji(code: string): string {

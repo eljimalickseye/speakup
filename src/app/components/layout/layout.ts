@@ -258,7 +258,7 @@ import { HistoryLogsComponent } from '../shared/history-logs';
               {{ t('Test de Niveau', 'Placement Test') }}
             </button>
             <button class="ni" [class.active]="activeTab === 'exercises-manager'" (click)="setTab('exercises-manager')">
-              <i class="ti ti-dumbbell" aria-hidden="true"></i>{{ t('Gérer les Exercices', 'Exercises Manager') }}
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px;flex-shrink:0"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><polyline points="9 12 11 14 15 10"/><line x1="9" y1="17" x2="15" y2="17"/></svg>{{ t('Gérer les Exercices', 'Exercises Manager') }}
             </button>
             <button class="ni" [class.active]="activeTab === 'vocab-games'" (click)="setTab('vocab-games')">
               <i class="ti ti-cards" aria-hidden="true"></i>{{ t('Jeux de Vocabulaire', 'Vocabulary Games') }}
@@ -344,14 +344,11 @@ import { HistoryLogsComponent } from '../shared/history-logs';
           <!-- Real-time notifications bell -->
           <app-notifications style="margin-right: 12px;"></app-notifications>
           
-          <!-- Live Button + Reset DB (Teacher only) -->
+          <!-- Live Button (Teacher only) -->
           @if (currentUser()?.role === 'teacher') {
             <button class="btn-s hide-mobile" (click)="triggerInstantLive()" style="font-size:11px; padding:4px 14px; border-radius:20px; display:flex; align-items:center; gap:6px; margin-right:10px; background:#EEF2FF; border-color:#4F46E5; color:#4F46E5; font-weight:700">
               <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7a2 2 0 0 0-2-2H3a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V7Z"/><path d="M12 9v6"/><path d="M9 12h6"/></svg>
               Activer le Live
-            </button>
-            <button class="btn-s hide-mobile" style="font-size: 11px; padding: 4px 12px; border-radius: 20px; display:flex; align-items:center; gap:4px; margin-right: 12px; border-color:#D97706; color:#D97706" (click)="resetDB()">
-              <i class="ti ti-refresh" aria-hidden="true"></i> {{ t('Reset DB', 'Reset DB') }}
             </button>
           }
 
@@ -596,6 +593,21 @@ import { HistoryLogsComponent } from '../shared/history-logs';
                   <div style="font-size:10px; color:#6B7280; margin-top:4px; line-height:1.4">
                     When checked, students will only see "Student Login". Teachers can show it again via this settings.
                   </div>
+                </div>
+
+                <!-- Database Actions (Accidental-proof) -->
+                <div class="input-row" style="background:#FEF2F2; border:1px solid #FEE2E2; padding:12px; border-radius:8px; margin-top:8px">
+                  <label style="color:#DC2626; font-weight:700; display:flex; align-items:center; gap:4px">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <span>{{ t('Administration Base de Données', 'Database Maintenance') }}</span>
+                  </label>
+                  <p style="font-size:10px; color:#991B1B; margin:4px 0 8px 0; line-height:1.4">
+                    {{ t('Attention: Cette action effacera toutes les modifications locales (cours, élèves, exercices) et réinitialisera la base de données.', 'Warning: This action will erase all local modifications (lessons, students, exercises) and reset the database.') }}
+                  </p>
+                  <button class="btn-s" style="border-color:#EF4444; color:#EF4444; background:white; font-size:11px; padding:6px 12px; font-weight:700; width:100%; display:flex; align-items:center; justify-content:center; gap:4px; cursor:pointer" (click)="resetDB(); closeProfileEditor()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                    {{ t('Réinitialiser la Base de Données', 'Reset Database') }}
+                  </button>
                 </div>
               }
 

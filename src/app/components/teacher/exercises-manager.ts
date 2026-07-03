@@ -56,7 +56,7 @@ import { DialogService } from '../../services/dialog.service';
                       style="padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); display: flex; align-items: center; gap: 4px; transition: all 0.2s;"
                       [style.background]="filterType() === typeItem.value ? typeItem.color : 'var(--surface-2)'"
                       [style.color]="filterType() === typeItem.value ? '#fff' : 'var(--text-secondary)'">
-                <span>{{ typeItem.emoji }}</span>
+                <span style="display:flex; align-items:center" [innerHTML]="typeItem.svg"></span>
                 <span>
                   {{ typeItem.value === 'writing' ? t('Rédaction', 'Writing') : 
                      typeItem.value === 'speaking' ? t('Expression Orale', 'Speaking') : 
@@ -79,7 +79,7 @@ import { DialogService } from '../../services/dialog.service';
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                       <span [style.background]="getTypeColor(ex.type) + '15'" [style.color]="getTypeColor(ex.type)"
                             style="padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; display: flex; align-items: center; gap: 4px;">
-                        <span>{{ getTypeEmoji(ex.type) }}</span>
+                        <span style="display:inline-flex; align-items:center" [innerHTML]="getTypeSvg(ex.type)"></span>
                         <span style="text-transform: capitalize;">
                           {{ ex.type === 'writing' ? t('Rédaction', 'Writing') : 
                              ex.type === 'speaking' ? t('Expression Orale', 'Speaking') : 
@@ -160,43 +160,65 @@ import { DialogService } from '../../services/dialog.service';
           <!-- STEP 1: CHOOSE TYPE (Only if creating new) -->
           @if (!selectedExerciseId() && currentStep() === 1) {
             <div>
-              <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 12px;">{{ labels().step1Label }}</label>
+              <div style="margin-bottom: 20px;">
+                <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px;">{{ labels().step1Label }}</label>
+                <p style="font-size: 13px; color: var(--text-secondary); margin: 0;">{{ t('Choisissez le type de compétence que vous souhaitez entraîner.', 'Choose the skill type you want to train.') }}</p>
+              </div>
               
-              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px;">
+              <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; margin-bottom: 24px;">
                 @for (typeItem of typesList; track typeItem.value) {
                   <div (click)="selectType(typeItem.value)"
-                       style="border: 2px solid var(--border); border-radius: 12px; padding: 16px; cursor: pointer; transition: all 0.2s; position: relative;"
+                       style="border: 2px solid var(--border); border-radius: 16px; padding: 20px 16px 16px; cursor: pointer; transition: all 0.22s cubic-bezier(.4,0,.2,1); position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: flex-start; gap: 12px;"
                        [style.border-color]="selectedType() === typeItem.value ? typeItem.color : 'var(--border)'"
-                       [style.background]="selectedType() === typeItem.value ? typeItem.color + '0a' : 'var(--surface-2)'">
-                    <div style="font-size: 28px; margin-bottom: 10px;">{{ typeItem.emoji }}</div>
-                    <h4 style="font-size: 14px; font-weight: 700; color: var(--text-primary); margin: 0 0 4px 0;">
-                      {{ typeItem.value === 'writing' ? t('Rédaction', 'Writing') : 
-                         typeItem.value === 'speaking' ? t('Expression Orale', 'Speaking') : 
-                         typeItem.value === 'listening' ? t('Compréhension Orale', 'Listening') : 
-                         typeItem.value === 'translation' ? t('Traduction', 'Translation') : 
-                         typeItem.value === 'pronunciation' ? t('Prononciation', 'Pronunciation') : 
-                         t('Vocabulaire', 'Vocabulary') }}
-                    </h4>
-                    <p style="font-size: 11px; color: var(--text-muted); margin: 0; line-height: 1.4;">
-                      {{ t(
-                        typeItem.value === 'writing' ? 'Sujets rédigés libres avec correction manuelle.' :
-                        typeItem.value === 'speaking' ? 'Entraînement oraux libres ou audio prompts.' :
-                        typeItem.value === 'listening' ? 'Vidéo YouTube avec résumé/questions ou réponse libre.' :
-                        typeItem.value === 'translation' ? 'Passages FR ➔ EN ou EN ➔ FR à traduire.' :
-                        typeItem.value === 'pronunciation' ? 'Texte à prononcer avec enregistrement audio.' :
-                        'Thème et liste de vocabulaire avec exercices associés.',
-                        typeItem.value === 'writing' ? 'Free writing subjects with manual grading.' :
-                        typeItem.value === 'speaking' ? 'Free speaking practice or audio prompts.' :
-                        typeItem.value === 'listening' ? 'YouTube video with summary/questions or free response.' :
-                        typeItem.value === 'translation' ? 'French ➔ English or English ➔ French passages to translate.' :
-                        typeItem.value === 'pronunciation' ? 'Text to read aloud with audio recording.' :
-                        'Theme and list of vocabulary words with practice exercises.'
-                      ) }}
-                    </p>
+                       [style.background]="selectedType() === typeItem.value ? typeItem.color + '10' : 'var(--surface-2)'"
+                       [style.box-shadow]="selectedType() === typeItem.value ? '0 4px 20px ' + typeItem.color + '30' : 'none'">
+
+                    <!-- Decorative glow blob -->
+                    <div style="position:absolute; top:-20px; right:-20px; width:80px; height:80px; border-radius:50%; pointer-events:none; transition: opacity 0.22s;"
+                         [style.background]="typeItem.color + '18'"
+                         [style.opacity]="selectedType() === typeItem.value ? '1' : '0.4'"></div>
+
+                    <!-- Icon bubble -->
+                    <div style="width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink:0; transition: transform 0.22s;"
+                         [style.background]="typeItem.color + '18'"
+                         [style.transform]="selectedType() === typeItem.value ? 'scale(1.08)' : 'scale(1)'"
+                         [innerHTML]="typeItem.svgLarge">
+                    </div>
+
+                    <!-- Text -->
+                    <div style="flex:1;">
+                      <h4 style="font-size: 14px; font-weight: 700; margin: 0 0 5px 0; line-height: 1.2;"
+                          [style.color]="selectedType() === typeItem.value ? typeItem.color : 'var(--text-primary)'">
+                        {{ typeItem.value === 'writing' ? t('Rédaction', 'Writing') : 
+                           typeItem.value === 'speaking' ? t('Expression Orale', 'Speaking') : 
+                           typeItem.value === 'listening' ? t('Compréhension Orale', 'Listening') : 
+                           typeItem.value === 'translation' ? t('Traduction', 'Translation') : 
+                           typeItem.value === 'pronunciation' ? t('Prononciation', 'Pronunciation') : 
+                           t('Vocabulaire', 'Vocabulary') }}
+                      </h4>
+                      <p style="font-size: 11.5px; color: var(--text-muted); margin: 0; line-height: 1.5;">
+                        {{ t(
+                          typeItem.value === 'writing' ? 'Sujets rédigés libres avec correction manuelle.' :
+                          typeItem.value === 'speaking' ? 'Entraînement oraux libres ou audio prompts.' :
+                          typeItem.value === 'listening' ? 'Vidéo YouTube avec résumé/questions ou réponse libre.' :
+                          typeItem.value === 'translation' ? 'Passages FR ➔ EN ou EN ➔ FR à traduire.' :
+                          typeItem.value === 'pronunciation' ? 'Texte à prononcer avec enregistrement audio.' :
+                          'Thème et liste de vocabulaire avec exercices associés.',
+                          typeItem.value === 'writing' ? 'Free writing subjects with manual grading.' :
+                          typeItem.value === 'speaking' ? 'Free speaking practice or audio prompts.' :
+                          typeItem.value === 'listening' ? 'YouTube video with summary/questions or free response.' :
+                          typeItem.value === 'translation' ? 'French ➔ English or English ➔ French passages to translate.' :
+                          typeItem.value === 'pronunciation' ? 'Text to read aloud with audio recording.' :
+                          'Theme and list of vocabulary words with practice exercises.'
+                        ) }}
+                      </p>
+                    </div>
                     
+                    <!-- Selected check badge -->
                     @if (selectedType() === typeItem.value) {
-                      <div style="position: absolute; top: 12px; right: 12px; width: 18px; height: 18px; border-radius: 50%; background: #059669; display: flex; align-items: center; justify-content: center; color: white;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      <div style="position: absolute; top: 12px; right: 12px; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;"
+                           [style.background]="typeItem.color">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                       </div>
                     }
                   </div>
@@ -205,11 +227,13 @@ import { DialogService } from '../../services/dialog.service';
 
               <div style="display: flex; justify-content: flex-end;">
                 <button [disabled]="!selectedType()" (click)="currentStep.set(2)"
-                        style="background: #059669; color: white; border: none; padding: 10px 24px; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;"
-                        [style.opacity]="selectedType() ? 1 : 0.5"
-                        [style.cursor]="selectedType() ? 'pointer' : 'not-allowed'">
+                        style="color: white; border: none; padding: 11px 28px; border-radius: 8px; font-weight: 700; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: opacity 0.2s, box-shadow 0.2s;"
+                        [style.background]="selectedType() ? getTypeColor(selectedType()) : '#059669'"
+                        [style.opacity]="selectedType() ? 1 : 0.45"
+                        [style.cursor]="selectedType() ? 'pointer' : 'not-allowed'"
+                        [style.box-shadow]="selectedType() ? '0 4px 14px ' + getTypeColor(selectedType()) + '55' : 'none'">
                   {{ labels().continueBtn }}
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                 </button>
               </div>
             </div>
@@ -623,12 +647,97 @@ export class TeacherExercisesManagerComponent {
   formWordListRaw = '';
 
   typesList = [
-    { value: 'writing', emoji: '✍️', color: '#7C3AED', label: 'Writing', desc: 'Sujets rédigés libres avec correction manuelle.' },
-    { value: 'speaking', emoji: '🎙️', color: '#059669', label: 'Speaking', desc: 'Entraînement oraux libres ou audio prompts.' },
-    { value: 'listening', emoji: '👂', color: '#0284C7', label: 'Listening', desc: 'Vidéo YouTube avec résumé/questions ou réponse libre.' },
-    { value: 'translation', emoji: '🌍', color: '#D97706', label: 'Translation', desc: 'Passages FR ➔ EN ou EN ➔ FR à traduire.' },
-    { value: 'pronunciation', emoji: '🔊', color: '#DC2626', label: 'Pronunciation', desc: 'Texte à prononcer avec enregistrement audio.' },
-    { value: 'vocabulary', emoji: '📚', color: '#4F46E5', label: 'Vocabulary', desc: 'Thème et liste de vocabulaire avec exercices associés.' }
+    { 
+      value: 'writing', 
+      emoji: '✍️', 
+      color: '#7C3AED', 
+      label: 'Writing', 
+      desc: 'Sujets rédigés libres avec correction manuelle.',
+      svg: '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>',
+      svgLarge: `<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z" fill="#7C3AED" fill-opacity="0.15"/>
+        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z"/>
+        <path d="M20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="#7C3AED" fill-opacity="0.4"/>
+        <path d="M20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+      </svg>`
+    },
+    { 
+      value: 'speaking', 
+      emoji: '🎙️', 
+      color: '#059669', 
+      label: 'Speaking', 
+      desc: 'Entraînement oraux libres ou audio prompts.',
+      svg: '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>',
+      svgLarge: `<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="9" y="2" width="6" height="12" rx="3" fill="#059669" fill-opacity="0.2"/>
+        <rect x="9" y="2" width="6" height="12" rx="3"/>
+        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+        <line x1="12" y1="19" x2="12" y2="22"/>
+        <line x1="8" y1="22" x2="16" y2="22" stroke-width="2"/>
+        <circle cx="12" cy="8" r="1.5" fill="#059669" fill-opacity="0.6" stroke="none"/>
+      </svg>`
+    },
+    { 
+      value: 'listening', 
+      emoji: '👂', 
+      color: '#0284C7', 
+      label: 'Listening', 
+      desc: 'Vidéo YouTube avec résumé/questions ou réponse libre.',
+      svg: '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>',
+      svgLarge: `<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#0284C7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 18v-6a9 9 0 0 1 18 0v6"/>
+        <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3z" fill="#0284C7" fill-opacity="0.2"/>
+        <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3z"/>
+        <path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" fill="#0284C7" fill-opacity="0.2"/>
+        <path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>
+        <path d="M8 10.5a4 4 0 0 1 8 0" stroke-width="2" stroke-dasharray="2 1"/>
+      </svg>`
+    },
+    { 
+      value: 'translation', 
+      emoji: '🌍', 
+      color: '#D97706', 
+      label: 'Translation', 
+      desc: 'Passages FR ➔ EN ou EN ➔ FR à traduire.',
+      svg: '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>',
+      svgLarge: `<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="9" fill="#D97706" fill-opacity="0.12"/>
+        <circle cx="12" cy="12" r="9"/>
+        <path d="M3.6 9h16.8M3.6 15h16.8"/>
+        <path d="M12 3a14 14 0 0 1 3.5 9A14 14 0 0 1 12 21A14 14 0 0 1 8.5 12A14 14 0 0 1 12 3z" fill="#D97706" fill-opacity="0.08"/>
+        <path d="M12 3a14 14 0 0 1 3.5 9A14 14 0 0 1 12 21A14 14 0 0 1 8.5 12A14 14 0 0 1 12 3z"/>
+      </svg>`
+    },
+    { 
+      value: 'pronunciation', 
+      emoji: '🔊', 
+      color: '#DC2626', 
+      label: 'Pronunciation', 
+      desc: 'Texte à prononcer avec enregistrement audio.',
+      svg: '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>',
+      svgLarge: `<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M11 5L6 9H2v6h4l5 4V5z" fill="#DC2626" fill-opacity="0.2"/>
+        <path d="M11 5L6 9H2v6h4l5 4V5z"/>
+        <path d="M15.54 8.46a5 5 0 0 1 0 7.07" stroke-width="2"/>
+        <path d="M19.07 4.93a10 10 0 0 1 0 14.14" stroke-width="1.8" stroke-opacity="0.5"/>
+      </svg>`
+    },
+    { 
+      value: 'vocabulary', 
+      emoji: '📚', 
+      color: '#4F46E5', 
+      label: 'Vocabulary', 
+      desc: 'Thème et liste de vocabulaire avec exercices associés.',
+      svg: '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5v-15z"/></svg>',
+      svgLarge: `<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+        <path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5v-15z" fill="#4F46E5" fill-opacity="0.12"/>
+        <path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5v-15z"/>
+        <line x1="9" y1="7" x2="16" y2="7" stroke-width="1.5"/>
+        <line x1="9" y1="10" x2="16" y2="10" stroke-width="1.5"/>
+        <line x1="9" y1="13" x2="13" y2="13" stroke-width="1.5"/>
+      </svg>`
+    }
   ];
 
   filteredExercises = computed(() => {
@@ -666,8 +775,14 @@ export class TeacherExercisesManagerComponent {
   startNew() {
     this.resetForm();
     this.selectedExerciseId.set(null);
-    this.selectedType.set(null);
-    this.currentStep.set(1);
+    const filter = this.filterType();
+    if (filter && filter !== 'all') {
+      this.selectedType.set(filter as any);
+      this.currentStep.set(2);
+    } else {
+      this.selectedType.set(null);
+      this.currentStep.set(1);
+    }
     this.setTab('create');
   }
 
@@ -835,6 +950,11 @@ export class TeacherExercisesManagerComponent {
     const item = this.typesList.find(t => t.value === type);
     return item ? item.emoji : '🎯';
   }
+  getTypeSvg(type: any): string {
+    const item = this.typesList.find(t => t.value === type);
+    return item ? item.svg : '';
+  }
+
 
   getGroupName(groupId: string): string {
     const g = this.groups().find(c => c.id === groupId);

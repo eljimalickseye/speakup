@@ -1,4 +1,5 @@
 import { Component, inject, signal, computed, OnDestroy, ViewChild, ElementRef } from '@angular/core';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DatabaseService, ChatMessage, UserProfile, ChatChannel } from '../../services/database.service';
@@ -49,8 +50,8 @@ interface ChatMember {
           
           <div class="channel-list">
             @for (chan of visibleChannels(); track chan.id) {
-              <div style="display:flex; justify-content:space-between; align-items:center; width:100%; gap:4px">
-                <button class="channel-btn" style="flex:1; text-align:left; overflow:hidden; text-overflow:ellipsis" [class.active]="activeChannel() === chan.id" (click)="switchChannel(chan.id)">
+              <div class="channel-row" [class.active]="activeChannel() === chan.id" style="display:flex; justify-content:space-between; align-items:center; width:100%; position:relative; border-radius:8px; transition:background 0.15s">
+                <button class="channel-btn" style="flex:1; text-align:left; overflow:hidden; text-overflow:ellipsis; border:none; background:transparent" [class.active]="activeChannel() === chan.id" (click)="switchChannel(chan.id)">
                   <span class="hashtag">#</span> {{ chan.name }}
                   @if (chan.isPrivate) {
                     <span style="font-size:9px; opacity:0.6; margin-left:4px" title="Private Room">🔒</span>
@@ -59,10 +60,19 @@ interface ChatMember {
                     <span class="unread-badge">{{ unreadCounts()[chan.id] }}</span>
                   }
                 </button>
-                @if (isTeacher() && chan.id !== 'general' && chan.id !== 'group-a' && chan.id !== 'travel' && chan.id !== 'debate') {
-                  <button (click)="removeChannel(chan)" style="background:none; border:none; cursor:pointer; color:#EF4444; padding:4px 6px; font-weight:700; font-size:12px" title="Delete Channel">
-                    ×
-                  </button>
+                @if (isTeacher()) {
+                  <div class="channel-actions" style="display:flex; align-items:center; gap:4px; padding-right:6px">
+                    <button (click)="renameChannelPrompt(chan); $event.stopPropagation()" 
+                            style="background:none; border:none; cursor:pointer; color:#4F46E5; padding:4px; display:flex; align-items:center; border-radius:4px" 
+                            title="Rename Channel">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                    </button>
+                    <button (click)="removeChannel(chan); $event.stopPropagation()" 
+                            style="background:none; border:none; cursor:pointer; color:#EF4444; padding:4px; display:flex; align-items:center; border-radius:4px" 
+                            title="Delete Channel">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    </button>
+                  </div>
                 }
               </div>
             }
@@ -200,8 +210,184 @@ interface ChatMember {
                             <i class="ti ti-video"></i> Video message
                           </span>
                         </div>
-                      } @else {
-                        {{ msg.content }}
+                      } @else if (msg.type === 'image') {
+                        <!-- Image Attachment View with Reactions -->
+                        <div style="display:flex; flex-direction:column; min-width:180px; position:relative"
+                             (mouseenter)="hoveredImageMsgId.set(msg.id || '')"
+                             (mouseleave)="hoveredImageMsgId.set('')">
+
+                          <!-- Emoji Reaction Picker (appears when toggled) -->
+                          @if (activeReactionPickerMsgId() === msg.id) {
+                            <div style="position:absolute; bottom:calc(100% - 10px); left:50%; transform:translateX(-50%); z-index:90; display:flex; gap:8px; background:var(--surface-1); border:1.5px solid var(--border); border-radius:999px; padding:6px 12px; box-shadow:0 12px 32px rgba(0,0,0,0.2); backdrop-filter:blur(16px); animation: reactionPickerIn 0.15s ease-out both; align-items:center">
+                              @for (typeItem of reactionTypes; track typeItem.key) {
+                                <button (click)="toggleReaction(msg, typeItem.key); $event.stopPropagation()"
+                                        style="background:none; border:none; cursor:pointer; padding:4px; border-radius:50%; transition:transform 0.15s; display:flex; align-items:center; justify-content:center"
+                                        [style.transform]="hasMyReaction(msg, typeItem.key) ? 'scale(1.3)' : 'scale(1)'"
+                                        [style.background]="hasMyReaction(msg, typeItem.key) ? 'var(--border)' : 'none'"
+                                        [title]="typeItem.label">
+                                  @switch (typeItem.key) {
+                                    @case ('heart') {
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#EF4444" stroke="#EF4444" stroke-width="1"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                                    }
+                                    @case ('like') {
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#3B82F6" stroke="#2563EB" stroke-width="1"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+                                    }
+                                    @case ('laugh') {
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#FBBF24" stroke="#D97706" stroke-width="1.2"><circle cx="12" cy="12" r="10"/><path d="M8 11.5s1.5-1 4-1 4 1 4 1" stroke-linecap="round"/><path d="M8 15s1.5 3 4 3 4-3 4-3H8z" fill="#FFF"/><path d="M10 7.5L8.5 8M14 7.5l1.5.5" stroke-width="2" stroke-linecap="round"/></svg>
+                                    }
+                                    @case ('wow') {
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#FBBF24" stroke="#D97706" stroke-width="1.2"><circle cx="12" cy="12" r="10"/><circle cx="8" cy="9" r="1.5" fill="#451A03" stroke="none"/><circle cx="16" cy="9" r="1.5" fill="#451A03" stroke="none"/><ellipse cx="12" cy="15" rx="2.5" ry="3.5" fill="#451A03" stroke="none"/></svg>
+                                    }
+                                    @case ('sad') {
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#FBBF24" stroke="#D97706" stroke-width="1.2"><circle cx="12" cy="12" r="10"/><circle cx="8.5" cy="9.5" r="1.2" fill="#451A03" stroke="none"/><circle cx="15.5" cy="9.5" r="1.2" fill="#451A03" stroke="none"/><path d="M9 15.5s1.5-1.5 3-1.5 3 1.5 3 1.5" stroke-linecap="round"/><path d="M8 11v3" stroke="#3B82F6" stroke-width="1.5" stroke-linecap="round"/></svg>
+                                    }
+                                    @case ('fire') {
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#F97316" stroke="#EA580C" stroke-width="1"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3.5z"/></svg>
+                                    }
+                                  }
+                                </button>
+                              }
+                            </div>
+                          }
+
+                          <!-- Image container holding image + overlay buttons -->
+                          <div style="position:relative; width:100%; border-radius:12px; margin-bottom:8px">
+                            <div style="position:relative; overflow:hidden; border-radius:12px; width:100%">
+                              <img [src]="msg.content" style="width:100%; max-height:220px; object-fit:cover; display:block; cursor:zoom-in; transition: transform 0.2s"
+                                   (click)="openImageModal(msg.content)"
+                                   onmouseover="this.style.transform='scale(1.02)'"
+                                   onmouseout="this.style.transform='scale(1)'"
+                                   alt="Chat attachment" />
+                              
+                              <!-- Overlay Reaction Trigger Icon (Smiley face) -->
+                              <button (click)="toggleReactionPicker(msg.id || '', $event)"
+                                      style="position:absolute; bottom:8px; right:8px; width:30px; height:30px; border-radius:50%; background:rgba(15,23,42,0.8); border:1.5px solid rgba(255,255,255,0.25); display:flex; align-items:center; justify-content:center; cursor:pointer; color:white; font-size:14px; box-shadow:0 4px 12px rgba(0,0,0,0.35); transition:all 0.2s; backdrop-filter:blur(4px); z-index:10"
+                                      onmouseover="this.style.transform='scale(1.1)'; this.style.background='#4F46E5'"
+                                      onmouseout="this.style.transform='scale(1)'; this.style.background='rgba(15,23,42,0.8)'"
+                                      title="React to this image">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+                              </button>
+                            </div>
+
+                            <!-- WhatsApp-Style Overlapping Reactions Pill -->
+                            @if (getReactionList(msg).length > 0) {
+                              <div (click)="toggleReactionPicker(msg.id || '', $event)"
+                                   style="position:absolute; bottom:-10px; left:12px; display:flex; align-items:center; gap:3px; background:var(--surface-1); border:1.5px solid var(--border); border-radius:999px; padding:3px 8px; box-shadow:0 4px 10px rgba(0,0,0,0.15); z-index:15; cursor:pointer; user-select:none; transition:transform 0.15s; line-height:1"
+                                   onmouseover="this.style.transform='scale(1.05)'"
+                                   onmouseout="this.style.transform='scale(1)'">
+                                <div style="display:flex; align-items:center; gap:1px">
+                                  @for (r of getReactionList(msg); track r.key) {
+                                    <span style="display:flex; align-items:center; transform:scale(0.7); margin-right:-5px">
+                                      @switch (r.key) {
+                                        @case ('heart') {
+                                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#EF4444" stroke="#EF4444" stroke-width="1"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                                        }
+                                        @case ('like') {
+                                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#3B82F6" stroke="#2563EB" stroke-width="1"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+                                        }
+                                        @case ('laugh') {
+                                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#FBBF24" stroke="#D97706" stroke-width="1.2"><circle cx="12" cy="12" r="10"/><path d="M8 11.5s1.5-1 4-1 4 1 4 1" stroke-linecap="round"/><path d="M8 15s1.5 3 4 3 4-3 4-3H8z" fill="#FFF"/><path d="M10 7.5L8.5 8M14 7.5l1.5.5" stroke-width="2" stroke-linecap="round"/></svg>
+                                        }
+                                        @case ('wow') {
+                                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#FBBF24" stroke="#D97706" stroke-width="1.2"><circle cx="12" cy="12" r="10"/><circle cx="8" cy="9" r="1.5" fill="#451A03" stroke="none"/><circle cx="16" cy="9" r="1.5" fill="#451A03" stroke="none"/><ellipse cx="12" cy="15" rx="2.5" ry="3.5" fill="#451A03" stroke="none"/></svg>
+                                        }
+                                        @case ('sad') {
+                                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#FBBF24" stroke="#D97706" stroke-width="1.2"><circle cx="12" cy="12" r="10"/><circle cx="8.5" cy="9.5" r="1.2" fill="#451A03" stroke="none"/><circle cx="15.5" cy="9.5" r="1.2" fill="#451A03" stroke="none"/><path d="M9 15.5s1.5-1.5 3-1.5 3 1.5 3 1.5" stroke-linecap="round"/><path d="M8 11v3" stroke="#3B82F6" stroke-width="1.5" stroke-linecap="round"/></svg>
+                                        }
+                                        @case ('fire') {
+                                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#F97316" stroke="#EA580C" stroke-width="1"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3.5z"/></svg>
+                                        }
+                                      }
+                                    </span>
+                                  }
+                                </div>
+                                <span style="font-size:10.5px; font-weight:800; color:var(--text-secondary); margin-left:6px">{{ getReactionTotalCount(msg) }}</span>
+                              </div>
+                            }
+                          </div>
+                        </div>
+                      } @else if (msg.type === 'file') {
+                        <!-- Document/File Attachment View -->
+                        <div style="display:flex; align-items:center; gap:10px; background:rgba(0,0,0,0.03); border:1px solid rgba(0,0,0,0.05); padding:8px 12px; border-radius:8px; min-width:200px">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                          </svg>
+                          <div style="text-align:left; flex:1">
+                            <div style="font-size:12px; font-weight:700; color:var(--text-primary); text-overflow:ellipsis; overflow:hidden; white-space:nowrap; max-width:140px">{{ msg.fileName || 'document.pdf' }}</div>
+                            <div style="font-size:10px; color:var(--text-muted)">{{ msg.fileSize || 'Unknown size' }}</div>
+                          </div>
+                          <a [href]="msg.content" [download]="msg.fileName || 'download'"
+                             style="width:28px; height:28px; border-radius:50%; background:#4F46E5; color:white; display:flex; align-items:center; justify-content:center; cursor:pointer; text-decoration:none">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                          </a>
+                        </div>
+                        } @else {
+                        <div>
+                          <span style="white-space: pre-wrap; word-break: break-word;">{{ msg.content }}</span>
+                          @if (getYoutubeVideoId(msg.content); as ytId) {
+                            <!-- YouTube Cinema Card -->
+                            <div style="margin-top:10px; border-radius:14px; overflow:hidden; width:100%; max-width:340px; position:relative" class="yt-cinema-card">
+
+                              @if (!expandedYoutubeIds().has(msg.id || '')) {
+                                <!-- Thumbnail Preview Mode -->
+                                <div style="position:relative; aspect-ratio:16/9; overflow:hidden; cursor:pointer; border-radius:14px"
+                                     (click)="expandYoutube(msg.id || '', ytId)">
+                                  <!-- Blurred BG -->
+                                  <img [src]="'https://img.youtube.com/vi/' + ytId + '/maxresdefault.jpg'"
+                                       style="position:absolute; inset:0; width:100%; height:100%; object-fit:cover; filter:blur(6px) brightness(0.6); transform:scale(1.1)" alt="" />
+                                  <!-- Sharp center thumbnail -->
+                                  <img [src]="'https://img.youtube.com/vi/' + ytId + '/hqdefault.jpg'"
+                                       style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:80%; height:80%; object-fit:cover; border-radius:8px; box-shadow:0 12px 40px rgba(0,0,0,0.55)" alt="Video thumbnail" />
+
+                                  <!-- Pulsing Play Button -->
+                                  <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:56px; height:56px; border-radius:50%; background:rgba(255,255,255,0.95); display:flex; align-items:center; justify-content:center; box-shadow:0 0 0 0 rgba(255,255,255,0.7); animation: ytPlayPulse 2s infinite; z-index:3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="#FF0000" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                                  </div>
+
+                                  <!-- Glassmorphism Bottom Bar -->
+                                  <div style="position:absolute; bottom:0; left:0; right:0; padding:12px 14px 10px; background:linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%); z-index:2">
+                                    <div style="display:flex; align-items:center; gap:8px">
+                                      <!-- YouTube Logo -->
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="13" viewBox="0 0 576 512" fill="#FF0000"><path d="M549.655 124.083c-6.281-23.65-24.787-42.276-48.284-48.597C458.781 64 288 64 288 64S117.22 64 74.629 75.486c-23.497 6.322-42.003 24.947-48.284 48.597-11.412 42.867-11.412 132.305-11.412 132.305s0 89.438 11.412 132.305c6.281 23.65 24.787 41.5 48.284 47.821C117.22 448 288 448 288 448s170.78 0 213.371-11.486c23.497-6.321 42.003-24.171 48.284-47.821 11.412-42.867 11.412-132.305 11.412-132.305s0-89.438-11.412-132.305zm-317.51 213.508V175.185l142.739 81.205-142.739 81.201z"/></svg>
+                                      <div style="flex:1; min-width:0">
+                                        <div style="color:white; font-size:12px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">
+                                          {{ getYoutubeTitle(ytId) || 'YouTube Video' }}
+                                        </div>
+                                        <div style="color:rgba(255,255,255,0.65); font-size:10px; margin-top:1px">Tap to play in chat</div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+
+                              } @else {
+                                <!-- Expanded Player Mode -->
+                                <div style="position:relative; border-radius:14px; overflow:hidden; background:#000">
+                                  <iframe [src]="getSafeYoutubeUrl(ytId)"
+                                          style="width:100%; aspect-ratio:16/9; border:none; display:block"
+                                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                          allowfullscreen>
+                                  </iframe>
+                                  <!-- Close/Collapse Button -->
+                                  <button (click)="collapseYoutube(msg.id || '')"
+                                          style="position:absolute; top:8px; right:8px; width:28px; height:28px; border-radius:50%; background:rgba(0,0,0,0.6); border:none; color:white; display:flex; align-items:center; justify-content:center; cursor:pointer; backdrop-filter:blur(4px)">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                  </button>
+                                </div>
+                              }
+
+                              <!-- YouTube action row -->
+                              <div style="display:flex; gap:6px; margin-top:6px; justify-content:flex-end">
+                                @if (expandedYoutubeIds().has(msg.id || '')) {
+                                  <a [href]="msg.content" target="_blank" rel="noopener"
+                                     style="font-size:10px; color:var(--text-muted); text-decoration:none; display:flex; align-items:center; gap:3px">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                                    Open on YouTube
+                                  </a>
+                                }
+                              </div>
+                            </div>
+                          }
+                        </div>
                       }
                     </div>
 
@@ -277,6 +463,25 @@ interface ChatMember {
             }
 
             <div style="display:flex; gap:8px; width:100%; align-items:center">
+              <!-- Attachment Button (Always show) -->
+              <button 
+                [disabled]="recordingState() === 'recording'"
+                title="Send Image or File"
+                (click)="fileInput.click()"
+                style="background:none; border:1px solid var(--border); color:#64748B; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                </svg>
+              </button>
+              
+              <!-- Hidden File Input -->
+              <input 
+                type="file" 
+                #fileInput 
+                style="display:none" 
+                (change)="onFileSelected($event)" 
+                accept="image/*,.pdf,.doc,.docx" />
+
               <input 
                 type="text" 
                 [(ngModel)]="newMessageContent" 
@@ -284,24 +489,25 @@ interface ChatMember {
                 [disabled]="recordingState() === 'recording'"
                 placeholder="Write in English here..." 
                 class="chat-textbox" 
-                style="flex:1" />
+                style="flex:1; height:36px; border-radius:18px; padding:0 14px; font-size:13px; min-width:0" />
 
-              <!-- Voice Recording Button -->
+              <!-- Voice Recording Button (Always visible) -->
               <button 
                 [disabled]="!isVoiceChatAllowed() || recordingState() === 'recording'"
                 [style.opacity]="isVoiceChatAllowed() ? '1' : '0.4'"
                 [style.cursor]="isVoiceChatAllowed() ? 'pointer' : 'not-allowed'"
                 [title]="isVoiceChatAllowed() ? 'Record voice message' : 'Voice messaging locked. Speak with teacher to unlock!'"
                 (click)="startVoiceRecording()"
-                style="background:none; border:1px solid var(--border); color:#4F46E5; width:38px; height:38px; border-radius:8px; display:flex; align-items:center; justify-content:center">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                style="background:none; border:1px solid var(--border); color:#4F46E5; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
                   <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
                   <line x1="12" x2="12" y1="19" y2="22" />
                 </svg>
               </button>
 
-              <button class="chat-send-btn" (click)="sendMessage()" [disabled]="!newMessageContent.trim() || recordingState() === 'recording'" style="height:38px; width:38px; display:flex; align-items:center; justify-content:center; padding:0">
+              <!-- Send Button (Always visible) -->
+              <button class="chat-send-btn" (click)="sendMessage()" [disabled]="!newMessageContent.trim() || recordingState() === 'recording'" style="height:36px; width:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; padding:0; flex-shrink:0">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
                 </svg>
@@ -590,6 +796,19 @@ interface ChatMember {
           </div>
         </div>
       }
+
+      <!-- FULLSCREEN IMAGE LIGHTBOX -->
+      @if (selectedImageForLightbox(); as imgUrl) {
+        <div class="modal-overlay" (click)="selectedImageForLightbox.set(null)" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); backdrop-filter:blur(8px); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:999999; padding:24px">
+          <div style="position:relative; display:flex; align-items:center; justify-content:center; max-width:90vw; max-height:85vh" (click)="$event.stopPropagation()">
+            <img [src]="imgUrl" style="max-width:100%; max-height:85vh; object-fit:contain; border-radius:8px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5)" alt="Lightbox view" />
+            
+            <button (click)="selectedImageForLightbox.set(null)" style="position:absolute; top:12px; right:12px; background:rgba(0,0,0,0.6); border:none; color:white; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; backdrop-filter:blur(4px); transition:transform 0.2s" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+        </div>
+      }
     </div>
   `,
 
@@ -599,6 +818,10 @@ interface ChatMember {
       height: calc(100vh - 180px);
       min-height: 480px;
       background: var(--surface-1);
+      border-radius: 12px;
+      border: 1px solid var(--border-weak);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+      overflow: hidden;
     }
 
     /* Left channel pane */
@@ -644,13 +867,35 @@ interface ChatMember {
       transition: all 0.15s;
     }
 
-    .channel-btn:hover {
+    .channel-row:hover {
       background: rgba(0, 0, 0, 0.04);
     }
 
-    .channel-btn.active {
+    .channel-row.active {
       background: #EEF2FF;
+    }
+
+    .channel-row .channel-btn {
+      padding: 8px 10px;
+    }
+
+    .channel-row .channel-btn.active {
       color: #4F46E5;
+      font-weight: 700;
+    }
+
+    .channel-actions {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s ease, transform 0.15s ease;
+      transform: scale(0.95);
+    }
+
+    .channel-row:hover .channel-actions,
+    .channel-row.active .channel-actions {
+      opacity: 1;
+      pointer-events: auto;
+      transform: scale(1);
     }
 
     .unread-badge {
@@ -921,6 +1166,26 @@ interface ChatMember {
       100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(13, 148, 136, 0); }
     }
 
+    @keyframes ytPlayPulse {
+      0%   { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.6); }
+      60%  { box-shadow: 0 0 0 18px rgba(255, 255, 255, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+    }
+
+    @keyframes reactionPickerIn {
+      from { opacity: 0; transform: translateX(-50%) translateY(8px) scale(0.85); }
+      to   { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+    }
+
+    .yt-cinema-card {
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      transition: box-shadow 0.2s;
+    }
+    .yt-cinema-card:hover {
+      box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+    }
+
+
     .voice-wave-bar {
       width: 2.5px;
       background: var(--text-secondary);
@@ -976,7 +1241,7 @@ interface ChatMember {
         display: none !important;
       }
       .chat-workspace {
-        height: calc(100vh - 125px) !important;
+        height: auto !important;
       }
     }
 
@@ -1106,6 +1371,9 @@ interface ChatMember {
         width: 34px !important;
         height: 34px !important;
       }
+      .chat-workspace {
+        height: calc(100vh - 125px) !important;
+      }
     }
 
     @media (max-width: 480px) {
@@ -1125,6 +1393,184 @@ interface ChatMember {
   `]
 })
 export class StudentChatComponent implements OnDestroy {
+  private sanitizer = inject(DomSanitizer);
+
+  selectedImageForLightbox = signal<string | null>(null);
+
+  openImageModal(url: string) {
+    this.selectedImageForLightbox.set(url);
+  }
+
+  // ── YouTube Cinema Card ────────────────────────────────────────────────
+  expandedYoutubeIds = signal<Set<string>>(new Set());
+  youtubeTitleCache = new Map<string, string>(); // videoId -> title
+
+  expandYoutube(msgId: string, videoId: string) {
+    const s = new Set(this.expandedYoutubeIds());
+    s.add(msgId);
+    this.expandedYoutubeIds.set(s);
+    // Fetch title if not cached
+    if (!this.youtubeTitleCache.has(videoId)) {
+      fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`)
+        .then(r => r.json())
+        .then(data => {
+          this.youtubeTitleCache.set(videoId, data.title || 'YouTube Video');
+        })
+        .catch(() => { this.youtubeTitleCache.set(videoId, 'YouTube Video'); });
+    }
+  }
+
+  collapseYoutube(msgId: string) {
+    const s = new Set(this.expandedYoutubeIds());
+    s.delete(msgId);
+    this.expandedYoutubeIds.set(s);
+  }
+
+  getYoutubeTitle(videoId: string): string {
+    // Also trigger a fetch if not cached yet (for thumbnail mode)
+    if (!this.youtubeTitleCache.has(videoId)) {
+      this.youtubeTitleCache.set(videoId, ''); // mark as fetching
+      fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`)
+        .then(r => r.json())
+        .then(data => { this.youtubeTitleCache.set(videoId, data.title || 'YouTube Video'); })
+        .catch(() => { this.youtubeTitleCache.set(videoId, 'YouTube Video'); });
+    }
+    return this.youtubeTitleCache.get(videoId) || '';
+  }
+
+  getYoutubeVideoId(text: string): string | null {
+    if (!text) return null;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = text.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+  }
+
+  getSafeYoutubeUrl(id: string): SafeResourceUrl {
+    return this.sanitizer.bypassSecurityTrustResourceUrl(`https://www.youtube.com/embed/${id}?autoplay=1`);
+  }
+
+  // ── Image Emoji Reactions ──────────────────────────────────────────────
+  reactionTypes = [
+    { key: 'heart', emoji: '❤️', label: 'Heart', svg: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#EF4444" stroke="#EF4444" stroke-width="1"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>' },
+    { key: 'like', emoji: '👍', label: 'Like', svg: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#3B82F6" stroke="#2563EB" stroke-width="1"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>' },
+    { key: 'laugh', emoji: '😂', label: 'Laugh', svg: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#FBBF24" stroke="#D97706" stroke-width="1.2"><circle cx="12" cy="12" r="10"/><path d="M8 11.5s1.5-1 4-1 4 1 4 1" stroke-linecap="round"/><path d="M8 15s1.5 3 4 3 4-3 4-3H8z" fill="#FFF"/><path d="M10 7.5L8.5 8M14 7.5l1.5.5" stroke-width="2" stroke-linecap="round"/></svg>' },
+    { key: 'wow', emoji: '😮', label: 'Wow', svg: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#FBBF24" stroke="#D97706" stroke-width="1.2"><circle cx="12" cy="12" r="10"/><circle cx="8" cy="9" r="1.5" fill="#451A03" stroke="none"/><circle cx="16" cy="9" r="1.5" fill="#451A03" stroke="none"/><ellipse cx="12" cy="15" rx="2.5" ry="3.5" fill="#451A03" stroke="none"/></svg>' },
+    { key: 'sad', emoji: '😢', label: 'Sad', svg: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#FBBF24" stroke="#D97706" stroke-width="1.2"><circle cx="12" cy="12" r="10"/><circle cx="8.5" cy="9.5" r="1.2" fill="#451A03" stroke="none"/><circle cx="15.5" cy="9.5" r="1.2" fill="#451A03" stroke="none"/><path d="M9 15.5s1.5-1.5 3-1.5 3 1.5 3 1.5" stroke-linecap="round"/><path d="M8 11v3" stroke="#3B82F6" stroke-width="1.5" stroke-linecap="round"/></svg>' },
+    { key: 'fire', emoji: '🔥', label: 'Fire', svg: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#F97316" stroke="#EA580C" stroke-width="1"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3.5z"/></svg>' }
+  ];
+  hoveredImageMsgId = signal<string>('');
+  activeReactionPickerMsgId = signal<string>('');
+
+  toggleReactionPicker(msgId: string, event: Event) {
+    event.stopPropagation();
+    if (this.activeReactionPickerMsgId() === msgId) {
+      this.activeReactionPickerMsgId.set('');
+    } else {
+      this.activeReactionPickerMsgId.set(msgId);
+    }
+  }
+
+  toggleReaction(msg: ChatMessage, typeKey: string) {
+    const userId = this.currentUserId();
+    if (!userId || !msg.id) return;
+    this.activeReactionPickerMsgId.set('');
+
+    // Optimistic update
+    const msgs = this.messages();
+    const idx = msgs.findIndex(m => m.id === msg.id);
+    if (idx < 0) return;
+    const updated = { ...msgs[idx] };
+    if (!updated.reactions) updated.reactions = {};
+
+    // Clear user from all other reactions
+    Object.keys(updated.reactions).forEach(k => {
+      if (k !== typeKey) {
+        updated.reactions![k] = (updated.reactions![k] || []).filter(id => id !== userId);
+        if (updated.reactions![k].length === 0) {
+          delete updated.reactions![k];
+        }
+      }
+    });
+
+    // Toggle current reaction
+    if (!updated.reactions[typeKey]) {
+      updated.reactions[typeKey] = [];
+    }
+    const reactorIdx = updated.reactions[typeKey].indexOf(userId);
+    if (reactorIdx >= 0) {
+      updated.reactions[typeKey] = updated.reactions[typeKey].filter(id => id !== userId);
+      if (updated.reactions[typeKey].length === 0) {
+        delete updated.reactions[typeKey];
+      }
+    } else {
+      updated.reactions[typeKey] = [...updated.reactions[typeKey], userId];
+    }
+
+    const newMsgs = [...msgs];
+    newMsgs[idx] = updated;
+    this.messages.set(newMsgs);
+
+    // Persist
+    this.db.toggleMessageReaction(this.activeChannel(), msg.id, typeKey, userId).catch(console.warn);
+  }
+
+  hasMyReaction(msg: ChatMessage, typeKey: string): boolean {
+    const uid = this.currentUserId();
+    return !!(uid && msg.reactions?.[typeKey]?.includes(uid));
+  }
+
+  getReactionList(msg: ChatMessage): { key: string; count: number }[] {
+    if (!msg.reactions) return [];
+    return Object.entries(msg.reactions)
+      .filter(([, users]) => users.length > 0)
+      .map(([key, users]) => ({ key, count: users.length }));
+  }
+
+  getReactionSvg(key: string): string {
+    const found = this.reactionTypes.find(r => r.key === key);
+    return found ? found.svg : '';
+  }
+
+  getReactionTotalCount(msg: ChatMessage): number {
+    if (!msg.reactions) return 0;
+    return Object.values(msg.reactions).reduce((sum, users) => sum + (users || []).length, 0);
+  }
+
+  onFileSelected(event: any) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (e: any) => {
+      const base64Data = e.target.result;
+      const fileType = file.type;
+      
+      let msgType: 'image' | 'file' = 'file';
+      if (fileType.startsWith('image/')) {
+        msgType = 'image';
+      }
+      
+      let sizeStr = '';
+      if (file.size > 1024 * 1024) {
+        sizeStr = (file.size / (1024 * 1024)).toFixed(1) + ' MB';
+      } else {
+        sizeStr = Math.round(file.size / 1024) + ' KB';
+      }
+
+      await this.db.sendChatMessageWithAttachment(
+        this.activeChannel(),
+        base64Data,
+        msgType,
+        file.name,
+        sizeStr
+      );
+      
+      event.target.value = '';
+    };
+
+    reader.readAsDataURL(file);
+  }
+
   private db = inject(DatabaseService);
   private dialogService = inject(DialogService);
 
@@ -1357,12 +1803,23 @@ export class StudentChatComponent implements OnDestroy {
       confirmText: 'Delete Room',
       cancelText: 'Cancel',
       onConfirm: () => {
+        const remaining = this.channels().filter(c => c.id !== chan.id);
+        const fallback = remaining.length > 0 ? remaining[0].id : '';
         this.db.deleteChannel(chan.id);
-        this.activeChannel.set('general');
+        this.activeChannel.set(fallback);
         this.subscribeToChat();
         this.dialogService.alert('Deleted', 'Chat room deleted successfully!', 'success');
       }
     });
+  }
+
+  renameChannelPrompt(chan: ChatChannel) {
+    const promptTitle = this.currentUser?.role === 'teacher' ? 'Renommer le groupe :' : 'Rename the group:';
+    const newName = window.prompt(promptTitle, chan.name);
+    if (newName && newName.trim() && newName.trim() !== chan.name) {
+      this.db.renameChannel(chan.id, newName.trim());
+      this.dialogService.alert('Succès', 'Le groupe a été renommé.', 'success');
+    }
   }
 
   awardStudentXP(studentId: string, studentName: string) {
