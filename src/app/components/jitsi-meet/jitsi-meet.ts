@@ -157,7 +157,7 @@ interface ParticipantModel {
         </div>
 
         <div class="footer-right-actions">
-          @if (isTeacher) {
+          @if (isTeacher || expectsBot()) {
             <button class="btn-end" (click)="endMeeting()">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.62 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2 2A17 17 0 0 1 3 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .62 2.81 2 2 0 0 1-.45 2.11L8.9 9.9a16 16 0 0 0 1.78 3.41Z"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
               <span>End Live Call</span>
