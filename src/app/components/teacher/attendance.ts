@@ -125,18 +125,18 @@ export class TeacherAttendanceComponent {
     return monday;
   });
 
-  // Compute Mon-Fri days for the current week
+  // Compute Mon-Sun days for the current week
   weekDays = computed(() => {
     const monday = this.currentWeekMonday();
     const todayDate = new Date();
     todayDate.setHours(0, 0, 0, 0);
     const todayTime = todayDate.getTime();
 
-    return [0, 1, 2, 3, 4].map(offset => {
+    return [0, 1, 2, 3, 4, 5, 6].map(offset => {
       const d = new Date(monday);
       d.setDate(monday.getDate() + offset);
       const isToday = d.getTime() === todayTime;
-      const jsDay = d.getDay(); // 1=Mon...5=Fri
+      const jsDay = d.getDay(); // 0=Sun, 1=Mon...6=Sat
       return {
         key: this.dateKey(d),           // "2026-07-01"
         shortLabel: this.DAY_SHORT[jsDay], // "Lun", "Mar"...

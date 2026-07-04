@@ -526,7 +526,7 @@ export class StudentExamComponent implements OnDestroy {
   }
 
   examQuizzes = computed<Quiz[]>(() =>
-    this.quizzes().filter(q => q.timeLimit && q.timeLimit !== 'No limit' && q.questions.length > 0)
+    this.quizzes().filter(q => q.isOfficialExam && (q.isExamActive || q.status === 'published') && q.questions.length > 0)
   );
 
   myAttempts = computed<ExamAttempt[]>(() =>

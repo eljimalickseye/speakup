@@ -1,4 +1,8 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import os
+
+file_path = r'c:\Users\PC\Downloads\speak-up2\src\app\components\teacher\vocab-games.ts'
+
+code = """import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DatabaseService, VocabGame, UserProfile, ChatChannel } from '../../services/database.service';
@@ -11,19 +15,19 @@ import { DialogService } from '../../services/dialog.service';
   template: `
     <div class="page" style="padding: 20px; max-width: 1000px; margin: 0 auto;">
       <div class="tab-row" style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--border-weak); padding-bottom: 10px;">
-        <button class="tab" [class.active]="activeTab() === 'list'" (click)="activeTab.set('list')"
-                style="padding: 10px 16px; border: none; background: none; cursor: pointer; font-weight: 600; transition: all 0.2s; border-bottom: 2px solid transparent; display: flex; align-items: center; gap: 6px;"
-                [style.color]="activeTab() === 'list' ? 'var(--text-primary)' : 'var(--text-muted)'"
-                [style.border-bottom-color]="activeTab() === 'list' ? '#F59E0B' : 'transparent'">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-          {{ labels().tabList }} ({{ games().length }})
-        </button>
         <button class="tab" [class.active]="activeTab() === 'create'" (click)="activeTab.set('create')"
                 style="padding: 10px 16px; border: none; background: none; cursor: pointer; font-weight: 600; transition: all 0.2s; border-bottom: 2px solid transparent; display: flex; align-items: center; gap: 6px;"
                 [style.color]="activeTab() === 'create' ? 'var(--text-primary)' : 'var(--text-muted)'"
                 [style.border-bottom-color]="activeTab() === 'create' ? '#F59E0B' : 'transparent'">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           {{ labels().tabCreate }}
+        </button>
+        <button class="tab" [class.active]="activeTab() === 'list'" (click)="activeTab.set('list')"
+                style="padding: 10px 16px; border: none; background: none; cursor: pointer; font-weight: 600; transition: all 0.2s; border-bottom: 2px solid transparent; display: flex; align-items: center; gap: 6px;"
+                [style.color]="activeTab() === 'list' ? 'var(--text-primary)' : 'var(--text-muted)'"
+                [style.border-bottom-color]="activeTab() === 'list' ? '#F59E0B' : 'transparent'">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          {{ labels().tabList }} ({{ games().length }})
         </button>
       </div>
 
@@ -43,85 +47,44 @@ import { DialogService } from '../../services/dialog.service';
           </div>
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
-            <!-- Game Type Selection (Custom modern buttons with SVGs) -->
+            <!-- Game Type -->
             <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
-              <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">{{ labels().typeLabel }}</label>
-              <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:8px">
-                <button type="button" (click)="gameType = 'flashcards'" [class.active-picker]="gameType === 'flashcards'" class="btn-picker">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="16" height="12" rx="2"/><path d="M22 8v10a2 2 0 0 1-2 2H6"/></svg>
-                  <span>Flashcards</span>
-                </button>
-                <button type="button" (click)="gameType = 'matching'" [class.active-picker]="gameType === 'matching'" class="btn-picker">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                  <span>{{ t('Association', 'Matching') }}</span>
-                </button>
-                <button type="button" (click)="gameType = 'memory'" [class.active-picker]="gameType === 'memory'" class="btn-picker">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.44 2.5 2.5 0 0 1 0-3.12 3 3 0 0 1 0-3.88 2.5 2.5 0 0 1 0-3.12A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.44 2.5 2.5 0 0 0 0-3.12 3 3 0 0 0 0-3.88 2.5 2.5 0 0 0 0-3.12A2.5 2.5 0 0 0 14.5 2Z"/></svg>
-                  <span>Memory</span>
-                </button>
-                <button type="button" (click)="gameType = 'word_builder'" [class.active-picker]="gameType === 'word_builder'" class="btn-picker">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
-                  <span>Word Builder</span>
-                </button>
-                <button type="button" (click)="gameType = 'hangman'" [class.active-picker]="gameType === 'hangman'" class="btn-picker">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22V2h10a2 2 0 0 1 2 2v2"/><circle cx="16" cy="9" r="3"/><path d="M16 12v6m-3-3h6m-5 5h4"/></svg>
-                  <span>{{ t('Pendu', 'Hangman') }}</span>
-                </button>
-                <button type="button" (click)="gameType = 'multiple_choice'" [class.active-picker]="gameType === 'multiple_choice'" class="btn-picker">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="m9 12 2 2 4-4"/></svg>
-                  <span>{{ t('Choix multiple', 'Multiple Choice') }}</span>
-                </button>
-              </div>
+              <label for="gameType" style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">{{ labels().typeLabel }}</label>
+              <select id="gameType" [(ngModel)]="gameType"
+                      style="width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font-size: 13px; background: var(--surface-1); color: var(--text-primary);">
+                <option value="flashcards">🃏 Flashcards</option>
+                <option value="matching">🔗 {{ t('Association', 'Matching') }}</option>
+                <option value="memory">🧠 Memory</option>
+                <option value="word_builder">🏗️ Word Builder</option>
+                <option value="hangman">🪢 {{ t('Pendu', 'Hangman') }}</option>
+                <option value="multiple_choice">📝 {{ t('Choix multiple', 'Multiple Choice') }}</option>
+              </select>
             </div>
 
-            <!-- Difficulty Selection (Custom buttons with SVG lights) -->
+            <!-- Difficulty -->
             <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
-              <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">{{ labels().difficultyLabel }}</label>
-              <div style="display:flex; flex-direction:column; gap:8px">
-                <div style="display:flex; gap:8px">
-                  <button type="button" style="flex:1" (click)="gameDifficulty = 'easy'" [class.active-easy]="gameDifficulty === 'easy'" class="btn-diff">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="#10B981" stroke="#10B981"><circle cx="12" cy="12" r="10"/></svg>
-                    <span>{{ t('Facile', 'Easy') }}</span>
-                  </button>
-                  <button type="button" style="flex:1" (click)="gameDifficulty = 'medium'" [class.active-medium]="gameDifficulty === 'medium'" class="btn-diff">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="#F59E0B" stroke="#F59E0B"><circle cx="12" cy="12" r="10"/></svg>
-                    <span>{{ t('Moyen', 'Medium') }}</span>
-                  </button>
-                  <button type="button" style="flex:1" (click)="gameDifficulty = 'hard'" [class.active-hard]="gameDifficulty === 'hard'" class="btn-diff">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="#EF4444" stroke="#EF4444"><circle cx="12" cy="12" r="10"/></svg>
-                    <span>{{ t('Difficile', 'Hard') }}</span>
-                  </button>
-                </div>
-              </div>
+              <label for="gameDiff" style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">{{ labels().difficultyLabel }}</label>
+              <select id="gameDiff" [(ngModel)]="gameDifficulty"
+                      style="width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font-size: 13px; background: var(--surface-1); color: var(--text-primary);">
+                <option value="easy">🟢 {{ t('Facile', 'Easy') }}</option>
+                <option value="medium">🟡 {{ t('Moyen', 'Medium') }}</option>
+                <option value="hard">🔴 {{ t('Difficile', 'Hard') }}</option>
+              </select>
             </div>
           </div>
 
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px">
-            <!-- Category Selection (Custom Visual Picker) -->
+            <!-- Category -->
             <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
-              <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">{{ labels().categoryLabel }}</label>
-              <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:8px">
-                <button type="button" (click)="gameCategory = 'general'" [class.active-cat]="gameCategory === 'general'" class="btn-cat">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
-                  <span>{{ t('Général', 'General') }}</span>
-                </button>
-                <button type="button" (click)="gameCategory = 'food'" [class.active-cat]="gameCategory === 'food'" class="btn-cat">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                  <span>Food & Drink</span>
-                </button>
-                <button type="button" (click)="gameCategory = 'travel'" [class.active-cat]="gameCategory === 'travel'" class="btn-cat">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 2 22M17 22l5-5-5-5-5 5z"/><path d="M2 2h5l5 5H2z"/></svg>
-                  <span>Travel & Places</span>
-                </button>
-                <button type="button" (click)="gameCategory = 'business'" [class.active-cat]="gameCategory === 'business'" class="btn-cat">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-                  <span>Business</span>
-                </button>
-                <button type="button" (click)="gameCategory = 'academic'" [class.active-cat]="gameCategory === 'academic'" class="btn-cat" style="grid-column: span 2">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 2.5 3 6 3s6-1 6-3v-5"/></svg>
-                  <span>Academic & Science</span>
-                </button>
-              </div>
+              <label for="gameCategory" style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">{{ labels().categoryLabel }}</label>
+              <select id="gameCategory" [(ngModel)]="gameCategory"
+                      style="width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font-size: 13px; background: var(--surface-1); color: var(--text-primary);">
+                <option value="general">🌍 {{ t('Général', 'General') }}</option>
+                <option value="food">🍕 Food & Restaurants</option>
+                <option value="travel">✈️ Travel & Places</option>
+                <option value="business">💼 Business & Work</option>
+                <option value="academic">🏫 Academic & Science</option>
+              </select>
             </div>
 
             <!-- Group Assignment -->
@@ -134,41 +97,6 @@ import { DialogService } from '../../services/dialog.service';
                   <option [value]="c.id">#{{ c.name }}</option>
                 }
               </select>
-            </div>
-          </div>
-
-          <!-- Color Theme & Cover Image Selector -->
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px">
-            <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
-              <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">Thème Visuel</label>
-              <div style="display:flex; gap:10px; align-items:center; margin-top:4px">
-                @for (color of ['indigo', 'emerald', 'amber', 'rose', 'purple']; track color) {
-                  <button (click)="colorTheme = color"
-                          [style.background]="color === 'indigo' ? '#4F46E5' : (color === 'emerald' ? '#10B981' : (color === 'amber' ? '#F59E0B' : (color === 'rose' ? '#F43F5E' : '#8B5CF6')))"
-                          style="width:22px; height:22px; border-radius:50%; border:2px solid; cursor:pointer; transition: transform 0.2s"
-                          [style.border-color]="colorTheme === color ? 'var(--text-primary)' : 'transparent'"
-                          [style.transform]="colorTheme === color ? 'scale(1.2)' : 'scale(1)'">
-                  </button>
-                }
-                <span style="font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase">{{ colorTheme }}</span>
-              </div>
-            </div>
-            <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
-              <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">Image de Couverture</label>
-              <div style="display:flex; gap:10px; align-items:center; margin-top:4px">
-                <button class="btn-s" style="padding:4px 10px; font-size:11.5px; font-weight:600; display:flex; align-items:center; gap:4px; height:30px" (click)="vocabCoverInput.click()">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                  <span>{{ t('Choisir', 'Browse') }}</span>
-                </button>
-                <input type="file" #vocabCoverInput style="display:none" (change)="onCoverImageSelected($event)" accept="image/*" />
-                @if (coverImage) {
-                  <div style="position:relative; width:50px; height:32px; border-radius:4px; overflow:hidden; border:1px solid var(--border-weak)">
-                    <img [src]="coverImage" style="width:100%; height:100%; object-fit:cover" />
-                    <button (click)="coverImage = ''" 
-                            style="position:absolute; top:1px; right:1px; background:#EF4444; color:white; border:none; width:12px; height:12px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:8px; font-weight:bold; cursor:pointer">×</button>
-                  </div>
-                }
-              </div>
             </div>
           </div>
 
@@ -239,16 +167,12 @@ import { DialogService } from '../../services/dialog.service';
           </div>
 
           <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px; padding-top:16px; border-top:1px solid var(--border-weak)">
-            <button class="btn-s" (click)="resetForm(); activeTab.set('list')" style="border: 1px solid var(--border); border-radius: 8px; padding: 8px 16px; cursor: pointer; background: none; font-weight: 600; color: var(--text-secondary);">{{ labels().cancelBtn }}</button>
-            
-            <button class="btn-s" [disabled]="!isValid()" (click)="saveGame('draft')" style="border-color:#F59E0B; color:#D97706; border-radius: 8px; padding: 8px 18px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-              <span>{{ t('Enregistrer Brouillon', 'Save Draft') }}</span>
-            </button>
-
-            <button class="btn-p" [disabled]="!isValid()" (click)="saveGame('published')" style="background:#F59E0B; border-color:#F59E0B; color: white; border-radius: 8px; padding: 8px 24px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+            @if (selectedGameId()) {
+              <button class="btn-s" (click)="resetForm()" style="border: 1px solid var(--border); border-radius: 8px; padding: 8px 16px; cursor: pointer; background: none; font-weight: 600; color: var(--text-secondary);">{{ labels().cancelBtn }}</button>
+            }
+            <button class="btn-p" [disabled]="!isValid()" (click)="saveGame()" style="background:#F59E0B; border-color:#F59E0B; color: white; border-radius: 8px; padding: 8px 24px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-              <span>{{ selectedGameId() ? t('Mettre à jour', 'Update Game') : t('Publier le Jeu', 'Publish Game') }}</span>
+              {{ labels().saveBtn }}
             </button>
           </div>
         </div>
@@ -256,20 +180,7 @@ import { DialogService } from '../../services/dialog.service';
 
       <!-- GAMES LIST -->
       @if (activeTab() === 'list') {
-        <div>
-          <!-- Header with action button -->
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
-            <div>
-              <h3 style="font-size: 15px; font-weight: 800; margin: 0 0 4px 0; color: var(--text-primary);">{{ t('Mes Jeux de Vocabulaire', 'My Vocabulary Games') }}</h3>
-              <p style="font-size: 12px; color: var(--text-muted); margin: 0;">{{ t('Gérez et organisez vos jeux de vocabulaire pour les élèves.', 'Manage and organize your vocabulary games for students.') }}</p>
-            </div>
-            <button (click)="resetForm(); activeTab.set('create')" style="background: #F59E0B; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; height: 34px">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              {{ t('Créer un Jeu', 'Create a Game') }}
-            </button>
-          </div>
-
-          <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="display: flex; flex-direction: column; gap: 10px;">
           @for (game of games(); track game.id) {
             <div class="game-list-card">
               <div style="display:flex; align-items:center; gap:14px; flex:1">
@@ -299,14 +210,7 @@ import { DialogService } from '../../services/dialog.service';
                   }
                 </div>
                 <div>
-                  <div style="display:flex; align-items:center; gap:8px">
-                    <div style="font-size:14px; font-weight:700; color:var(--text-primary)">{{ game.title }}</div>
-                    @if (game.status === 'draft') {
-                      <span style="font-size: 9px; padding: 1px 6px; border-radius: 12px; font-weight: 600; background: #FFFBEB; color: #D97706; border: 1px solid #FDE68A">
-                        {{ t('Brouillon', 'Draft') }}
-                      </span>
-                    }
-                  </div>
+                  <div style="font-size:14px; font-weight:700; color:var(--text-primary)">{{ game.title }}</div>
                   <div style="font-size:12px; color:var(--text-muted); margin-top:2px">
                     {{ getGameLabel(game.gameType) }} · {{ game.words.length }} {{ t('mots', 'words') }} · {{ getDiffLabel(game.difficulty) }}
                     · {{ t('Créé le', 'Created on') }} {{ game.createdAt | date:'d MMM y' }}
@@ -331,7 +235,6 @@ import { DialogService } from '../../services/dialog.service';
             </div>
           }
         </div>
-      </div>
       }
     </div>
   `,
@@ -370,84 +273,24 @@ import { DialogService } from '../../services/dialog.service';
     .game-icon.red { background: #FFF1F2; color: #E11D48; }
     .game-icon.purple { background: #FAF5FF; color: #7C3AED; }
     .game-icon.green { background: #F0FDF4; color: #10B981; }
-
-    .btn-picker, .btn-diff, .btn-cat {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 12px;
-      font-size: 12.5px;
-      font-weight: 600;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: var(--surface-1);
-      color: var(--text-primary);
-      cursor: pointer;
-      transition: all 0.2s;
-      justify-content: center;
-    }
-    .btn-picker:hover, .btn-diff:hover, .btn-cat:hover {
-      border-color: #F59E0B;
-      background: rgba(245, 158, 11, 0.05);
-    }
-    .btn-picker.active-picker {
-      border-color: #F59E0B;
-      background: #FEF3C7;
-      color: #92400E;
-    }
-    .btn-diff.active-easy {
-      border-color: #10B981;
-      background: #ECFDF5;
-      color: #065F46;
-    }
-    .btn-diff.active-medium {
-      border-color: #F59E0B;
-      background: #FFFBEB;
-      color: #92400E;
-    }
-    .btn-diff.active-hard {
-      border-color: #EF4444;
-      background: #FEF2F2;
-      color: #991B1B;
-    }
-    .btn-cat.active-cat {
-      border-color: #F59E0B;
-      background: #FEF3C7;
-      color: #92400E;
-    }
   `]
 })
 export class TeacherVocabGamesComponent {
   private db = inject(DatabaseService);
   private dialogService = inject(DialogService);
 
-  activeTab = signal<'create' | 'list'>('list');
+  activeTab = signal<'create' | 'list'>('create');
   games = signal<VocabGame[]>([]);
   currentUser = signal<UserProfile | null>(null);
   channels = signal<ChatChannel[]>([]);
 
   selectedGameId = signal<string | null>(null);
-  gameStatus: 'published' | 'draft' = 'published';
 
   gameTitle = '';
   gameType: VocabGame['gameType'] = 'flashcards';
   gameDifficulty: VocabGame['difficulty'] = 'medium';
   gameCategory = 'general';
   gameGroup = '';
-  colorTheme = 'indigo';
-  coverImage = '';
-
-  onCoverImageSelected(event: any) {
-    const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e: any) => {
-        this.coverImage = e.target.result;
-      };
-      reader.readAsDataURL(file);
-    }
-  }
-
   words: VocabGame['words'] = [
     { word: '', definition: '', translation: '' },
     { word: '', definition: '', translation: '' },
@@ -510,7 +353,7 @@ export class TeacherVocabGamesComponent {
     return filled.length >= 2;
   }
 
-  async saveGame(status: 'published' | 'draft' = 'published') {
+  async saveGame() {
     const user = this.currentUser();
     const validWords = this.words.filter(w => w.word.trim() && w.definition.trim());
     const id = this.selectedGameId();
@@ -520,10 +363,7 @@ export class TeacherVocabGamesComponent {
       difficulty: this.gameDifficulty,
       category: this.gameCategory,
       assignedGroupId: this.gameGroup || undefined,
-      colorTheme: this.colorTheme,
-      coverImage: this.coverImage,
-      words: validWords,
-      status: status
+      words: validWords
     };
 
     if (id) {
@@ -540,20 +380,16 @@ export class TeacherVocabGamesComponent {
         words: validWords
       });
 
-      if (status === 'published') {
-        await this.db.sendNotification({
-          recipientId: this.gameGroup || 'all', recipientRole: 'student',
-          type: 'quiz_available',
-          title: this.t('🎮 Nouveau jeu de vocabulaire', '🎮 New vocabulary game'),
-          message: this.t(`"${this.gameTitle}" est disponible !`, `"${this.gameTitle}" is available!`)
-        });
-      }
+      await this.db.sendNotification({
+        recipientId: this.gameGroup || 'all', recipientRole: 'student',
+        type: 'quiz_available',
+        title: this.t('🎮 Nouveau jeu de vocabulaire', '🎮 New vocabulary game'),
+        message: this.t(`"${this.gameTitle}" est disponible !`, `"${this.gameTitle}" is available!`)
+      });
 
       this.dialogService.alert(
-        status === 'published' ? this.t('Jeu créé !', 'Game created!') : this.t('Brouillon enregistré !', 'Draft saved!'), 
-        status === 'published'
-          ? this.t(`"${this.gameTitle}" a été publié avec ${validWords.length} mots.`, `"${this.gameTitle}" has been published with ${validWords.length} words.`)
-          : this.t(`"${this.gameTitle}" a été enregistré comme brouillon.`, `"${this.gameTitle}" has been saved as a draft.`),
+        this.t('Jeu créé !', 'Game created!'), 
+        this.t(`"${this.gameTitle}" a été publié avec ${validWords.length} mots.`, `"${this.gameTitle}" has been published with ${validWords.length} words.`), 
         'success'
       );
     }
@@ -568,9 +404,6 @@ export class TeacherVocabGamesComponent {
     this.gameDifficulty = game.difficulty;
     this.gameCategory = game.category || 'general';
     this.gameGroup = game.assignedGroupId || '';
-    this.colorTheme = game.colorTheme || 'indigo';
-    this.coverImage = game.coverImage || '';
-    this.gameStatus = game.status || 'published';
     this.words = game.words.map(w => ({ ...w }));
     this.activeTab.set('create');
   }
@@ -582,9 +415,6 @@ export class TeacherVocabGamesComponent {
     this.gameDifficulty = 'medium';
     this.gameCategory = 'general';
     this.gameGroup = '';
-    this.colorTheme = 'indigo';
-    this.coverImage = '';
-    this.gameStatus = 'published';
     this.words = [{ word: '', definition: '', translation: '' }, { word: '', definition: '', translation: '' }, { word: '', definition: '', translation: '' }];
   }
 
@@ -604,58 +434,15 @@ export class TeacherVocabGamesComponent {
   }
 
   loadTemplate() {
-    const category = this.gameCategory;
-    if (category === 'food') {
-      this.gameTitle = 'Vocabulary: Food & Restaurants';
-      this.gameType = 'matching';
-      this.words = [
-        { word: 'Appetizer', definition: 'A small dish served before the main meal', translation: 'Entrée' },
-        { word: 'Beverage', definition: 'A liquid that can be drunk', translation: 'Boisson' },
-        { word: 'Cuisine', definition: 'A style or method of cooking', translation: 'Cuisine' },
-        { word: 'Delicacy', definition: 'A choice or expensive food', translation: 'Délicatesse' },
-        { word: 'Palate', definition: "A person's appreciation of taste and flavour", translation: 'Palais gustatif' }
-      ];
-    } else if (category === 'travel') {
-      this.gameTitle = 'Vocabulary: Travel & Places';
-      this.gameType = 'flashcards';
-      this.words = [
-        { word: 'Itinerary', definition: 'A planned route or journey', translation: 'Itinéraire' },
-        { word: 'Destination', definition: 'The place to which someone is going', translation: 'Destination' },
-        { word: 'Souvenir', definition: 'A thing kept as a reminder of a place', translation: 'Souvenir' },
-        { word: 'Sightseeing', definition: 'The activity of visiting places of interest', translation: 'Tourisme' },
-        { word: 'Luggage', definition: 'Suitcases and bags for travel', translation: 'Bagages' }
-      ];
-    } else if (category === 'business') {
-      this.gameTitle = 'Vocabulary: Business & Work';
-      this.gameType = 'multiple_choice';
-      this.words = [
-        { word: 'Negotiation', definition: 'Discussion aimed at reaching an agreement', translation: 'Négociation' },
-        { word: 'Feedback', definition: 'Information about reactions to a product or task', translation: 'Retour d\'information' },
-        { word: 'Deadline', definition: 'The latest time or date by which something should be completed', translation: 'Date limite' },
-        { word: 'Partnership', definition: 'An association of two or more people/entities', translation: 'Partenariat' },
-        { word: 'Strategy', definition: 'A plan of action designed to achieve a long-term goal', translation: 'Stratégie' }
-      ];
-    } else if (category === 'academic') {
-      this.gameTitle = 'Vocabulary: Academic & Science';
-      this.gameType = 'word_builder';
-      this.words = [
-        { word: 'Hypothesis', definition: 'A proposed explanation made on the basis of limited evidence', translation: 'Hypothèse' },
-        { word: 'Experiment', definition: 'A scientific procedure undertaken to make a discovery', translation: 'Expérience' },
-        { word: 'Thesis', definition: 'A long essay or dissertation involving personal research', translation: 'Thèse' },
-        { word: 'Evaluation', definition: 'The making of a judgement about the amount, number, or value of something', translation: 'Évaluation' },
-        { word: 'Analysis', definition: 'Detailed examination of the elements or structure of something', translation: 'Analyse' }
-      ];
-    } else {
-      this.gameTitle = 'Vocabulary: General Expressive';
-      this.gameType = 'matching';
-      this.words = [
-        { word: 'Perseverance', definition: 'Persistence in doing something despite difficulty', translation: 'Persévérance' },
-        { word: 'Resilience', definition: 'The capacity to recover quickly from difficulties', translation: 'Résilience' },
-        { word: 'Achievement', definition: 'A thing done successfully with effort, skill, or courage', translation: 'Réussite' },
-        { word: 'Gratitude', definition: 'The quality of being thankful', translation: 'Gratitude' },
-        { word: 'Obstacle', definition: 'A thing that blocks one\'s way or prevents progress', translation: 'Obstacle' }
-      ];
-    }
+    this.gameTitle = 'Vocabulary: Food & Restaurants';
+    this.gameType = 'matching';
+    this.words = [
+      { word: 'Appetizer', definition: 'A small dish served before the main meal', translation: 'Entrée' },
+      { word: 'Beverage', definition: 'A liquid that can be drunk', translation: 'Boisson' },
+      { word: 'Cuisine', definition: 'A style or method of cooking', translation: 'Cuisine' },
+      { word: 'Delicacy', definition: 'A choice or expensive food', translation: 'Délicatesse' },
+      { word: 'Palate', definition: "A person's appreciation of taste and flavour", translation: 'Palais gustatif' },
+    ];
   }
 
   getGameLabel(t: string): string {
@@ -677,3 +464,9 @@ export class TeacherVocabGamesComponent {
     return `game-icon ${m[t] || 'purple'}`;
   }
 }
+"""
+
+with open(file_path, 'w', encoding='utf-8') as f:
+    f.write(code)
+
+print("vocab-games.ts updated successfully with translations!")

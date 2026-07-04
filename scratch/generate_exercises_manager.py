@@ -1,4 +1,8 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import os
+
+file_path = r'c:\Users\PC\Downloads\speak-up2\src\app\components\teacher\exercises-manager.ts'
+
+code = """import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DatabaseService, Exercise, ExerciseType, UserProfile } from '../../services/database.service';
@@ -9,7 +13,7 @@ import { DialogService } from '../../services/dialog.service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="page" [style.padding]="activeTab() === 'create' ? '0' : '20px'" [style.max-width]="activeTab() === 'create' ? 'none' : '1200px'" style="margin:0 auto">
+    <div class="page" style="padding: 20px; max-width: 1200px; margin: 0 auto;">
       <!-- Tab Selector -->
       <div class="tab-row" style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--border-weak); padding-bottom: 10px;">
         <button class="tab" [class.active]="activeTab() === 'list'" (click)="setTab('list')"
@@ -56,7 +60,7 @@ import { DialogService } from '../../services/dialog.service';
                       style="padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); display: flex; align-items: center; gap: 4px; transition: all 0.2s;"
                       [style.background]="filterType() === typeItem.value ? typeItem.color : 'var(--surface-2)'"
                       [style.color]="filterType() === typeItem.value ? '#fff' : 'var(--text-secondary)'">
-                <span style="display:flex; align-items:center" [innerHTML]="typeItem.svg"></span>
+                <span>{{ typeItem.emoji }}</span>
                 <span>
                   {{ typeItem.value === 'writing' ? t('Rédaction', 'Writing') : 
                      typeItem.value === 'speaking' ? t('Expression Orale', 'Speaking') : 
@@ -79,7 +83,7 @@ import { DialogService } from '../../services/dialog.service';
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                       <span [style.background]="getTypeColor(ex.type) + '15'" [style.color]="getTypeColor(ex.type)"
                             style="padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; display: flex; align-items: center; gap: 4px;">
-                        <span style="display:inline-flex; align-items:center" [innerHTML]="getTypeSvg(ex.type)"></span>
+                        <span>{{ getTypeEmoji(ex.type) }}</span>
                         <span style="text-transform: capitalize;">
                           {{ ex.type === 'writing' ? t('Rédaction', 'Writing') : 
                              ex.type === 'speaking' ? t('Expression Orale', 'Speaking') : 
@@ -148,171 +152,55 @@ import { DialogService } from '../../services/dialog.service';
         </div>
       }
 
-      <!-- CREATE / EDIT TAB (FULL SCREEN WORKSPACE) -->
+      <!-- CREATE / EDIT TAB -->
       @if (activeTab() === 'create') {
-        <div style="background:#F8FAFC; padding:24px; min-height:calc(100vh - 60px); display:flex; flex-direction:column; gap:20px; animation: fadeIn 0.2s ease-out">
+        <div class="card" style="border: 1px solid var(--border); border-radius: 12px; padding: 24px; background: var(--surface-1); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+          
+          <h3 style="font-size: 16px; font-weight: 700; margin: 0 0 20px 0; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            {{ labels().tabCreateHeader }}
+          </h3>
 
-          <!-- TOP WORKSPACE MENU -->
-          <div style="display:flex; justify-content:space-between; align-items:center; background:white; padding:12px 24px; border-radius:12px; box-shadow:0 4px 6px -1px rgba(0,0,0,0.05); border:1px solid var(--border-weak)">
-            <div style="display:flex; align-items:center; gap:16px">
-              <button class="btn-s" style="padding:6px 12px; font-weight:700; display:flex; align-items:center; gap:6px" (click)="setTab('list')">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-                {{ t('Retour', 'Back') }}
-              </button>
-              <div style="width:1px; height:24px; background:#E2E8F0"></div>
-              <div>
-                <span [style.color]="getTypeColor(selectedType())" style="font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:1px">
-                   {{ getWorkspaceTitle() }}
-                </span>
-                <h2 style="font-size:15px; font-weight:800; color:var(--text-primary); margin:0">{{ formTitle || t('Sans titre','Untitled') }}</h2>
-              </div>
-            </div>
-            <!-- Toolbar Buttons -->
-            <div style="display:flex; align-items:center; gap:10px">
-              <!-- Config Panel -->
-              <button class="btn-s" style="display:flex; align-items:center; gap:6px" (click)="toggleExPanel('config')">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9z"/></svg>
-                <span style="font-size:11.5px; font-weight:700">{{ t('Configuration','Settings') }}</span>
-              </button>
-              <!-- YouTube Panel (Listening only) -->
-              @if (selectedType() === 'listening') {
-                <button class="btn-s" style="display:flex; align-items:center; gap:6px" (click)="toggleExPanel('youtube')"
-                  [style.background]="formYoutubeUrl ? '#FEE2E2' : 'white'" [style.color]="formYoutubeUrl ? '#EF4444' : 'var(--text-primary)'">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"/><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"/></svg>
-                  <span style="font-size:11.5px; font-weight:700">{{ formYoutubeUrl ? t('Vidéo ajoutée','Video Linked') : t('Ajouter Vidéo','Link Video') }}</span>
-                </button>
-              }
-              <div style="width:1px; height:24px; background:#E2E8F0"></div>
-              <button (click)="saveExercise('draft')" class="btn-s">
-                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                {{ t('Brouillon','Draft') }}
-              </button>
-              <button (click)="saveExercise('published')" class="btn-p" [style.background]="getTypeColor(selectedType())" [style.border-color]="getTypeColor(selectedType())">
-                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                {{ selectedExerciseId() ? t('Mettre à jour','Update') : t('Publier','Publish') }}
-              </button>
-            </div>
-          </div>
-
-          <!-- COLLAPSIBLE PANELS -->
-          @if (activeExPanel() !== 'none') {
-            <div style="background:white; border-radius:12px; padding:18px; border:1px solid var(--border-weak); box-shadow:0 4px 6px -1px rgba(0,0,0,0.05); animation: slideDown 0.18s ease-out">
-              <!-- CONFIG PANEL -->
-              @if (activeExPanel() === 'config') {
-                <h4 style="font-size:12px; font-weight:800; text-transform:uppercase; color:var(--text-primary); margin:0 0 12px 0">{{ t('Paramètres académiques & Points','Academic Settings & Points') }}</h4>
-                <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px">
-                  <div>
-                    <label style="font-size:11.5px; font-weight:700; color:var(--text-secondary); display:block; margin-bottom:6px">{{ labels().targetLevelLabel }}</label>
-                    <select [(ngModel)]="formLevel" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:6px; font-size:13px; background:var(--surface-1); color:var(--text-primary)">
-                      <option value="A1">A1 — {{ t('Débutant','Beginner') }}</option>
-                      <option value="A2">A2 — {{ t('Élémentaire','Elementary') }}</option>
-                      <option value="B1">B1 — {{ t('Intermédiaire','Intermediate') }}</option>
-                      <option value="B2">B2 — {{ t('Intermédiaire Supérieur','Upper Intermediate') }}</option>
-                      <option value="C1">C1 — {{ t('Avancé','Advanced') }}</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label style="font-size:11.5px; font-weight:700; color:var(--text-secondary); display:block; margin-bottom:6px">{{ labels().xpEarnLabel }}</label>
-                    <input type="number" [(ngModel)]="formPoints" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:6px; font-size:13px; background:var(--surface-1); color:var(--text-primary)"/>
-                  </div>
-                  <div>
-                    <label style="font-size:11.5px; font-weight:700; color:var(--text-secondary); display:block; margin-bottom:6px">{{ labels().assignGroupLabel }}</label>
-                    <select [(ngModel)]="formGroupId" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:6px; font-size:13px; background:var(--surface-1); color:var(--text-primary)">
-                      <option value="">{{ labels().noGroup }}</option>
-                      @for (g of groups(); track g.id) {
-                        <option [value]="g.id">{{ g.name }}</option>
-                      }
-                    </select>
-                  </div>
-                </div>
-              }
-              <!-- YOUTUBE PANEL (Listening) -->
-              @if (activeExPanel() === 'youtube') {
-                <h4 style="font-size:12px; font-weight:800; text-transform:uppercase; color:#EF4444; margin:0 0 12px 0">{{ t('Multimédia & Lien YouTube','Multimedia & YouTube Link') }}</h4>
-                <div style="display:grid; grid-template-columns:1.5fr 1fr; gap:16px">
-                  <div>
-                    <label style="font-size:11.5px; font-weight:700; color:var(--text-secondary); display:block; margin-bottom:6px">{{ labels().youtubeLabel }}</label>
-                    <input type="text" [(ngModel)]="formYoutubeUrl" placeholder="https://www.youtube.com/watch?v=..." style="width:100%; padding:9px; border:1px solid var(--border); border-radius:6px; font-size:13px; background:var(--surface-1); color:var(--text-primary)"/>
-                  </div>
-                  <div>
-                    <label style="font-size:11.5px; font-weight:700; color:var(--text-secondary); display:block; margin-bottom:6px">{{ labels().listeningPromptLabel }}</label>
-                    <textarea [(ngModel)]="formListeningInstruction" rows="2" [placeholder]="labels().formListeningPlaceholder" style="width:100%; padding:9px; border:1px solid var(--border); border-radius:6px; font-size:13px; background:var(--surface-1); color:var(--text-primary); resize:none"></textarea>
-                  </div>
-                </div>
-              }
-            </div>
-          }
-
-          <!-- CANVAS DOCUMENT -->
-          <div style="max-width:840px; width:100%; margin:0 auto; background:white; border-radius:12px; border:1px solid var(--border-weak); box-shadow:0 10px 25px -5px rgba(0,0,0,0.05); display:flex; flex-direction:column; min-height:600px">
-
-          <!-- STEP 1: Choose type (only for new) -->
+          <!-- STEP 1: CHOOSE TYPE (Only if creating new) -->
           @if (!selectedExerciseId() && currentStep() === 1) {
-            <div style="padding:40px">
-              <h3 style="font-size: 16px; font-weight: 700; margin: 0 0 20px 0; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                {{ labels().tabCreateHeader }}
-              </h3>
-
-              <div style="margin-bottom: 20px;">
-                <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px;">{{ labels().step1Label }}</label>
-                <p style="font-size: 13px; color: var(--text-secondary); margin: 0;">{{ t('Choisissez le type de compétence que vous souhaitez entraîner.', 'Choose the skill type you want to train.') }}</p>
-              </div>
+            <div>
+              <label style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 12px;">{{ labels().step1Label }}</label>
               
-              <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; margin-bottom: 24px;">
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px;">
                 @for (typeItem of typesList; track typeItem.value) {
                   <div (click)="selectType(typeItem.value)"
-                       style="border: 2px solid var(--border); border-radius: 16px; padding: 20px 16px 16px; cursor: pointer; transition: all 0.22s cubic-bezier(.4,0,.2,1); position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: flex-start; gap: 12px;"
+                       style="border: 2px solid var(--border); border-radius: 12px; padding: 16px; cursor: pointer; transition: all 0.2s; position: relative;"
                        [style.border-color]="selectedType() === typeItem.value ? typeItem.color : 'var(--border)'"
-                       [style.background]="selectedType() === typeItem.value ? typeItem.color + '10' : 'var(--surface-2)'"
-                       [style.box-shadow]="selectedType() === typeItem.value ? '0 4px 20px ' + typeItem.color + '30' : 'none'">
-
-                    <!-- Decorative glow blob -->
-                    <div style="position:absolute; top:-20px; right:-20px; width:80px; height:80px; border-radius:50%; pointer-events:none; transition: opacity 0.22s;"
-                         [style.background]="typeItem.color + '18'"
-                         [style.opacity]="selectedType() === typeItem.value ? '1' : '0.4'"></div>
-
-                    <!-- Icon bubble -->
-                    <div style="width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink:0; transition: transform 0.22s;"
-                         [style.background]="typeItem.color + '18'"
-                         [style.transform]="selectedType() === typeItem.value ? 'scale(1.08)' : 'scale(1)'"
-                         [innerHTML]="typeItem.svgLarge">
-                    </div>
-
-                    <!-- Text -->
-                    <div style="flex:1;">
-                      <h4 style="font-size: 14px; font-weight: 700; margin: 0 0 5px 0; line-height: 1.2;"
-                          [style.color]="selectedType() === typeItem.value ? typeItem.color : 'var(--text-primary)'">
-                        {{ typeItem.value === 'writing' ? t('Rédaction', 'Writing') : 
-                           typeItem.value === 'speaking' ? t('Expression Orale', 'Speaking') : 
-                           typeItem.value === 'listening' ? t('Compréhension Orale', 'Listening') : 
-                           typeItem.value === 'translation' ? t('Traduction', 'Translation') : 
-                           typeItem.value === 'pronunciation' ? t('Prononciation', 'Pronunciation') : 
-                           t('Vocabulaire', 'Vocabulary') }}
-                      </h4>
-                      <p style="font-size: 11.5px; color: var(--text-muted); margin: 0; line-height: 1.5;">
-                        {{ t(
-                          typeItem.value === 'writing' ? 'Sujets rédigés libres avec correction manuelle.' :
-                          typeItem.value === 'speaking' ? 'Entraînement oraux libres ou audio prompts.' :
-                          typeItem.value === 'listening' ? 'Vidéo YouTube avec résumé/questions ou réponse libre.' :
-                          typeItem.value === 'translation' ? 'Passages FR ➔ EN ou EN ➔ FR à traduire.' :
-                          typeItem.value === 'pronunciation' ? 'Texte à prononcer avec enregistrement audio.' :
-                          'Thème et liste de vocabulaire avec exercices associés.',
-                          typeItem.value === 'writing' ? 'Free writing subjects with manual grading.' :
-                          typeItem.value === 'speaking' ? 'Free speaking practice or audio prompts.' :
-                          typeItem.value === 'listening' ? 'YouTube video with summary/questions or free response.' :
-                          typeItem.value === 'translation' ? 'French ➔ English or English ➔ French passages to translate.' :
-                          typeItem.value === 'pronunciation' ? 'Text to read aloud with audio recording.' :
-                          'Theme and list of vocabulary words with practice exercises.'
-                        ) }}
-                      </p>
-                    </div>
+                       [style.background]="selectedType() === typeItem.value ? typeItem.color + '0a' : 'var(--surface-2)'">
+                    <div style="font-size: 28px; margin-bottom: 10px;">{{ typeItem.emoji }}</div>
+                    <h4 style="font-size: 14px; font-weight: 700; color: var(--text-primary); margin: 0 0 4px 0;">
+                      {{ typeItem.value === 'writing' ? t('Rédaction', 'Writing') : 
+                         typeItem.value === 'speaking' ? t('Expression Orale', 'Speaking') : 
+                         typeItem.value === 'listening' ? t('Compréhension Orale', 'Listening') : 
+                         typeItem.value === 'translation' ? t('Traduction', 'Translation') : 
+                         typeItem.value === 'pronunciation' ? t('Prononciation', 'Pronunciation') : 
+                         t('Vocabulaire', 'Vocabulary') }}
+                    </h4>
+                    <p style="font-size: 11px; color: var(--text-muted); margin: 0; line-height: 1.4;">
+                      {{ t(
+                        typeItem.value === 'writing' ? 'Sujets rédigés libres avec correction manuelle.' :
+                        typeItem.value === 'speaking' ? 'Entraînement oraux libres ou audio prompts.' :
+                        typeItem.value === 'listening' ? 'Vidéo YouTube avec résumé/questions ou réponse libre.' :
+                        typeItem.value === 'translation' ? 'Passages FR ➔ EN ou EN ➔ FR à traduire.' :
+                        typeItem.value === 'pronunciation' ? 'Texte à prononcer avec enregistrement audio.' :
+                        'Thème et liste de vocabulaire avec exercices associés.',
+                        typeItem.value === 'writing' ? 'Free writing subjects with manual grading.' :
+                        typeItem.value === 'speaking' ? 'Free speaking practice or audio prompts.' :
+                        typeItem.value === 'listening' ? 'YouTube video with summary/questions or free response.' :
+                        typeItem.value === 'translation' ? 'French ➔ English or English ➔ French passages to translate.' :
+                        typeItem.value === 'pronunciation' ? 'Text to read aloud with audio recording.' :
+                        'Theme and list of vocabulary words with practice exercises.'
+                      ) }}
+                    </p>
                     
-                    <!-- Selected check badge -->
                     @if (selectedType() === typeItem.value) {
-                      <div style="position: absolute; top: 12px; right: 12px; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;"
-                           [style.background]="typeItem.color">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      <div style="position: absolute; top: 12px; right: 12px; width: 18px; height: 18px; border-radius: 50%; background: #059669; display: flex; align-items: center; justify-content: center; color: white;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                       </div>
                     }
                   </div>
@@ -321,13 +209,11 @@ import { DialogService } from '../../services/dialog.service';
 
               <div style="display: flex; justify-content: flex-end;">
                 <button [disabled]="!selectedType()" (click)="currentStep.set(2)"
-                        style="color: white; border: none; padding: 11px 28px; border-radius: 8px; font-weight: 700; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: opacity 0.2s, box-shadow 0.2s;"
-                        [style.background]="selectedType() ? getTypeColor(selectedType()) : '#059669'"
-                        [style.opacity]="selectedType() ? 1 : 0.45"
-                        [style.cursor]="selectedType() ? 'pointer' : 'not-allowed'"
-                        [style.box-shadow]="selectedType() ? '0 4px 14px ' + getTypeColor(selectedType()) + '55' : 'none'">
+                        style="background: #059669; color: white; border: none; padding: 10px 24px; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;"
+                        [style.opacity]="selectedType() ? 1 : 0.5"
+                        [style.cursor]="selectedType() ? 'pointer' : 'not-allowed'">
                   {{ labels().continueBtn }}
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                 </button>
               </div>
             </div>
@@ -335,8 +221,7 @@ import { DialogService } from '../../services/dialog.service';
 
           <!-- STEP 2: FORM BASED ON TYPE -->
           @if (selectedExerciseId() || currentStep() === 2) {
-            <div style="padding:40px">
-              <div style="display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; justify-content: space-between;">
+            <div style="display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; justify-content: space-between;">
               
               <!-- Left Column: Form Inputs -->
               <div style="flex: 1.2; min-width: 320px; display: flex; flex-direction: column; gap: 16px;">
@@ -350,8 +235,8 @@ import { DialogService } from '../../services/dialog.service';
                   }
                   <div style="font-size: 13px; font-weight: 700; color: var(--text-secondary); display: flex; align-items: center; gap: 6px;">
                     {{ labels().selectedTypeLabel }} 
-                    <span [style.color]="getTypeColor(selectedType())" style="text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px; display:inline-flex; align-items:center; gap:4px">
-                      <span style="display:inline-flex; align-items:center" [innerHTML]="getTypeSvg(selectedType())"></span> {{ selectedType() }}
+                    <span [style.color]="getTypeColor(selectedType())" style="text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px;">
+                      {{ getTypeEmoji(selectedType()) }} {{ selectedType() }}
                     </span>
                   </div>
                 </div>
@@ -390,7 +275,14 @@ import { DialogService } from '../../services/dialog.service';
                   </div>
                 </div>
 
-
+                <!-- Status Selection -->
+                <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
+                  <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">{{ labels().statusLabel }}</label>
+                  <select [(ngModel)]="formStatus" style="width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 13px; background: var(--surface-1); color: var(--text-primary);">
+                    <option value="published">{{ labels().statusPublished }}</option>
+                    <option value="draft">{{ labels().statusDraft }}</option>
+                  </select>
+                </div>
 
                 <!-- WRITING SPECIFIC FIELD -->
                 @if (selectedType() === 'writing') {
@@ -474,15 +366,8 @@ import { DialogService } from '../../services/dialog.service';
                   <button (click)="setTab('list')" style="background: none; border: 1px solid var(--border); padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; color: var(--text-secondary);">
                     {{ labels().cancelBtn }}
                   </button>
-
-                  <button (click)="saveExercise('draft')" style="background: none; border: 1px solid #10B981; padding: 8px 18px; border-radius: 6px; cursor: pointer; font-weight: 600; color: #059669; display: flex; align-items: center; gap: 6px">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                    <span>{{ t('Enregistrer Brouillon', 'Save Draft') }}</span>
-                  </button>
-
-                  <button (click)="saveExercise('published')" style="background: #059669; color: white; border: none; padding: 8px 24px; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                    <span>{{ selectedExerciseId() ? t("Mettre à jour", "Update Exercise") : t("Publier l'Exercice", "Publish Exercise") }}</span>
+                  <button (click)="saveExercise()" style="background: #059669; color: white; border: none; padding: 8px 24px; border-radius: 6px; font-weight: 600; cursor: pointer;">
+                    {{ labels().saveBtn }}
                   </button>
                 </div>
               </div>
@@ -609,16 +494,16 @@ import { DialogService } from '../../services/dialog.service';
                       <div style="display: flex; justify-content: space-between; align-items: center; gap: 6px; width: 100%;">
                         <button disabled class="btn-s" style="flex: 1; padding: 6px; font-size: 11px; cursor: not-allowed;">{{ labels().prevBtn }}</button>
                         <span style="font-size: 11px; color: var(--text-muted);">1 / {{ words.length || 1 }}</span>
+                        <button disabled class="btn-p" style="flex: 1; background: #4F46E5; border-color: #4F46E5; padding: 6px; font-size: 11px; cursor: not-allowed; color: white;">{{ labels().nextBtn }}</button>
                       </div>
                     </div>
                   }
-                </div><!-- close preview white container -->
-              </div><!-- close preview column -->
-            </div><!-- close flex row -->
-          </div><!-- close padding:40px wrapper -->
+                </div>
+              </div>
+
+            </div>
           }
-        </div><!-- close canvas -->
-        </div><!-- close workspace wrapper -->
+        </div>
       }
     </div>
   `
@@ -631,13 +516,6 @@ export class TeacherExercisesManagerComponent {
 
   t(fr: string, en: string): string {
     return this.activeLang() === 'fr' ? fr : en;
-  }
-
-  getWorkspaceTitle(): string {
-    if (this.selectedExerciseId()) {
-      return this.t("Éditeur d'Exercice", "Exercise Editor");
-    }
-    return this.t("Créateur d'Exercice", "Exercise Creator");
   }
 
   labels = computed(() => ({
@@ -716,7 +594,6 @@ export class TeacherExercisesManagerComponent {
   }));
 
   activeTab = signal<'list' | 'create'>('list');
-  activeExPanel = signal<'none' | 'config' | 'youtube'>('none');
   currentStep = signal<1 | 2>(1);
 
   // Data signals
@@ -750,97 +627,12 @@ export class TeacherExercisesManagerComponent {
   formWordListRaw = '';
 
   typesList = [
-    { 
-      value: 'writing', 
-      emoji: '✍️', 
-      color: '#7C3AED', 
-      label: 'Writing', 
-      desc: 'Sujets rédigés libres avec correction manuelle.',
-      svg: '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>',
-      svgLarge: `<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z" fill="#7C3AED" fill-opacity="0.15"/>
-        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z"/>
-        <path d="M20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="#7C3AED" fill-opacity="0.4"/>
-        <path d="M20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
-      </svg>`
-    },
-    { 
-      value: 'speaking', 
-      emoji: '🎙️', 
-      color: '#059669', 
-      label: 'Speaking', 
-      desc: 'Entraînement oraux libres ou audio prompts.',
-      svg: '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>',
-      svgLarge: `<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="9" y="2" width="6" height="12" rx="3" fill="#059669" fill-opacity="0.2"/>
-        <rect x="9" y="2" width="6" height="12" rx="3"/>
-        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-        <line x1="12" y1="19" x2="12" y2="22"/>
-        <line x1="8" y1="22" x2="16" y2="22" stroke-width="2"/>
-        <circle cx="12" cy="8" r="1.5" fill="#059669" fill-opacity="0.6" stroke="none"/>
-      </svg>`
-    },
-    { 
-      value: 'listening', 
-      emoji: '👂', 
-      color: '#0284C7', 
-      label: 'Listening', 
-      desc: 'Vidéo YouTube avec résumé/questions ou réponse libre.',
-      svg: '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>',
-      svgLarge: `<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#0284C7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M3 18v-6a9 9 0 0 1 18 0v6"/>
-        <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3z" fill="#0284C7" fill-opacity="0.2"/>
-        <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3z"/>
-        <path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" fill="#0284C7" fill-opacity="0.2"/>
-        <path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>
-        <path d="M8 10.5a4 4 0 0 1 8 0" stroke-width="2" stroke-dasharray="2 1"/>
-      </svg>`
-    },
-    { 
-      value: 'translation', 
-      emoji: '🌍', 
-      color: '#D97706', 
-      label: 'Translation', 
-      desc: 'Passages FR ➔ EN ou EN ➔ FR à traduire.',
-      svg: '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>',
-      svgLarge: `<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="12" cy="12" r="9" fill="#D97706" fill-opacity="0.12"/>
-        <circle cx="12" cy="12" r="9"/>
-        <path d="M3.6 9h16.8M3.6 15h16.8"/>
-        <path d="M12 3a14 14 0 0 1 3.5 9A14 14 0 0 1 12 21A14 14 0 0 1 8.5 12A14 14 0 0 1 12 3z" fill="#D97706" fill-opacity="0.08"/>
-        <path d="M12 3a14 14 0 0 1 3.5 9A14 14 0 0 1 12 21A14 14 0 0 1 8.5 12A14 14 0 0 1 12 3z"/>
-      </svg>`
-    },
-    { 
-      value: 'pronunciation', 
-      emoji: '🔊', 
-      color: '#DC2626', 
-      label: 'Pronunciation', 
-      desc: 'Texte à prononcer avec enregistrement audio.',
-      svg: '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>',
-      svgLarge: `<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M11 5L6 9H2v6h4l5 4V5z" fill="#DC2626" fill-opacity="0.2"/>
-        <path d="M11 5L6 9H2v6h4l5 4V5z"/>
-        <path d="M15.54 8.46a5 5 0 0 1 0 7.07" stroke-width="2"/>
-        <path d="M19.07 4.93a10 10 0 0 1 0 14.14" stroke-width="1.8" stroke-opacity="0.5"/>
-      </svg>`
-    },
-    { 
-      value: 'vocabulary', 
-      emoji: '📚', 
-      color: '#4F46E5', 
-      label: 'Vocabulary', 
-      desc: 'Thème et liste de vocabulaire avec exercices associés.',
-      svg: '<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5v-15z"/></svg>',
-      svgLarge: `<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-        <path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5v-15z" fill="#4F46E5" fill-opacity="0.12"/>
-        <path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5v-15z"/>
-        <line x1="9" y1="7" x2="16" y2="7" stroke-width="1.5"/>
-        <line x1="9" y1="10" x2="16" y2="10" stroke-width="1.5"/>
-        <line x1="9" y1="13" x2="13" y2="13" stroke-width="1.5"/>
-      </svg>`
-    }
+    { value: 'writing', emoji: '✍️', color: '#7C3AED', label: 'Writing', desc: 'Sujets rédigés libres avec correction manuelle.' },
+    { value: 'speaking', emoji: '🎙️', color: '#059669', label: 'Speaking', desc: 'Entraînement oraux libres ou audio prompts.' },
+    { value: 'listening', emoji: '👂', color: '#0284C7', label: 'Listening', desc: 'Vidéo YouTube avec résumé/questions ou réponse libre.' },
+    { value: 'translation', emoji: '🌍', color: '#D97706', label: 'Translation', desc: 'Passages FR ➔ EN ou EN ➔ FR à traduire.' },
+    { value: 'pronunciation', emoji: '🔊', color: '#DC2626', label: 'Pronunciation', desc: 'Texte à prononcer avec enregistrement audio.' },
+    { value: 'vocabulary', emoji: '📚', color: '#4F46E5', label: 'Vocabulary', desc: 'Thème et liste de vocabulaire avec exercices associés.' }
   ];
 
   filteredExercises = computed(() => {
@@ -868,30 +660,18 @@ export class TeacherExercisesManagerComponent {
     this.activeTab.set(tab);
     if (tab === 'list') {
       this.resetForm();
-      this.activeExPanel.set('none');
     }
-  }
-
-  toggleExPanel(name: 'config' | 'youtube') {
-    this.activeExPanel.set(this.activeExPanel() === name ? 'none' : name);
   }
 
   selectType(type: any) {
     this.selectedType.set(type);
-    this.currentStep.set(2);
   }
 
   startNew() {
     this.resetForm();
     this.selectedExerciseId.set(null);
-    const filter = this.filterType();
-    if (filter && filter !== 'all') {
-      this.selectedType.set(filter as any);
-      this.currentStep.set(2);
-    } else {
-      this.selectedType.set(null);
-      this.currentStep.set(1);
-    }
+    this.selectedType.set(null);
+    this.currentStep.set(1);
     this.setTab('create');
   }
 
@@ -915,7 +695,7 @@ export class TeacherExercisesManagerComponent {
     this.formTextToTranslate = ex.textToTranslate || '';
     this.formTextToPronounce = ex.textToPronounce || '';
     this.formTheme = ex.theme || '';
-    this.formWordListRaw = (ex.wordList || []).join('\n');
+    this.formWordListRaw = (ex.wordList || []).join('\\n');
 
     this.currentStep.set(2);
     this.setTab('create');
@@ -945,7 +725,7 @@ export class TeacherExercisesManagerComponent {
     );
   }
 
-  async saveExercise(statusOverride?: 'published' | 'draft') {
+  async saveExercise() {
     if (!this.formTitle.trim()) {
       this.dialogService.alert(
         this.t('Erreur', 'Error'),
@@ -961,11 +741,9 @@ export class TeacherExercisesManagerComponent {
     const user = this.currentUser();
 
     const words = this.formWordListRaw
-      .split('\n')
+      .split('\\n')
       .map(w => w.trim())
       .filter(w => w.length > 0);
-
-    const status = statusOverride || this.formStatus;
 
     const exerciseData: any = {
       title: this.formTitle.trim(),
@@ -973,7 +751,7 @@ export class TeacherExercisesManagerComponent {
       level: this.formLevel,
       points: this.formPoints,
       groupId: this.formGroupId || undefined,
-      status: status,
+      status: this.formStatus,
       authorId: user?.id || 'teacher',
       authorName: user?.name || 'Teacher'
     };
@@ -1002,22 +780,18 @@ export class TeacherExercisesManagerComponent {
         await this.db.updateExercise(id, exerciseData);
         this.dialogService.alert(
           this.t('Succès', 'Success'),
-          status === 'published'
-            ? this.t("L'exercice a été publié avec succès.", "Exercise published successfully.")
-            : this.t("Le brouillon a été mis à jour avec succès.", "Draft updated successfully."),
+          this.t("L'exercice a été mis à jour avec succès.", "Exercise updated successfully."),
           'success'
         );
       } else {
         await this.db.addExercise(exerciseData);
         this.dialogService.alert(
           this.t('Succès', 'Success'),
-          status === 'published'
-            ? this.t("L'exercice a été créé avec succès.", "Exercise created successfully.")
-            : this.t("Le brouillon a été créé avec succès.", "Draft created successfully."),
+          this.t("L'exercice a été créé avec succès.", "Exercise created successfully."),
           'success'
         );
 
-        if (status === 'published') {
+        if (this.formStatus === 'published') {
           await this.db.sendNotification({
             recipientId: 'all',
             recipientRole: 'student',
@@ -1065,11 +839,6 @@ export class TeacherExercisesManagerComponent {
     const item = this.typesList.find(t => t.value === type);
     return item ? item.emoji : '🎯';
   }
-  getTypeSvg(type: any): string {
-    const item = this.typesList.find(t => t.value === type);
-    return item ? item.svg : '';
-  }
-
 
   getGroupName(groupId: string): string {
     const g = this.groups().find(c => c.id === groupId);
@@ -1078,6 +847,12 @@ export class TeacherExercisesManagerComponent {
 
   getPreviewWordList(): string[] {
     if (!this.formWordListRaw) return [];
-    return this.formWordListRaw.split('\n').map(w => w.trim()).filter(w => w.length > 0);
+    return this.formWordListRaw.split('\\n').map(w => w.trim()).filter(w => w.length > 0);
   }
 }
+"""
+
+with open(file_path, 'w', encoding='utf-8') as f:
+    f.write(code)
+
+print("exercises-manager.ts regenerated successfully!")

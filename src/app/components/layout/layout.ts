@@ -1,4 +1,4 @@
-import { Component, inject, signal, effect } from '@angular/core';
+import { Component, inject, signal, effect, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DatabaseService, UserProfile, LiveClass, Submission, Announcement } from '../../services/database.service';
 import { DialogService } from '../../services/dialog.service';
@@ -140,57 +140,117 @@ import { HistoryLogsComponent } from '../shared/history-logs';
           <!-- STUDENT/GUEST SIDEBAR TABS -->
           @if (currentUser()?.role === 'student' || currentUser()?.role === 'guest') {
             <div class="nav-section">{{ t('Apprendre', 'Learn') }}</div>
-            <button class="nav-item" [class.active]="activeTab === 'dashboard'" (click)="setTab('dashboard')">
+            <button class="nav-item" [class.active]="activeTab === 'dashboard'" (click)="setTab('dashboard')"
+                    [style.opacity]="mustTakePlacementTest() ? '0.4' : '1'"
+                    [style.pointer-events]="mustTakePlacementTest() ? 'none' : 'auto'"
+                    [style.cursor]="mustTakePlacementTest() ? 'not-allowed' : 'pointer'">
               <i class="ti ti-layout-dashboard" aria-hidden="true"></i>{{ t('Tableau de bord', 'Dashboard') }}
             </button>
             @if (showGarden()) {
-              <button class="nav-item" [class.active]="activeTab === 'garden'" (click)="setTab('garden')">
+              <button class="nav-item" [class.active]="activeTab === 'garden'" (click)="setTab('garden')"
+                      [style.opacity]="mustTakePlacementTest() ? '0.4' : '1'"
+                      [style.pointer-events]="mustTakePlacementTest() ? 'none' : 'auto'"
+                      [style.cursor]="mustTakePlacementTest() ? 'not-allowed' : 'pointer'">
                 <i class="ti ti-plant" aria-hidden="true"></i>My Garden
               </button>
             }
             @if (showJourney()) {
-              <button class="nav-item" [class.active]="activeTab === 'journey'" (click)="setTab('journey')">
+              <button class="nav-item" [class.active]="activeTab === 'journey'" (click)="setTab('journey')"
+                      [style.opacity]="mustTakePlacementTest() ? '0.4' : '1'"
+                      [style.pointer-events]="mustTakePlacementTest() ? 'none' : 'auto'"
+                      [style.cursor]="mustTakePlacementTest() ? 'not-allowed' : 'pointer'">
                 <i class="ti ti-map" aria-hidden="true"></i>SpeakUp Journey
               </button>
             }
-            <button class="nav-item" [class.active]="activeTab === 'lessons'" (click)="setTab('lessons')">
+            <button class="nav-item" [class.active]="activeTab === 'lessons'" (click)="setTab('lessons')"
+                    [style.opacity]="mustTakePlacementTest() ? '0.4' : '1'"
+                    [style.pointer-events]="mustTakePlacementTest() ? 'none' : 'auto'"
+                    [style.cursor]="mustTakePlacementTest() ? 'not-allowed' : 'pointer'">
               <i class="ti ti-book" aria-hidden="true"></i>{{ t('Cours & Leçons', 'Lessons') }}
               @if (newLessonsCount() > 0) {
                 <span class="badge" style="background:#4F46E5; color:white; margin-left:auto">{{ newLessonsCount() }}</span>
               }
             </button>
-            <button class="nav-item" [class.active]="activeTab === 'speaking'" [class.hidden]="currentUser()?.role === 'guest'" [disabled]="currentUser()?.role === 'guest'" [class.disabled]="currentUser()?.role === 'guest'" [style.opacity]="currentUser()?.role === 'guest' ? '0.5' : '1'" [style.pointer-events]="currentUser()?.role === 'guest' ? 'none' : 'auto'" [attr.title]="currentUser()?.role === 'guest' ? 'Unlock with full account' : null" [class.active]="activeTab === 'speaking'" (click)="setTab('speaking')">
+            <button class="nav-item" [class.active]="activeTab === 'speaking'" [class.hidden]="currentUser()?.role === 'guest'" [disabled]="currentUser()?.role === 'guest'" [class.disabled]="currentUser()?.role === 'guest'" 
+                    [style.opacity]="currentUser()?.role === 'guest' ? '0.5' : (mustTakePlacementTest() ? '0.4' : '1')" 
+                    [style.pointer-events]="currentUser()?.role === 'guest' || mustTakePlacementTest() ? 'none' : 'auto'" 
+                    [style.cursor]="currentUser()?.role === 'guest' || mustTakePlacementTest() ? 'not-allowed' : 'pointer'"
+                    [attr.title]="currentUser()?.role === 'guest' ? 'Unlock with full account' : null" (click)="setTab('speaking')">
               <i class="ti ti-microphone" aria-hidden="true"></i>{{ t('Pratique Orale', 'Speaking') }}
             </button>
-            <button class="nav-item" [class.active]="activeTab === 'exercises'" (click)="setTab('exercises')">
-              <i class="ti ti-pencil" aria-hidden="true"></i>{{ t('Exercices & Quiz', 'Exercises & Quizzes') }}
+            <button class="nav-item" [class.active]="activeTab === 'quizzes'" (click)="setTab('quizzes')"
+                    [style.opacity]="mustTakePlacementTest() ? '0.4' : '1'"
+                    [style.pointer-events]="mustTakePlacementTest() ? 'none' : 'auto'"
+                    [style.cursor]="mustTakePlacementTest() ? 'not-allowed' : 'pointer'">
+              <i class="ti ti-list-check" aria-hidden="true"></i>{{ t('Quiz & Évaluations', 'Quizzes & Tests') }}
+              @if (newQuizzesCount() > 0) {
+                <span class="badge" style="background:#4F46E5; color:white; margin-left:auto">{{ newQuizzesCount() }}</span>
+              }
             </button>
-            <button class="nav-item" [class.active]="activeTab === 'dictionary'" (click)="setTab('dictionary')">
+            
+            <button class="nav-item" 
+                    [class.active]="activeTab === 'exercises'" 
+                    (click)="setTab('exercises')"
+                    [style.border]="mustTakePlacementTest() ? '1.5px solid #F59E0B' : 'none'"
+                    [style.background]="mustTakePlacementTest() ? '#FFFDF5' : 'transparent'">
+              <i class="ti ti-pencil" aria-hidden="true" [style.color]="mustTakePlacementTest() ? '#D97706' : 'inherit'"></i>
+              <span [style.color]="mustTakePlacementTest() ? '#B45309' : 'inherit'" [style.font-weight]="mustTakePlacementTest() ? '800' : 'normal'">
+                {{ mustTakePlacementTest() ? t('Test de Niveau 🎯', 'Placement Test 🎯') : t('Jeux & Exercices', 'Games & Exercises') }}
+              </span>
+              @if (mustTakePlacementTest()) {
+                <span class="badge" style="background:#D97706; color:white; margin-left:auto; font-size:9.5px; font-weight:800; animation: pulse-live 1.5s infinite">REQ</span>
+              } @else if (newExercisesCount() > 0) {
+                <span class="badge" style="background:#4F46E5; color:white; margin-left:auto">{{ newExercisesCount() }}</span>
+              }
+            </button>
+
+            <button class="nav-item" [class.active]="activeTab === 'dictionary'" (click)="setTab('dictionary')"
+                    [style.opacity]="mustTakePlacementTest() ? '0.4' : '1'"
+                    [style.pointer-events]="mustTakePlacementTest() ? 'none' : 'auto'"
+                    [style.cursor]="mustTakePlacementTest() ? 'not-allowed' : 'pointer'">
               <i class="ti ti-bookmarks" aria-hidden="true"></i>{{ t('Dictionnaire', 'Dictionary') }}
             </button>
-            <button class="nav-item" [class.active]="activeTab === 'ebooks'" (click)="setTab('ebooks')">
+            <button class="nav-item" [class.active]="activeTab === 'ebooks'" (click)="setTab('ebooks')"
+                    [style.opacity]="mustTakePlacementTest() ? '0.4' : '1'"
+                    [style.pointer-events]="mustTakePlacementTest() ? 'none' : 'auto'"
+                    [style.cursor]="mustTakePlacementTest() ? 'not-allowed' : 'pointer'">
               <i class="ti ti-book" aria-hidden="true"></i>{{ t('Bibliothèque (Ebooks)', 'Ebooks Library') }}
             </button>
             
             <div class="nav-section">{{ t('Communauté', 'Community') }}</div>
-            <button class="nav-item" [class.active]="activeTab === 'chat'" (click)="setTab('chat')">
+            <button class="nav-item" [class.active]="activeTab === 'chat'" (click)="setTab('chat')"
+                    [style.opacity]="mustTakePlacementTest() ? '0.4' : '1'"
+                    [style.pointer-events]="mustTakePlacementTest() ? 'none' : 'auto'"
+                    [style.cursor]="mustTakePlacementTest() ? 'not-allowed' : 'pointer'">
               <i class="ti ti-messages" aria-hidden="true"></i>{{ t('Chat en Anglais', 'English Chat') }}
               @if (chatUnreadCount() > 0) {
                 <span class="badge" style="background:#EF4444; color:white; margin-left:auto">{{ chatUnreadCount() }}</span>
               }
             </button>
             @if (showBoutique()) {
-              <button class="nav-item" [class.active]="activeTab === 'marketplace'" (click)="setTab('marketplace')">
+              <button class="nav-item" [class.active]="activeTab === 'marketplace'" (click)="setTab('marketplace')"
+                      [style.opacity]="mustTakePlacementTest() ? '0.4' : '1'"
+                      [style.pointer-events]="mustTakePlacementTest() ? 'none' : 'auto'"
+                      [style.cursor]="mustTakePlacementTest() ? 'not-allowed' : 'pointer'">
                 <i class="ti ti-shopping-cart" aria-hidden="true"></i>Boutique
               </button>
             }
-            <button class="nav-item" [class.active]="activeTab === 'leaderboard'" (click)="setTab('leaderboard')">
+            <button class="nav-item" [class.active]="activeTab === 'leaderboard'" (click)="setTab('leaderboard')"
+                    [style.opacity]="mustTakePlacementTest() ? '0.4' : '1'"
+                    [style.pointer-events]="mustTakePlacementTest() ? 'none' : 'auto'"
+                    [style.cursor]="mustTakePlacementTest() ? 'not-allowed' : 'pointer'">
               <i class="ti ti-trophy" aria-hidden="true"></i>{{ t('Classement (XP)', 'Leaderboard') }}
             </button>
-            <button class="nav-item" [class.active]="activeTab === 'events'" (click)="setTab('events')">
+            <button class="nav-item" [class.active]="activeTab === 'events'" (click)="setTab('events')"
+                    [style.opacity]="mustTakePlacementTest() ? '0.4' : '1'"
+                    [style.pointer-events]="mustTakePlacementTest() ? 'none' : 'auto'"
+                    [style.cursor]="mustTakePlacementTest() ? 'not-allowed' : 'pointer'">
               <i class="ti ti-calendar-event" aria-hidden="true"></i>{{ t('Événements', 'Events') }}
             </button>
-            <button class="nav-item" [class.active]="activeTab === 'announcements'" (click)="setTab('announcements')">
+            <button class="nav-item" [class.active]="activeTab === 'announcements'" (click)="setTab('announcements')"
+                    [style.opacity]="mustTakePlacementTest() ? '0.4' : '1'"
+                    [style.pointer-events]="mustTakePlacementTest() ? 'none' : 'auto'"
+                    [style.cursor]="mustTakePlacementTest() ? 'not-allowed' : 'pointer'">
               <i class="ti ti-volume" aria-hidden="true"></i>{{ t('Annonces', 'Announcements') }}
               @if (unreadAnnouncementsCount() > 0) {
                 <span class="badge red" style="background:#EF4444; color:white; margin-left:auto">{{ unreadAnnouncementsCount() }}</span>
@@ -206,10 +266,16 @@ import { HistoryLogsComponent } from '../shared/history-logs';
             </button>
             
             <div class="nav-section">{{ t('Progression', 'Progress') }}</div>
-            <button class="nav-item" [class.active]="activeTab === 'history'" (click)="setTab('history')">
+            <button class="nav-item" [class.active]="activeTab === 'history'" (click)="setTab('history')"
+                    [style.opacity]="mustTakePlacementTest() ? '0.4' : '1'"
+                    [style.pointer-events]="mustTakePlacementTest() ? 'none' : 'auto'"
+                    [style.cursor]="mustTakePlacementTest() ? 'not-allowed' : 'pointer'">
               <i class="ti ti-history" aria-hidden="true"></i>{{ t('Mon Historique', 'My History') }}
             </button>
-            <button class="nav-item" [class.active]="activeTab === 'exam'" (click)="setTab('exam')">
+            <button class="nav-item" [class.active]="activeTab === 'exam'" (click)="setTab('exam')"
+                    [style.opacity]="mustTakePlacementTest() ? '0.4' : '1'"
+                    [style.pointer-events]="mustTakePlacementTest() ? 'none' : 'auto'"
+                    [style.cursor]="mustTakePlacementTest() ? 'not-allowed' : 'pointer'">
               <i class="ti ti-certificate" aria-hidden="true"></i>{{ t('Mode Examen', 'Exam Mode') }}
               @if (examModeIsNew() || showExamNewBadge()) {
                 <span class="badge" style="background:#4F46E5; color:white; font-size:9px; margin-left:auto">NEW</span>
@@ -256,6 +322,9 @@ import { HistoryLogsComponent } from '../shared/history-logs';
             <button class="ni" [class.active]="activeTab === 'placement-tests'" (click)="setTab('placement-tests')">
               <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
               {{ t('Test de Niveau', 'Placement Test') }}
+              @if (pendingPlacementCount() > 0) {
+                <span class="badge" style="background:#EEF2FF; color:#4F46E5; font-size:10px; margin-left:auto; font-weight:700">{{ pendingPlacementCount() }}</span>
+              }
             </button>
             <button class="ni" [class.active]="activeTab === 'exercises-manager'" (click)="setTab('exercises-manager')">
               <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px;flex-shrink:0"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><polyline points="9 12 11 14 15 10"/><line x1="9" y1="17" x2="15" y2="17"/></svg>{{ t('Gérer les Exercices', 'Exercises Manager') }}
@@ -343,12 +412,24 @@ import { HistoryLogsComponent } from '../shared/history-logs';
           
           <!-- Real-time notifications bell -->
           <app-notifications style="margin-right: 12px;"></app-notifications>
+
+          <!-- Daily Practice Streak (Student only) -->
+          @if (currentUser()?.role === 'student') {
+            <div style="display:flex; align-items:center; gap:4.5px; margin-right:12px; background:linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%); border:1px solid #FED7AA; padding:4px 10px; border-radius:20px; font-size:12px; font-weight:700; color:#EA580C; box-shadow:0 2px 5px rgba(234,88,12,0.08); cursor:pointer" 
+                 (click)="setTab('exercises')" 
+                 [title]="t('Votre série de pratique quotidienne 🔥', 'Your daily practice streak 🔥')">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="fill:#EA580C;">
+                <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
+              </svg>
+              <span>{{ currentUser()?.streak || 0 }} {{ t('jours', 'days') }}</span>
+            </div>
+          }
           
           <!-- Live Button (Teacher only) -->
           @if (currentUser()?.role === 'teacher') {
             <button class="btn-s hide-mobile" (click)="triggerInstantLive()" style="font-size:11px; padding:4px 14px; border-radius:20px; display:flex; align-items:center; gap:6px; margin-right:10px; background:#EEF2FF; border-color:#4F46E5; color:#4F46E5; font-weight:700">
               <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7a2 2 0 0 0-2-2H3a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V7Z"/><path d="M12 9v6"/><path d="M9 12h6"/></svg>
-              Activer le Live
+              {{ t('Activer le Live', 'Start Live') }}
             </button>
           }
 
@@ -364,6 +445,30 @@ import { HistoryLogsComponent } from '../shared/history-logs';
         
         <!-- CONTENT VIEWPORT -->
         <div class="content">
+          <!-- ── PERSISTENT LIVE BANNER (student only, when live is active) ── -->
+          @if (currentUser()?.role === 'student' && activeClassAvailable() && !activeJitsiCall()) {
+            @let activeLive = getActiveLiveClass();
+            @if (activeLive) {
+              <div style="background:linear-gradient(135deg,#EF4444,#DC2626); color:white; padding:10px 20px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-shrink:0; box-shadow:0 4px 12px rgba(239,68,68,0.4); z-index:100; position:sticky; top:0"
+                   style="animation: slideDown 0.3s ease-out">
+                <div style="display:flex; align-items:center; gap:12px">
+                  <div style="width:10px; height:10px; border-radius:50%; background:white; animation:pulse-live 1.5s infinite; flex-shrink:0"></div>
+                  <div>
+                    <div style="font-size:13px; font-weight:800">🎥 {{ t('Cours en direct en cours !','Live Class in Progress!') }}</div>
+                    <div style="font-size:11px; opacity:0.9">{{ activeLive.title }} — {{ t('Rejoignez maintenant','Join now') }}</div>
+                  </div>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px">
+                  <button (click)="joinActiveLive(activeLive)"
+                          style="background:white; color:#DC2626; border:none; border-radius:8px; font-size:12px; font-weight:800; padding:7px 18px; cursor:pointer; display:flex; align-items:center; gap:6px; transition:all 0.2s"
+                          onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                    {{ t('Rejoindre le live','Join Live') }}
+                  </button>
+                </div>
+              </div>
+            }
+          }
           <!-- Student/Guest Views -->
           @if (currentUser()?.role === 'student' || currentUser()?.role === 'guest') {
             @if (activeTab === 'dashboard') {
@@ -382,8 +487,10 @@ import { HistoryLogsComponent } from '../shared/history-logs';
               <app-student-lessons></app-student-lessons>
             } @else if (activeTab === 'speaking') {
               <app-student-speaking></app-student-speaking>
+            } @else if (activeTab === 'quizzes') {
+              <app-student-exercises mode="quizzes"></app-student-exercises>
             } @else if (activeTab === 'exercises') {
-              <app-student-exercises></app-student-exercises>
+              <app-student-exercises [mode]="mustTakePlacementTest() ? 'quizzes' : 'exercises'"></app-student-exercises>
             } @else if (activeTab === 'dictionary') {
               <app-student-dictionary></app-student-dictionary>
             } @else if (activeTab === 'ebooks') {
@@ -632,7 +739,7 @@ import { HistoryLogsComponent } from '../shared/history-logs';
               <span style="font-weight:700; font-size:14px">{{ call.title }} — Live Room</span>
             </div>
             <div style="display:flex; gap:8px">
-              @if (currentUser()?.role === 'teacher' || call.group === 'AI-Practice') {
+              @if (currentUser()?.role === 'teacher' || call.group === 'AI-Practice' || call.title.startsWith('Live Call') || call.group !== 'All Students') {
                 <button class="btn-s" style="background:#EF4444; border-color:#EF4444; color:white; font-size:11px; padding:6px 12px; border-radius:6px; font-weight:700" (click)="endLiveCall()">
                   <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:4px"><path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3A19.5 19.5 0 0 1 4.54 10.6 19.79 19.79 0 0 1 1.54 2 2 2 0 0 1 3.52 0h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.5 7.91a16 16 0 0 0 3.18 5.4Z"/><line x1="23" y1="1" x2="1" y2="23"/></svg>
                   <span>End Call for All</span>
@@ -646,8 +753,9 @@ import { HistoryLogsComponent } from '../shared/history-logs';
             </div>
           </div>
           <!-- Jitsi Meet Component viewport -->
-          <div style="flex:1; background:#000; position:relative">
+          <div style="flex:1; background:#000; position:relative; overflow:hidden; display:flex; flex-direction:column; min-height:0">
             <app-jitsi-meet
+              [classId]="call.id"
               [roomName]="call.jitsiRoom"
               [isTeacher]="currentUser()?.role === 'teacher'"
               [userName]="currentUser()?.name || 'User'"
@@ -785,6 +893,15 @@ export class LayoutComponent {
   currentUser = signal<UserProfile | null>(null);
   allUsers = signal<UserProfile[]>([]);
 
+  pendingPlacementCount = computed(() => {
+    return this.allUsers().filter(u => u.placementTestTaken === true && (u.role === 'student' || u.role === 'guest')).length;
+  });
+
+  mustTakePlacementTest = computed(() => {
+    const user = this.currentUser();
+    return !!user && user.role === 'student' && user.blocked;
+  });
+
   activeTab = localStorage.getItem('speak_active_tab') || 'dashboard';
   pageTitle = 'Dashboard';
   isSidebarOpen = signal<boolean>(false);
@@ -795,6 +912,8 @@ export class LayoutComponent {
 
   // Badge notification clearing states
   lastLessonsView = signal<string>(localStorage.getItem('speak_last_lessons_view') || '');
+  lastQuizzesView = signal<string>(localStorage.getItem('speak_last_quizzes_view') || '');
+  lastExercisesView = signal<string>(localStorage.getItem('speak_last_exercises_view') || '');
   showExamNewBadge = signal<boolean>(localStorage.getItem('speak_seen_exam_mode') !== 'true');
   showVocabNewBadge = signal<boolean>(localStorage.getItem('speak_seen_vocab_games') !== 'true');
   showResultsNewBadge = signal<boolean>(localStorage.getItem('speak_seen_results') !== 'true');
@@ -809,6 +928,8 @@ export class LayoutComponent {
   // "Seen" badges - disappear after first visit
   examModeIsNew = signal<boolean>(localStorage.getItem('speak_exam_visited') !== 'true');
   newLessonsCount = signal<number>(0);
+  newQuizzesCount = signal<number>(0);
+  newExercisesCount = signal<number>(0);
 
   // Toasts state
   toasts = signal<{
@@ -866,18 +987,21 @@ export class LayoutComponent {
       this.toasts.set([]);
 
       if (user) {
-        if (user.blocked) {
+        if (user.blocked && user.role !== 'student') {
           this.dialogService.alert('Compte Suspendu 🚫', 'Votre accès a été révoqué par le professeur. Vous allez être déconnecté.', 'info');
           this.db.logout();
           return;
         }
         this.currentUser.set(user);
+        if (user.role === 'student' && user.blocked) {
+          this.setTab('exercises');
+        }
         // Sync active tab for roles
-        if (user.role === 'teacher' && ['dashboard', 'lessons', 'speaking', 'exercises', 'events', 'live-classes', 'admin-management', 'history', 'exam'].includes(this.activeTab)) {
+        if (user.role === 'teacher' && ['dashboard', 'lessons', 'speaking', 'exercises', 'quizzes', 'events', 'live-classes', 'admin-management', 'history', 'exam'].includes(this.activeTab)) {
           this.setTab('overview');
         } else if ((user.role === 'student' || user.role === 'guest') && ['overview', 'students', 'create-lesson', 'create-quiz', 'exercises-manager', 'grade-homework', 'attendance', 'schedule-class', 'payments', 'teacher-events', 'user-management', 'admin-management', 'results', 'vocab-games'].includes(this.activeTab)) {
           this.setTab('dashboard');
-        } else if (user.role === 'admin' && ['dashboard', 'lessons', 'speaking', 'exercises', 'events', 'live-classes', 'overview', 'students', 'create-lesson', 'create-quiz', 'exercises-manager', 'grade-homework', 'attendance', 'schedule-class', 'payments', 'teacher-events', 'user-management', 'history', 'exam', 'results', 'vocab-games'].includes(this.activeTab)) {
+        } else if (user.role === 'admin' && ['dashboard', 'lessons', 'speaking', 'exercises', 'quizzes', 'events', 'live-classes', 'overview', 'students', 'create-lesson', 'create-quiz', 'exercises-manager', 'grade-homework', 'attendance', 'schedule-class', 'payments', 'teacher-events', 'user-management', 'history', 'exam', 'results', 'vocab-games'].includes(this.activeTab)) {
           this.setTab('admin-management');
         }
       }
@@ -891,11 +1015,45 @@ export class LayoutComponent {
       const lastViewStr = this.lastLessonsView();
       if (!lastViewStr) {
         this.lessonsCount.set(list.length);
+        this.newLessonsCount.set(list.length);
       } else {
         const lastViewTime = new Date(lastViewStr).getTime();
         const newLessons = list.filter(l => new Date(l.createdAt).getTime() > lastViewTime);
         this.lessonsCount.set(newLessons.length);
         this.newLessonsCount.set(newLessons.length);
+      }
+    });
+
+    this.db.observeQuizzes().subscribe(list => {
+      const activeQuizzes = list.filter(q => q.status !== 'draft');
+      const lastViewStr = this.lastQuizzesView();
+      if (!lastViewStr) {
+        this.newQuizzesCount.set(activeQuizzes.length);
+      } else {
+        const lastViewTime = new Date(lastViewStr).getTime();
+        const newItems = activeQuizzes.filter(q => {
+          const raw = q as any;
+          const dateVal = raw.createdAt || raw.createdAtDate;
+          if (dateVal) {
+            return new Date(dateVal).getTime() > lastViewTime;
+          }
+          const parts = q.id.split('-');
+          const timestamp = Number(parts[parts.length - 1]);
+          return !isNaN(timestamp) && timestamp > lastViewTime;
+        });
+        this.newQuizzesCount.set(newItems.length);
+      }
+    });
+
+    this.db.observeExercises().subscribe(list => {
+      const activeExercises = list.filter(ex => (ex as any).status !== 'draft');
+      const lastViewStr = this.lastExercisesView();
+      if (!lastViewStr) {
+        this.newExercisesCount.set(activeExercises.length);
+      } else {
+        const lastViewTime = new Date(lastViewStr).getTime();
+        const newItems = activeExercises.filter(ex => new Date(ex.createdAt || '').getTime() > lastViewTime);
+        this.newExercisesCount.set(newItems.length);
       }
     });
 
@@ -1015,6 +1173,46 @@ export class LayoutComponent {
       }
     });
 
+    // Periodically check for scheduled live classes that are starting now (every 30 seconds)
+    setInterval(() => {
+      const user = this.currentUser();
+      if (user && user.role === 'student') {
+        const list = this.db.getSchedulesValue();
+        const now = new Date();
+        
+        list.forEach(c => {
+          if (c.status === 'waiting') {
+            try {
+              const scheduledDateTime = new Date(`${c.date}T${c.time}:00`);
+              const diffMs = now.getTime() - scheduledDateTime.getTime();
+              
+              // If the current time is between 5 minutes before and 15 minutes after the scheduled start time
+              if (diffMs >= -5 * 60 * 1000 && diffMs <= 15 * 60 * 1000) {
+                const notifiedKey = `notified_live_${c.id}`;
+                if (!sessionStorage.getItem(notifiedKey)) {
+                  sessionStorage.setItem(notifiedKey, 'true');
+                  
+                  this.dialogService.confirm(
+                    this.t('Le cours en direct commence ! 🎥', 'Live class is starting! 🎥'),
+                    this.t(
+                      `Le cours "${c.title}" est programmé pour maintenant (${c.time}). Voulez-vous rejoindre le cours live ?`,
+                      `The class "${c.title}" is scheduled for now (${c.time}). Would you like to join the live session?`
+                    ),
+                    () => {
+                      this.setTab('live-classes');
+                      this.db.setActiveJitsiCall(c);
+                    }
+                  );
+                }
+              }
+            } catch (e) {
+              console.warn('Error parsing scheduled date:', e);
+            }
+          }
+        });
+      }
+    }, 30000);
+
     this.db.observeRewards().subscribe(list => {
       const user = this.currentUser();
       if (!user) return;
@@ -1032,6 +1230,10 @@ export class LayoutComponent {
   }
 
   setTab(tabName: string) {
+    if (this.mustTakePlacementTest() && tabName !== 'exercises' && tabName !== 'profile' && tabName !== 'live-classes') {
+      tabName = 'exercises';
+    }
+
     if (tabName === 'chat-teacher') {
       this.activeTab = 'chat';
       localStorage.setItem('speak_active_tab', 'chat');
@@ -1062,6 +1264,22 @@ export class LayoutComponent {
       this.lastLessonsView.set(nowStr);
       this.newLessonsCount.set(0);
       this.lessonsCount.set(0);
+    }
+
+    // Clear "new quizzes" badge after visiting quizzes tab
+    if (tabName === 'quizzes') {
+      const nowStr = new Date().toISOString();
+      localStorage.setItem('speak_last_quizzes_view', nowStr);
+      this.lastQuizzesView.set(nowStr);
+      this.newQuizzesCount.set(0);
+    }
+
+    // Clear "new exercises" badge after visiting exercises tab
+    if (tabName === 'exercises') {
+      const nowStr = new Date().toISOString();
+      localStorage.setItem('speak_last_exercises_view', nowStr);
+      this.lastExercisesView.set(nowStr);
+      this.newExercisesCount.set(0);
     }
 
     // Clear "NEW" badge on Exam Mode after first visit
@@ -1178,7 +1396,8 @@ export class LayoutComponent {
       dashboard: { fr: 'Tableau de bord', en: 'Dashboard' },
       lessons: { fr: 'Cours & Leçons', en: 'Lessons' },
       speaking: { fr: 'Pratique Orale', en: 'Speaking Practice' },
-      exercises: { fr: 'Exercices & Quiz', en: 'Exercises & Quizzes' },
+      quizzes: { fr: 'Quiz & Évaluations', en: 'Quizzes & Tests' },
+      exercises: { fr: 'Jeux & Exercices', en: 'Games & Exercises' },
       chat: { fr: 'Chat en Anglais', en: 'English Chat' },
       leaderboard: { fr: 'Classement (XP)', en: 'Leaderboard' },
       events: { fr: 'Événements', en: 'Events' },
@@ -1263,6 +1482,18 @@ export class LayoutComponent {
     this.db.setActiveJitsiCall(c);
   }
 
+  /** Returns the currently active live class, or null */
+  getActiveLiveClass(): any | null {
+    const list = this.db.getSchedulesValue();
+    return list.find(c => c.status === 'active') || null;
+  }
+
+  /** Student presses the persistent banner to join a live class at any time */
+  joinActiveLive(liveClass: any) {
+    this.setTab('live-classes');
+    this.db.setActiveJitsiCall(liveClass);
+  }
+
   exitLiveCall() {
     this.db.setActiveJitsiCall(null);
   }
@@ -1277,12 +1508,7 @@ export class LayoutComponent {
 
   async triggerInstantLive() {
     // Check if there is an active live class already
-    const list = await new Promise<LiveClass[]>((resolve) => {
-      const sub = this.db.observeSchedules().subscribe(fresh => {
-        sub.unsubscribe();
-        resolve(fresh);
-      });
-    });
+    const list = this.db.getSchedulesValue();
     const active = list.find(c => c.status === 'active');
     if (active) {
       this.joinLiveCall(active);
@@ -1290,8 +1516,8 @@ export class LayoutComponent {
     }
 
     this.dialogService.confirm(
-      'Start Instant Live Class',
-      'Would you like to start a live meeting session instantly?',
+      this.t('Activer le cours en direct', 'Start Instant Live Class'),
+      this.t('Voulez-vous démarrer un cours en direct instantanément ?', 'Would you like to start a live meeting session instantly?'),
       async () => {
         try {
           const created = await this.db.startInstantLiveClass();
@@ -1299,7 +1525,11 @@ export class LayoutComponent {
             this.joinLiveCall(created);
           }
         } catch (e: any) {
-          this.dialogService.alert('Failed to Start Live', e.message || 'Error occurred starting live session.', 'info');
+          this.dialogService.alert(
+            this.t('Échec du démarrage', 'Failed to Start Live'),
+            e.message || this.t('Une erreur est survenue lors du lancement de la session.', 'Error occurred starting live session.'),
+            'info'
+          );
         }
       }
     );

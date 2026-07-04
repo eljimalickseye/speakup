@@ -185,8 +185,12 @@ import { DialogService } from '../../services/dialog.service';
               <div class="input-row">
                 <label for="cGroup" style="font-size:11px; font-weight:600; color:var(--text-secondary); display:block; margin-bottom:4px">Target Group</label>
                 <select id="cGroup" [(ngModel)]="group" style="width:100%; padding:9px; border:1px solid var(--border); border-radius:var(--radius); font-size:12px; background:#FFF; color:var(--text-primary)">
-                  <option value="B1 — All students (18)">B1 — All students</option>
-                  <option value="A2 — All students (10)">A2 — All students</option>
+                  @for (chan of channels(); track chan.id) {
+                    <option [value]="chan.name">{{ chan.name }}</option>
+                  }
+                  @if (channels().length === 0) {
+                    <option value="general">general</option>
+                  }
                 </select>
               </div>
             } @else {
@@ -241,11 +245,12 @@ export class TeacherScheduleComponent {
   date = this.getLocalDateString(new Date(Date.now() + 86400000));
   time = '10:00';
   duration = '45 minutes';
-  group = 'B1 — All students (18)';
+  group = 'general';
   description = 'In this live session, we will practice reported speech in English. Please complete your vocabulary check before joining.';
   sessionType = 'group';
   selectedStudentId = '';
   students = signal<UserProfile[]>([]);
+  channels = signal<any[]>([]);
 
   @Output() navigateToTab = new EventEmitter<string>();
 
@@ -329,6 +334,10 @@ export class TeacherScheduleComponent {
 
     this.db.observeUsers().subscribe(list => {
       this.students.set(list.filter(u => u.role === 'student'));
+    });
+
+    this.db.observeChannels().subscribe(list => {
+      this.channels.set(list);
     });
   }
 

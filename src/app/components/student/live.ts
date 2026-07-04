@@ -152,7 +152,7 @@ import { DatabaseService, LiveClass, UserProfile } from '../../services/database
                   </p>
 
                   <div class="event-details-actions">
-                    @if (c.status === 'active') {
+                    @if (canJoinClass(c)) {
                       <button class="btn-p join-session-accent" (click)="joinClass(c)">
                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:4px"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
                         Join Live Session
@@ -201,7 +201,7 @@ import { DatabaseService, LiveClass, UserProfile } from '../../services/database
                       {{ c.description }}
                     </p>
 
-                    @if (c.status === 'active') {
+                    @if (canJoinClass(c)) {
                       <div style="border-top:1px solid #E0E7FF; padding-top:12px; margin-top:12px">
                         <button class="join-now-btn" (click)="joinClass(c)">
                           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:4px"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
@@ -680,13 +680,21 @@ export class StudentLiveClassesComponent {
   activeTab = signal<'calendar' | 'list'>('calendar');
   allSchedules = signal<LiveClass[]>([]);
   classes = computed(() => {
-    const list = this.allSchedules();
-    const user = this.currentUser();
-    return list.filter(c => {
-      if (!c.studentId) return true;
-      return user && c.studentId === user.id;
-    });
+    return this.allSchedules();
   });
+
+  canJoinClass(c: LiveClass): boolean {
+    if (c.status === 'completed') return false;
+    if (c.status === 'active') return true;
+    try {
+      const scheduledDateTime = new Date(`${c.date}T${c.time}:00`);
+      const now = new Date();
+      const tenMinutesBefore = new Date(scheduledDateTime.getTime() - 10 * 60 * 1000);
+      return now >= tenMinutesBefore;
+    } catch (e) {
+      return false;
+    }
+  }
   currentUser = signal<UserProfile | null>(null);
   activeMeeting = signal<LiveClass | null>(null);
 

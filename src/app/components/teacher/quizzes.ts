@@ -21,19 +21,33 @@ interface QuestionDraft {
   imports: [CommonModule, FormsModule],
   template: `
     <div class="page">
-      <!-- Tab Selector -->
-      <div class="tab-row">
-        <button class="tab" [class.active]="activeTab() === 'create'" (click)="activeTab.set('create')">
-          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          {{ selectedQuizId() ? 'Modifier Quiz' : 'Créer Quiz' }}
-        </button>
-        <button class="tab" [class.active]="activeTab() === 'list'" (click)="activeTab.set('list')">
-          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-          Quiz Publiés ({{ quizzes().length }})
-        </button>
-        <button class="tab" [class.active]="activeTab() === 'drafts'" (click)="activeTab.set('drafts')">
-          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          Brouillons ({{ quizDrafts().length }})
+      <!-- Tab Selector Header with Actions -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px">
+        <div class="tab-row" style="margin-bottom:0">
+          <button class="tab" [class.active]="activeTab() === 'list'" (click)="activeTab.set('list')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            {{ t('Quiz Publiés', 'Published Quizzes') }} ({{ quizzes().length }})
+          </button>
+          <button class="tab" [class.active]="activeTab() === 'drafts'" (click)="activeTab.set('drafts')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            {{ t('Brouillons', 'Drafts') }} ({{ quizDrafts().length }})
+          </button>
+          <button class="tab" [class.active]="activeTab() === 'placement'" (click)="activeTab.set('placement')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><path d="M12 2a3 3 0 0 0-3 3v1H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-4V5a3 3 0 0 0-3-3z"/><path d="m9 12 2 2 4-4"/></svg>
+            {{ t('Tests de Niveau', 'Placement Tests') }}
+          </button>
+          @if (activeTab() === 'create') {
+            <button class="tab active" (click)="activeTab.set('create')">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              {{ selectedQuizId() ? t('Modifier Quiz', 'Edit Quiz') : t('Créer Quiz', 'Create Quiz') }}
+            </button>
+          }
+        </div>
+
+        <button class="btn-p" style="background:#4F46E5; border-color:#4F46E5; font-size:12.5px; padding:8px 16px; border-radius:8px; display:flex; align-items:center; gap:6px; height:34px" 
+                (click)="resetForm(); activeTab.set('create')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          {{ t('Créer un Quiz', 'Create a Quiz') }}
         </button>
       </div>
 
@@ -42,27 +56,27 @@ interface QuestionDraft {
         <div class="card">
           <h3 class="st" style="font-size:16px; margin-bottom:16px; display:flex; align-items:center; gap:8px">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-            {{ selectedQuizId() ? 'Modifier le Quiz' : 'Créer un Quiz' }}
+            {{ selectedQuizId() ? t('Modifier le Quiz', 'Modify Quiz') : t('Créer un Quiz', 'Create a Quiz') }}
           </h3>
           <div style="background:#EEF2FF; border:1px solid #C7D2FE; border-radius:8px; padding:10px 14px; margin-bottom:16px; font-size:12px; color:#4338CA; display:flex; align-items:center; gap:6px">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            Les quiz sont utilisés pour évaluer les élèves en cours. Pour créer des exercices d'entraînement, utilisez le module <strong style="margin-left:3px">Gérer les Exercices</strong>.
+            {{ t("Les quiz sont utilisés pour évaluer les élèves en cours. Pour créer des exercices d'entraînement, utilisez le module ", "Quizzes are used to evaluate students in class. To create practice exercises, use the ") }} <strong style="margin-left:3px">{{ t('Gérer les Exercices', 'Manage Exercises') }}</strong>.
           </div>
 
           <!-- Quick Templates -->
           <div style="background:#EEF2FF; border:1px solid #C7D2FE; border-radius:8px; padding:12px; margin-bottom:16px">
             <div style="font-size:11px; font-weight:700; color:#4F46E5; margin-bottom:8px; display:flex; align-items:center; gap:5px">
-              ⭐ Modèles rapides
+              ⭐ {{ t('Modèles rapides', 'Quick Templates') }}
             </div>
             <div style="display:flex; gap:8px; flex-wrap:wrap">
               <button class="badge" style="background:#FFF; border:1px solid #4F46E5; color:#4F46E5; cursor:pointer; font-size:10px; padding:4px 8px; border-radius:4px" (click)="loadQuizTemplate('grammar')">
-                Verbes Irréguliers
+                {{ t('Verbes Irréguliers', 'Irregular Verbs') }}
               </button>
               <button class="badge" style="background:#FFF; border:1px solid #4F46E5; color:#4F46E5; cursor:pointer; font-size:10px; padding:4px 8px; border-radius:4px" (click)="loadQuizTemplate('vocab')">
-                Vocabulaire Voyage
+                {{ t('Vocabulaire Voyage', 'Travel Vocabulary') }}
               </button>
               <button class="badge" style="background:#FFF; border:1px solid #4F46E5; color:#4F46E5; cursor:pointer; font-size:10px; padding:4px 8px; border-radius:4px" (click)="loadQuizTemplate('oral')">
-                Oral : Week-end
+                {{ t('Oral : Week-end', 'Oral: Weekend') }}
               </button>
             </div>
           </div>
@@ -71,82 +85,179 @@ interface QuestionDraft {
 
           <!-- Common Fields -->
           <div class="input-row">
-            <label for="qTitle">Titre</label>
+            <label for="qTitle">{{ t('Titre', 'Title') }}</label>
             <input id="qTitle" type="text" [(ngModel)]="title" placeholder="ex. Quiz Unité 9 — Reported Speech" />
           </div>
 
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px">
             <div class="input-row" style="margin-bottom:0">
-              <label for="qXp">Points XP à remporter</label>
+              <label for="qXp">{{ t('Points XP à remporter', 'Points XP to Earn') }}</label>
               <input id="qXp" type="number" [(ngModel)]="points" placeholder="ex. 10, 20, 50..." />
             </div>
             <div class="input-row" style="margin-bottom:0">
-              <label for="qYoutube">Lien Vidéo YouTube (Optionnel)</label>
+              <label for="qYoutube">{{ t('Lien Vidéo YouTube (Optionnel)', 'YouTube Video Link (Optional)') }}</label>
               <input id="qYoutube" type="text" [(ngModel)]="youtubeUrl" placeholder="https://www.youtube.com/watch?v=..." />
             </div>
           </div>
           
           <div class="input-row" style="margin-bottom:12px">
-            <label for="qYoutubeDesc">Description de la vidéo YouTube (Optionnel)</label>
-            <textarea id="qYoutubeDesc" [(ngModel)]="youtubeDescription" rows="2" placeholder="Description ou instructions sur la vidéo..." style="width:100%; border:1px solid var(--border); border-radius:6px; padding:6px 10px; background:#FFF; color:var(--text-primary); font-size:12px"></textarea>
+            <label for="qYoutubeDesc">{{ t('Description de la vidéo YouTube (Optionnel)', 'YouTube Video Description (Optional)') }}</label>
+            <textarea id="qYoutubeDesc" [(ngModel)]="youtubeDescription" rows="2" placeholder="{{ t('Description ou instructions sur la vidéo...', 'Description or instructions on the video...') }}" style="width:100%; border:1px solid var(--border); border-radius:6px; padding:6px 10px; background:#FFF; color:var(--text-primary); font-size:12px"></textarea>
+          </div>
+
+          <!-- Color Theme & Cover Image Selector -->
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:12px">
+            <div class="input-row" style="margin-bottom:0">
+              <label style="font-size:11px; font-weight:600; color:var(--text-secondary); display:block; margin-bottom:6px">{{ t('Thème Visuel', 'Visual Theme') }}</label>
+              <div style="display:flex; gap:10px; align-items:center; margin-top:4px">
+                @for (color of ['indigo', 'emerald', 'amber', 'rose', 'purple']; track color) {
+                  <button (click)="colorTheme = color"
+                          [style.background]="color === 'indigo' ? '#4F46E5' : (color === 'emerald' ? '#10B981' : (color === 'amber' ? '#F59E0B' : (color === 'rose' ? '#F43F5E' : '#8B5CF6')))"
+                          style="width:22px; height:22px; border-radius:50%; border:2px solid; cursor:pointer; transition: transform 0.2s"
+                          [style.border-color]="colorTheme === color ? 'var(--text-primary)' : 'transparent'"
+                          [style.transform]="colorTheme === color ? 'scale(1.2)' : 'scale(1)'">
+                  </button>
+                }
+                <span style="font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase">{{ colorTheme }}</span>
+              </div>
+            </div>
+            <div class="input-row" style="margin-bottom:0">
+              <label style="font-size:11px; font-weight:600; color:var(--text-secondary); display:block; margin-bottom:6px">{{ t('Image de Couverture', 'Cover Image') }}</label>
+              <div style="display:flex; gap:10px; align-items:center; margin-top:4px">
+                <button class="btn-s" style="padding:6px 12px; font-size:11.5px; font-weight:600; display:flex; align-items:center; gap:6px; height:32px" (click)="quizCoverInput.click()">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                  <span>{{ t('Choisir', 'Browse') }}</span>
+                </button>
+                <input type="file" #quizCoverInput style="display:none" (change)="onCoverImageSelected($event)" accept="image/*" />
+                @if (coverImage) {
+                  <div style="position:relative; width:50px; height:32px; border-radius:4px; overflow:hidden; border:1px solid var(--border-weak)">
+                    <img [src]="coverImage" style="width:100%; height:100%; object-fit:cover" />
+                    <button (click)="coverImage = ''" 
+                            style="position:absolute; top:1px; right:1px; background:#EF4444; color:white; border:none; width:12px; height:12px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:8px; font-weight:bold; cursor:pointer">×</button>
+                  </div>
+                }
+              </div>
+            </div>
           </div>
 
           <div class="g2">
             <div class="input-row">
-              <label for="qType">Type de question</label>
+              <label for="qType">{{ t('Type de question', 'Question Type') }}</label>
               <select id="qType" [(ngModel)]="type" (change)="onTypeChange()">
-                <option value="Multiple Choice">Choix multiple</option>
-                <option value="Fill in the blank">Complétez les blancs</option>
-                <option value="True / False">Vrai / Faux</option>
-                <option value="Matching">Association</option>
-                <option value="Ordering">Remise en ordre</option>
-                <option value="Short Answer">Réponse courte</option>
-                <option value="Essay">Rédaction</option>
-                <option value="Audio Question">Question audio</option>
-                <option value="Oral Practice">Oral / Speaking</option>
+                <option value="Multiple Choice">{{ t('Choix multiple', 'Multiple Choice') }}</option>
+                <option value="Fill in the blank">{{ t('Complétez les blancs', 'Fill in the blanks') }}</option>
+                <option value="True / False">{{ t('Vrai / Faux', 'True / False') }}</option>
+                <option value="Matching">{{ t('Association', 'Matching') }}</option>
+                <option value="Ordering">{{ t('Remise en ordre', 'Ordering') }}</option>
+                <option value="Short Answer">{{ t('Réponse courte', 'Short Answer') }}</option>
+                <option value="Essay">{{ t('Rédaction', 'Essay') }}</option>
+                <option value="Audio Question">{{ t('Question audio', 'Audio Question') }}</option>
+                <option value="Oral Practice">{{ t('Oral / Speaking', 'Oral / Speaking') }}</option>
               </select>
             </div>
             <div class="input-row">
-              <label for="qLimit">Limite de temps</label>
+              <label for="qLimit">{{ t('Limite de temps', 'Time Limit') }}</label>
               <select id="qLimit" [(ngModel)]="timeLimit">
-                <option value="No limit">Pas de limite</option>
+                <option value="No limit">{{ t('Pas de limite', 'No limit') }}</option>
                 <option value="10 minutes">10 minutes</option>
                 <option value="15 minutes">15 minutes</option>
                 <option value="20 minutes">20 minutes</option>
                 <option value="30 minutes">30 minutes</option>
                 <option value="45 minutes">45 minutes</option>
-                <option value="60 minutes">1 heure</option>
+                <option value="60 minutes">{{ t('1 heure', '1 hour') }}</option>
               </select>
             </div>
           </div>
 
           <div class="g3">
             <div class="input-row">
-              <label for="qLevel">Niveau</label>
+              <label for="qLevel">{{ t('Niveau', 'Level') }}</label>
               <select id="qLevel" [(ngModel)]="level">
-                <option value="A1">A1 — Débutant</option>
-                <option value="A2">A2 — Élémentaire</option>
-                <option value="B1">B1 — Intermédiaire</option>
-                <option value="B2">B2 — Supérieur</option>
-                <option value="All">Tous niveaux</option>
+                <option value="A1">A1 — {{ t('Débutant', 'Beginner') }}</option>
+                <option value="A2">A2 — {{ t('Élémentaire', 'Elementary') }}</option>
+                <option value="B1">B1 — {{ t('Intermédiaire', 'Intermediate') }}</option>
+                <option value="B2">B2 — {{ t('Supérieur', 'Upper Intermediate') }}</option>
+                <option value="All">{{ t('Tous niveaux', 'All Levels') }}</option>
               </select>
             </div>
             <div class="input-row">
-              <label for="qPoints">Points</label>
+              <label for="qPoints">{{ t('Points', 'Points') }}</label>
               <input id="qPoints" type="number" [(ngModel)]="points" min="0" max="100" />
             </div>
             <div class="input-row">
-              <label for="qStatus">Statut</label>
+              <label for="qStatus">{{ t('Statut', 'Status') }}</label>
               <select id="qStatus" [(ngModel)]="status">
-                <option value="published">Publié</option>
-                <option value="draft">Brouillon</option>
+                <option value="published">{{ t('Publié', 'Published') }}</option>
+                <option value="draft">{{ t('Brouillon', 'Draft') }}</option>
               </select>
             </div>
           </div>
 
+          <!-- Submission Deadline -->
+          <div style="margin-bottom:20px; display:flex; gap:16px; flex-wrap:wrap">
+            <div class="input-row" style="flex:1; min-width:240px; margin-bottom:0">
+              <label for="qDeadline" style="font-weight:700; color:var(--text-primary); display:block; margin-bottom:6px">{{ t('Date limite de soumission (Optionnel)', 'Submission Deadline (Optional)') }}</label>
+              <input id="qDeadline" type="datetime-local" [(ngModel)]="deadline" style="width:100%; height:38px; border:1.5px solid var(--border); border-radius:8px; padding:8px 12px; font-size:13px; background:var(--surface-1); color:var(--text-primary); outline:none; transition:border-color 0.2s;" />
+            </div>
+          </div>
+
+          <!-- Official Exam Settings -->
+          <div [style.background]="isOfficialExam ? 'linear-gradient(135deg, #FFFDF5 0%, #FEF3C7 100%)' : '#F8FAFC'"
+               [style.border]="isOfficialExam ? '2px solid #F59E0B' : '1px solid #E2E8F0'"
+               style="padding:16px; border-radius:12px; margin-bottom:20px; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.02)">
+            
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px">
+              <div style="display:flex; align-items:center; gap:10px">
+                <span [style.background]="isOfficialExam ? '#F59E0B' : '#64748B'" style="color:white; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 8px rgba(0,0,0,0.1)">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="7"/><path d="M5.3 15.5l-2.3 6.5 6-2 6 2-2.3-6.5"/></svg>
+                </span>
+                <div>
+                  <div style="font-weight:800; font-size:13px; color:#1E293B">Définir comme Examen Officiel (Official Exam)</div>
+                  <div style="font-size:11px; color:#475569">Activer cette option pour bloquer le mode entraînement libre et le lier aux sessions officielles.</div>
+                </div>
+              </div>
+              <div>
+                <!-- Custom Checkbox styled as toggle -->
+                <label class="switch-container" style="display:inline-flex; align-items:center; cursor:pointer">
+                  <input type="checkbox" [(ngModel)]="isOfficialExam" style="display:none" />
+                  <span [style.background]="isOfficialExam ? '#F59E0B' : '#E2E8F0'" style="width:44px; height:24px; border-radius:12px; position:relative; display:block; transition: background 0.3s">
+                    <span [style.left.px]="isOfficialExam ? 22 : 2" style="width:20px; height:20px; border-radius:50%; background:white; position:absolute; top:2px; display:block; transition: left 0.3s; box-shadow:0 2px 4px rgba(0,0,0,0.2)"></span>
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            @if (isOfficialExam) {
+              <!-- Warning alert box inside -->
+              <div style="background:#FFFBEB; border:1px solid #FDE68A; border-radius:8px; padding:12px; margin-top:14px; display:flex; gap:10px; align-items:flex-start">
+                <span style="color:#D97706; font-size:18px; line-height:1">⚠️</span>
+                <div style="flex:1">
+                  <div style="font-size:11px; font-weight:800; color:#B45309">Examen Final Officiel Actif</div>
+                  <p style="font-size:10px; color:#D97706; margin:2px 0 0 0; line-height:1.4">
+                    Les élèves pourront soumettre leurs réponses et remporter des XP. Les résultats seront transmis directement sur la page des Notes.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Activation Switch -->
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; border-top:1px solid #FDE68A; padding-top:12px">
+                <div>
+                  <div style="font-size:12px; font-weight:700; color:#92400E">Rendre l'Examen visible aux élèves</div>
+                  <div style="font-size:10.5px; color:#D97706">Si désactivé, l'examen sera masqué pour l'évaluation.</div>
+                </div>
+                <label class="switch-container" style="display:inline-flex; align-items:center; cursor:pointer">
+                  <input type="checkbox" [(ngModel)]="isExamActive" style="display:none" />
+                  <span [style.background]="isExamActive ? '#10B981' : '#E2E8F0'" style="width:44px; height:24px; border-radius:12px; position:relative; display:block; transition: background 0.3s">
+                    <span [style.left.px]="isExamActive ? 22 : 2" style="width:20px; height:20px; border-radius:50%; background:white; position:absolute; top:2px; display:block; transition: left 0.3s; box-shadow:0 2px 4px rgba(0,0,0,0.2)"></span>
+                  </span>
+                </label>
+              </div>
+            }
+          </div>
+
           <!-- Questions Builder -->
           <div style="margin-top:16px">
-            <strong style="font-size:13px; color:var(--text-primary); display:block; margin-bottom:12px">Questions</strong>
+            <strong style="font-size:13px; color:var(--text-primary); display:block; margin-bottom:12px">{{ t('Questions', 'Questions') }}</strong>
 
             @for (q of questions; track q; let idx = $index) {
               <div class="card" style="background:var(--surface-2); margin-bottom:12px; border-color:var(--border-strong)">
@@ -156,9 +267,9 @@ interface QuestionDraft {
                     Question {{ idx + 1 }}
                   </span>
                   <div style="display:flex; gap:6px">
-                    <button class="btn-s" style="padding:2px 8px; font-size:10px" (click)="duplicateQuestion(idx)">Dupliquer</button>
+                    <button class="btn-s" style="padding:2px 8px; font-size:10px" (click)="duplicateQuestion(idx)">{{ t('Dupliquer', 'Duplicate') }}</button>
                     @if (questions.length > 1) {
-                      <button class="btn-s" style="padding:2px 8px; font-size:10px; background:#FEE2E2; color:#DC2626; border-color:#FCA5A5" (click)="removeQuestion(idx)">Supprimer</button>
+                      <button class="btn-s" style="padding:2px 8px; font-size:10px; background:#FEE2E2; color:#DC2626; border-color:#FCA5A5" (click)="removeQuestion(idx)">{{ t('Supprimer', 'Delete') }}</button>
                     }
                   </div>
                 </div>
@@ -279,20 +390,20 @@ interface QuestionDraft {
             <!-- ADD QUESTION — Fixed at the bottom of list -->
             <button class="add-question-btn" (click)="addQuestionDraft()">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Ajouter une question
+              {{ t('Ajouter une question', 'Add Question') }}
             </button>
           </div>
 
           <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:20px; padding-top:16px; border-top:1px solid var(--border-weak)">
             <button class="btn-s" (click)="saveAsDraft()">
-              <i class="ti ti-file"></i> Sauver comme brouillon
+              <i class="ti ti-file"></i> {{ t('Sauver comme brouillon', 'Save as Draft') }}
             </button>
             @if (selectedQuizId()) {
-              <button class="btn-s" (click)="resetForm()">Annuler</button>
+              <button class="btn-s" (click)="resetForm()">{{ t('Annuler', 'Cancel') }}</button>
             }
             <button class="btn-p" [disabled]="!isValid()" (click)="publishQuiz()">
               <i class="ti ti-check"></i>
-              {{ selectedQuizId() ? 'Mettre à jour' : 'Publier' }}
+              {{ selectedQuizId() ? t('Mettre à jour', 'Update') : t('Publier', 'Publish') }}
             </button>
           </div>
         </div>
@@ -305,34 +416,72 @@ interface QuestionDraft {
           @if (getPlacementTest(); as pt) {
             <div style="background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%); border: 1.5px solid #4F46E5; border-radius: 10px; padding: 14px 16px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; gap:12px; flex-wrap:wrap">
               <div>
-                <span class="badge" style="background:#4F46E5; color:white; font-size:8px; padding:1px 5px; border-radius:20px; font-weight:700">🎯 TEST DE NIVEAU</span>
+                <span class="badge" style="background:#4F46E5; color:white; font-size:8px; padding:1px 5px; border-radius:20px; font-weight:700; display:inline-flex; align-items:center; gap:3px">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v1H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-4V5a3 3 0 0 0-3-3z"/><path d="m9 12 2 2 4-4"/></svg>
+                  {{ t('TEST DE NIVEAU', 'PLACEMENT TEST') }}
+                </span>
                 <h4 style="font-size:13px; font-weight:800; color:#1e293b; margin:4px 0 2px 0">{{ pt.title }}</h4>
-                <p style="font-size:11.5px; color:#475569; margin:0">Ce test de niveau évalue automatiquement les nouveaux élèves lors de leur première connexion.</p>
+                <p style="font-size:11.5px; color:#475569; margin:0">{{ t('Ce test de niveau évalue automatiquement les nouveaux élèves lors de leur première connexion.', 'This placement test automatically evaluates new students during their first login.') }}</p>
               </div>
-              <button class="btn-s" style="font-size:11.5px; padding:5px 12px; border-color:#4F46E5; color:#4F46E5" (click)="editQuiz(pt)">
-                <i class="ti ti-edit"></i> Configurer
+              <button class="btn-s" style="font-size:11.5px; padding:5px 12px; border-color:#4F46E5; color:#4F46E5; display:flex; align-items:center; gap:5px" (click)="activeTab.set('placement')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                {{ t('Gérer les Tests', 'Manage Tests') }}
               </button>
             </div>
           }
 
-          <div class="st" style="margin-bottom:12px">Quiz publiés ({{ quizzes().length }})</div>
+          <div class="st" style="margin-bottom:12px">{{ t('Quiz publiés (', 'Published Quizzes (') }}{{ quizzes().length }})</div>
           @for (quiz of quizzes(); track quiz.id) {
             @if (quiz.id !== 'placement-test') {
               <div class="row" style="font-size:13px; align-items:center; justify-content:space-between">
                 <div style="flex:1">
-                  <strong style="color:var(--text-primary)">
-                    {{ quiz.title }}
-                  </strong>
+                  <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap">
+                    <strong style="color:var(--text-primary)">
+                      {{ quiz.title }}
+                    </strong>
+                    @if (quiz.isOfficialExam) {
+                      <span class="badge" style="background:#EEF2FF; color:#4F46E5; font-size:9.5px; font-weight:700">Exam</span>
+                      @if (quiz.isExamActive) {
+                        <span class="badge" style="background:#D1FAE5; color:#047857; font-size:9.5px; font-weight:700">Active</span>
+                      } @else {
+                        <span class="badge" style="background:#FEE2E2; color:#991B1B; font-size:9.5px; font-weight:700">Inactive</span>
+                      }
+                    }
+                  </div>
                   <div style="font-size:11px; color:var(--text-muted); margin-top:2px">
-                    Type: {{ quiz.type }} · Limite: {{ quiz.timeLimit }} · {{ quiz.questions.length }} questions
+                    {{ t('Type: ', 'Type: ') }}{{ quiz.type }} · {{ t('Limite: ', 'Limit: ') }}{{ quiz.timeLimit }} · {{ quiz.questions.length }} {{ t('questions', 'questions') }}
                   </div>
                 </div>
-                <div style="display:flex; gap:6px">
-                  <button class="btn-s" style="font-size:11px; padding:4px 10px; border-color:#4F46E5; color:#4F46E5" (click)="editQuiz(quiz)">
-                    <i class="ti ti-edit"></i> Modifier
+                <div style="display:flex; align-items:center; gap:6px">
+                  <button class="btn-s" style="font-size:11px; padding:4px 10px;" 
+                          [style.border-color]="quiz.isOfficialExam ? '#4F46E5' : '#64748B'"
+                          [style.color]="quiz.isOfficialExam ? '#4F46E5' : '#64748B'"
+                          [style.background]="quiz.isOfficialExam ? 'rgba(79, 70, 229, 0.05)' : 'none'"
+                          (click)="toggleQuizExamMode(quiz)"
+                          [title]="quiz.isOfficialExam ? t('Convertir en Quiz standard', 'Convert to standard Quiz') : t('Placer ce quiz en mode Examen officiel', 'Set this quiz as official Exam')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:3px"><circle cx="12" cy="8" r="7"/><path d="M5.3 15.5l-2.3 6.5 6-2 6 2-2.3-6.5"/></svg>
+                    {{ quiz.isOfficialExam ? t('Examen', 'Exam') : t('Placer en Examen', 'Set as Exam') }}
                   </button>
-                  <button class="btn-s" style="font-size:11px; padding:4px 10px; border-color:#EF4444; color:#EF4444" (click)="deleteQuiz(quiz.id)">
-                    <i class="ti ti-trash"></i>
+
+                  @if (quiz.isOfficialExam) {
+                    <button class="btn-s" style="font-size:11px; padding:4px 10px; display:flex; align-items:center; gap:3px" 
+                            [style.border-color]="quiz.isExamActive ? '#D97706' : '#059669'"
+                            [style.color]="quiz.isExamActive ? '#D97706' : '#059669'"
+                            (click)="toggleExamActivation(quiz)">
+                      @if (quiz.isExamActive) {
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                      } @else {
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                      }
+                      {{ quiz.isExamActive ? t('Désactiver', 'Deactivate') : t('Activer', 'Activate') }}
+                    </button>
+                  }
+                  <button class="btn-s" style="font-size:11px; padding:4px 10px; border-color:#4F46E5; color:#4F46E5; display:flex; align-items:center; gap:3px" (click)="editQuiz(quiz); activeTab.set('create')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    {{ t('Modifier', 'Edit') }}
+                  </button>
+                  <button class="btn-s" style="font-size:11px; padding:4px 10px; border-color:#EF4444; color:#EF4444; display:flex; align-items:center; justify-content:center" (click)="deleteQuiz(quiz.id)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                   </button>
                 </div>
               </div>
@@ -340,7 +489,7 @@ interface QuestionDraft {
           }
           @if (quizzes().length === 0) {
             <div style="font-size:12px; color:var(--text-muted); padding:20px; text-align:center; border:1px dashed var(--border); border-radius:8px">
-              Aucun quiz publié. Créez votre premier quiz !
+              {{ t('Aucun quiz publié. Créez votre premier quiz !', 'No quizzes published yet. Create your first quiz!') }}
             </div>
           }
         </div>
@@ -349,13 +498,12 @@ interface QuestionDraft {
 
 
 
-      <!-- DRAFTS LIST -->
       @if (activeTab() === 'drafts') {
         <div>
-          <div class="st" style="margin-bottom:12px">Brouillons de Quiz</div>
+          <div class="st" style="margin-bottom:12px">{{ t('Brouillons de Quiz', 'Quiz Drafts') }}</div>
           @if (quizDrafts().length === 0) {
             <div style="font-size:12px; color:var(--text-muted); padding:20px; text-align:center; border:1px dashed var(--border); border-radius:8px">
-              Aucun brouillon de quiz.
+              {{ t('Aucun brouillon de quiz.', 'No quiz drafts.') }}
             </div>
           }
 
@@ -363,28 +511,89 @@ interface QuestionDraft {
             <div class="row" style="font-size:13px; align-items:center; justify-content:space-between; margin-bottom:8px; border-left: 3px solid #F59E0B">
               <div style="flex:1">
                 <div style="display:flex; align-items:center; gap:8px">
-                  <span style="font-size:16px">📝</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
                   <div>
                     <strong style="font-size:13px; color:var(--text-primary)">{{ quiz.title }}</strong>
                     <div style="font-size:11px; color:var(--text-muted); margin-top:2px">
-                      Quiz · {{ quiz.type }} · {{ quiz.questions.length }} questions
+                      Quiz · {{ quiz.type }} · {{ quiz.questions.length }} {{ t('questions', 'questions') }}
                     </div>
                   </div>
                 </div>
               </div>
               <div style="display:flex; gap:6px">
-                <button class="btn-s" style="font-size:11px; padding:4px 10px; border-color:#4F46E5; color:#4F46E5" (click)="editQuiz(quiz); activeTab.set('create')">
-                  <i class="ti ti-edit"></i> Éditer
+                <button class="btn-s" style="font-size:11px; padding:4px 10px; border-color:#4F46E5; color:#4F46E5; display:flex; align-items:center; gap:3px" (click)="editQuiz(quiz); activeTab.set('create')">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                  {{ t('Éditer', 'Edit') }}
                 </button>
-                <button class="btn-p" style="font-size:11px; padding:4px 10px; background:#10B981" (click)="publishDraft(quiz.id)">
-                  <i class="ti ti-check"></i> Publier
+                <button class="btn-p" style="font-size:11px; padding:4px 10px; background:#10B981; display:flex; align-items:center; gap:3px" (click)="publishDraft(quiz.id)">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  {{ t('Publier', 'Publish') }}
                 </button>
-                <button class="btn-s" style="font-size:11px; padding:4px 10px; border-color:#EF4444; color:#EF4444" (click)="deleteDraft(quiz.id)">
-                  <i class="ti ti-trash"></i>
+                <button class="btn-s" style="font-size:11px; padding:4px 10px; border-color:#EF4444; color:#EF4444; display:flex; align-items:center; justify-content:center" (click)="deleteDraft(quiz.id)">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                 </button>
               </div>
             </div>
           }
+        </div>
+      }
+
+      <!-- PLACEMENT TESTS TAB -->
+      @if (activeTab() === 'placement') {
+        <div>
+          <!-- Header -->
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px">
+            <div>
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v1H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-4V5a3 3 0 0 0-3-3z"/><path d="m9 12 2 2 4-4"/></svg>
+                <h3 style="font-size:15px; font-weight:800; color:var(--text-primary); margin:0">{{ t('Tests de Niveau', 'Placement Tests') }}</h3>
+              </div>
+              <p style="font-size:12px; color:var(--text-muted); margin:0">{{ t('Ces tests évaluent automatiquement les nouveaux élèves à leur première connexion.', 'These tests automatically evaluate new students on first login.') }}</p>
+            </div>
+          </div>
+
+          <!-- Placement Test Cards Grid -->
+          <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:16px">
+            @for (pt of getPlacementTests(); track pt.id) {
+              <div class="card" style="padding:0; overflow:hidden; border:1px solid var(--border); border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.04); transition: box-shadow 0.2s, transform 0.2s"
+                   onmouseover="this.style.boxShadow='0 8px 24px rgba(0,0,0,0.1)'; this.style.transform='translateY(-2px)'"
+                   onmouseout="this.style.boxShadow='0 2px 8px rgba(0,0,0,0.04)'; this.style.transform='translateY(0)'">
+
+                <!-- Card Top Bar -->
+                <div [style.background]="pt.id.includes('grammar') ? 'linear-gradient(135deg,#4F46E5,#7C3AED)' : pt.id.includes('vocabulary') ? 'linear-gradient(135deg,#0D9488,#059669)' : pt.id.includes('speaking') ? 'linear-gradient(135deg,#F59E0B,#D97706)' : pt.id.includes('listening') ? 'linear-gradient(135deg,#3B82F6,#2563EB)' : pt.id.includes('translation') ? 'linear-gradient(135deg,#EC4899,#BE185D)' : pt.id.includes('pronunciation') ? 'linear-gradient(135deg,#EF4444,#DC2626)' : 'linear-gradient(135deg,#64748B,#475569)'"
+                     style="padding:14px 16px; color:white; position:relative; overflow:hidden">
+                  <div style="position:absolute; top:-10px; right:-10px; width:60px; height:60px; background:rgba(255,255,255,0.08); border-radius:50%"></div>
+                  <div style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1px; opacity:0.8; margin-bottom:4px">{{ t('Test de Niveau', 'Placement Test') }}</div>
+                  <div style="font-size:13px; font-weight:800; line-height:1.3">{{ pt.title }}</div>
+                  <div style="margin-top:8px; display:flex; align-items:center; gap:6px">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    <span style="font-size:11px; opacity:0.8">{{ pt.questions.length }} {{ t('questions', 'questions') }} · {{ pt.timeLimit }}</span>
+                  </div>
+                </div>
+
+                <!-- Questions Preview -->
+                <div style="padding:12px 16px; flex:1">
+                  @for (q of pt.questions.slice(0, 2); track q.question; let qi = $index) {
+                    <div style="font-size:11.5px; color:var(--text-secondary); margin-bottom:6px; display:flex; align-items:flex-start; gap:6px">
+                      <span style="background:#EEF2FF; color:#4F46E5; font-size:9px; font-weight:800; padding:1px 5px; border-radius:10px; flex-shrink:0; margin-top:1px">Q{{ qi + 1 }}</span>
+                      <span style="line-height:1.4">{{ q.question | slice:0:60 }}{{ q.question.length > 60 ? '...' : '' }}</span>
+                    </div>
+                  }
+                  @if (pt.questions.length > 2) {
+                    <div style="font-size:11px; color:var(--text-muted); margin-top:4px">+ {{ pt.questions.length - 2 }} {{ t('autres questions', 'more questions') }}</div>
+                  }
+                </div>
+
+                <!-- Actions -->
+                <div style="padding:10px 16px; border-top:1px solid var(--border-weak); display:flex; gap:8px">
+                  <button class="btn-s" style="flex:1; font-size:11.5px; padding:6px 10px; border-color:#4F46E5; color:#4F46E5; display:flex; align-items:center; justify-content:center; gap:4px" (click)="editQuiz(pt); activeTab.set('create')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    {{ t('Modifier', 'Edit') }}
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
         </div>
       }
     </div>
@@ -453,10 +662,16 @@ interface QuestionDraft {
   `]
 })
 export class TeacherQuizzesComponent {
-  private db = inject(DatabaseService);
+  public db = inject(DatabaseService);
   private dialogService = inject(DialogService);
 
-  activeTab = signal<'create' | 'list' | 'placement' | 'drafts'>('create');
+  activeLang = this.db.activeLang;
+
+  t(fr: string, en: string): string {
+    return this.activeLang() === 'fr' ? fr : en;
+  }
+
+  activeTab = signal<'create' | 'list' | 'placement' | 'drafts'>('list');
   selectedQuizId = signal<string | null>(null);
   rawQuizzes = signal<Quiz[]>([]);
   quizzes = signal<Quiz[]>([]);
@@ -474,6 +689,22 @@ export class TeacherQuizzesComponent {
   status: 'published' | 'draft' = 'published';
   youtubeUrl = '';
   youtubeDescription = '';
+  isOfficialExam = false;
+  isExamActive = false;
+  colorTheme = 'indigo';
+  coverImage = '';
+  deadline = '';
+
+  onCoverImageSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        this.coverImage = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  }
 
 
   exerciseTypes = [
@@ -590,6 +821,11 @@ export class TeacherQuizzesComponent {
       authorName: user?.name || 'Teacher',
       youtubeUrl: this.youtubeUrl,
       youtubeDescription: this.youtubeDescription,
+      isOfficialExam: this.isOfficialExam,
+      isExamActive: this.isExamActive,
+      colorTheme: this.colorTheme,
+      coverImage: this.coverImage,
+      deadline: this.deadline || '',
       questions: this.questions.map(q => ({
         question: q.question,
         options: this.type === 'Oral Practice' || this.type === 'Essay' ? [] : q.options.filter(o => o.trim().length > 0),
@@ -621,6 +857,11 @@ export class TeacherQuizzesComponent {
     this.status = quiz.status || 'published';
     this.youtubeUrl = quiz.youtubeUrl || '';
     this.youtubeDescription = quiz.youtubeDescription || '';
+    this.isOfficialExam = quiz.isOfficialExam || false;
+    this.isExamActive = quiz.isExamActive || false;
+    this.colorTheme = quiz.colorTheme || 'indigo';
+    this.coverImage = quiz.coverImage || '';
+    this.deadline = quiz.deadline || '';
     this.questions = quiz.questions.map(q => ({
       question: q.question,
       questionType: 'multiple_choice' as any,
@@ -660,11 +901,16 @@ export class TeacherQuizzesComponent {
       timeLimit: this.timeLimit,
       level: this.level,
       points: this.points,
-      status: this.status,
+      status: 'published',
       authorId: user?.id || 'teacher',
       authorName: user?.name || 'Teacher',
       youtubeUrl: this.youtubeUrl,
       youtubeDescription: this.youtubeDescription,
+      isOfficialExam: this.isOfficialExam,
+      isExamActive: this.isExamActive,
+      colorTheme: this.colorTheme,
+      coverImage: this.coverImage,
+      deadline: this.deadline || '',
       questions: this.questions.map(q => ({
         question: q.question,
         options: this.type === 'Oral Practice' || this.type === 'Essay' ? [] : q.options.filter(o => o.trim().length > 0),
@@ -684,15 +930,28 @@ export class TeacherQuizzesComponent {
         level: this.level,
         authorId: user?.id || 'teacher',
         authorName: user?.name || 'Teacher',
-        status: this.status as 'published' | 'draft',
+        status: 'published' as const,
         points: this.points
       };
       this.db.addExercise(exerciseData);
     }
 
     if (id) {
+      const oldQuiz = this.rawQuizzes().find(q => q.id === id);
+      const newlyActivated = this.isExamActive && (!oldQuiz || !oldQuiz.isExamActive);
+
       this.db.updateQuiz(id, quizData);
       this.dialogService.alert('Succès', 'Quiz mis à jour avec succès !', 'success');
+
+      if (newlyActivated && this.status === 'published') {
+        this.db.sendNotification({
+          recipientId: 'all',
+          recipientRole: 'student',
+          type: this.isOfficialExam ? 'exam_completed' : 'quiz_available',
+          title: this.isOfficialExam ? '🏆 Examen Officiel Activé' : '📝 Classroom Quiz Activé',
+          message: `L'examen/quiz "${this.title}" a été activé pour votre niveau par ${user?.name || 'votre professeur'}.`,
+        });
+      }
     } else {
       this.db.addQuiz(quizData);
       this.dialogService.alert('Succès', 'Quiz publié avec succès !', 'success');
@@ -701,13 +960,47 @@ export class TeacherQuizzesComponent {
         this.db.sendNotification({
           recipientId: 'all',
           recipientRole: 'student',
-          type: 'quiz_available',
-          title: '📝 Nouveau quiz disponible',
-          message: `"${this.title}" a été publié par ${user?.name || 'votre professeur'}`,
+          type: this.isOfficialExam ? 'exam_completed' : 'quiz_available',
+          title: this.isOfficialExam ? '🏆 Nouvel Examen disponible' : '📝 Nouveau quiz disponible',
+          message: `"${this.title}" a été publié par ${user?.name || 'votre professeur'}.`,
         });
       }
     }
     this.resetForm();
+  }
+
+  toggleExamActivation(quiz: Quiz) {
+    const active = !quiz.isExamActive;
+    this.db.updateQuiz(quiz.id, { isExamActive: active, status: 'published' });
+
+    if (active) {
+      this.db.sendNotification({
+        recipientId: 'all',
+        recipientRole: 'student',
+        type: quiz.isOfficialExam ? 'exam_completed' : 'quiz_available',
+        title: quiz.isOfficialExam ? '🏆 Examen Officiel Activé' : '📝 Classroom Quiz Activé',
+        message: `L'examen/quiz "${quiz.title}" a été activé pour votre niveau.`,
+      });
+    }
+
+    this.dialogService.alert(
+      active ? 'Exam Activated' : 'Exam Deactivated',
+      `"${quiz.title}" is now ${active ? 'active' : 'inactive'} for students.`,
+      'success'
+    );
+  }
+
+  toggleQuizExamMode(quiz: Quiz) {
+    const isExam = !quiz.isOfficialExam;
+    this.db.updateQuiz(quiz.id, { 
+      isOfficialExam: isExam,
+      isExamActive: isExam ? true : false
+    });
+    this.dialogService.alert(
+      isExam ? 'Placé en Examen 🏆' : 'Quiz Standard 📝',
+      `"${quiz.title}" est maintenant configuré comme ${isExam ? 'un examen officiel' : 'un quiz standard'}.`,
+      'success'
+    );
   }
 
   resetForm() {
@@ -718,6 +1011,12 @@ export class TeacherQuizzesComponent {
     this.points = 10;
     this.status = 'published';
     this.youtubeUrl = '';
+    this.youtubeDescription = '';
+    this.isOfficialExam = false;
+    this.isExamActive = false;
+    this.colorTheme = 'indigo';
+    this.coverImage = '';
+    this.deadline = '';
     this.youtubeDescription = '';
     this.questions = [{ question: '', questionType: 'multiple_choice', options: ['', '', ''], correctOption: 'A' }];
   }
@@ -765,6 +1064,10 @@ export class TeacherQuizzesComponent {
 
   getPlacementTest(): Quiz | undefined {
     return this.rawQuizzes().find(q => q.id === this.selectedPlacementId());
+  }
+
+  getPlacementTests(): Quiz[] {
+    return this.rawQuizzes().filter(q => q.id.startsWith('placement-test'));
   }
 
   getOptionLetter(idx: number): string {

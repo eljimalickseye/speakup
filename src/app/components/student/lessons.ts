@@ -18,7 +18,6 @@ import { DialogService } from '../../services/dialog.service';
             <div>
               <h3 style="font-size:15px; font-weight:700; color:var(--text-primary); margin:0">{{ t('Progrès de mes Cours', 'My Lessons Progress') }}</h3>
               <p style="font-size:11.5px; color:var(--text-secondary); margin:4px 0 0 0">
-                {{ t('Niveau :', 'Level:') }} <strong style="color:#4F46E5">{{ currentUser()?.level || 'B1' }}</strong> · 
                 {{ t('Complétés :', 'Completed:') }} <strong>{{ completedCount() }}</strong> / {{ lessons().length }} {{ t('cours', 'lessons') }}
               </p>
             </div>
@@ -35,7 +34,6 @@ import { DialogService } from '../../services/dialog.service';
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px">
           <div class="tab-row" style="margin-bottom:0">
             <button class="tab" [class.active]="activeTab() === 'all'" (click)="activeTab.set('all')">{{ t('Tous les cours', 'All Lessons') }}</button>
-            <button class="tab" [class.active]="activeTab() === 'level'" (click)="activeTab.set('level')">{{ t('Mon Niveau', 'My Level') }} ({{ currentUser()?.level || 'B1' }})</button>
           </div>
           
           <div style="display:flex; gap:6px; flex-wrap:wrap">
@@ -52,33 +50,49 @@ import { DialogService } from '../../services/dialog.service';
           </div>
         </div>
 
-        <!-- LESSONS CARD GRID -->
-        <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:16px">
+        <!-- LESSONS LIST (COMPACT ROW LAYOUT) -->
+        <div style="display:flex; flex-direction:column; gap:12px">
           @for (lesson of filteredLessons(); track lesson.id) {
-            <div class="card" (click)="selectLesson(lesson)" style="cursor:pointer; display:flex; flex-direction:column; justify-content:space-between; margin:0; padding:16px; border-radius:12px; transition:transform 0.2s, box-shadow 0.2s; border:1px solid var(--border-weak)" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.05)'" onmouseout="this.style.transform='none'; this.style.boxShadow='none'">
-              <div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
-                  <span class="badge" [style.background]="getBadgeBg(lesson.type)" [style.color]="getBadgeColor(lesson.type)" style="font-size:10px; font-weight:700; text-transform:uppercase; padding:2px 8px; border-radius:20px">
-                    {{ lesson.type === 'Grammar' ? t('Grammaire', 'Grammar') : (lesson.type === 'Listening' ? t('Compréhension', 'Listening') : t('Vocabulaire', 'Vocabulary')) }}
-                  </span>
-                  <span style="font-size:10.5px; color:var(--text-muted)">{{ t('Limite :', 'Due:') }} {{ lesson.dueDate }}</span>
+            <div class="card" (click)="selectLesson(lesson)" 
+                 [style.border-left]="'5px solid ' + getTheme(lesson.colorTheme).border"
+                 style="cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:16px; margin:0; padding:12px 18px; border-radius:12px; transition:transform 0.2s, box-shadow 0.2s; border:1px solid var(--border-weak)" 
+                 onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.05)'" 
+                 onmouseout="this.style.transform='none'; this.style.boxShadow='none'">
+              
+              <div style="display:flex; align-items:center; gap:16px; flex:1">
+                <!-- Compact cover image/gradient thumbnail -->
+                <div [style.background]="lesson.coverImage ? 'none' : getGradient(lesson.colorTheme)"
+                     style="width: 52px; height: 52px; border-radius: 8px; overflow: hidden; display:flex; align-items:center; justify-content:center; flex-shrink:0; position:relative">
+                  @if (lesson.coverImage) {
+                    <img [src]="lesson.coverImage" style="width: 100%; height: 100%; object-fit: cover" />
+                  } @else {
+                    <span style="font-size:18px">📖</span>
+                  }
                 </div>
-                
-                <h4 style="font-size:14px; font-weight:700; color:var(--text-primary); margin:0 0 6px 0; line-height:1.3">{{ lesson.title }}</h4>
-                <p style="font-size:11.5px; color:var(--text-muted); margin:0 0 12px 0">Level {{ lesson.level }} · {{ t("Matériel d'étude", 'Course Study Material') }}</p>
+
+                <div>
+                  <div style="display:flex; align-items:center; gap:8px; margin-bottom:3px">
+                    <span class="badge" [style.background]="getBadgeBg(lesson.type)" [style.color]="getBadgeColor(lesson.type)" style="font-size:9px; font-weight:700; text-transform:uppercase; padding:1px 6px; border-radius:10px">
+                      {{ lesson.type === 'Grammar' ? t('Grammaire', 'Grammar') : (lesson.type === 'Listening' ? t('Compréhension', 'Listening') : t('Vocabulaire', 'Vocabulary')) }}
+                    </span>
+                  </div>
+                  
+                  <h4 style="font-size:14px; font-weight:800; color:var(--text-primary); margin:0 0 2px 0; line-height:1.3">{{ lesson.title }}</h4>
+                  <span style="font-size:11px; color:var(--text-muted)">{{ t('Limite :', 'Due:') }} {{ lesson.dueDate }}</span>
+                </div>
               </div>
 
-              <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--border-weak); padding-top:12px; margin-top:12px">
-                <span class="pill" [class.done]="isLessonSubmitted(lesson.id)" [class.new]="!isLessonSubmitted(lesson.id)">
+              <div style="display:flex; align-items:center; gap:12px; flex-shrink:0">
+                <span class="pill" [class.done]="isLessonSubmitted(lesson.id)" [class.new]="!isLessonSubmitted(lesson.id)" style="font-size:10.5px; padding:3px 8px">
                   {{ isLessonSubmitted(lesson.id) ? (getSubmissionStatus(lesson.id)) : t('Non soumis', 'Unsubmitted') }}
                 </span>
-                <span style="font-size:11.5px; color:#4F46E5; font-weight:600; display:flex; align-items:center; gap:4px">
-                  {{ t('Ouvrir le cours', 'Open Lesson') }} <i class="ti ti-arrow-right"></i>
+                <span style="font-size:11px; color:#4F46E5; font-weight:700; display:flex; align-items:center; gap:2px">
+                  {{ t('Ouvrir', 'Open') }} <i class="ti ti-arrow-right"></i>
                 </span>
               </div>
             </div>
           } @empty {
-            <div class="card" style="grid-column: 1 / -1; text-align:center; padding:40px; color:var(--text-muted)">
+            <div class="card" style="text-align:center; padding:40px; color:var(--text-muted)">
               <i class="ti ti-book-off" style="font-size:36px; display:block; margin-bottom:12px"></i>
               <p style="font-size:13px; font-weight:500; margin:0">{{ t('Aucun cours trouvé pour cette recherche.', 'No lessons found matching the selected filter query.') }}</p>
             </div>
@@ -94,12 +108,14 @@ import { DialogService } from '../../services/dialog.service';
             </span>
           </div>
 
-          <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:16px">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:16px; padding:16px; border-radius:8px"
+               [style.background]="getTheme(selectedLesson()?.colorTheme).bg"
+               [style.border-left]="'4px solid ' + getTheme(selectedLesson()?.colorTheme).border">
             <div>
-              <h3 style="font-size:18px; font-weight:800; color:var(--text-primary); margin:0">{{ selectedLesson()?.title }}</h3>
-              <p style="font-size:11.5px; color:var(--text-muted); margin:4px 0 0 0">Level: {{ selectedLesson()?.level }} · Class Material · Due Date: {{ selectedLesson()?.dueDate }}</p>
+              <h3 style="font-size:18px; font-weight:800; margin:0" [style.color]="getTheme(selectedLesson()?.colorTheme).text">{{ selectedLesson()?.title }}</h3>
+              <p style="font-size:11.5px; color:var(--text-muted); margin:4px 0 0 0">Class Material · Due Date: {{ selectedLesson()?.dueDate }}</p>
             </div>
-            <span class="badge" [style.background]="getBadgeBg(selectedLesson()!.type)" [style.color]="getBadgeColor(selectedLesson()!.type)" style="font-size:11px; font-weight:700; text-transform:uppercase; padding:3px 10px; border-radius:20px">
+            <span class="badge" [style.background]="getBadgeBg(selectedLesson()!.type)" [style.color]="getBadgeColor(selectedLesson()!.type)" style="font-size:11px; font-weight:700; text-transform:uppercase; padding:3px 10px; border-radius:20px; align-self: center">
               {{ selectedLesson()?.type }}
             </span>
           </div>
@@ -114,7 +130,7 @@ import { DialogService } from '../../services/dialog.service';
           <!-- Tab Contents -->
           @if (detailTab() === 'content') {
             @if (selectedLesson()?.youtubeUrl) {
-              <div class="card" style="padding:14px; margin-bottom:16px; background:#000; border-radius:10px; overflow:hidden">
+              <div class="card" style="padding:14px; margin: 0 auto 16px auto; max-width: 680px; width: 100%; background:#000; border-radius:10px; overflow:hidden">
                 <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden">
                   <iframe 
                     style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0"
@@ -135,10 +151,33 @@ import { DialogService } from '../../services/dialog.service';
               <button (click)="copyText(selectedLesson()?.content || '')" style="position:absolute; top:12px; right:12px; background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:14px" [title]="t('Copier les notes', 'Copy Notes')">
                 <i class="ti ti-copy"></i>
               </button>
-              <div style="white-space: pre-line; line-height:1.6; font-size:13.5px; color:var(--text-secondary)">
-                {{ selectedLesson()?.content }}
+              <div style="line-height:1.6; font-size:13.5px; color:var(--text-secondary)" [innerHTML]="selectedLesson()?.content">
               </div>
             </div>
+
+            @if (selectedLesson()?.attachments && selectedLesson()!.attachments!.length > 0) {
+              <div style="margin-top:16px">
+                <h4 style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:8px">📂 {{ t('Documents de cours attachés', 'Attached Course Documents') }} ({{ selectedLesson()!.attachments!.length }})</h4>
+                <div style="display:flex; flex-direction:column; gap:8px">
+                  @for (att of selectedLesson()!.attachments; track att.name) {
+                    <div style="display:flex; align-items:center; justify-content:space-between; background:var(--surface-2); border:1.5px solid var(--border-weak); padding:10px 14px; border-radius:8px">
+                      <div style="display:flex; align-items:center; gap:8px">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.5"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        <div>
+                          <span style="font-size:12.5px; font-weight:600; color:var(--text-primary)">{{ att.name }}</span>
+                          <span style="font-size:10px; color:var(--text-muted); margin-left:6px">({{ att.size }})</span>
+                        </div>
+                      </div>
+                      <a [href]="att.base64" [download]="att.name"
+                         class="btn-s" style="padding:4px 10px; font-size:11px; text-decoration:none; display:flex; align-items:center; gap:4px">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        {{ t('Télécharger', 'Download') }}
+                      </a>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
           } @else if (detailTab() === 'vocab') {
             <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap:12px">
               @for (v of selectedLesson()?.vocabulary; track v) {
@@ -171,7 +210,7 @@ import { DialogService } from '../../services/dialog.service';
                 <h4 style="font-size:12.5px; font-weight:700; color:#3730A3; margin:0 0 6px 0; display:flex; align-items:center; gap:6px">
                   <i class="ti ti-info-circle"></i> {{ t('Consignes du Devoir :', 'Homework Instructions:') }}
                 </h4>
-                <p style="font-size:13px; color:#4B5563; line-height:1.5; margin:0">{{ selectedLesson()?.homeworkInstruction }}</p>
+                <p style="font-size:13px; color:#4B5563; line-height:1.5; margin:0; white-space: pre-wrap;">{{ selectedLesson()?.homeworkInstruction }}</p>
               </div>
 
               @if (getLessonSubmission(selectedLesson()!.id); as sub) {
@@ -226,14 +265,17 @@ import { DialogService } from '../../services/dialog.service';
               } @else {
                 <!-- SUBMIT HOMEWORK FORM -->
                 <div style="display:flex; gap:16px; margin-bottom:12px; border-bottom:1px solid var(--border-weak); padding-bottom:12px">
-                  <button (click)="homeworkType = 'text'" [style.border-bottom]="homeworkType === 'text' ? '2px solid #4F46E5' : 'none'" [style.color]="homeworkType === 'text' ? '#4F46E5' : 'var(--text-muted)'" style="background:none; border:none; padding:8px 4px; font-size:13px; font-weight:600; cursor:pointer">
-                    ✍️ {{ t('Soumission Écrite', 'Text Submission') }}
+                  <button (click)="homeworkType = 'text'" [style.border-bottom]="homeworkType === 'text' ? '2px solid #4F46E5' : 'none'" [style.color]="homeworkType === 'text' ? '#4F46E5' : 'var(--text-muted)'" style="background:none; border:none; padding:8px 4px; font-size:13px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                    <span>{{ t('Soumission Écrite', 'Text Submission') }}</span>
                   </button>
-                  <button (click)="homeworkType = 'audio'" [style.border-bottom]="homeworkType === 'audio' ? '2px solid #4F46E5' : 'none'" [style.color]="homeworkType === 'audio' ? '#4F46E5' : 'var(--text-muted)'" style="background:none; border:none; padding:8px 4px; font-size:13px; font-weight:600; cursor:pointer">
-                    🎙️ {{ t('Enregistrement Vocal', 'Voice Recording') }}
+                  <button (click)="homeworkType = 'audio'" [style.border-bottom]="homeworkType === 'audio' ? '2px solid #4F46E5' : 'none'" [style.color]="homeworkType === 'audio' ? '#4F46E5' : 'var(--text-muted)'" style="background:none; border:none; padding:8px 4px; font-size:13px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+                    <span>{{ t('Enregistrement Vocal', 'Voice Recording') }}</span>
                   </button>
-                  <button (click)="homeworkType = 'video'" [style.border-bottom]="homeworkType === 'video' ? '2px solid #4F46E5' : 'none'" [style.color]="homeworkType === 'video' ? '#4F46E5' : 'var(--text-muted)'" style="background:none; border:none; padding:8px 4px; font-size:13px; font-weight:600; cursor:pointer">
-                    📹 {{ t('Soumission Vidéo', 'Video Submission') }}
+                  <button (click)="homeworkType = 'video'" [style.border-bottom]="homeworkType === 'video' ? '2px solid #4F46E5' : 'none'" [style.color]="homeworkType === 'video' ? '#4F46E5' : 'var(--text-muted)'" style="background:none; border:none; padding:8px 4px; font-size:13px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2" ry="2"/></svg>
+                    <span>{{ t('Soumission Vidéo', 'Video Submission') }}</span>
                   </button>
                 </div>
 
@@ -363,6 +405,29 @@ export class StudentLessonsComponent {
     return this.activeLang() === 'fr' ? fr : en;
   }
 
+  themeColors: Record<string, { border: string; bg: string; text: string }> = {
+    emerald: { border: '#10B981', bg: '#ECFDF5', text: '#047857' },
+    indigo: { border: '#4F46E5', bg: '#EEF2FF', text: '#3730A3' },
+    amber: { border: '#F59E0B', bg: '#FFFBEB', text: '#B45309' },
+    rose: { border: '#F43F5E', bg: '#FFF1F2', text: '#9F1239' },
+    purple: { border: '#8B5CF6', bg: '#F5F3FF', text: '#6D28D9' }
+  };
+
+  getTheme(color: string | undefined) {
+    return this.themeColors[color || 'indigo'] || this.themeColors['indigo'];
+  }
+
+  getGradient(color?: string): string {
+    const gradients: Record<string, string> = {
+      indigo: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)',
+      emerald: 'linear-gradient(135deg, #34D399 0%, #059669 100%)',
+      amber: 'linear-gradient(135deg, #FBBF24 0%, #D97706 100%)',
+      rose: 'linear-gradient(135deg, #FB7185 0%, #E11D48 100%)',
+      purple: 'linear-gradient(135deg, #A78BFA 0%, #7C3AED 100%)'
+    };
+    return gradients[color || 'indigo'] || gradients['indigo'];
+  }
+
   activeTab = signal<string>('all');
   selectedTypeFilter = signal<string>('All');
   detailTab = signal<string>('content');
@@ -406,12 +471,6 @@ export class StudentLessonsComponent {
   filteredLessons() {
     let list = this.lessons();
     
-    // 1. Level filter
-    if (this.activeTab() === 'level') {
-      const level = this.currentUser()?.level || 'B1';
-      list = list.filter(l => l.level === level);
-    }
-
     // 2. Type filter
     if (this.selectedTypeFilter() !== 'All') {
       list = list.filter(l => l.type === this.selectedTypeFilter());

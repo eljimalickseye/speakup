@@ -49,7 +49,7 @@ interface QuestionDraft {
                       [style.background]="selectedPlacementId() === cat.id ? '#4F46E5' : 'var(--surface-1)'"
                       [style.border-color]="selectedPlacementId() === cat.id ? '#4F46E5' : 'var(--border)'"
                       [style.color]="selectedPlacementId() === cat.id ? '#fff' : 'var(--text-secondary)'">
-                <span>{{ cat.emoji }}</span>
+                <span [innerHTML]="getCategorySvg(cat.id)" style="display:flex; align-items:center"></span>
                 <span>{{ cat.label }}</span>
               </button>
             }
@@ -441,14 +441,27 @@ export class TeacherPlacementTestsComponent {
     return this.activeLang() === 'fr' ? fr : en;
   }
 
+  getCategorySvg(id: string): string {
+    const map: Record<string, string> = {
+      'placement-test': `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,
+      'placement-test-grammar': `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>`,
+      'placement-test-vocabulary': `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10"/><path d="M6 10h10"/></svg>`,
+      'placement-test-speaking': `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>`,
+      'placement-test-listening': `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3ZM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3Z"/></svg>`,
+      'placement-test-translation': `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 8h10"/><path d="M4 10a10 10 0 0 1 16 0"/><path d="M12 2v6"/><path d="M12 16v6"/><path d="M20 14H4a10 10 0 0 0 16 0Z"/></svg>`,
+      'placement-test-pronunciation': `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>`
+    };
+    return map[id] || '';
+  }
+
   categories = [
-    { id: 'placement-test', label: 'Général', emoji: '🌟' },
-    { id: 'placement-test-grammar', label: 'Grammaire', emoji: '📝' },
-    { id: 'placement-test-vocabulary', label: 'Vocabulaire', emoji: '📚' },
-    { id: 'placement-test-speaking', label: 'Oral/Expression', emoji: '🎙️' },
-    { id: 'placement-test-listening', label: 'Compréhension Orale', emoji: '👂' },
-    { id: 'placement-test-translation', label: 'Traduction', emoji: '🌍' },
-    { id: 'placement-test-pronunciation', label: 'Prononciation', emoji: '🔊' }
+    { id: 'placement-test', label: 'Général' },
+    { id: 'placement-test-grammar', label: 'Grammaire' },
+    { id: 'placement-test-vocabulary', label: 'Vocabulaire' },
+    { id: 'placement-test-speaking', label: 'Oral/Expression' },
+    { id: 'placement-test-listening', label: 'Compréhension Orale' },
+    { id: 'placement-test-translation', label: 'Traduction' },
+    { id: 'placement-test-pronunciation', label: 'Prononciation' }
   ];
 
   // Candidates list

@@ -364,7 +364,7 @@ export class LoginComponent {
       return;
     }
 
-    if (match.blocked) {
+    if (match.status === 'suspended' || (match.blocked && match.role !== 'student')) {
       this.dialogService.alert('Accès Refusé 🚫', 'Votre compte a été suspendu. Contactez un professeur pour plus d\'informations.', 'info');
       this.isLoading.set(false);
       return;
@@ -377,6 +377,23 @@ export class LoginComponent {
       return;
     }
 
+    // Check validation status
+    if (match.status === 'pending') {
+      this.isSuccessModalOpen.set(true);
+      this.isLoading.set(false);
+      return;
+    }
+
+    if (match.status === 'rejected') {
+      this.dialogService.alert(
+        'Inscription Refusée ❌',
+        "Votre demande d'inscription a été refusée par l'administrateur. Veuillez contacter l'équipe SpeakUp pour plus d'informations.",
+        'info'
+      );
+      this.isLoading.set(false);
+      return;
+    }
+
     this.db.setCurrentUser(match.id);
     this.loginUsername = '';
     this.loginPassword = '';
@@ -385,9 +402,18 @@ export class LoginComponent {
 
   async signInWithGoogle() {
     try {
-      await this.db.loginWithGoogle('student');
+      this.isLoading.set(true);
+      const user = await this.db.loginWithGoogle('student');
+      this.isLoading.set(false);
     } catch (err: any) {
+      this.isLoading.set(false);
       console.error('Google Sign-In failed:', err);
+      const msg = err.message || '';
+      if (msg.includes('validation') || msg.includes('pending') || msg.includes('attente')) {
+        this.isSuccessModalOpen.set(true);
+      } else {
+        this.dialogService.alert('Connexion Google échouée ❌', msg || 'Une erreur est survenue lors de la connexion.', 'info');
+      }
     }
   }
 
@@ -418,9 +444,18 @@ export class LoginComponent {
     const role = level === 'Teacher' ? 'teacher' : 'student';
 
     this.db.registerUserProfile(name, username, password, level, country, role)
-      .then(() => {
+      .then((newProfile) => {
         this.closeRequestModal();
-        this.isSuccessModalOpen.set(true);
+        if (newProfile.status === 'approved') {
+          this.db.setCurrentUser(newProfile.id);
+          this.dialogService.alert(
+            "Inscription Réussie 🎉",
+            "Bienvenue ! Votre compte a été créé et activé automatiquement. Vous êtes maintenant connecté.",
+            "success"
+          );
+        } else {
+          this.isSuccessModalOpen.set(true);
+        }
       })
       .catch((err: any) => {
         this.dialogService.alert('Erreur', err.message || "Impossible de créer le compte.", 'info');

@@ -6,7 +6,7 @@ import {
   arrayUnion, arrayRemove, where, deleteDoc 
 } from 'firebase/firestore';
 import { environment } from '../../environments/environment';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, combineLatest } from 'rxjs';
 import { getAuth, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 
 export interface UserGarden {
@@ -93,6 +93,7 @@ export interface UserProfile {
   coins?: number;
   unlockedBadges?: string[];
   unlockedFrames?: string[];
+  lastPracticeDate?: string;
   unlockedAvatars?: string[];
   unlockedThemes?: string[];
   activeFrame?: string;
@@ -101,6 +102,8 @@ export interface UserProfile {
   activeTitle?: string;
   garden?: UserGarden;
   clubId?: string;
+  readNotifications?: string[];
+  deletedNotifications?: string[];
 }
 
 export interface SystemLog {
@@ -146,6 +149,15 @@ export interface DictionaryWord {
   savedAt: string;
 }
 
+export interface EbookPage {
+  id: string;
+  title: string;
+  content: string;
+  order: number;
+  youtubeUrl?: string;
+  youtubeDesc?: string;
+}
+
 export interface Ebook {
   id: string;
   title: string;
@@ -156,6 +168,12 @@ export interface Ebook {
   content: string;
   createdAt: string;
   views?: number;
+  language?: 'fr' | 'en';
+  coverColor?: string;
+  coverGradient?: string;
+  coverImageUrl?: string;
+  status?: 'draft' | 'published';
+  pages?: EbookPage[];
 }
 
 export interface AbuseReport {
@@ -186,6 +204,9 @@ export interface Lesson {
   youtubeUrl?: string;
   youtubeDescription?: string;
   points?: number;
+  attachments?: { name: string; size: string; type: string; base64: string }[];
+  colorTheme?: string;
+  coverImage?: string;
 }
 
 export interface Quiz {
@@ -198,10 +219,15 @@ export interface Quiz {
   status: 'draft' | 'published';
   authorId?: string;
   authorName?: string;
+  colorTheme?: string;
+  coverImage?: string;
   youtubeUrl?: string;
   youtubeDescription?: string;
   isPlacementTest?: boolean;
   placementCategory?: string;
+  isOfficialExam?: boolean;
+  isExamActive?: boolean;
+  deadline?: string;
   questions: {
     question: string;
     options: string[];
@@ -343,6 +369,9 @@ export interface VocabGame {
   assignedGroupId?: string;
   authorId: string;
   createdAt: string;
+  colorTheme?: string;
+  coverImage?: string;
+  status?: 'published' | 'draft';
   words: {
     word: string;
     definition: string;
@@ -439,6 +468,7 @@ export class DatabaseService {
   private users$ = new BehaviorSubject<UserProfile[]>([]);
   private lessons$ = new BehaviorSubject<Lesson[]>([]);
   private quizzes$ = new BehaviorSubject<Quiz[]>([]);
+  get quizzes(): Quiz[] { return this.quizzes$.value; }
   private submissions$ = new BehaviorSubject<Submission[]>([]);
   private attendance$ = new BehaviorSubject<Attendance[]>([]);
   private schedules$ = new BehaviorSubject<LiveClass[]>([]);
@@ -455,6 +485,9 @@ export class DatabaseService {
   private exercises$ = new BehaviorSubject<Exercise[]>([]);
   private activityLogs$ = new BehaviorSubject<ActivityLog[]>([]);
   private systemLogs$ = new BehaviorSubject<SystemLog[]>([]);
+  autoApproveRegistrations = signal<boolean>(false);
+  autoApproveStudents = signal<boolean>(false);
+  autoApproveTeachers = signal<boolean>(false);
 
   private notifications$ = new BehaviorSubject<AppNotification[]>([]);
   private vocabGames$ = new BehaviorSubject<VocabGame[]>([]);
@@ -489,12 +522,26 @@ export class DatabaseService {
     localStorage.setItem('speakup_lang', lang);
   }
 
+  private getLocal(key: string, defaults: any): any {
+    const data = localStorage.getItem(key);
+    if (!data) {
+      localStorage.setItem(key, JSON.stringify(defaults));
+      return defaults;
+    }
+    return JSON.parse(data);
+  }
+
   constructor() {
     const voiceChatLocal = localStorage.getItem('speak_voice_chat_enabled') !== 'false';
     this.voiceChatEnabled$.next(voiceChatLocal);
 
     const boutiqueLocal = localStorage.getItem('speak_settings_show_boutique') === 'true';
     this.showBoutique$.next(boutiqueLocal);
+
+    const autoApproveLocal = localStorage.getItem('speak_settings_auto_approve_registrations') === 'true';
+    this.autoApproveRegistrations.set(autoApproveLocal);
+    this.autoApproveStudents.set(localStorage.getItem('speak_settings_auto_approve_students') === 'true');
+    this.autoApproveTeachers.set(localStorage.getItem('speak_settings_auto_approve_teachers') === 'true');
 
     const gardenLocal = localStorage.getItem('speak_settings_show_garden') === 'true';
     this.showGarden$.next(gardenLocal);
@@ -522,6 +569,7 @@ export class DatabaseService {
     this.initializeData();
     if (this.useFirebase) {
       this.clearOldMockMessagesOnce();
+      this.cleanupMockTeachers();
     }
 
     // Start periodic presence heartbeat pings (every 20 seconds)
@@ -540,9 +588,7 @@ export class DatabaseService {
     // 1. Users (Pre-established 3 teachers + 1 admin)
     const defaultUsers: UserProfile[] = [
       { id: 'admin', name: 'AT - Admin', role: 'admin', level: 'C2', xp: 0, streak: 0, lastActive: 'Today', avatar: 'AD', username: 'admin', password: 'adminpassword', status: 'approved' },
-      { id: 'teacher', name: 'AT - Teacher', role: 'teacher', level: 'C2', xp: 0, streak: 0, lastActive: 'Today', avatar: 'AT', username: 'teacher', password: 'admin123', status: 'approved' },
-      { id: 'teacher-2', name: 'MJ - Teacher Marie', role: 'teacher', level: 'C2', xp: 0, streak: 0, lastActive: 'Today', avatar: 'MJ', username: 'teacher2', password: 'teacher123', status: 'approved' },
-      { id: 'teacher-3', name: 'KS - Teacher Karim', role: 'teacher', level: 'C2', xp: 0, streak: 0, lastActive: 'Today', avatar: 'KS', username: 'teacher3', password: 'teacher123', status: 'approved' }
+      { id: 'teacher', name: 'AT - Teacher', role: 'teacher', level: 'C2', xp: 0, streak: 0, lastActive: 'Today', avatar: 'AT', username: 'teacher', password: 'admin123', status: 'approved' }
     ];
 
     // 2. Lessons (Empty by default)
@@ -574,16 +620,10 @@ export class DatabaseService {
     ];
 
     // Read or write from LocalStorage
-    const getLocal = (key: string, defaults: any) => {
-      const data = localStorage.getItem(key);
-      if (!data) {
-        localStorage.setItem(key, JSON.stringify(defaults));
-        return defaults;
-      }
-      return JSON.parse(data);
-    };
+    const getLocal = (key: string, defaults: any) => this.getLocal(key, defaults);
 
-    const users = getLocal('speak_users', defaultUsers);
+    const rawUsers = getLocal('speak_users', defaultUsers);
+    const users = (Array.isArray(rawUsers) ? rawUsers : []).filter((u: any) => u && u.id);
     defaultUsers.forEach(t => {
       const idx = users.findIndex((u: any) => u.id === t.id);
       if (idx === -1) {
@@ -600,8 +640,12 @@ export class DatabaseService {
     // Auto-generate credentials for any existing users without them
     users.forEach((u: any) => {
       if (!u.password) {
-        u.username = u.name.toLowerCase().replace(/[^a-z0-9]/g, '') + Math.floor(10 + Math.random() * 90);
+        const baseName = u.name || 'user';
+        u.username = baseName.toLowerCase().replace(/[^a-z0-9]/g, '') + Math.floor(10 + Math.random() * 90);
         u.password = Math.floor(1000 + Math.random() * 9000).toString(); // 4-digit PIN code
+      }
+      if (!u.name) {
+        u.name = u.username || 'User';
       }
     });
 
@@ -894,8 +938,15 @@ export class DatabaseService {
 
     // Require authentication on startup instead of auto-logging in as teacher
     const savedUserId = localStorage.getItem('speak_current_user_id') || null;
-    const foundUser = savedUserId ? (users.find((u: UserProfile) => u.id === savedUserId) || null) : null;
+    let foundUser = savedUserId ? (users.find((u: UserProfile) => u.id === savedUserId) || null) : null;
+    if (foundUser && (foundUser.status === 'pending' || foundUser.status === 'rejected' || foundUser.status === 'suspended' || (foundUser.blocked && foundUser.role !== 'student'))) {
+      foundUser = null;
+      localStorage.removeItem('speak_current_user_id');
+    }
     this.currentUser$.next(foundUser);
+    if (foundUser) {
+      this.checkAndResetStreak(foundUser);
+    }
 
     // If using Firebase, sync local data to Firestore if Firebase has no collections yet
     if (this.useFirebase) {
@@ -961,9 +1012,7 @@ export class DatabaseService {
         // Always force-update default/canonical accounts in Firestore (only credential fields)
         const canonicalAccounts = [
           { id: 'admin',     username: 'admin',    password: 'adminpassword', role: 'admin',   name: 'AT - Admin',          avatar: 'AD', status: 'approved' },
-          { id: 'teacher',   username: 'teacher',  password: 'admin123',      role: 'teacher', name: 'AT - Teacher',         avatar: 'AT', status: 'approved' },
-          { id: 'teacher-2', username: 'teacher2', password: 'teacher123',    role: 'teacher', name: 'MJ - Teacher Marie',   avatar: 'MJ', status: 'approved' },
-          { id: 'teacher-3', username: 'teacher3', password: 'teacher123',    role: 'teacher', name: 'KS - Teacher Karim',   avatar: 'KS', status: 'approved' }
+          { id: 'teacher',   username: 'teacher',  password: 'admin123',      role: 'teacher', name: 'AT - Teacher',         avatar: 'AT', status: 'approved' }
         ];
         for (const acct of canonicalAccounts) {
           try {
@@ -986,11 +1035,20 @@ export class DatabaseService {
   }
 
   private setupFirebaseSubscriptions() {
+    // 0. Subscribe to Notifications
+    onSnapshot(collection(this.firestore, 'notifications'), (snap) => {
+      const notifications: AppNotification[] = [];
+      snap.forEach(docSnap => notifications.push(docSnap.data() as AppNotification));
+      const sortedNotifs = notifications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      this.notifications$.next(sortedNotifs);
+      this.saveLocal('speak_notifications', sortedNotifs);
+    });
+
     // 1. Subscribe to Users
     onSnapshot(collection(this.firestore, 'users'), (snap) => {
       const users: UserProfile[] = [];
-      snap.forEach(doc => {
-        const u = doc.data() as UserProfile;
+      snap.forEach(docSnap => {
+        const u = docSnap.data() as UserProfile;
         if (u.countryFlag && u.countryFlag.trim().length === 2) {
           u.countryFlag = this.countryCodeToEmoji(u.countryFlag);
           this.updateUserFlagInFirestore(u.id, u.countryFlag);
@@ -998,26 +1056,35 @@ export class DatabaseService {
         users.push(u);
       });
       this.users$.next(users);
+      this.saveLocal('speak_users', users);
       
-      // Update active user profile if updated
+      // Update active user profile if updated, and log out if status is invalid
       const active = this.currentUser$.value;
       if (active) {
         const fresh = users.find(u => u.id === active.id);
-        if (fresh) this.currentUser$.next(fresh);
+        if (fresh) {
+          if (fresh.status === 'pending' || fresh.status === 'rejected' || fresh.status === 'suspended' || (fresh.blocked && fresh.role !== 'student')) {
+            this.currentUser$.next(null);
+            localStorage.removeItem('speak_current_user_id');
+          } else {
+            this.currentUser$.next(fresh);
+          }
+        }
       }
     });
 
     // 2. Subscribe to Lessons
     onSnapshot(collection(this.firestore, 'lessons'), (snap) => {
       const lessons: Lesson[] = [];
-      snap.forEach(doc => lessons.push(doc.data() as Lesson));
+      snap.forEach(docSnap => lessons.push(docSnap.data() as Lesson));
       this.lessons$.next(lessons);
+      this.saveLocal('speak_lessons', lessons);
     });
 
     // 3. Subscribe to Quizzes
     onSnapshot(collection(this.firestore, 'quizzes'), (snap) => {
       const quizzes: Quiz[] = [];
-      snap.forEach(doc => quizzes.push(doc.data() as Quiz));
+      snap.forEach(docSnap => quizzes.push(docSnap.data() as Quiz));
       
       const placementCategories = [
         { id: 'placement-test-grammar', title: 'Grammar Level Placement Test', type: 'Multiple Choice', q1: 'She ___ to school every day.', o1: ['go', 'goes', 'going'], c1: 'B', q2: 'I am interested ___ learning English.', o2: ['in', 'at', 'on'], c2: 'A' },
@@ -1068,83 +1135,95 @@ export class DatabaseService {
         setDoc(doc(this.firestore, 'quizzes', 'placement-test'), ptQuiz).catch(e => console.warn(e));
       }
       this.quizzes$.next(quizzes);
+      this.saveLocal('speak_quizzes', quizzes);
     });
 
     // 4. Subscribe to Submissions
     onSnapshot(collection(this.firestore, 'submissions'), (snap) => {
       const submissions: Submission[] = [];
-      snap.forEach(doc => submissions.push(doc.data() as Submission));
+      snap.forEach(docSnap => submissions.push(docSnap.data() as Submission));
       this.submissions$.next(submissions);
+      this.saveLocal('speak_submissions', submissions);
     });
 
     // 5. Subscribe to Attendance
     onSnapshot(collection(this.firestore, 'attendance'), (snap) => {
       const attendance: Attendance[] = [];
-      snap.forEach(doc => attendance.push(doc.data() as Attendance));
+      snap.forEach(docSnap => attendance.push(docSnap.data() as Attendance));
       this.attendance$.next(attendance);
+      this.saveLocal('speak_attendance', attendance);
     });
 
     // 6. Subscribe to Schedules (Live Classes)
     onSnapshot(collection(this.firestore, 'schedules'), (snap) => {
       const schedules: LiveClass[] = [];
-      snap.forEach(doc => schedules.push(doc.data() as LiveClass));
+      snap.forEach(docSnap => schedules.push(docSnap.data() as LiveClass));
       this.schedules$.next(schedules);
+      this.saveLocal('speak_schedules', schedules);
     });
 
     // 7. Subscribe to Announcements
     onSnapshot(collection(this.firestore, 'announcements'), (snap) => {
       const announcements: Announcement[] = [];
-      snap.forEach(doc => announcements.push(doc.data() as Announcement));
+      snap.forEach(docSnap => announcements.push(docSnap.data() as Announcement));
       this.announcements$.next(announcements);
+      this.saveLocal('speak_announcements', announcements);
     });
 
     // 8. Subscribe to Payments
     onSnapshot(collection(this.firestore, 'payments'), (snap) => {
       const payments: Payment[] = [];
-      snap.forEach(doc => payments.push(doc.data() as Payment));
+      snap.forEach(docSnap => payments.push(docSnap.data() as Payment));
       this.payments$.next(payments);
+      this.saveLocal('speak_payments', payments);
     });
 
     // 9. Subscribe to Events
     onSnapshot(collection(this.firestore, 'events'), (snap) => {
       const events: EventItem[] = [];
-      snap.forEach(doc => events.push(doc.data() as EventItem));
+      snap.forEach(docSnap => events.push(docSnap.data() as EventItem));
       this.events$.next(events);
+      this.saveLocal('speak_events', events);
     });
 
     // 10. Subscribe to Rewards
     onSnapshot(collection(this.firestore, 'rewards'), (snap) => {
       const list: LeaderboardReward[] = [];
-      snap.forEach(doc => list.push(doc.data() as LeaderboardReward));
+      snap.forEach(docSnap => list.push(docSnap.data() as LeaderboardReward));
       this.rewards$.next(list);
+      this.saveLocal('speak_rewards', list);
     });
 
     // 12. Subscribe to Registration Requests
     onSnapshot(collection(this.firestore, 'registration_requests'), (snap) => {
       const list: RegistrationRequest[] = [];
-      snap.forEach(doc => list.push(doc.data() as RegistrationRequest));
+      snap.forEach(docSnap => list.push(docSnap.data() as RegistrationRequest));
       this.registrationRequests$.next(list);
+      this.saveLocal('speak_registration_requests', list);
     });
 
     // 13. Subscribe to Dictionary Words
     onSnapshot(collection(this.firestore, 'dictionary'), (snap) => {
       const list: DictionaryWord[] = [];
-      snap.forEach(doc => list.push(doc.data() as DictionaryWord));
+      snap.forEach(docSnap => list.push(docSnap.data() as DictionaryWord));
       this.dictionary$.next(list);
+      this.saveLocal('speak_dictionary', list);
     });
 
     // 14. Subscribe to Ebooks
     onSnapshot(collection(this.firestore, 'ebooks'), (snap) => {
       const list: Ebook[] = [];
-      snap.forEach(doc => list.push(doc.data() as Ebook));
+      snap.forEach(docSnap => list.push(docSnap.data() as Ebook));
       this.ebooks$.next(list);
+      this.saveLocal('speak_ebooks', list);
     });
 
     // 15. Subscribe to Abuse Reports
     onSnapshot(collection(this.firestore, 'reports'), (snap) => {
       const list: AbuseReport[] = [];
-      snap.forEach(doc => list.push(doc.data() as AbuseReport));
+      snap.forEach(docSnap => list.push(docSnap.data() as AbuseReport));
       this.reports$.next(list);
+      this.saveLocal('speak_reports', list);
     });
 
     // 11. Subscribe to Channels
@@ -1154,7 +1233,6 @@ export class DatabaseService {
         const raw = d.data() as any;
         const docId = d.id;
         const rawName = raw.name || docId;
-        // Auto-detect DM channels even if isPrivate flag was lost
         const inferredPrivate = raw.isPrivate === true
           || rawName.startsWith('conv-')
           || docId.startsWith('dm-')
@@ -1167,7 +1245,6 @@ export class DatabaseService {
           createdById: raw.createdById,
           createdByRole: raw.createdByRole
         };
-        // Auto-patch malformed or incomplete documents in Firestore
         const needsPatch = !raw.id || !raw.name || (inferredPrivate && !raw.isPrivate);
         if (needsPatch) {
           try {
@@ -1180,8 +1257,8 @@ export class DatabaseService {
       }
       if (list.length > 0) {
         this.channels$.next(list);
+        this.saveLocal('speak_channels', list);
       } else {
-        // Firestore channels collection is empty: seed default channels
         const defaults: ChatChannel[] = [
           { id: 'general', name: 'general' },
           { id: 'group-a', name: 'study-group-a' },
@@ -1196,6 +1273,7 @@ export class DatabaseService {
           }
         }
         this.channels$.next(defaults);
+        this.saveLocal('speak_channels', defaults);
       }
     });
 
@@ -1210,14 +1288,14 @@ export class DatabaseService {
     // 16. Subscribe to System Logs
     onSnapshot(collection(this.firestore, 'system_logs'), (snap) => {
       const list: SystemLog[] = [];
-      snap.forEach(doc => list.push(doc.data() as SystemLog));
+      snap.forEach(docSnap => list.push(docSnap.data() as SystemLog));
       this.systemLogs$.next(list.sort((a, b) => b.createdAt.localeCompare(a.createdAt)));
     });
 
     // 17. Subscribe to Vocab Game Attempts
     onSnapshot(collection(this.firestore, 'vocab_game_attempts'), (snap) => {
       const list: VocabGameAttempt[] = [];
-      snap.forEach(doc => list.push(doc.data() as VocabGameAttempt));
+      snap.forEach(docSnap => list.push(docSnap.data() as VocabGameAttempt));
       this.vocabGameAttempts$.next(list.sort((a, b) => b.completedAt.localeCompare(a.completedAt)));
     });
 
@@ -1257,6 +1335,56 @@ export class DatabaseService {
         localStorage.setItem('speak_settings_show_journey', String(value));
       }
     });
+
+    onSnapshot(doc(this.firestore, 'settings', 'auto_approve_registrations'), (docSnap) => {
+      if (docSnap.exists()) {
+        const val = docSnap.data()['enabled'] === true;
+        this.autoApproveRegistrations.set(val);
+        localStorage.setItem('speak_settings_auto_approve_registrations', String(val));
+      }
+    });
+
+    onSnapshot(doc(this.firestore, 'settings', 'auto_approve_students'), (docSnap) => {
+      if (docSnap.exists()) {
+        const val = docSnap.data()['enabled'] === true;
+        this.autoApproveStudents.set(val);
+        localStorage.setItem('speak_settings_auto_approve_students', String(val));
+      }
+    });
+
+    onSnapshot(doc(this.firestore, 'settings', 'auto_approve_teachers'), (docSnap) => {
+      if (docSnap.exists()) {
+        const val = docSnap.data()['enabled'] === true;
+        this.autoApproveTeachers.set(val);
+        localStorage.setItem('speak_settings_auto_approve_teachers', String(val));
+      }
+    });
+
+    onSnapshot(collection(this.firestore, 'exercises'), (snap) => {
+      const list: Exercise[] = [];
+      snap.forEach(docSnap => list.push(docSnap.data() as Exercise));
+      this.exercises$.next(list);
+      this.saveLocal('speak_exercises', list);
+    });
+
+    onSnapshot(collection(this.firestore, 'vocab_games'), (snap) => {
+      const list: VocabGame[] = [];
+      snap.forEach(docSnap => list.push(docSnap.data() as VocabGame));
+      this.vocabGames$.next(list);
+      this.saveLocal('speak_vocab_games', list);
+    });
+
+    combineLatest([
+      this.currentUser$,
+      this.submissions$,
+      this.activityLogs$,
+      this.dictionary$,
+      this.vocabGameAttempts$
+    ]).subscribe(([user, subs, logs, dict, vocab]) => {
+      if (user && (user.role === 'student' || user.role === 'guest')) {
+        this.recalculateJourneyProgress(user.id, subs, logs, dict, vocab);
+      }
+    });
   }
 
   // --- LOCAL WRITE HELPERS ---
@@ -1267,6 +1395,41 @@ export class DatabaseService {
   // --- USER OPERATIONS ---
   observeUsers(): Observable<UserProfile[]> { return this.users$.asObservable(); }
   observeCurrentUser(): Observable<UserProfile | null> { return this.currentUser$.asObservable(); }
+  getCurrentUser(): UserProfile | null { return this.currentUser$.value; }
+
+  async checkAndResetStreak(user: UserProfile) {
+    if (user.role === 'student' && user.streak > 0 && user.lastPracticeDate) {
+      const todayStr = new Date().toISOString().split('T')[0];
+      const today = new Date(todayStr);
+      const last = new Date(user.lastPracticeDate);
+      const diffTime = today.getTime() - last.getTime();
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays > 1) {
+        const list = [...this.users$.value];
+        const userIndex = list.findIndex(u => u.id === user.id);
+        if (userIndex !== -1) {
+          const updated = {
+            ...user,
+            streak: 0
+          };
+          list[userIndex] = updated;
+          this.users$.next(list);
+          this.saveLocal('speak_users', list);
+          this.currentUser$.next(updated);
+          
+          if (this.useFirebase) {
+            try {
+              const { updateDoc, doc } = await import('firebase/firestore');
+              await updateDoc(doc(this.firestore, 'users', user.id), { streak: 0 });
+            } catch (e) {
+              console.warn(e);
+            }
+          }
+        }
+      }
+    }
+  }
 
   setCurrentUser(userId: string) {
     const user = this.users$.value.find(u => u.id === userId);
@@ -1274,6 +1437,7 @@ export class DatabaseService {
       this.currentUser$.next(user);
       localStorage.setItem('speak_current_user_id', userId);
       this.logAction('login', `Connexion à l'application`);
+      this.checkAndResetStreak(user);
     }
   }
 
@@ -1286,11 +1450,22 @@ export class DatabaseService {
       
       let existingUser = this.users$.value.find(u => u.id === uid);
       if (existingUser) {
+        if (existingUser.blocked || existingUser.status === 'suspended') {
+          throw new Error('Votre compte est suspendu. Veuillez contacter un professeur.');
+        }
+        if (existingUser.status === 'pending') {
+          throw new Error('Votre demande d\'inscription est en cours de validation.');
+        }
+        if (existingUser.status === 'rejected') {
+          throw new Error('Votre demande d\'inscription a été refusée.');
+        }
         this.setCurrentUser(existingUser.id);
         return existingUser;
       }
       
       const avatar = name.slice(0,2).toUpperCase();
+      const autoApprove = (desiredRole === 'student' ? this.autoApproveStudents() : this.autoApproveTeachers());
+      const status = autoApprove ? 'approved' : 'pending';
       const newProfile: UserProfile = {
         id: uid,
         name: name.charAt(0).toUpperCase() + name.slice(1),
@@ -1299,8 +1474,10 @@ export class DatabaseService {
         xp: 0,
         streak: 0,
         lastActive: 'Today',
+        lastPracticeDate: '',
         avatar,
-        status: 'pending'
+        status,
+        registeredAt: new Date().toISOString()
       };
       
       const list = [...this.users$.value, newProfile];
@@ -1311,7 +1488,11 @@ export class DatabaseService {
         await this.addStudentToDefaultChannels(uid);
       }
 
-      this.setCurrentUser(uid);
+      if (status === 'approved') {
+        this.setCurrentUser(uid);
+      } else {
+        throw new Error('Votre demande d\'inscription est en cours de validation.');
+      }
       
       return newProfile;
     }
@@ -1328,6 +1509,15 @@ export class DatabaseService {
     }
 
     if (existingUser) {
+      if (existingUser.blocked || existingUser.status === 'suspended') {
+        throw new Error('Votre compte est suspendu. Veuillez contacter un professeur.');
+      }
+      if (existingUser.status === 'pending') {
+        throw new Error('Votre demande d\'inscription est en cours de validation.');
+      }
+      if (existingUser.status === 'rejected') {
+        throw new Error('Votre demande d\'inscription a été refusée.');
+      }
       this.setCurrentUser(existingUser.id);
       return existingUser;
     } else {
@@ -1335,6 +1525,8 @@ export class DatabaseService {
       const name = googleUser.displayName || 'Google User';
       const avatar = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'G';
       
+      const autoApprove = (desiredRole === 'student' ? this.autoApproveStudents() : this.autoApproveTeachers());
+      const status = autoApprove ? 'approved' : 'pending';
       const newProfile: UserProfile = {
         id,
         name,
@@ -1344,7 +1536,8 @@ export class DatabaseService {
         streak: 0,
         lastActive: 'Today',
         avatar,
-        status: 'pending'
+        status,
+        registeredAt: new Date().toISOString()
       };
       
       const list = [...this.users$.value, newProfile];
@@ -1357,7 +1550,11 @@ export class DatabaseService {
         await this.addStudentToDefaultChannels(id);
       }
 
-      this.setCurrentUser(id);
+      if (status === 'approved') {
+        this.setCurrentUser(id);
+      } else {
+        throw new Error('Votre demande d\'inscription est en cours de validation.');
+      }
       
       return newProfile;
     }
@@ -1366,6 +1563,24 @@ export class DatabaseService {
   logout() {
     this.currentUser$.next(null);
     localStorage.removeItem('speak_current_user_id');
+  }
+
+  cleanDocData(data: any): any {
+    if (data === null || data === undefined) return null;
+    if (Array.isArray(data)) {
+      return data.map(item => this.cleanDocData(item));
+    }
+    if (typeof data === 'object') {
+      const cleaned: any = {};
+      for (const key of Object.keys(data)) {
+        const val = data[key];
+        if (val !== undefined) {
+          cleaned[key] = this.cleanDocData(val);
+        }
+      }
+      return cleaned;
+    }
+    return data;
   }
 
   async updateCurrentUserProfile(updates: Partial<UserProfile>) {
@@ -1385,7 +1600,8 @@ export class DatabaseService {
 
     if (this.useFirebase) {
       try {
-        await updateDoc(doc(this.firestore, 'users', active.id), updates);
+        const cleaned = this.cleanDocData(updates);
+        await setDoc(doc(this.firestore, 'users', active.id), cleaned, { merge: true });
       } catch (e) {
         console.warn('Firestore update profile failed:', e);
       }
@@ -1395,18 +1611,32 @@ export class DatabaseService {
   async updateUserProfile(userId: string, updates: Partial<UserProfile>) {
     const list = [...this.users$.value];
     const idx = list.findIndex(u => u.id === userId);
+    let updated: UserProfile | null = null;
     if (idx !== -1) {
-      const updated = { ...list[idx], ...updates };
+      updated = { ...list[idx], ...updates };
       list[idx] = updated;
       this.users$.next(list);
       this.saveLocal('speak_users', list);
+    }
 
-      if (this.useFirebase) {
-        try {
-          await updateDoc(doc(this.firestore, 'users', userId), updates);
-        } catch (e) {
-          console.warn('Firestore update profile failed:', e);
-        }
+    // Keep currentUser in sync and log out in real-time if blocked/suspended/pending/rejected
+    const active = this.currentUser$.value;
+    if (active && active.id === userId) {
+      const currentFresh = updated || active;
+      if (currentFresh.status === 'pending' || currentFresh.status === 'rejected' || currentFresh.status === 'suspended' || (currentFresh.blocked && currentFresh.role !== 'student')) {
+        this.currentUser$.next(null);
+        localStorage.removeItem('speak_current_user_id');
+      } else {
+        this.currentUser$.next(currentFresh);
+      }
+    }
+
+    if (this.useFirebase) {
+      try {
+        const cleaned = this.cleanDocData(updates);
+        await setDoc(doc(this.firestore, 'users', userId), cleaned, { merge: true });
+      } catch (e) {
+        console.warn('Firestore updateUserProfile failed:', e);
       }
     }
   }
@@ -1640,12 +1870,14 @@ export class DatabaseService {
       level,
       countryFlag: country,
       role,
-      status: 'pending',
+      status: (role === 'student' ? this.autoApproveStudents() : this.autoApproveTeachers()) ? 'approved' : 'pending',
       xp: 0,
       streak: 0,
       lastActive: 'Never',
+      lastPracticeDate: '',
       avatar,
-      blocked: false
+      blocked: false,
+      registeredAt: new Date().toISOString()
     };
 
     const users = [...this.users$.value, newProfile];
@@ -1772,13 +2004,35 @@ export class DatabaseService {
     if (userIndex !== -1) {
       const user = list[userIndex];
       const newCoins = (user.coins || 0) + xpToAdd; // 1 Coin per 1 XP
-      const newStreak = addStreak ? user.streak + 1 : user.streak;
       
+      let newStreak = user.streak || 0;
+      const todayStr = new Date().toISOString().split('T')[0];
+      const lastDate = (user as any).lastPracticeDate;
+
+      if (addStreak) {
+        if (!lastDate) {
+          newStreak = 1;
+        } else {
+          const today = new Date(todayStr);
+          const last = new Date(lastDate);
+          const diffTime = today.getTime() - last.getTime();
+          const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+          
+          if (diffDays === 1) {
+            newStreak = (user.streak || 0) + 1;
+          } else if (diffDays > 1) {
+            newStreak = 1;
+          }
+          // If diffDays === 0, keep same streak
+        }
+      }
+
       const updated = {
         ...user,
         xp: user.xp + xpToAdd,
         coins: newCoins,
         streak: newStreak,
+        lastPracticeDate: addStreak ? todayStr : (lastDate || ''),
         lastActive: 'Today'
       };
       
@@ -1835,6 +2089,7 @@ export class DatabaseService {
             xp: updated.xp,
             coins: updated.coins,
             streak: updated.streak,
+            lastPracticeDate: updated.lastPracticeDate,
             lastActive: updated.lastActive
           });
         } catch (e) {
@@ -2008,9 +2263,13 @@ export class DatabaseService {
     this.submissions$.next(list);
     this.saveLocal('speak_submissions', list);
 
+    // Increment daily streak for active practice
+    await this.updateUserXP(activeUser.id, 0, true);
+
     if (this.useFirebase) {
       try {
-        await setDoc(doc(this.firestore, 'submissions', newSub.id), newSub);
+        const cleaned = this.cleanDocData(newSub);
+        await setDoc(doc(this.firestore, 'submissions', newSub.id), cleaned);
       } catch (e) {
         console.warn(e);
       }
@@ -2096,6 +2355,7 @@ export class DatabaseService {
 
   // --- LIVE CLASS OPERATIONS ---
   observeSchedules(): Observable<LiveClass[]> { return this.schedules$.asObservable(); }
+  getSchedulesValue(): LiveClass[] { return this.schedules$.value; }
   observeActiveJitsiCall(): Observable<LiveClass | null> { return this.activeJitsiCall$.asObservable(); }
   setActiveJitsiCall(c: LiveClass | null) { this.activeJitsiCall$.next(c); }
 
@@ -2150,6 +2410,167 @@ export class DatabaseService {
     if (this.useFirebase) {
       try {
         await deleteDoc(doc(this.firestore, 'schedules', classId));
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+  }
+
+  observeWhiteboard(classId: string): Observable<any[]> {
+    const subject = new BehaviorSubject<any[]>([]);
+    const localKey = 'speak_whiteboard_' + classId;
+    subject.next(this.getLocal(localKey, []));
+
+    if (this.useFirebase && this.firestore) {
+      try {
+        const colRef = collection(this.firestore, 'schedules', classId, 'whiteboard');
+        onSnapshot(colRef, (snap) => {
+          const list: any[] = [];
+          snap.forEach(d => list.push(d.data()));
+          subject.next(list);
+          this.saveLocal(localKey, list);
+        });
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+    return subject.asObservable();
+  }
+
+  async addWhiteboardElement(classId: string, el: any) {
+    const localKey = 'speak_whiteboard_' + classId;
+    const list = this.getLocal(localKey, []);
+    list.push(el);
+    this.saveLocal(localKey, list);
+
+    if (this.useFirebase && this.firestore) {
+      try {
+        await setDoc(doc(this.firestore, 'schedules', classId, 'whiteboard', el.id), el);
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+  }
+
+  observeSpeechPrompter(classId: string): Observable<any> {
+    const subject = new BehaviorSubject<any>(null);
+    const localKey = 'speak_speech_prompter_' + classId;
+    subject.next(this.getLocal(localKey, null));
+
+    if (this.useFirebase && this.firestore) {
+      try {
+        const docRef = doc(this.firestore, 'schedules', classId, 'speechPrompter', 'active');
+        onSnapshot(docRef, (snap) => {
+          if (snap.exists()) {
+            const data = snap.data();
+            subject.next(data);
+            this.saveLocal(localKey, data);
+          } else {
+            subject.next(null);
+            this.saveLocal(localKey, null);
+          }
+        });
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+    return subject.asObservable();
+  }
+
+  async setSpeechPrompter(classId: string, data: { text: string, targetStudent: string, senderName: string }) {
+    const localKey = 'speak_speech_prompter_' + classId;
+    this.saveLocal(localKey, data);
+
+    if (this.useFirebase && this.firestore) {
+      try {
+        await setDoc(doc(this.firestore, 'schedules', classId, 'speechPrompter', 'active'), data);
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+  }
+
+  async updateWhiteboardElement(classId: string, elId: string, data: any) {
+    const localKey = 'speak_whiteboard_' + classId;
+    const list = this.getLocal(localKey, []);
+    const idx = list.findIndex((x: any) => x.id === elId);
+    if (idx !== -1) {
+      list[idx] = { ...list[idx], ...data };
+      this.saveLocal(localKey, list);
+    }
+
+    if (this.useFirebase && this.firestore) {
+      try {
+        await updateDoc(doc(this.firestore, 'schedules', classId, 'whiteboard', elId), data);
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+  }
+
+  async deleteWhiteboardElement(classId: string, elId: string) {
+    const localKey = 'speak_whiteboard_' + classId;
+    const list = this.getLocal(localKey, []).filter((x: any) => x.id !== elId);
+    this.saveLocal(localKey, list);
+
+    if (this.useFirebase && this.firestore) {
+      try {
+        await deleteDoc(doc(this.firestore, 'schedules', classId, 'whiteboard', elId));
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+  }
+
+  async clearWhiteboard(classId: string) {
+    const localKey = 'speak_whiteboard_' + classId;
+    this.saveLocal(localKey, []);
+
+    if (this.useFirebase && this.firestore) {
+      try {
+        const snap = await getDocs(collection(this.firestore, 'schedules', classId, 'whiteboard'));
+        const promises: Promise<any>[] = [];
+        snap.forEach(d => {
+          promises.push(deleteDoc(doc(this.firestore, 'schedules', classId, 'whiteboard', d.id)));
+        });
+        await Promise.all(promises);
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+  }
+
+  observeLiveChat(classId: string): Observable<any[]> {
+    const subject = new BehaviorSubject<any[]>([]);
+    const localKey = 'speak_livechat_' + classId;
+    subject.next(this.getLocal(localKey, []));
+
+    if (this.useFirebase && this.firestore) {
+      try {
+        const colRef = collection(this.firestore, 'schedules', classId, 'liveChat');
+        onSnapshot(colRef, (snap) => {
+          const list: any[] = [];
+          snap.forEach(d => list.push(d.data()));
+          list.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+          subject.next(list);
+          this.saveLocal(localKey, list);
+        });
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+    return subject.asObservable();
+  }
+
+  async sendLiveChatMessage(classId: string, msg: any) {
+    const localKey = 'speak_livechat_' + classId;
+    const list = this.getLocal(localKey, []);
+    list.push(msg);
+    this.saveLocal(localKey, list);
+
+    if (this.useFirebase && this.firestore) {
+      try {
+        await setDoc(doc(this.firestore, 'schedules', classId, 'liveChat', msg.id), msg);
       } catch (e) {
         console.warn(e);
       }
@@ -2603,6 +3024,12 @@ export class DatabaseService {
     this.dictionary$.next(list);
     this.saveLocal('speak_dictionary', list);
 
+    // Award 5 XP and increment streak
+    const activeUser = this.currentUser$.value;
+    if (activeUser) {
+      await this.updateUserXP(activeUser.id, 5, true);
+    }
+
     if (this.useFirebase) {
       try {
         await setDoc(doc(this.firestore, 'dictionary', newWord.id), newWord);
@@ -2666,6 +3093,25 @@ export class DatabaseService {
         await deleteDoc(doc(this.firestore, 'ebooks', ebookId));
       } catch (e) {
         console.warn('Firestore delete ebook failed:', e);
+      }
+    }
+  }
+
+  async updateEbook(ebookId: string, eb: Partial<Ebook>) {
+    const list = [...this.ebooks$.value];
+    const idx = list.findIndex(b => b.id === ebookId);
+    if (idx !== -1) {
+      const updated = { ...list[idx], ...eb };
+      list[idx] = updated;
+      this.ebooks$.next(list);
+      this.saveLocal('speak_ebooks', list);
+
+      if (this.useFirebase) {
+        try {
+          await updateDoc(doc(this.firestore, 'ebooks', ebookId), eb);
+        } catch (e) {
+          console.warn('Firestore update ebook failed:', e);
+        }
       }
     }
   }
@@ -3221,6 +3667,17 @@ export class DatabaseService {
     }
   }
 
+  private async cleanupMockTeachers() {
+    if (!this.useFirebase) return;
+    try {
+      await deleteDoc(doc(this.firestore, 'users', 'teacher-2'));
+      await deleteDoc(doc(this.firestore, 'users', 'teacher-3'));
+      console.log('Mock teachers teacher-2 and teacher-3 cleaned up.');
+    } catch (e) {
+      console.warn('Failed to cleanup mock teachers:', e);
+    }
+  }
+
   observeVoiceChatEnabled(): Observable<boolean> {
     return this.voiceChatEnabled$.asObservable();
   }
@@ -3232,6 +3689,42 @@ export class DatabaseService {
     if (this.useFirebase) {
       try {
         await setDoc(doc(this.firestore, 'settings', 'voice_chat'), { enabled });
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+  }
+
+  async setAutoApproveRegistrations(enabled: boolean) {
+    this.autoApproveRegistrations.set(enabled);
+    localStorage.setItem('speak_settings_auto_approve_registrations', String(enabled));
+    if (this.useFirebase) {
+      try {
+        await setDoc(doc(this.firestore, 'settings', 'auto_approve_registrations'), { enabled });
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+  }
+
+  async setAutoApproveStudents(enabled: boolean) {
+    this.autoApproveStudents.set(enabled);
+    localStorage.setItem('speak_settings_auto_approve_students', String(enabled));
+    if (this.useFirebase) {
+      try {
+        await setDoc(doc(this.firestore, 'settings', 'auto_approve_students'), { enabled });
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+  }
+
+  async setAutoApproveTeachers(enabled: boolean) {
+    this.autoApproveTeachers.set(enabled);
+    localStorage.setItem('speak_settings_auto_approve_teachers', String(enabled));
+    if (this.useFirebase) {
+      try {
+        await setDoc(doc(this.firestore, 'settings', 'auto_approve_teachers'), { enabled });
       } catch (e) {
         console.warn(e);
       }
@@ -3395,9 +3888,11 @@ export class DatabaseService {
       userRole: user.role,
       action,
       details,
-      groupId,
       createdAt: new Date().toISOString()
     };
+    if (groupId !== undefined) {
+      newLog.groupId = groupId;
+    }
 
     const list = [newLog, ...this.systemLogs$.value];
     this.systemLogs$.next(list);
@@ -3417,12 +3912,48 @@ export class DatabaseService {
   observeNotifications(): Observable<AppNotification[]> { return this.notifications$.asObservable(); }
 
   getNotificationsForUser(userId: string, role: string): AppNotification[] {
-    return this.notifications$.value.filter(n =>
-      n.recipientId === userId ||
-      n.recipientId === 'all' ||
-      (n.recipientRole && n.recipientRole === role) ||
-      n.recipientRole === 'all'
-    ).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const active = this.currentUser$.value;
+    const deletedList = active?.deletedNotifications || [];
+    const readList = active?.readNotifications || [];
+
+    return this.notifications$.value.filter(n => {
+      // If deleted by this user, do not show
+      if (deletedList.includes(n.id)) {
+        return false;
+      }
+      // If targeted to a specific user (not a broadcast), only show to that user
+      if (n.recipientId && n.recipientId !== 'all') {
+        return n.recipientId === userId;
+      }
+      // Broadcast notification — check role match
+      let isBroadcastTarget = false;
+      if (n.recipientRole) {
+        isBroadcastTarget = n.recipientRole === role || n.recipientRole === 'all';
+      } else {
+        isBroadcastTarget = true;
+      }
+
+      if (!isBroadcastTarget) {
+        return false;
+      }
+
+      // For broadcast notifications, new users should not see announcements created before they registered
+      if (active && active.registeredAt) {
+        try {
+          const regTime = new Date(active.registeredAt).getTime();
+          const notifTime = new Date(n.createdAt).getTime();
+          if (notifTime < regTime) {
+            return false;
+          }
+        } catch (e) {}
+      }
+
+      return true;
+    }).map(n => {
+      // Map global 'read' state to user-specific read state
+      const isRead = n.recipientId && n.recipientId !== 'all' ? n.read : readList.includes(n.id);
+      return { ...n, read: isRead };
+    }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 
   async sendNotification(notif: Omit<AppNotification, 'id' | 'createdAt' | 'read'>): Promise<void> {
@@ -3441,22 +3972,91 @@ export class DatabaseService {
   }
 
   async markNotificationRead(notifId: string) {
-    const list = this.notifications$.value.map(n =>
-      n.id === notifId ? { ...n, read: true } : n
-    );
-    this.notifications$.next(list);
-    this.saveLocal('speak_notifications', list);
-    if (this.useFirebase) {
-      try { await updateDoc(doc(this.firestore, 'notifications', notifId), { read: true }); } catch(e) { console.warn(e); }
+    const active = this.currentUser$.value;
+    if (!active) return;
+
+    // Add to user-specific readNotifications list
+    const readList = active.readNotifications || [];
+    if (!readList.includes(notifId)) {
+      const updatedReadList = [...readList, notifId];
+      await this.updateCurrentUserProfile({ readNotifications: updatedReadList });
+    }
+
+    // If it's a private user-specific notification (not broadcast), we can also update it globally in Firestore
+    const notif = this.notifications$.value.find(n => n.id === notifId);
+    if (notif && notif.recipientId && notif.recipientId === active.id) {
+      const list = this.notifications$.value.map(n =>
+        n.id === notifId ? { ...n, read: true } : n
+      );
+      this.notifications$.next(list);
+      this.saveLocal('speak_notifications', list);
+      if (this.useFirebase) {
+        try { await updateDoc(doc(this.firestore, 'notifications', notifId), { read: true }); } catch(e) { console.warn(e); }
+      }
+    } else {
+      // Trigger notification update local stream
+      this.notifications$.next([...this.notifications$.value]);
     }
   }
 
   async markAllNotificationsRead(userId: string) {
-    const list = this.notifications$.value.map(n =>
-      (n.recipientId === userId || n.recipientId === 'all') ? { ...n, read: true } : n
-    );
-    this.notifications$.next(list);
-    this.saveLocal('speak_notifications', list);
+    const active = this.currentUser$.value;
+    if (!active) return;
+
+    const visibleNotifs = this.getNotificationsForUser(userId, active.role);
+    const unreadIds = visibleNotifs.filter(n => !n.read).map(n => n.id);
+
+    if (unreadIds.length > 0) {
+      const readList = active.readNotifications || [];
+      const updatedReadList = Array.from(new Set([...readList, ...unreadIds]));
+      await this.updateCurrentUserProfile({ readNotifications: updatedReadList });
+    }
+
+    const privateUnreadNotifs = visibleNotifs.filter(n => !n.read && n.recipientId === active.id);
+    if (privateUnreadNotifs.length > 0) {
+      const list = this.notifications$.value.map(n =>
+        (n.recipientId === active.id) ? { ...n, read: true } : n
+      );
+      this.notifications$.next(list);
+      this.saveLocal('speak_notifications', list);
+
+      if (this.useFirebase) {
+        for (const n of privateUnreadNotifs) {
+          try {
+            await updateDoc(doc(this.firestore, 'notifications', n.id), { read: true });
+          } catch(e) {
+            console.warn('Failed to mark private notification read in Firestore', n.id, e);
+          }
+        }
+      }
+    } else {
+      this.notifications$.next([...this.notifications$.value]);
+    }
+  }
+
+  async deleteNotification(notifId: string) {
+    const active = this.currentUser$.value;
+    if (!active) return;
+
+    // Add to user-specific deletedNotifications list
+    const deletedList = active.deletedNotifications || [];
+    if (!deletedList.includes(notifId)) {
+      const updatedDeletedList = [...deletedList, notifId];
+      await this.updateCurrentUserProfile({ deletedNotifications: updatedDeletedList });
+    }
+
+    // If it's a private user-specific notification (not broadcast), we can also delete it globally from Firestore
+    const notif = this.notifications$.value.find(n => n.id === notifId);
+    if (notif && notif.recipientId && notif.recipientId === active.id) {
+      const list = this.notifications$.value.filter(n => n.id !== notifId);
+      this.notifications$.next(list);
+      this.saveLocal('speak_notifications', list);
+      if (this.useFirebase) {
+        try { await deleteDoc(doc(this.firestore, 'notifications', notifId)); } catch(e) { console.warn(e); }
+      }
+    } else {
+      this.notifications$.next([...this.notifications$.value]);
+    }
   }
 
   // --- VOCAB GAME OPERATIONS ---
@@ -3821,9 +4421,71 @@ export class DatabaseService {
     }
   }
 
-  // --- JOURNEY OPERATIONS ---
   observeJourneyMissions(): Observable<JourneyMission[]> {
     return this.journeyMissions$.asObservable();
+  }
+
+  recalculateJourneyProgress(
+    userId: string,
+    subs: Submission[],
+    logs: ActivityLog[],
+    dict: DictionaryWord[],
+    vocab: VocabGameAttempt[]
+  ) {
+    const list = [...this.journeyMissions$.value];
+    let updated = false;
+
+    list.forEach(mission => {
+      if (mission.unlocked && !mission.completed) {
+        mission.requiredTasks.forEach(task => {
+          let newValue = task.current;
+
+          if (task.type === 'words') {
+            newValue = dict.filter(w => w.userId === userId).length;
+          } else if (task.type === 'video') {
+            const sCount = subs.filter(s => s.studentId === userId && s.type === 'video').length;
+            const lCount = logs.filter(l => l.studentId === userId && (l.type as any) === 'video').length;
+            newValue = sCount + lCount;
+          } else if (task.type === 'quiz') {
+            newValue = logs.filter(l => l.studentId === userId && l.type === 'quiz' && l.status === 'completed').length;
+          } else if (task.type === 'listening') {
+            const lCount = logs.filter(l => l.studentId === userId && l.type === 'listening' && l.status === 'completed').length;
+            const sCount = subs.filter(s => s.studentId === userId && s.type === 'audio').length;
+            newValue = lCount + sCount;
+          } else if (task.type === 'writing') {
+            const sCount = subs.filter(s => s.studentId === userId && s.type === 'text').length;
+            newValue = sCount;
+          }
+
+          if (newValue !== task.current) {
+            task.current = Math.min(task.target, newValue);
+            updated = true;
+          }
+        });
+
+        // Check if all tasks completed
+        const allDone = mission.requiredTasks.every(t => t.current >= t.target);
+        if (allDone) {
+          mission.completed = true;
+
+          // Unlock next mission in list
+          const nextIdx = list.findIndex(m => m.id === mission.id) + 1;
+          if (nextIdx < list.length) {
+            list[nextIdx].unlocked = true;
+          }
+
+          // Award bonus XP and coins
+          this.updateUserXP(userId, 100, true);
+          this.addCoinsToUser(userId, 200);
+          updated = true;
+        }
+      }
+    });
+
+    if (updated) {
+      this.journeyMissions$.next(list);
+      this.saveLocal('speak_missions', list);
+    }
   }
 
   async updateJourneyTaskProgress(userId: string, taskType: string, amount: number) {

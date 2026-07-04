@@ -158,7 +158,7 @@ import { DialogService } from '../../services/dialog.service';
                 </div>
                 
                 <div class="input-row" style="margin-bottom:0">
-                  <label for="newStudentLevel" style="color:#4F46E5; font-weight:700; font-size:11.5px">{{ t('Niveau d\'anglais de départ', 'English Level') }}</label>
+                  <label for="newStudentLevel" style="color:#4F46E5; font-weight:700; font-size:11.5px">{{ t("Niveau d'anglais de départ", 'English Level') }}</label>
                   <select id="newStudentLevel" [(ngModel)]="newStudentLevel" style="background:#FFF; padding:8px; border-radius:6px; border:1.5px solid var(--border); width:100%">
                     <option value="A1">A1 — {{ t('Débutant', 'Beginner') }}</option>
                     <option value="A2">A2 — {{ t('Élémentaire', 'Elementary') }}</option>
@@ -188,7 +188,7 @@ import { DialogService } from '../../services/dialog.service';
 
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px">
                   <div class="input-row" style="margin-bottom:0">
-                    <label for="newStudentRegFee" style="color:#4F46E5; font-weight:700; font-size:11.5px">{{ t('Frais d\'inscription', 'Reg. Fee') }}</label>
+                    <label for="newStudentRegFee" style="color:#4F46E5; font-weight:700; font-size:11.5px">{{ t("Frais d'inscription", 'Reg. Fee') }}</label>
                     <select id="newStudentRegFee" [(ngModel)]="newStudentRegFee" style="background:#FFF; padding:8px; border-radius:6px; border:1.5px solid var(--border); width:100%">
                       <option [value]="10000">10,000 CFA (Regular)</option>
                       <option [value]="0">0 CFA (Waived / Promo)</option>
@@ -202,6 +202,16 @@ import { DialogService } from '../../services/dialog.service';
                     </select>
                   </div>
                 </div>
+              </div>
+
+              <div style="border-top:1.5px dashed var(--border-weak); margin-top:16px; padding-top:16px">
+                <label style="color:#4F46E5; font-weight:700; font-size:11.5px; display:block; margin-bottom:6px">
+                  {{ t('Ou importer plusieurs étudiants via un fichier (.csv, .txt)', 'Or import multiple students via file (.csv, .txt)') }}
+                </label>
+                <input type="file" accept=".csv,.txt" (change)="onStudentsFileSelected($event)" style="font-size:11px; width:100%; border:1px dashed var(--border); padding:8px; border-radius:6px; cursor:pointer" />
+                <p style="font-size:9.5px; color:var(--text-muted); margin:4px 0 0 0; line-height:1.4">
+                  {{ t('Format : Un nom par ligne, ou CSV (Nom, Niveau, Drapeau, Frais Inscr., Scolarité Mensuelle)', 'Format: One name per line, or CSV (Name, Level, Flag, Reg. Fee, Monthly Fee)') }}
+                </p>
               </div>
 
               <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:20px; border-top:1px solid var(--border-weak); padding-top:16px">
@@ -332,20 +342,20 @@ import { DialogService } from '../../services/dialog.service';
               <div class="card" style="margin-top:0; margin-bottom:16px; border: 1.5px dashed #D97706; background:#FFFBEB; padding:16px; border-radius:8px">
                 <h4 style="font-size:12px; font-weight:700; color:#B45309; margin-bottom:12px; display:flex; align-items:center; gap:6px; margin-top:0">
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 3 3 6 3s6-1 6-3v-5"/></svg>
-                  <span>{{ t('Certifications de Niveau de l\'élève', 'Student Language Certificates') }}</span>
+                  <span>{{ t("Certifications de Niveau de l'élève", 'Student Language Certificates') }}</span>
                 </h4>
                 <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap:10px">
                   @for (lvl of ['A1', 'A2', 'B1', 'B2']; track lvl) {
                     <div style="padding:10px; border-radius:8px; border:1.5px solid; display:flex; flex-direction:column; justify-content:space-between; align-items:center; min-height:80px; text-align:center"
-                         [style.background]="isCertificateUnlocked(student.level, lvl) ? 'white' : 'var(--surface-2)'"
-                         [style.border-color]="isCertificateUnlocked(student.level, lvl) ? '#FDE68A' : 'var(--border-weak)'">
+                         [style.background]="isCertificateUnlocked(student, lvl) ? 'white' : 'var(--surface-2)'"
+                         [style.border-color]="isCertificateUnlocked(student, lvl) ? '#FDE68A' : 'var(--border-weak)'">
                       <div>
                         <span style="font-size:11px; font-weight:800; color:var(--text-primary)">Level {{ lvl }}</span>
                         <div style="font-size:9.5px; color:var(--text-muted); margin-top:2px">
-                          {{ isCertificateUnlocked(student.level, lvl) ? t('Débloqué', 'Unlocked') : t('En cours', 'Locked') }}
+                          {{ isCertificateUnlocked(student, lvl) ? t('Débloqué', 'Unlocked') : t('En cours', 'Locked') }}
                         </div>
                       </div>
-                      @if (isCertificateUnlocked(student.level, lvl)) {
+                      @if (isCertificateUnlocked(student, lvl)) {
                         <button class="btn-s" style="padding:4px 8px; font-size:10px; margin-top:6px; background:#4F46E5; color:white; border:none; display:flex; align-items:center; gap:4px; cursor:pointer" 
                                 (click)="selectedCertificate.set(lvl); selectedStudentCert.set(student)">
                           <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -470,7 +480,7 @@ import { DialogService } from '../../services/dialog.service';
             <div class="cert-modal-card" (click)="$event.stopPropagation()">
               
               <div class="no-print" style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-weak); padding-bottom:12px; margin-bottom:16px">
-                <h3 style="margin:0; font-size:14px; font-weight:800; color:var(--text-primary)">{{ t('Aperçu du Certificat de l\'élève', 'Student Certificate Preview') }}</h3>
+                <h3 style="margin:0; font-size:14px; font-weight:800; color:var(--text-primary)">{{ t("Aperçu du Certificat de l'élève", "Student Certificate Preview") }}</h3>
                 <button (click)="selectedCertificate.set(null); selectedStudentCert.set(null)" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:20px; line-height:1"><i class="ti ti-x"></i></button>
               </div>
 
@@ -486,11 +496,11 @@ import { DialogService } from '../../services/dialog.service';
                 </div>
 
                 <div style="font-family:'Cinzel', serif; font-size:12px; font-weight:700; color:#D97706; letter-spacing:3px; text-transform:uppercase; margin-bottom:14px">
-                  {{ t('CERTIFICAT DE COMPÉTENCE LINGUISTIQUE', 'CERTIFICATE OF LANGUAGE PROFICIENCY') }}
+                  {{ t("CERTIFICAT DE COMPÉTENCE LINGUISTIQUE", "CERTIFICATE OF LANGUAGE PROFICIENCY") }}
                 </div>
 
                 <div style="font-size:13px; color:#475569; font-style:italic; margin-bottom:14px">
-                  {{ t('Ce document officiel est décerné à', 'This official certificate is proudly presented to') }}
+                  {{ t("Ce document officiel est décerné à", "This official certificate is proudly presented to") }}
                 </div>
 
                 <!-- Student Name -->
@@ -499,19 +509,25 @@ import { DialogService } from '../../services/dialog.service';
                 </div>
 
                 <div style="font-size:13px; color:#475569; line-height:1.6; max-width:520px; margin:0 auto 20px auto">
-                  {{ t('pour avoir brillamment validé et démontré ses compétences linguistiques en anglais au niveau', 'for having successfully attained and demonstrated linguistic proficiency in the English language at the level of') }}
+                  {{ t("pour avoir brillamment validé et démontré ses compétences linguistiques en anglais au niveau", "for having successfully attained and demonstrated linguistic proficiency in the English language at the level of") }}
                   <div style="font-size:16px; font-weight:850; color:#D97706; margin:8px 0; text-transform:uppercase; letter-spacing:0.5px">
                     {{ lvl }} — {{ getLevelFullName(lvl) }}
                   </div>
-                  {{ t('conformément aux exigences du Cadre Européen Commun de Référence pour les Langues (CECRL).', 'in compliance with the criteria of the Common European Framework of Reference for Languages (CEFR).') }}
+                  <p style="font-size:11.5px; color:#475569; font-style:italic; line-height:1.4; margin:10px auto; max-width:460px; border-top:1px dashed #CBD5E1; border-bottom:1px dashed #CBD5E1; padding:8px 0">
+                    " {{ getLevelDescription(lvl) }} "
+                  </p>
+                  <div style="font-size:12px; font-weight:700; color:#1E1B4B; margin-top:8px; margin-bottom:14px">
+                    {{ t("Score d'évaluation :", "Evaluation Score:") }} <span style="color:#D97706; font-weight:800">{{ getCertificateScore(student.id, lvl) }}</span>
+                  </div>
+                  {{ t("conformément aux exigences du Cadre Européen Commun de Référence pour les Langues (CECRL).", "in compliance with the criteria of the Common European Framework of Reference for Languages (CEFR).") }}
                 </div>
 
                 <!-- Footer with Signatures, Date and Unique hash -->
                 <div style="display:grid; grid-template-columns:1.2fr 1fr 1.2fr; gap:10px; border-top:1px solid rgba(79, 70, 229, 0.15); padding-top:20px; align-items:center">
                   <div style="text-align:left">
-                    <div style="font-size:10px; color:#64748B; font-weight:600">{{ t('DATE D\'ÉMISSION', 'ISSUE DATE') }}</div>
-                    <div style="font-size:11px; color:#1E1B4B; font-weight:700; margin-top:2px">{{ getCertificateIssueDate(student.registeredAt) }}</div>
-                    <div style="font-size:9px; color:#64748B; font-weight:600; margin-top:10px">{{ t('IDENTIFIANT DE SÉCURITÉ', 'SECURE CREDENTIAL ID') }}</div>
+                    <div style="font-size:10px; color:#64748B; font-weight:600">{{ t("DATE D'ÉMISSION", "ISSUE DATE") }}</div>
+                    <div style="font-size:11px; color:#1E1B4B; font-weight:700; margin-top:2px">{{ getCertificateIssueDate(student.id, lvl) }}</div>
+                    <div style="font-size:9px; color:#64748B; font-weight:600; margin-top:10px">{{ t("IDENTIFIANT DE SÉCURITÉ", "SECURE CREDENTIAL ID") }}</div>
                     <div style="font-size:10px; color:#4F46E5; font-weight:700; margin-top:2px; font-family:monospace">{{ getCertificateId(student.id, lvl) }}</div>
                   </div>
 
@@ -556,12 +572,13 @@ export class TeacherStudentsComponent {
   selectedCertificate = signal<string | null>(null);
   selectedStudentCert = signal<UserProfile | null>(null);
 
-  isCertificateUnlocked(studentLevel: string, targetLevel: string): boolean {
-    if (studentLevel === 'Guest') return true;
-    const levels = ['A1', 'A2', 'B1', 'B2'];
-    const currentIdx = levels.indexOf(studentLevel);
-    const targetIdx = levels.indexOf(targetLevel);
-    return currentIdx >= targetIdx;
+  isCertificateUnlocked(student: UserProfile, targetLevel: string): boolean {
+    if (student.level === 'Guest') return true;
+    const attempts = this.db.getStudentExamAttempts(student.id).filter(att => att.passed);
+    return attempts.some(att => {
+      const quiz = this.db.quizzes.find(q => q.id === att.quizId);
+      return quiz ? (quiz.isOfficialExam && quiz.level === targetLevel) : false;
+    });
   }
 
   getCertificateId(studentId: string, level: string): string {
@@ -584,8 +601,13 @@ export class TeacherStudentsComponent {
     }
   }
 
-  getCertificateIssueDate(registeredAt?: string): string {
-    const d = registeredAt ? new Date(registeredAt) : new Date();
+  getCertificateIssueDate(studentId: string, level: string): string {
+    const attempts = this.db.getStudentExamAttempts(studentId).filter(att => att.passed);
+    const attempt = attempts.find(att => {
+      const quiz = this.db.quizzes.find(q => q.id === att.quizId);
+      return quiz ? (quiz.isOfficialExam && quiz.level === level) : false;
+    });
+    const d = attempt ? new Date(attempt.completedAt) : new Date();
     if (isNaN(d.getTime())) {
       return this.t('1 juillet 2026', 'July 1, 2026');
     }
@@ -595,6 +617,37 @@ export class TeacherStudentsComponent {
       return `${d.getDate()} ${monthsFr[d.getMonth()]} ${d.getFullYear()}`;
     }
     return `${monthsEn[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+  }
+
+  getCertificateScore(studentId: string, level: string): string {
+    const attempts = this.db.getStudentExamAttempts(studentId).filter(att => att.passed);
+    const attempt = attempts.find(att => {
+      const quiz = this.db.quizzes.find(q => q.id === att.quizId);
+      return quiz ? (quiz.isOfficialExam && quiz.level === level) : false;
+    });
+    return attempt ? `${attempt.percentage}%` : '100%';
+  }
+
+  getLevelDescription(level: string): string {
+    switch (level) {
+      case 'A1': return this.t(
+        "Peut comprendre et utiliser des expressions familières et quotidiennes ainsi que des énoncés très simples.",
+        "Can understand and use familiar everyday expressions and very basic phrases."
+      );
+      case 'A2': return this.t(
+        "Peut comprendre des phrases isolées et des expressions fréquemment utilisées en relation avec des domaines immédiats de priorité.",
+        "Can understand sentences and frequently used expressions related to areas of most immediate relevance."
+      );
+      case 'B1': return this.t(
+        "Peut comprendre les points essentiels quand un langage clair et standard est utilisé et s'il s'agit de choses familières.",
+        "Can understand the main points of clear standard input on familiar matters regularly encountered."
+      );
+      case 'B2': return this.t(
+        "Peut comprendre le contenu essentiel de sujets concrets ou abstraits dans un texte complexe, y compris une discussion technique.",
+        "Can understand the main ideas of complex text on both concrete and abstract topics, including technical discussions."
+      );
+      default: return '';
+    }
   }
 
   printCertificate() {
@@ -754,6 +807,70 @@ export class TeacherStudentsComponent {
       this.newStudentRegFee = 10000;
       this.newStudentMonthlyFee = 7000;
     });
+  }
+
+  onStudentsFileSelected(event: Event) {
+    const target = event.target as HTMLInputElement;
+    if (!target.files || target.files.length === 0) return;
+    const file = target.files[0];
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const text = e.target?.result as string;
+      if (!text) return;
+      const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+      if (lines.length === 0) {
+        this.dialogService.alert('Fichier Vide', 'Aucun étudiant trouvé dans le fichier.', 'info');
+        return;
+      }
+
+      let importedCount = 0;
+      for (const line of lines) {
+        // Skip header lines
+        if (importedCount === 0 && (line.toLowerCase().includes('name') || line.toLowerCase().includes('nom'))) {
+          continue;
+        }
+        
+        let name = '';
+        let level = 'B1';
+        let flag = '🇸🇳';
+        let regFee = 10000;
+        let monthlyFee = 7000;
+
+        // Try comma-separated parsing
+        const parts = line.split(',').map(p => p.trim());
+        if (parts.length > 0 && parts[0]) {
+          name = parts[0];
+          if (parts.length > 1 && parts[1]) {
+            level = parts[1];
+          }
+          if (parts.length > 2 && parts[2]) {
+            flag = parts[2];
+          }
+          if (parts.length > 3 && !isNaN(Number(parts[3]))) {
+            regFee = Number(parts[3]);
+          }
+          if (parts.length > 4 && !isNaN(Number(parts[4]))) {
+            monthlyFee = Number(parts[4]);
+          }
+          
+          try {
+            await this.db.addStudent(name, level, flag, regFee, monthlyFee);
+            importedCount++;
+          } catch (err) {
+            console.error('Failed to import student:', name, err);
+          }
+        }
+      }
+
+      this.dialogService.alert(
+        'Import Réussi 🎉',
+        `${importedCount} étudiants ont été importés et créés avec succès !`,
+        'success'
+      );
+      this.showAddStudentModal.set(false);
+      target.value = ''; // Clear file input
+    };
+    reader.readAsText(file);
   }
 
   approveRequest(requestId: string, name: string) {

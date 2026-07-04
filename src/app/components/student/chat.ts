@@ -22,15 +22,20 @@ interface ChatMember {
   imports: [CommonModule, FormsModule],
   template: `
     <div class="page" style="padding:0">
-      <div style="font-size:12px; color:#4F46E5; background:#EEF2FF; padding:10px 16px; border-bottom:1px solid var(--border-weak); display:flex; align-items:center; gap:6px; flex-wrap:wrap">
-        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
-        </svg>
-        <span>Only English in this chat — practicing helps you improve faster!</span>
-        <button (click)="showSecurityPolicy.set(true)" style="background:none; border:none; color:#4F46E5; text-decoration:underline; font-weight:700; cursor:pointer; margin-left:auto; font-size:11px">
-          🛡️ Charte de sécurité & conduite
-        </button>
-      </div>
+      @if (!securityBannerDismissed()) {
+        <div style="font-size:12px; color:#4F46E5; background:#EEF2FF; padding:10px 16px; border-bottom:1px solid var(--border-weak); display:flex; align-items:center; gap:6px; flex-wrap:wrap">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
+          <span>Only English in this chat — practicing helps you improve faster!</span>
+          <button (click)="showSecurityPolicy.set(true)" style="background:none; border:none; color:#4F46E5; text-decoration:underline; font-weight:700; cursor:pointer; margin-left:auto; font-size:11px">
+            {{ t('🛡️ Charte de sécurité & conduite', '🛡️ Safety & Conduct Charter') }}
+          </button>
+          <button (click)="dismissSecurityBanner()" style="background:none; border:none; color:#4F46E5; cursor:pointer; font-weight:700; font-size:14px; margin-left:4px; padding:0 4px; line-height:1" title="Close banner">
+            ×
+          </button>
+        </div>
+      }
 
       <!-- Main Slack-style Grid Layout -->
       <div class="chat-workspace">
@@ -342,6 +347,7 @@ interface ChatMember {
                             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                           </a>
                         </div>
+                      } @else {
                         <div>
                           @if (msg.content.startsWith('[LIVE_CALL_INVITE:')) {
                             <!-- Render Live Invite card -->
@@ -361,7 +367,32 @@ interface ChatMember {
                               </button>
                             </div>
                           } @else {
-                            <span style="white-space: pre-wrap; word-break: break-word;">{{ msg.content }}</span>
+                            <div style="display:flex; flex-direction:column; gap:4px">
+                              <div style="display:flex; align-items:center; gap:8px">
+                                <span style="white-space: pre-wrap; word-break: break-word;">{{ msg.content }}</span>
+                                <div style="display:inline-flex; align-items:center; gap:6px">
+                                  <button (click)="speakTextMessage(msg.content); $event.stopPropagation()" 
+                                          style="background:none; border:none; color:var(--text-muted); cursor:pointer; padding:2px; display:inline-flex; align-items:center; justify-content:center; transition:color 0.2s" 
+                                          onmouseover="this.style.color='#4F46E5'"
+                                          onmouseout="this.style.color='var(--text-muted)'"
+                                          title="Pronounce Sentence">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                                  </button>
+                                  <button (click)="translateMessage(msg); $event.stopPropagation()" 
+                                          style="background:none; border:none; color:var(--text-muted); cursor:pointer; padding:2px; display:inline-flex; align-items:center; justify-content:center; transition:color 0.2s" 
+                                          onmouseover="this.style.color='#0D9488'"
+                                          onmouseout="this.style.color='var(--text-muted)'"
+                                          title="Translate Message">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                                  </button>
+                                </div>
+                              </div>
+                              @if (showTranslation[msg.id || msg.timestamp.toString()]) {
+                                <div style="font-size:11px; font-style:italic; color:#0D9488; background:rgba(13,148,136,0.06); padding:4px 8px; border-radius:4px; border-left:2px solid #0D9488; margin-top:2px">
+                                  🇫🇷 {{ translations[msg.id || msg.timestamp.toString()] }}
+                                </div>
+                              }
+                            </div>
                           }
                           @if (!msg.content.startsWith('[LIVE_CALL_INVITE:') && getYoutubeVideoId(msg.content); as ytId) {
                             <!-- YouTube Cinema Card -->
@@ -500,6 +531,27 @@ interface ChatMember {
                 </div>
               </div>
             }
+
+            <!-- English Quick Phrases Bar -->
+            <div style="display:flex; gap:6px; overflow-x:auto; padding:6px 2px; margin-bottom:6px; white-space:nowrap; width:100%; scrollbar-width:none;-ms-overflow-style:none;">
+              @for (phrase of [
+                { text: 'Hello everyone! 👋', value: 'Hello everyone! 👋' },
+                { text: 'How are you? 😊', value: 'How are you? 😊' },
+                { text: 'I agree! 👍', value: 'I agree! 👍' },
+                { text: 'I have a question 🙋‍♂️', value: 'I have a question: ' },
+                { text: 'Thank you! 🙏', value: 'Thank you! 🙏' },
+                { text: "Let's practice! 📚", value: "Let's practice English! 📚" },
+                { text: 'Could you explain? 💡', value: 'Could you explain this, please? 💡' },
+                { text: 'Great job! 🌟', value: 'Great job! 🌟' }
+              ]; track phrase.text) {
+                <button (click)="appendQuickPhrase(phrase.value)"
+                        style="font-size:11px; font-weight:600; padding:5px 10px; background:#F1F5F9; border:1px solid #E2E8F0; border-radius:15px; color:#475569; cursor:pointer; flex-shrink:0; transition:all 0.2s"
+                        onmouseover="this.style.background='#E2E8F0'"
+                        onmouseout="this.style.background='#F1F5F9'">
+                  {{ phrase.text }}
+                </button>
+              }
+            </div>
 
             <div style="display:flex; gap:8px; width:100%; align-items:center">
               <!-- Attachment Button (Always show) -->
@@ -739,11 +791,11 @@ interface ChatMember {
 
       <!-- Security Policy / Code of Conduct Modal -->
       @if (showSecurityPolicy()) {
-        <div style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.65); display:flex; justify-content:center; align-items:center; z-index:99999; padding:16px">
-          <div class="card" style="width:100%; max-width:520px; background:#FFF; border-radius:12px; padding:24px; box-shadow:0 10px 25px rgba(0,0,0,0.25); margin:0; max-height:90vh; overflow-y:auto">
+        <div style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.65); display:flex; justify-content:center; align-items:center; z-index:99999; padding:16px">
+          <div class="card" style="width:100%; max-width:520px; background:#FFF; border-radius:12px; padding:24px; box-shadow:0 10px 25px rgba(0,0,0,0.25); margin:auto; max-height:90vh; overflow-y:auto">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; border-bottom:1px solid var(--border-weak); padding-bottom:12px">
               <h3 style="font-size:16px; font-weight:800; color:#4F46E5; margin:0; display:flex; align-items:center; gap:6px">
-                🛡️ Charte de Sécurité & Conduite
+                {{ t("🛡️ Charte de Sécurité & Conduite", "🛡️ Safety & Conduct Charter") }}
               </h3>
               <button (click)="showSecurityPolicy.set(false)" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:22px; font-weight:700; line-height:1; padding:4px">
                 ×
@@ -752,41 +804,41 @@ interface ChatMember {
 
             <div style="font-size:13px; color:var(--text-secondary); line-height:1.6; display:flex; flex-direction:column; gap:12px">
               <p style="margin:0; font-weight:700; color:var(--text-primary)">
-                Bienvenue sur SpeakUp ! Pour que notre espace d'échange reste un lieu d'apprentissage sûr, bienveillant et productif, chaque utilisateur s'engage à respecter les règles suivantes :
+                {{ t("Bienvenue sur SpeakUp ! Pour que notre espace d'échange reste un lieu d'apprentissage sûr, bienveillant et productif, chaque utilisateur s'engage à respecter les règles suivantes :", "Welcome to SpeakUp! To keep our communication space safe, supportive, and productive, every user agrees to respect the following rules:") }}
               </p>
               
               <div style="background:#FFFEEF; border-left:4px solid #D97706; padding:10px 12px; border-radius:4px">
-                <strong style="color:#B45309">🗣️ Parler Uniquement en Anglais :</strong>
+                <strong style="color:#B45309">{{ t("🗣️ Parler Uniquement en Anglais :", "🗣️ Speak English Only:") }}</strong>
                 <p style="margin:2px 0 0 0; font-size:12.5px">
-                  Tous les messages textuels et vocaux dans le chat principal doivent être rédigés en anglais. C'est le meilleur moyen de progresser rapidement ensemble !
+                  {{ t("Tous les messages textuels et vocaux dans le chat principal doivent être rédigés en anglais. C'est le meilleur moyen de progresser rapidement ensemble !", "All text and voice messages in chat rooms must be in English. This is the best way to progress quickly together!") }}
                 </p>
               </div>
 
               <div style="background:#F0FDF4; border-left:4px solid #10B981; padding:10px 12px; border-radius:4px">
-                <strong style="color:#047857">🤝 Respect & Bienveillance :</strong>
+                <strong style="color:#047857">{{ t("🤝 Respect & Bienveillance :", "🤝 Respect & Kindness:") }}</strong>
                 <p style="margin:2px 0 0 0; font-size:12.5px">
-                  Soyez courtois, encourageant et respectueux envers les autres étudiants. Les moqueries sur le niveau de langue ou les erreurs de grammaire sont formellement interdites.
+                  {{ t("Soyez courtois, encourageant et respectueux envers les autres étudiants. Les moqueries sur le niveau de langue ou les erreurs de grammaire sont formellement interdites.", "Be polite, encouraging, and respectful of other students. Mocking anyone's language level or grammar mistakes is strictly forbidden.") }}
                 </p>
               </div>
 
               <div style="background:#FEE2E2; border-left:4px solid #EF4444; padding:10px 12px; border-radius:4px">
-                <strong style="color:#B91C1C">🚫 Tolérance Zéro pour les Abus :</strong>
+                <strong style="color:#B91C1C">{{ t("🚫 Tolérance Zéro pour les Abus :", "🚫 Zero Tolerance for Abuse:") }}</strong>
                 <p style="margin:2px 0 0 0; font-size:12.5px">
-                  Le harcèlement, les injures, les propos discriminatoires, sexistes, à caractère sexuel ou menaçants entraîneront un bannissement définitif immédiat de la plateforme par l'équipe enseignante.
+                  {{ t("Le harcèlement, les injures, les propos discriminatoires, sexistes, à caractère sexuel ou menaçants entraîneront un bannissement définitif immédiat de la plateforme par l'équipe enseignante.", "Harassment, insults, hate speech, offensive, inappropriate, or threatening remarks will result in an immediate and permanent ban by the teaching staff.") }}
                 </p>
               </div>
 
               <div style="background:#EEF2FF; border-left:4px solid #4F46E5; padding:10px 12px; border-radius:4px">
-                <strong style="color:#4338CA">⚠️ Système de Signalement :</strong>
+                <strong style="color:#4338CA">{{ t("⚠️ Système de Signalement :", "⚠️ Reporting System:") }}</strong>
                 <p style="margin:2px 0 0 0; font-size:12.5px">
-                  Si vous constatez un comportement inapproprié ou un abus, cliquez sur l'icône de triangle de danger (⚠️) à côté du message de l'utilisateur pour le signaler instantanément aux professeurs.
+                  {{ t("Si vous constatez un comportement inapproprié ou un abus, cliquez sur l'icône de triangle de danger (⚠️) à côté du message de l'utilisateur pour le signaler instantanément aux professeurs.", "If you witness inappropriate behavior or abuse, click the warning triangle icon (⚠️) next to the message to report it instantly to the teachers.") }}
                 </p>
               </div>
             </div>
 
             <div style="display:flex; justify-content:flex-end; margin-top:20px; border-top:1px solid var(--border-weak); padding-top:12px">
-              <button class="btn-p" (click)="showSecurityPolicy.set(false)" style="height:38px; font-size:12px; padding:0 24px; background:#4F46E5; border-color:#4F46E5; font-weight:700">
-                J'ai compris & J'accepte 👍
+              <button class="btn-p" (click)="acceptSecurityPolicy()" style="height:38px; font-size:12px; padding:0 24px; background:#4F46E5; border-color:#4F46E5; font-weight:700">
+                {{ t("J'ai compris & J'accepte 👍", "I Understand & I Agree 👍") }}
               </button>
             </div>
           </div>
@@ -1702,6 +1754,14 @@ export class StudentChatComponent implements OnDestroy {
     return this.activeLang() === 'fr' ? fr : en;
   }
 
+  appendQuickPhrase(value: string) {
+    if (this.newMessageContent.endsWith(' ') || this.newMessageContent.length === 0) {
+      this.newMessageContent += value;
+    } else {
+      this.newMessageContent += ' ' + value;
+    }
+  }
+
   @ViewChild('scrollContainer') private scrollContainer!: ElementRef;
 
   activeChannel = signal<string>('general');
@@ -1734,6 +1794,7 @@ export class StudentChatComponent implements OnDestroy {
   reportingMessage = signal<ChatMessage | null>(null);
   reportReason = 'Harcèlement ou intimidation';
   reportDetails = '';
+  securityBannerDismissed = signal<boolean>(false);
   
   studentList = computed(() => {
     return this.dbUsers().filter(u => u.role === 'student');
@@ -1766,6 +1827,7 @@ export class StudentChatComponent implements OnDestroy {
   private recordedTranscript = '';
 
   constructor() {
+    this.securityBannerDismissed.set(localStorage.getItem('speak_security_banner_dismissed') === 'true');
     this.db.observeCurrentUser().subscribe(u => this.currentUser = u);
     this.db.observeUsers().subscribe(list => this.dbUsers.set(list));
     this.db.observeChannels().subscribe(list => this.channels.set(list));
@@ -2260,6 +2322,16 @@ export class StudentChatComponent implements OnDestroy {
     });
   }
 
+  dismissSecurityBanner() {
+    this.securityBannerDismissed.set(true);
+    localStorage.setItem('speak_security_banner_dismissed', 'true');
+  }
+
+  acceptSecurityPolicy() {
+    this.showSecurityPolicy.set(false);
+    this.dismissSecurityBanner();
+  }
+
   cancelVoiceRecording() {
     if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
       this.mediaRecorder.stop();
@@ -2352,6 +2424,102 @@ export class StudentChatComponent implements OnDestroy {
     } else {
       this.playingMessageId.set(null);
     }
+  }
+
+  speakTextMessage(text: string) {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = text.match(/[éàèêûîïô]/i) ? 'fr-FR' : 'en-US';
+      window.speechSynthesis.speak(utterance);
+    }
+  }
+
+  translations: Record<string, string> = {};
+  showTranslation: Record<string, boolean> = {};
+
+  translateMessage(msg: ChatMessage) {
+    const text = msg.content;
+    const msgId = msg.id || msg.timestamp.toString();
+    
+    if (this.translations[msgId]) {
+      this.showTranslation[msgId] = !this.showTranslation[msgId];
+      return;
+    }
+
+    const dictionary: Record<string, string> = {
+      "hello": "bonjour / salut",
+      "hi": "salut",
+      "how are you": "comment ça va ?",
+      "how are you?": "comment ça va ?",
+      "good morning": "bonjour (matin)",
+      "good evening": "bonsoir",
+      "good night": "bonne nuit",
+      "thank you": "merci",
+      "thanks": "merci",
+      "you're welcome": "de rien / je vous en prive",
+      "please": "s'il vous plaît",
+      "yes": "oui",
+      "no": "non",
+      "what are you doing?": "que fais-tu ?",
+      "what are you doing": "que fais-tu ?",
+      "i am practicing english": "je m'entraîne en anglais",
+      "i'm practicing english": "je m'entraîne en anglais",
+      "i agree": "je suis d'accord",
+      "me too": "moi aussi",
+      "can you help me?": "peux-tu m'aider ?",
+      "can you help me": "peux-tu m'aider ?",
+      "sure": "bien sûr",
+      "of course": "bien sûr",
+      "good job": "bon travail",
+      "well done": "bien joué",
+      "awesome": "génial / fantastique",
+      "great": "super",
+      "welcome": "bienvenue",
+      "where are you from?": "d'où viens-tu ?",
+      "where are you from": "d'où viens-tu ?",
+      "i am from france": "je viens de France",
+      "i'm from france": "je viens de France",
+      "congratulations": "félicitations",
+      "nice to meet you": "enchanté(e) de vous rencontrer",
+      "nice to meet you too": "enchanté(e) également",
+      "see you later": "à plus tard",
+      "see you soon": "à bientôt",
+      "bye": "au revoir",
+      "goodbye": "au revoir",
+      "i don't understand": "je ne comprends pas",
+      "i do not understand": "je ne comprends pas",
+      "could you repeat that?": "pourriez-vous répéter cela ?",
+      "could you repeat that": "pourriez-vous répéter cela ?",
+      "what does this mean?": "qu'est-ce que cela signifie ?",
+      "what does this mean": "qu'est-ce que cela signifie ?",
+      "how do you say that in english?": "comment dit-on cela en anglais ?",
+      "how do you say that in english": "comment dit-on cela en anglais ?",
+      "excuse me": "excusez-moi"
+    };
+
+    const cleanText = text.trim().toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
+    if (dictionary[cleanText]) {
+      this.translations[msgId] = dictionary[cleanText];
+    } else {
+      let translated = text;
+      const wordMap: Record<string, string> = {
+        "hello": "bonjour", "hi": "salut", "practice": "pratique", "practicing": "pratique", "teacher": "professeur",
+        "student": "étudiant", "class": "classe", "english": "anglais", "french": "français", "help": "aide",
+        "welcome": "bienvenue", "love": "aime", "like": "aime", "good": "bon", "great": "super", "study": "étudie",
+        "lesson": "leçon", "exercise": "exercice", "game": "jeu", "play": "joue", "read": "lis", "write": "écris",
+        "speak": "parle", "listen": "écoute", "learn": "apprends", "understand": "comprends", "know": "sais"
+      };
+
+      Object.entries(wordMap).forEach(([en, fr]) => {
+        const regex = new RegExp('\\b' + en + '\\b', 'gi');
+        translated = translated.replace(regex, fr);
+      });
+
+      this.translations[msgId] = translated !== text ? translated : `[Traduction libre] : "${text}"`;
+    }
+
+    this.showTranslation[msgId] = true;
   }
 
   private scrollToBottom() {

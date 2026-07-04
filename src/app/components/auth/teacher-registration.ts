@@ -152,6 +152,8 @@ export class TeacherRegistrationComponent {
       const userId = 'teacher-' + Date.now();
       const avatar = this.teacherName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
       
+      const autoApprove = (this.db as any).autoApproveTeachers();
+      
       const newTeacher = {
         id: userId,
         name: this.teacherName,
@@ -167,7 +169,7 @@ export class TeacherRegistrationComponent {
         username: this.teacherEmail.split('@')[0],
         blocked: false,
         voiceChatAllowed: true,
-        status: 'pending' as const
+        status: (autoApprove ? 'approved' : 'pending') as 'approved' | 'pending'
       };
 
       const users = [...(this.db as any).users$.value, newTeacher];
@@ -177,11 +179,27 @@ export class TeacherRegistrationComponent {
       existingUsers.push(newTeacher);
       localStorage.setItem('speak_users', JSON.stringify(existingUsers));
 
-      this.successMessage.set('Votre compte a été créé avec succès ! Il est actuellement en attente de validation par l\'administrateur.');
-      
-      setTimeout(() => {
-        this.goToLogin();
-      }, 2000);
+      if ((this.db as any).useFirebase) {
+        try {
+          const { setDoc, doc } = await import('firebase/firestore');
+          await setDoc(doc((this.db as any).firestore, 'users', userId), newTeacher);
+        } catch (e) {
+          console.warn('Firestore teacher registration failed:', e);
+        }
+      }
+
+      if (autoApprove) {
+        (this.db as any).setCurrentUser(userId);
+        this.successMessage.set('Votre compte a été créé et activé automatiquement ! Connexion en cours...');
+        setTimeout(() => {
+          window.location.hash = '#/';
+        }, 1500);
+      } else {
+        this.successMessage.set('Votre compte a été créé avec succès ! Il est actuellement en attente de validation par l\'administrateur.');
+        setTimeout(() => {
+          this.goToLogin();
+        }, 2000);
+      }
 
     } catch (error) {
       this.errorMessage.set('Failed to create account. Please try again.');

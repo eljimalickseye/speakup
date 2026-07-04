@@ -48,6 +48,7 @@ import { DatabaseService, AppNotification, UserProfile } from '../../services/da
                 class="notif-item"
                 [class.unread]="!notif.read"
                 (click)="markRead(notif); $event.stopPropagation()"
+                style="position:relative"
               >
                 <div class="notif-icon" [class]="getNotifIconClass(notif.type)">
                   <i class="ti" [class]="getNotifIcon(notif.type)"></i>
@@ -60,8 +61,14 @@ import { DatabaseService, AppNotification, UserProfile } from '../../services/da
                 @if (!notif.read) {
                   <div class="notif-dot"></div>
                 }
+                <button 
+                  class="notif-delete-btn"
+                  (click)="deleteNotif(notif.id); $event.stopPropagation()"
+                  title="Supprimer"
+                >✕</button>
               </div>
             }
+
           }
         </div>
       </div>
@@ -246,7 +253,7 @@ import { DatabaseService, AppNotification, UserProfile } from '../../services/da
       display: flex;
       align-items: flex-start;
       gap: 12px;
-      padding: 12px 16px;
+      padding: 12px 38px 12px 16px;
       border-bottom: 1px solid var(--border-weak);
       cursor: pointer;
       transition: background 0.15s;
@@ -254,9 +261,38 @@ import { DatabaseService, AppNotification, UserProfile } from '../../services/da
     }
 
     .notif-item:hover { background: var(--surface-2); }
+    .notif-item:hover .notif-delete-btn { opacity: 1; }
 
     .notif-item.unread { background: #F8F8FF; }
     .notif-item.unread:hover { background: #EEF2FF; }
+
+    .notif-delete-btn {
+      position: absolute;
+      top: 50%;
+      right: 12px;
+      transform: translateY(-50%);
+      background: #F3F4F6;
+      border: none;
+      cursor: pointer;
+      color: #9CA3AF;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      transition: all 0.2s ease;
+      opacity: 0.8;
+      z-index: 10;
+    }
+
+    .notif-delete-btn:hover {
+      background: #FEE2E2;
+      color: #EF4444;
+      opacity: 1;
+    }
+
 
     .notif-icon {
       width: 34px;
@@ -497,6 +533,7 @@ export class NotificationsComponent {
   activeLang = this.db.activeLang;
 
   private previousUnreadCount = 0;
+  private isFirstLoad = true;
 
   t(fr: string, en: string): string {
     return this.activeLang() === 'fr' ? fr : en;
@@ -509,6 +546,14 @@ export class NotificationsComponent {
     this.db.observeNotifications().subscribe(allNotifs => {
       const currentUnread = this.userNotifications().filter(n => !n.read);
       
+      if (this.isFirstLoad) {
+        if (this.currentUser()) {
+          this.previousUnreadCount = currentUnread.length;
+          this.isFirstLoad = false;
+        }
+        return;
+      }
+
       // If there are more unread notifications than before, trigger notifications popup
       if (currentUnread.length > this.previousUnreadCount) {
         const diffCount = currentUnread.length - this.previousUnreadCount;
@@ -635,6 +680,10 @@ export class NotificationsComponent {
   markAllRead() {
     const user = this.currentUser();
     if (user) this.db.markAllNotificationsRead(user.id);
+  }
+
+  deleteNotif(notifId: string) {
+    this.db.deleteNotification(notifId);
   }
 
   getNotifIcon(type: AppNotification['type']): string {

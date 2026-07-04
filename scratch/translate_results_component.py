@@ -1,7 +1,13 @@
-import { Component, inject, signal, computed } from '@angular/core';
+file_path = r'c:\Users\PC\Downloads\speak-up2\src\app\components\teacher\results.ts'
+
+with open(file_path, 'r', encoding='utf-8') as f:
+    content = f.read()
+
+# 1. Update the component decorator and template
+new_results_code = """import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { DatabaseService, Submission, UserProfile, Quiz, VocabGameAttempt, ExamAttempt } from '../../services/database.service';
+import { DatabaseService, Submission, UserProfile, Quiz, VocabGameAttempt } from '../../services/database.service';
 import { DialogService } from '../../services/dialog.service';
 
 interface EnrichedResult {
@@ -25,10 +31,6 @@ interface EnrichedResult {
         <button class="subtab-btn" [class.active]="activeSubTab() === 'vocab'" (click)="activeSubTab.set('vocab')" style="background:none; border:none; padding:8px 16px; font-weight:700; font-size:13.5px; color:var(--text-secondary); cursor:pointer; position:relative; outline:none; display:flex; align-items:center; gap:6px">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="3"/><path d="M6 12h4"/><path d="M8 10v4"/><line x1="15" y1="11" x2="15" y2="11"/><line x1="18" y1="13" x2="18" y2="13"/></svg>
           <span>{{ t('Vocabulaire & Jeux', 'Vocabulary & Games') }}</span>
-        </button>
-        <button class="subtab-btn" [class.active]="activeSubTab() === 'exams'" (click)="activeSubTab.set('exams')" style="background:none; border:none; padding:8px 16px; font-weight:700; font-size:13.5px; color:var(--text-secondary); cursor:pointer; position:relative; outline:none; display:flex; align-items:center; gap:6px">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"/></svg>
-          <span>{{ t('Examens Officiels', 'Official Exams') }}</span>
         </button>
       </div>
 
@@ -166,7 +168,7 @@ interface EnrichedResult {
             {{ t('Aucun résultat ne correspond aux filtres actuels.', 'No results match the current filters.') }}
           </div>
         }
-      } @else if (activeSubTab() === 'vocab') {
+      } @else {
         <!-- VOCABULARY DASHBOARD -->
         <div style="animation: fadeIn 0.2s">
           <div style="display:grid; grid-template-columns: 2fr 1fr; gap:20px; flex-wrap:wrap">
@@ -229,113 +231,6 @@ interface EnrichedResult {
 
           </div>
         </div>
-      } @else if (activeSubTab() === 'exams') {
-        <!-- Exams Attempts Management -->
-        <div style="display:flex; flex-direction:column; gap:20px; animation: fadeIn 0.2s ease">
-          <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between; margin-bottom:16px; padding-bottom:12px; border-bottom:1px solid var(--border-weak)">
-            <div style="display:flex; align-items:center; gap:10px">
-              <div style="position:relative">
-                <i class="ti ti-search" style="position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--text-muted); font-size:14px"></i>
-                <input type="text" [(ngModel)]="examSearchQuery" [placeholder]="t('Rechercher élève, examen...', 'Search student, exam...')" style="height:34px; padding:0 12px 0 32px; border:1px solid var(--border); border-radius:8px; font-size:12px; background:var(--surface-1); width:240px; color:var(--text-primary)">
-              </div>
-            </div>
-            
-            <div class="stat-badge" style="background:#EEF2FF; color:#4F46E5">
-              <span class="stat-num">{{ filteredExamAttempts().length }}</span> {{ t('Tentative(s)', 'Attempt(s)') }}
-            </div>
-          </div>
-
-          <!-- Exams attempts table -->
-          <div style="display:grid; grid-template-columns: 1fr 340px; gap:20px; align-items:flex-start">
-            <div class="results-table-wrapper">
-              <div class="results-header-row">
-                <div class="rh-cell" style="width:160px">{{ t('Élève', 'Student') }}</div>
-                <div class="rh-cell" style="flex:1">{{ t('Examen', 'Exam') }}</div>
-                <div class="rh-cell" style="width:90px; text-align:center">{{ t('Score', 'Score') }}</div>
-                <div class="rh-cell" style="width:90px; text-align:center">{{ t('Note (%)', 'Grade (%)') }}</div>
-                <div class="rh-cell" style="width:120px">{{ t('Date', 'Date') }}</div>
-                <div class="rh-cell" style="width:90px; text-align:center">{{ t('Statut', 'Status') }}</div>
-                <div class="rh-cell" style="width:80px; text-align:center">Actions</div>
-              </div>
-
-              @if (filteredExamAttempts().length === 0) {
-                <div style="padding:40px; text-align:center; color:var(--text-muted)">{{ t('Aucun résultat trouvé.', 'No results found.') }}</div>
-              } @else {
-                @for (att of filteredExamAttempts(); track att.id) {
-                  <div class="result-row" [class.selected-row]="selectedExamAttempt()?.id === att.id" (click)="selectedExamAttempt.set(att)">
-                    <div style="width:160px; display:flex; align-items:center; gap:8px">
-                      <div class="mini-avatar">{{ getInitials(att.studentName) }}</div>
-                      <span style="font-weight:700; color:var(--text-primary); font-size:12.5px">{{ att.studentName }}</span>
-                    </div>
-                    <div style="flex:1; font-weight:600; color:var(--text-secondary); font-size:12.5px">{{ att.quizTitle }}</div>
-                    <div style="width:90px; text-align:center; font-weight:700; color:var(--text-primary); font-size:12.5px">{{ att.score }} / {{ att.answers.length }}</div>
-                    <div style="width:90px; text-align:center; font-weight:700; color:#4F46E5; font-size:12.5px">{{ att.percentage }}%</div>
-                    <div style="width:120px; font-size:11.5px; color:var(--text-muted)">{{ att.completedAt | date:'dd/MM/yyyy HH:mm' }}</div>
-                    <div style="width:90px; text-align:center">
-                      <span style="font-size:10px; font-weight:700; padding:2px 8px; border-radius:12px"
-                            [style.background]="att.passed ? '#D1FAE5' : '#FEE2E2'"
-                            [style.color]="att.passed ? '#065F46' : '#991B1B'">
-                        {{ att.passed ? t('RÉUSSI', 'PASSED') : t('ÉCHOUÉ', 'FAILED') }}
-                      </span>
-                    </div>
-                    <div style="width:80px; text-align:center">
-                      <button class="btn-icon" (click)="selectedExamAttempt.set(att); $event.stopPropagation()" [title]="t('Détails', 'Details')">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-                      </button>
-                    </div>
-                  </div>
-                }
-              }
-            </div>
-
-            <!-- Detailed Exam Sheet View -->
-            <div class="card detail-drawer" style="margin:0; padding:20px; position:sticky; top:20px">
-              @if (selectedExamAttempt(); as att) {
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; border-bottom:1.5px solid var(--border-weak); padding-bottom:12px">
-                  <h3 style="font-size:15px; font-weight:800; color:var(--text-primary); margin:0">{{ t("Copie d'Examen", 'Exam Sheet') }}</h3>
-                  <button (click)="selectedExamAttempt.set(null)" style="background:none; border:none; font-size:18px; cursor:pointer; color:var(--text-muted)">×</button>
-                </div>
-
-                <div style="font-size:12.5px; display:flex; flex-direction:column; gap:6px; margin-bottom:16px">
-                  <div><strong>{{ t('Élève :', 'Student:') }}</strong> {{ att.studentName }}</div>
-                  <div><strong>{{ t('Examen :', 'Exam:') }}</strong> {{ att.quizTitle }}</div>
-                  <div><strong>{{ t('Score :', 'Score:') }}</strong> {{ att.score }} / {{ att.answers.length }} ({{ att.percentage }}%)</div>
-                  <div><strong>{{ t('Temps passé :', 'Time Taken:') }}</strong> {{ formatTime(att.timeTakenSeconds) }}</div>
-                  <div><strong>{{ t('Statut :', 'Status:') }}</strong> 
-                    <span style="font-weight:700" [style.color]="att.passed ? '#059669' : '#DC2626'">
-                      {{ att.passed ? t('✓ Réussi', '✓ Passed') : t('✗ Échoué', '✗ Failed') }}
-                    </span>
-                  </div>
-                </div>
-
-                <div style="max-height:360px; overflow-y:auto; display:flex; flex-direction:column; gap:12px; padding-right:4px">
-                  <h4 style="font-size:12px; font-weight:800; color:var(--text-secondary); margin:0 0 4px">{{ t('Réponses aux questions :', 'Answers Details:') }}</h4>
-                  
-                  @for (ans of att.answers; track ans.questionIdx; let i = $index) {
-                    <div style="padding:10px; border-radius:8px; border:1px solid; font-size:12px"
-                         [style.border-color]="ans.correct ? '#A7F3D0' : '#FCA5A5'"
-                         [style.background]="ans.correct ? '#F0FDF4' : '#FEF2F2'">
-                      <div style="font-weight:700; color:var(--text-primary); margin-bottom:4px">Q{{ i + 1 }}. {{ t('Question', 'Question') }} #{{ ans.questionIdx + 1 }}</div>
-                      <div>
-                        {{ t('Réponse donnée :', 'Answer given:') }} <strong [style.color]="ans.correct ? '#065F46' : '#991B1B'">{{ ans.answer || t('[Pas de réponse]', '[No answer]') }}</strong>
-                      </div>
-                      @if (!ans.correct) {
-                        <div style="color:var(--text-muted); font-size:11px; margin-top:2px">
-                          {{ t('Correct :', 'Correct option:') }} {{ getCorrectOptionText(att.quizId, ans.questionIdx) }}
-                        </div>
-                      }
-                    </div>
-                  }
-                </div>
-              } @else {
-                <div style="text-align:center; padding:60px 20px; color:var(--text-muted)">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:10px; color:var(--text-muted)"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                  <p style="font-size:12.5px; margin:0">{{ t("Sélectionnez une copie d'examen pour voir le détail des réponses.", 'Select an exam sheet to see answers details.') }}</p>
-                </div>
-              }
-            </div>
-          </div>
-        </div>
       }
     </div>
   `,
@@ -393,24 +288,8 @@ export class TeacherResultsComponent {
   users = signal<UserProfile[]>([]);
   quizzes = signal<Quiz[]>([]);
   vocabAttempts = signal<VocabGameAttempt[]>([]);
-  examAttempts = signal<ExamAttempt[]>([]);
 
-  activeSubTab = signal<'quizzes' | 'vocab' | 'exams'>('quizzes');
-
-  examSearchQuery = '';
-  selectedExamAttempt = signal<ExamAttempt | null>(null);
-
-  filteredExamAttempts = computed(() => {
-    let list = this.examAttempts();
-    const q = this.examSearchQuery.toLowerCase().trim();
-    if (q) {
-      list = list.filter(a =>
-        a.studentName.toLowerCase().includes(q) ||
-        a.quizTitle.toLowerCase().includes(q)
-      );
-    }
-    return list;
-  });
+  activeSubTab = signal<'quizzes' | 'vocab'>('quizzes');
 
   searchQuery = '';
   filterType = 'all';
@@ -419,121 +298,28 @@ export class TeacherResultsComponent {
   sortAsc = signal<boolean>(false);
 
   selectedResult = signal<EnrichedResult | null>(null);
-  constructor() {
-    this.db.observeSubmissions().subscribe(list => this.submissions.set(list));
-    this.db.observeUsers().subscribe(list => this.users.set(list));
-    this.db.observeQuizzes().subscribe(list => this.quizzes.set(list));
-    this.db.observeVocabGameAttempts().subscribe(list => this.vocabAttempts.set(list));
-    this.db.observeExamAttempts().subscribe(list => this.examAttempts.set(list));
-  }
+"""
 
-  allResults = computed<EnrichedResult[]>(() => {
-    return this.submissions().map(sub => ({
-      sub,
-      student: this.users().find(u => u.id === sub.studentId),
-      quiz: this.quizzes().find(q => q.title === sub.lessonTitle)
-    }));
-  });
+# Let's find where export class TeacherResultsComponent starts in content
+# We will replace from the beginning to the start of constructor
+start_idx = content.find("export class TeacherResultsComponent {")
+# Let's replace the whole top block up to constructor
+# The constructor starts with '  constructor() {'
+constructor_idx = content.find("  constructor() {", start_idx)
 
-  filteredResults = computed<EnrichedResult[]>(() => {
-    let list = this.allResults();
-    const q = this.searchQuery.toLowerCase().trim();
-    if (q) {
-      list = list.filter(r =>
-        (r.student?.name || r.sub.studentName).toLowerCase().includes(q) ||
-        r.sub.lessonTitle.toLowerCase().includes(q)
-      );
-    }
-    if (this.filterType !== 'all') {
-      list = list.filter(r => r.sub.type === this.filterType);
-    }
-    if (this.filterStatus === 'graded') list = list.filter(r => r.sub.graded);
-    if (this.filterStatus === 'pending') list = list.filter(r => !r.sub.graded);
+if start_idx != -1 and constructor_idx != -1:
+    content = new_results_code + content[constructor_idx:]
+    print("Top results.ts template and class header updated!")
+else:
+    print("Error: Could not locate class or constructor in results.ts!")
 
-    const field = this.sortField();
-    const asc = this.sortAsc();
-    list = [...list].sort((a, b) => {
-      let cmp = 0;
-      if (field === 'student') cmp = (a.student?.name || a.sub.studentName).localeCompare(b.student?.name || b.sub.studentName);
-      else if (field === 'quiz') cmp = a.sub.lessonTitle.localeCompare(b.sub.lessonTitle);
-      else if (field === 'date') cmp = new Date(a.sub.submittedAt).getTime() - new Date(b.sub.submittedAt).getTime();
-      else if (field === 'score') cmp = (a.sub.score || '').localeCompare(b.sub.score || '');
-      return asc ? cmp : -cmp;
-    });
-    return list;
-  });
+# 2. Update TS methods at the bottom of results.ts
+# Let's update getDiffLabel, exportToPdf, goToGrade, deleteResult
+bottom_search_str = "  getDiffLabel(difficulty: string): string {"
+bottom_idx = content.find(bottom_search_str)
 
-  hardestWords = computed(() => {
-    const wordCounts: Record<string, { word: string; count: number; category?: string }> = {};
-    this.vocabAttempts().forEach(attempt => {
-      if (attempt.missedWords) {
-        attempt.missedWords.forEach(w => {
-          if (!wordCounts[w]) {
-            wordCounts[w] = { word: w, count: 0, category: attempt.category };
-          }
-          wordCounts[w].count++;
-        });
-      }
-    });
-    return Object.values(wordCounts).sort((a, b) => b.count - a.count).slice(0, 10);
-  });
-
-  totalSubmissions = computed(() => this.allResults().length);
-  pendingCount = computed(() => this.allResults().filter(r => !r.sub.graded).length);
-  gradedCount = computed(() => this.allResults().filter(r => r.sub.graded).length);
-  avgScore = computed(() => {
-    const graded = this.allResults().filter(r => r.sub.graded && r.sub.score);
-    if (!graded.length) return '—';
-    const scoreMap: Record<string, number> = { 'A — Excellent': 4, 'B — Good': 3, 'C — Satisfactory': 2, 'D — Needs improvement': 1 };
-    const total = graded.reduce((sum, r) => sum + (scoreMap[r.sub.score!] || 0), 0);
-    const avg = total / graded.length;
-    if (avg >= 3.5) return 'A moy.';
-    if (avg >= 2.5) return 'B moy.';
-    if (avg >= 1.5) return 'C moy.';
-    return 'D moy.';
-  });
-
-  sortBy(field: string) {
-    if (this.sortField() === field) {
-      this.sortAsc.update(v => !v);
-    } else {
-      this.sortField.set(field);
-      this.sortAsc.set(false);
-    }
-  }
-
-  getSortIcon(field: string): string {
-    if (this.sortField() !== field) return 'ti-arrows-sort';
-    return this.sortAsc() ? 'ti-sort-ascending' : 'ti-sort-descending';
-  }
-
-  selectResult(item: EnrichedResult) {
-    this.selectedResult.set(item);
-    setTimeout(() => {
-      document.querySelector('.detail-drawer')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }, 100);
-  }
-
-  getInitials(name: string): string {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-  }
-
-  getScoreClass(score: string): string {
-    if (score.startsWith('A')) return 'score-badge excellent';
-    if (score.startsWith('B')) return 'score-badge good';
-    if (score.startsWith('C')) return 'score-badge average';
-    return 'score-badge poor';
-  }
-
-  getCorrectOptionText(quizId: string, questionIdx: number): string {
-    const quiz = this.quizzes().find(q => q.id === quizId);
-    if (!quiz) return '';
-    const q = quiz.questions[questionIdx];
-    if (!q) return '';
-    return q.correctOption || '';
-  }
-
-  getDiffLabel(difficulty: string): string {
+if bottom_idx != -1:
+    new_bottom_code = """  getDiffLabel(difficulty: string): string {
     switch (difficulty) {
       case 'easy': return '🟢 ' + this.t('Facile', 'Easy');
       case 'medium': return '🟡 ' + this.t('Moyen', 'Medium');
@@ -555,7 +341,7 @@ export class TeacherResultsComponent {
         <hr>
         <h3>${this.t("Réponse de l'élève :", "Student Answer:")}</h3>
         <p style="font-style:italic; background:#F9FAFB; padding:12px; border-left:4px solid #4F46E5">${item.sub.type === 'audio' ? (this.t('[Réponse Audio]', '[Audio Response]')) : item.sub.content}</p>
-        ${item.sub.feedback ? `<h3>Feedback :</h3><p>${item.sub.feedback}</p>` : ''}
+        \${item.sub.feedback ? `<h3>Feedback :</h3><p>\${item.sub.feedback}</p>` : ''}
       </div>
     `;
     const win = window.open('', '_blank');
@@ -570,15 +356,15 @@ export class TeacherResultsComponent {
   goToGrade(item: EnrichedResult) {
     this.dialogService.alert(
       this.t('Navigation', 'Navigation'), 
-      this.t("Allez dans l'onglet \"Copies\" pour corriger cette soumission.", "Go to the 'Grading' tab to grade this submission."), 
+      this.t("Allez dans l'onglet \\"Copies\\" pour corriger cette soumission.", "Go to the 'Grading' tab to grade this submission."), 
       'info'
     );
   }
 
   deleteResult(item: EnrichedResult) {
     const confirmMsg = this.t(
-      `Êtes-vous sûr de vouloir supprimer ce résultat pour "${item.student?.name || item.sub.studentName}" ?\n\nCette action est irréversible.`,
-      `Are you sure you want to delete this result for "${item.student?.name || item.sub.studentName}"?\n\nThis action is irreversible.`
+      `Êtes-vous sûr de vouloir supprimer ce résultat pour "${item.student?.name || item.sub.studentName}" ?\\n\\nCette action est irréversible.`,
+      `Are you sure you want to delete this result for "${item.student?.name || item.sub.studentName}"?\\n\\nThis action is irreversible.`
     );
     if (!confirm(confirmMsg)) {
       return;
@@ -592,10 +378,14 @@ export class TeacherResultsComponent {
       'success'
     );
   }
-
-  formatTime(seconds: number): string {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return m > 0 ? `${m}min ${s}s` : `${s}s`;
-  }
 }
+"""
+    content = content[:bottom_idx] + new_bottom_code
+    print("Bottom results.ts methods updated successfully!")
+else:
+    print("Error: Could not locate bottom methods in results.ts!")
+
+with open(file_path, 'w', encoding='utf-8') as f:
+    f.write(content)
+
+print("results.ts fully translated and SVGs added!")

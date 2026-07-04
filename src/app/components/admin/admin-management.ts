@@ -68,6 +68,54 @@ import { DialogService } from '../../services/dialog.service';
 
       <!-- PANEL 1: PENDING REGISTRATION REQUESTS -->
       @if (activePanel() === 'requests') {
+        <!-- Registration Mode Configuration Card -->
+        <div class="card" style="background:#FFFEEF; border:1px solid #FCD34D; border-radius:12px; padding:16px; margin-bottom:20px; display:flex; flex-direction:column; gap:16px; animation: fadeIn 0.2s">
+          <div style="flex:1">
+            <h4 style="margin:0 0 4px 0; font-size:14px; font-weight:800; color:#B45309; display:flex; align-items:center; gap:6px">
+              ⚡ Mode Validation Directe (Inscription Libre)
+            </h4>
+            <p style="margin:0 0 8px 0; font-size:11.5px; color:#92400E; line-height:1.4">
+              Activez séparément la validation automatique pour les vagues d'inscription des professeurs ou des étudiants. Les nouveaux membres approuvés pourront se connecter instantanément sans intervention.
+            </p>
+          </div>
+          
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; border-top: 1px dashed rgba(245, 158, 11, 0.2); padding-top:12px">
+            <div>
+              <span style="font-size:12.5px; font-weight:700; color:#92400E">👨‍🎓 Connexion directe : Étudiants</span>
+              <p style="margin:2px 0 0 0; font-size:11px; color:#B45309">Les étudiants s'inscrivent et se connectent directement.</p>
+            </div>
+            <div>
+              <label class="switch" style="position:relative; display:inline-block; width:48px; height:24px; cursor:pointer">
+                <input type="checkbox" 
+                       [checked]="db.autoApproveStudents()" 
+                       (change)="toggleAutoApproveStudents($event)"
+                       style="opacity:0; width:0; height:0; cursor:pointer" />
+                <span class="slider" [style.background]="db.autoApproveStudents() ? '#10B981' : '#CBD5E1'" style="position:absolute; top:0; left:0; right:0; bottom:0; transition:0.2s; border-radius:34px">
+                  <span style="position:absolute; content:''; height:18px; width:18px; left:3px; bottom:3px; background-color:white; transition:0.2s; border-radius:50%" [style.transform]="db.autoApproveStudents() ? 'translateX(24px)' : 'none'"></span>
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; border-top: 1px dashed rgba(245, 158, 11, 0.2); padding-top:12px">
+            <div>
+              <span style="font-size:12.5px; font-weight:700; color:#92400E">👩‍🏫 Connexion directe : Professeurs</span>
+              <p style="margin:2px 0 0 0; font-size:11px; color:#B45309">Les professeurs s'inscrivent et se connectent directement.</p>
+            </div>
+            <div>
+              <label class="switch" style="position:relative; display:inline-block; width:48px; height:24px; cursor:pointer">
+                <input type="checkbox" 
+                       [checked]="db.autoApproveTeachers()" 
+                       (change)="toggleAutoApproveTeachers($event)"
+                       style="opacity:0; width:0; height:0; cursor:pointer" />
+                <span class="slider" [style.background]="db.autoApproveTeachers() ? '#10B981' : '#CBD5E1'" style="position:absolute; top:0; left:0; right:0; bottom:0; transition:0.2s; border-radius:34px">
+                  <span style="position:absolute; content:''; height:18px; width:18px; left:3px; bottom:3px; background-color:white; transition:0.2s; border-radius:50%" [style.transform]="db.autoApproveTeachers() ? 'translateX(24px)' : 'none'"></span>
+                </span>
+              </label>
+            </div>
+          </div>
+        </div>
+
         <div class="card" style="animation: fadeIn 0.2s">
           <h3 class="st" style="font-size:15px; margin-bottom:12px; color:#4F46E5">Demandes d'inscription en attente</h3>
           <p style="font-size:12px; color:var(--text-secondary); margin-bottom:16px">
@@ -414,7 +462,7 @@ import { DialogService } from '../../services/dialog.service';
   `]
 })
 export class AdminManagementComponent {
-  private db = inject(DatabaseService);
+  public db = inject(DatabaseService);
   private dialogService = inject(DialogService);
 
   activePanel = signal<'requests' | 'teachers' | 'students' | 'guests' | 'admins'>('requests');
@@ -592,6 +640,32 @@ export class AdminManagementComponent {
           this.dialogService.alert('Supprimé', 'L\'utilisateur a été supprimé.', 'success');
         });
       }
+    });
+  }
+
+  toggleAutoApproveStudents(event: any) {
+    const enabled = event.target.checked;
+    this.db.setAutoApproveStudents(enabled).then(() => {
+      this.dialogService.alert(
+        'Étudiants : Inscription Directe',
+        enabled 
+          ? 'Validation directe activée pour les étudiants !'
+          : 'Validation directe désactivée pour les étudiants.',
+        'success'
+      );
+    });
+  }
+
+  toggleAutoApproveTeachers(event: any) {
+    const enabled = event.target.checked;
+    this.db.setAutoApproveTeachers(enabled).then(() => {
+      this.dialogService.alert(
+        'Professeurs : Inscription Directe',
+        enabled 
+          ? 'Validation directe activée pour les professeurs !'
+          : 'Validation directe désactivée pour les professeurs.',
+        'success'
+      );
     });
   }
 }

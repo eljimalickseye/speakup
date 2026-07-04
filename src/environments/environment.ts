@@ -10,7 +10,7 @@ export const environment = {
   },
   livekit: {
     url: "wss://anour-rv83fs3g.livekit.cloud",
-    apiKey: "APIoCRJ6zVrNLK4",
-    apiSecret: "Abzk7T9VeFp0JpIYrYsaRtFwWnsRLJnktmtFdMcw8TH"
+    apiKey: "APIsCo9dSx9D6VC",
+    apiSecret: "uOfP2sDQQjFe3dREQazqQq3fLWkv5JPfMVnikLAoCPAB"
   }
 };

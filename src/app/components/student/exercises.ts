@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DatabaseService, Quiz, Exercise, UserProfile, VocabGame } from '../../services/database.service';
@@ -64,73 +64,287 @@ const defaultWordsBank = [
         <!-- Header & Tab Selector -->
         <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1.5px solid var(--border-weak); padding-bottom:12px; margin-bottom:24px; flex-wrap:wrap; gap:12px">
           <div>
-            <h2 style="font-size:18px; font-weight:800; color:var(--text-primary); margin:0 0 4px 0">Exercices & Quiz</h2>
-            <p style="font-size:12px; color:var(--text-secondary); margin:0">Évaluations chronométrées, entraînements oraux/écrits et jeux de vocabulaire.</p>
+            @if (_mode() === 'quizzes') {
+              <h2 style="font-size:18px; font-weight:800; color:var(--text-primary); margin:0 0 4px 0">{{ t('Quiz & Évaluations', 'Quizzes & Tests') }}</h2>
+              <p style="font-size:12px; color:var(--text-secondary); margin:0">{{ t('Évaluations chronométrées avec score immédiat.', 'Timed evaluations with immediate scoring.') }}</p>
+            } @else if (_mode() === 'exercises') {
+              <h2 style="font-size:18px; font-weight:800; color:var(--text-primary); margin:0 0 4px 0">{{ t('Jeux & Exercices', 'Games & Exercises') }}</h2>
+              <p style="font-size:12px; color:var(--text-secondary); margin:0">{{ t('Jeux interactifs de vocabulaire et entraînements oraux/écrits.', 'Interactive vocabulary games and oral/written practice.') }}</p>
+            } @else {
+              <h2 style="font-size:18px; font-weight:800; color:var(--text-primary); margin:0 0 4px 0">{{ t('Exercices & Quiz', 'Exercises & Quizzes') }}</h2>
+              <p style="font-size:12px; color:var(--text-secondary); margin:0">{{ t('Évaluations chronométrées, entraînements oraux/écrits et jeux de vocabulaire.', 'Timed evaluations, oral/written practice, and vocabulary games.') }}</p>
+            }
           </div>
-          <div style="display:flex; gap:6px; background:var(--surface-2); padding:4px; border-radius:10px; border: 1px solid var(--border-weak)">
-            <button (click)="activeSubTab.set('quizzes')" 
-                    style="border:none; padding:8px 16px; border-radius:8px; font-size:12.5px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px; transition:all 0.2s"
-                    [style.background]="activeSubTab() === 'quizzes' ? '#4F46E5' : 'transparent'"
-                    [style.color]="activeSubTab() === 'quizzes' ? 'white' : 'var(--text-secondary)'">
-              <span>📝</span>
-              <span>Quiz ({{ quizzes().length }})</span>
-            </button>
-            <button (click)="activeSubTab.set('exercises')" 
-                    style="border:none; padding:8px 16px; border-radius:8px; font-size:12.5px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px; transition:all 0.2s"
-                    [style.background]="activeSubTab() === 'exercises' ? '#059669' : 'transparent'"
-                    [style.color]="activeSubTab() === 'exercises' ? 'white' : 'var(--text-secondary)'">
-              <span>🎯</span>
-              <span>Exercices ({{ exercises().length }})</span>
-            </button>
-            <button (click)="activeSubTab.set('games')" 
-                    style="border:none; padding:8px 16px; border-radius:8px; font-size:12.5px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px; transition:all 0.2s"
-                    [style.background]="activeSubTab() === 'games' ? '#D97706' : 'transparent'"
-                    [style.color]="activeSubTab() === 'games' ? 'white' : 'var(--text-secondary)'">
-              <span>🎮</span>
-              <span>Jeux ({{ vocabGames().length }})</span>
-            </button>
-          </div>
+          
+          @if ((_mode() === 'all' || _mode() === 'exercises') && (currentUser()?.placementTestTaken || currentUser()?.role !== 'student')) {
+            <div style="display:flex; gap:6px; background:var(--surface-2); padding:4px; border-radius:10px; border: 1px solid var(--border-weak)">
+              @if (_mode() === 'all') {
+                <button (click)="activeSubTab.set('quizzes')" 
+                        style="border:none; padding:8px 16px; border-radius:8px; font-size:12.5px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px; transition:all 0.2s"
+                        [style.background]="activeSubTab() === 'quizzes' ? '#4F46E5' : 'transparent'"
+                        [style.color]="activeSubTab() === 'quizzes' ? 'white' : 'var(--text-secondary)'">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                  <span>{{ t('Quiz', 'Quizzes') }} ({{ quizzes().length }})</span>
+                </button>
+              }
+              <button (click)="activeSubTab.set('exercises')" 
+                      style="border:none; padding:8px 16px; border-radius:8px; font-size:12.5px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px; transition:all 0.2s"
+                      [style.background]="activeSubTab() === 'exercises' ? '#059669' : 'transparent'"
+                      [style.color]="activeSubTab() === 'exercises' ? 'white' : 'var(--text-secondary)'">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+                <span>{{ t('Exercices', 'Exercises') }} ({{ exercises().length }})</span>
+              </button>
+              <button (click)="activeSubTab.set('games')" 
+                      style="border:none; padding:8px 16px; border-radius:8px; font-size:12.5px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px; transition:all 0.2s"
+                      [style.background]="activeSubTab() === 'games' ? '#D97706' : 'transparent'"
+                      [style.color]="activeSubTab() === 'games' ? 'white' : 'var(--text-secondary)'">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="3"/><path d="M6 12h4"/><path d="M8 10v4"/><line x1="15" y1="11" x2="15" y2="11"/><line x1="18" y1="13" x2="18" y2="13"/></svg>
+                <span>{{ t('Jeux', 'Games') }} ({{ vocabGames().length || 1 }})</span>
+              </button>
+            </div>
+          }
         </div>
 
         <!-- ===== SECTION 1: QUIZ ===== -->
         @if (activeSubTab() === 'quizzes') {
           <div style="margin-bottom: 28px;">
+            <!-- Mandatory notice banner -->
+            @if (!currentUser()?.placementTestTaken && currentUser()?.role === 'student') {
+              <div style="background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%); border: 2px solid #F59E0B; border-radius: 14px; padding: 16px 20px; margin-bottom: 24px; display: flex; align-items: flex-start; gap: 14px; box-shadow: 0 4px 12px rgba(217, 119, 6, 0.05); animation: pulse-live 2s infinite">
+                <div style="background: #F59E0B; color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3)">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                </div>
+                <div>
+                  <h4 style="margin: 0 0 4px 0; color: #78350F; font-size: 14px; font-weight: 800;">
+                    🎯 {{ t('Test de Niveau Obligatoire', 'Mandatory Placement Test') }}
+                  </h4>
+                  <p style="margin: 0; color: #92400E; font-size: 12.5px; line-height: 1.4; font-weight: 600;">
+                    {{ t('Bonjour ! Afin de déverrouiller le reste de la plateforme et de déterminer votre niveau, veuillez compléter le test de placement ci-dessous. Chaque étape est obligatoire et séquentielle.', 'Hello! In order to unlock the rest of the platform and determine your level, please complete the placement test below. Each step is mandatory and sequential.') }}
+                  </p>
+                </div>
+              </div>
+            }
+
+            <!-- Placement Tests Section -->
+            @if (placementQuizzes().length > 0) {
+              <div style="background:#F8FAFC; border: 1.5px solid #CBD5E1; border-radius: 14px; padding: 16px 20px; margin-bottom: 24px; box-shadow:0 4px 6px -1px rgba(0,0,0,0.02)">
+                <div style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; user-select:none" (click)="isPlacementExpanded.set(!isPlacementExpanded())">
+                  <div style="display:flex; align-items:center; gap:10px">
+                    <div style="background:#EEF2FF; color:#4F46E5; width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+                    </div>
+                    <div>
+                      <h3 style="font-size:14.5px; font-weight:800; color:#1E1B4B; margin:0">{{ t('Tests de Placement de Niveau', 'English Placement Tests') }}</h3>
+                      <p style="font-size:11px; color:var(--text-muted); margin:2px 0 0 0">{{ t('Évaluez vos compétences initiales pour déterminer votre niveau', 'Assess your starting skills to determine your level') }}</p>
+                    </div>
+                  </div>
+                  
+                  <div style="display:flex; align-items:center; gap:12px">
+                    @if (currentUser()?.placementTestTaken) {
+                      <span style="background:#ECFDF5; color:#047857; font-size:10px; font-weight:800; padding:3px 10px; border-radius:20px; text-transform:uppercase; letter-spacing:0.5px">
+                        {{ t('Complété', 'Completed') }}
+                      </span>
+                    } @else {
+                      <span style="background:#FEF3C7; color:#D97706; font-size:10px; font-weight:800; padding:3px 10px; border-radius:20px; text-transform:uppercase; letter-spacing:0.5px">
+                        {{ t('À Faire', 'To Do') }}
+                      </span>
+                    }
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                         [style.transform]="isPlacementExpanded() ? 'rotate(180deg)' : 'rotate(0deg)'"
+                         style="transition: transform 0.2s; color:var(--text-secondary); width: 18px; height: 18px">
+                      <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                  </div>
+                </div>
+
+                @if (isPlacementExpanded()) {
+                  <div style="height:1px; background:#E2E8F0; margin:16px 0; animation: fadeIn 0.2s"></div>
+                  <div style="display:flex; flex-direction:column; gap:10px; animation: fadeIn 0.2s">
+                    @for (quiz of placementQuizzes(); track quiz.id) {
+                      <div class="card exercise-card" 
+                           (click)="isPlacementStepLocked(quiz) ? null : startQuiz(quiz)"
+                           [style.border-left]="'5px solid ' + (isPlacementStepLocked(quiz) ? '#94A3B8' : getTheme(quiz.colorTheme).border)"
+                           [style.opacity]="isPlacementStepLocked(quiz) ? '0.5' : '1'"
+                           [style.cursor]="isPlacementStepLocked(quiz) ? 'not-allowed' : 'pointer'"
+                           [style.pointer-events]="isPlacementStepLocked(quiz) ? 'none' : 'auto'"
+                           style="padding: 12px 18px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; gap: 16px; transition: transform 0.2s, box-shadow 0.2s; background:white">
+                        
+                        <div style="display: flex; align-items: center; gap: 16px; flex: 1;">
+                          <div [style.background]="isPlacementStepLocked(quiz) ? '#CBD5E1' : (quiz.coverImage ? 'none' : getGradient(quiz.colorTheme))"
+                               style="width: 44px; height: 44px; border-radius: 8px; overflow: hidden; flex-shrink: 0; display: flex; align-items: center; justify-content: center; position: relative">
+                            @if (isPlacementStepLocked(quiz)) {
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:#64748B"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                            } @else if (quiz.coverImage) {
+                              <img [src]="quiz.coverImage" style="width: 100%; height: 100%; object-fit: cover" />
+                            } @else {
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+                            }
+                          </div>
+
+                          <div>
+                            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap">
+                              <h4 style="font-size:13.5px; font-weight:800; color:var(--text-primary); margin:0; line-height: 1.3">{{ quiz.title }}</h4>
+                              @if (isQuizCompleted(quiz.id)) {
+                                <span style="background:#ECFDF5; color:#047857; font-size:8.5px; font-weight:800; padding:1px 6px; border-radius:10px; text-transform:uppercase">
+                                  {{ t('Complété', 'Completed') }}
+                                </span>
+                              } @else if (!isPlacementStepLocked(quiz)) {
+                                <span style="background:#FFF9E6; color:#D97706; font-size:8.5px; font-weight:800; padding:1px 6px; border-radius:10px; text-transform:uppercase">
+                                  {{ t('À faire', 'To Do') }}
+                                </span>
+                              }
+                            </div>
+                            <div style="display:flex; align-items:center; gap:8px; font-size:11px; color:var(--text-secondary)">
+                              <span style="display:flex; align-items:center; gap:3px">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                {{ quiz.timeLimit || 'No limit' }}
+                              </span>
+                              <span>•</span>
+                              <span>{{ quiz.questions.length }} {{ t('questions', 'questions') }}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+                          @if (isPlacementStepLocked(quiz)) {
+                            <span style="font-size: 11px; color: #64748B; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; background: #F1F5F9; padding: 4px 8px; border-radius: 6px;">
+                              🔒 Verrouillé
+                            </span>
+                          } @else if (isQuizCompleted(quiz.id)) {
+                            <span style="font-size: 11px; color: #059669; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; background: #E6F4EA; padding: 4px 8px; border-radius: 6px;">
+                              ✓ Fait
+                            </span>
+                          } @else {
+                            <button class="btn-s" style="padding: 6px 14px; font-size: 12px; font-weight: 700; border-radius: 8px; display: inline-flex; align-items: center; gap: 4px;">
+                              {{ t('Commencer', 'Start') }} →
+                            </button>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding: 12px 16px; background: linear-gradient(135deg, #4F46E5 0%, #6366F1 100%); border-radius: 10px; color: white;">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
               <div style="flex: 1;">
                 <div style="font-size: 14px; font-weight: 800;">Quiz de cours</div>
                 <div style="font-size: 10px; opacity: 0.85;">⏱ Évaluations chronométrées • Score immédiat</div>
               </div>
-              <span style="background: rgba(255,255,255,0.2); border-radius: 12px; padding: 2px 10px; font-size: 12px; font-weight: 700;">{{ quizzes().length }}</span>
+              <span style="background: rgba(255,255,255,0.2); border-radius: 12px; padding: 2px 10px; font-size: 12px; font-weight: 700;">{{ filteredQuizzes().length }}</span>
             </div>
 
-            <div class="grid2">
-              @for (quiz of quizzes(); track quiz.id) {
-                <div class="card exercise-card" [class.oral-card]="quiz.type === 'Oral Practice'" (click)="startQuiz(quiz)"
-                     style="border-left: 3px solid #4F46E5; cursor: pointer;">
-                  <div>
-                    <div class="lesson-icon" [style.background]="getQuizThemeBg(quiz.type)" [style.border]="'1px solid ' + getQuizThemeBorder(quiz.type)" style="margin-bottom:12px; width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center">
-                      @if (quiz.type === 'Oral Practice') {
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0D9488" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" x2="12" y1="19" y2="22" /></svg>
+            <!-- Filter Dropdown Row -->
+            <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 16px; gap: 8px;">
+              <span style="font-size: 12.5px; font-weight: 700; color: var(--text-secondary);">Statut :</span>
+              <div style="position: relative; display: inline-block;">
+                <select [ngModel]="quizFilter()" (ngModelChange)="quizFilter.set($event)" 
+                        style="appearance: none; -webkit-appearance: none; background-color: var(--surface-1); border: 1.5px solid var(--border); border-radius: 8px; padding: 6px 32px 6px 12px; font-size: 12px; font-weight: 700; color: var(--text-primary); cursor: pointer; outline: none; transition: border-color 0.2s, box-shadow 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05); min-width: 140px;">
+                  <option value="todo">⏳ À Faire (To Do)</option>
+                  <option value="completed">✅ Terminé (Completed)</option>
+                  <option value="all">🌐 Tous (All)</option>
+                </select>
+                <!-- Custom Arrow Icon -->
+                <div style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); pointer-events: none; display: flex; align-items: center; color: var(--text-secondary);">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+              </div>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:12px">
+              @for (quiz of filteredQuizzes(); track quiz.id) {
+                <div class="card exercise-card" 
+                     (click)="isQuizDisabled(quiz) ? null : startQuiz(quiz)"
+                     [style.border-left]="'5px solid ' + (isQuizDisabled(quiz) ? '#DC2626' : getTheme(quiz.colorTheme).border)"
+                     [style.opacity]="isQuizDisabled(quiz) ? '0.55' : '1'"
+                     [style.cursor]="isQuizDisabled(quiz) ? 'not-allowed' : 'pointer'"
+                     [style.pointer-events]="isQuizDisabled(quiz) ? 'none' : 'auto'"
+                     style="padding: 12px 18px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; gap: 16px; transition: transform 0.2s, box-shadow 0.2s;">
+                  
+                  <div style="display: flex; align-items: center; gap: 16px; flex: 1;">
+                    <!-- Compact cover thumbnail -->
+                    <div [style.background]="quiz.coverImage ? 'none' : getGradient(quiz.colorTheme)"
+                         style="width: 52px; height: 52px; border-radius: 8px; overflow: hidden; flex-shrink: 0; display: flex; align-items: center; justify-content: center; position: relative">
+                      @if (quiz.coverImage) {
+                        <img [src]="quiz.coverImage" style="width: 100%; height: 100%; object-fit: cover" />
                       } @else {
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
                       }
                     </div>
-                    <div class="card-label" [style.color]="quiz.type === 'Oral Practice' ? '#0D9488' : '#4F46E5'" style="font-weight:700">
-                      {{ quiz.type === 'Oral Practice' ? 'Oral Practice' : 'Grammar Quiz' }}
+
+                    <div>
+                      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 3px; flex-wrap: wrap;">
+                        <span [style.background]="quiz.type === 'Oral Practice' ? '#E6F4F1' : '#EEF2FF'"
+                              [style.color]="quiz.type === 'Oral Practice' ? '#0D9488' : '#4F46E5'"
+                              style="font-size: 9px; font-weight: 800; padding: 1px 6px; border-radius: 10px; text-transform: uppercase;">
+                          {{ quiz.type === 'Oral Practice' ? 'Oral Practice' : 'Grammar Quiz' }}
+                        </span>
+                        <span style="font-size: 10px; color: var(--text-muted)">{{ quiz.level || 'B1' }}</span>
+                        
+                        <span style="background:#F1F5F9; color:#475569; font-size: 9px; font-weight: 800; padding: 1px 6px; border-radius: 10px; text-transform: uppercase;">
+                          {{ t('Essais : ', 'Attempts: ') }}{{ getQuizSubmissionsCount(quiz.id) }} / 4
+                        </span>
+
+                        @if (isQuizAttemptsReached(quiz.id)) {
+                          <span style="background:#FEF2F2; color:#DC2626; font-size: 9px; font-weight: 800; padding: 1px 6px; border-radius: 10px; text-transform: uppercase; border: 1px solid #FCA5A5">
+                            {{ t('Limite atteinte', 'Limit reached') }}
+                          </span>
+                        } @else if (isQuizDeadlinePassed(quiz)) {
+                          <span style="background:#FEF2F2; color:#DC2626; font-size: 9px; font-weight: 800; padding: 1px 6px; border-radius: 10px; text-transform: uppercase; border: 1px solid #FCA5A5">
+                            {{ t('Date limite dépassée', 'Deadline passed') }}
+                          </span>
+                        } @else if (isQuizCompleted(quiz.id)) {
+                          <span style="background:#ECFDF5; color:#047857; font-size: 9px; font-weight: 800; padding: 1px 6px; border-radius: 10px; text-transform: uppercase;">
+                            {{ t('Complété', 'Completed') }}
+                          </span>
+                        } @else {
+                          <span style="background:#FEF3C7; color:#D97706; font-size: 9px; font-weight: 800; padding: 1px 6px; border-radius: 10px; text-transform: uppercase;">
+                            {{ t('À Faire', 'To Do') }}
+                          </span>
+                        }
+                      </div>
+                      
+                      <h4 style="font-size:14px; font-weight:800; color:var(--text-primary); margin:0 0 2px 0; line-height: 1.3">{{ quiz.title }}</h4>
+                      
+                      <div style="display:flex; align-items:center; gap:8px; font-size:11px; color:var(--text-secondary); flex-wrap:wrap">
+                        <span style="display:flex; align-items:center; gap:3px">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                          {{ quiz.timeLimit || 'No limit' }}
+                        </span>
+                        <span>•</span>
+                        <span>{{ quiz.questions.length }} {{ t('questions', 'questions') }}</span>
+                        @if (quiz.deadline) {
+                          <span>•</span>
+                          <span style="display:flex; align-items:center; gap:3px" [style.color]="isQuizDeadlinePassed(quiz) ? '#DC2626' : 'var(--text-secondary)'">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                            {{ t('Limite : ', 'Deadline: ') }}{{ quiz.deadline | date:'short' }}
+                          </span>
+                        }
+                      </div>
                     </div>
-                    <div class="card-value" style="font-size:15px; color:var(--text-primary); font-weight:700; margin-top:4px">{{ quiz.title }}</div>
-                    <p style="font-size:12px; color:var(--text-secondary); margin:6px 0 0 0">
-                      {{ quiz.questions.length }} questions · {{ quiz.timeLimit || 'No limit' }}
-                    </p>
                   </div>
-                  <div [style.color]="quiz.type === 'Oral Practice' ? '#0D9488' : '#4F46E5'" style="font-size:11px; font-weight:600; margin-top:12px; display:flex; align-items:center; gap:4px">
-                    Start Quiz <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-left:4px"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+
+                  <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+                    @if (isQuizAttemptsReached(quiz.id)) {
+                      <span style="font-size: 11px; color: #DC2626; font-weight: 700; background: #FEF2F2; padding: 4px 8px; border-radius: 6px;">
+                        🔒 Essais épuisés
+                      </span>
+                    } @else if (isQuizDeadlinePassed(quiz)) {
+                      <span style="font-size: 11px; color: #DC2626; font-weight: 700; background: #FEF2F2; padding: 4px 8px; border-radius: 6px;">
+                        ⏳ Expiré
+                      </span>
+                    } @else {
+                      <span style="font-size:11px; color:#4F46E5; font-weight:700; display:flex; align-items:center; gap:2px">
+                        {{ t('Commencer', 'Start') }} <i class="ti ti-arrow-right"></i>
+                      </span>
+                    }
                   </div>
                 </div>
               } @empty {
                 <div style="grid-column: 1 / -1; padding: 24px; background: var(--surface-2); border-radius: 8px; border: 1px dashed var(--border); text-align: center; font-size: 12.5px; color: var(--text-secondary);">
-                  No quiz published by your teacher yet.
+                  {{ t('Aucun quiz ne correspond à ce filtre.', 'No quiz matches this filter.') }}
                 </div>
               }
             </div>
@@ -191,56 +405,95 @@ const defaultWordsBank = [
             <div class="grid2">
               @for (game of vocabGames(); track game.id) {
                 <div class="card exercise-card game-card" (click)="playVocabGame(game)" 
-                     style="border-left: 4px solid #D97706; border-radius: 12px; cursor: pointer; transition: all 0.3s; background: white; box-shadow: 0 4px 12px rgba(217, 119, 6, 0.04); position: relative; overflow: hidden;">
-                  <!-- Background glow design element -->
-                  <div style="position: absolute; top: -20px; right: -20px; width: 60px; height: 60px; background: rgba(217, 119, 6, 0.05); border-radius: 50%;"></div>
-                  
-                  <div style="padding: 16px;">
-                    <div class="lesson-icon amber" style="margin-bottom:12px; width:44px; height:44px; border-radius:12px; background:#FFFBEB; border:1.5px solid #FDE68A; display:flex; align-items:center; justify-content:center">
-                      @if (game.gameType === 'flashcards') {
-                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="12" height="18" x="3" y="3" rx="2" /><path d="M7 3V21" /><rect width="12" height="18" x="9" y="3" rx="2" /></svg>
-                      } @else if (game.gameType === 'matching') {
-                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
-                      } @else if (game.gameType === 'memory') {
-                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.44 2.5 2.5 0 0 1 0-3.12 3 3 0 0 1 0-3.88 2.5 2.5 0 0 1 0-3.12A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.44 2.5 2.5 0 0 0 0-3.12 3 3 0 0 0 0-3.88 2.5 2.5 0 0 0 0-3.12A2.5 2.5 0 0 0 14.5 2Z"/></svg>
-                      } @else if (game.gameType === 'word_builder') {
-                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
-                      } @else if (game.gameType === 'hangman') {
-                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22V2h10a2 2 0 0 1 2 2v2"/><circle cx="16" cy="9" r="3"/><path d="M16 12v6m-3-3h6m-5 5h4"/></svg>
-                      } @else if (game.gameType === 'multiple_choice') {
-                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="m9 12 2 2 4-4"/></svg>
+                     [style.border-left]="'5px solid ' + (game.colorTheme ? getQuizThemeBorder(game.colorTheme) : '#D97706')"
+                     style="border-radius: 16px; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); background: white; box-shadow: 0 10px 25px -5px rgba(217, 119, 6, 0.05), 0 8px 10px -6px rgba(217, 119, 6, 0.05); position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; border: 1.5px solid var(--border-weak)">
+                  <div>
+                    <!-- Vocab Cover Header -->
+                    <div [style.background]="game.coverImage ? 'none' : getGradient(game.colorTheme || 'amber')"
+                         style="width: 100%; height: 110px; border-radius: 0; overflow: hidden; position: relative">
+                      @if (game.coverImage) {
+                        <img [src]="game.coverImage" style="width: 100%; height: 100%; object-fit: cover" />
                       } @else {
-                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3" /></svg>
+                        <div style="position:absolute; inset:0; opacity:0.12; background-image: radial-gradient(circle, white 10%, transparent 11%), radial-gradient(circle, white 10%, transparent 11%); background-size: 16px 16px; background-position: 0 0, 8px 8px;"></div>
+                        <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:white">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15))"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4m-2-2v4m7-2h.01M19 12h.01"/></svg>
+                        </div>
                       }
+                      <div style="position: absolute; bottom: 0; left: 0; right: 0; height: 30px; background: linear-gradient(to top, rgba(255,255,255,1), rgba(255,255,255,0))"></div>
                     </div>
-                    <div style="font-size: 9px; font-weight: 800; color: #B45309; text-transform: uppercase; background: #FEF3C7; padding: 2px 8px; border-radius: 20px; display: inline-flex; align-items: center; gap: 4px; letter-spacing: 0.5px;">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4m-2-2v4m7-2h.01M19 12h.01"/></svg>
-                      Mode Arcade
+
+                    <div style="padding: 0 18px 14px 18px; position:relative; margin-top: -18px; z-index: 2;">
+                      <div [style.background]="game.colorTheme === 'emerald' ? '#ECFDF5' : (game.colorTheme === 'rose' ? '#FFF1F2' : (game.colorTheme === 'purple' ? '#F5F3FF' : '#FFFBEB'))"
+                           [style.border-color]="game.colorTheme === 'emerald' ? '#A7F3D0' : (game.colorTheme === 'rose' ? '#FECDD3' : (game.colorTheme === 'purple' ? '#DDD6FE' : '#FDE68A'))"
+                           style="width:40px; height:40px; border-radius:12px; border:2px solid; display:flex; align-items:center; justify-content:center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 12px">
+                        @if (game.gameType === 'flashcards') {
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="12" height="18" x="3" y="3" rx="2" /><path d="M7 3V21" /><rect width="12" height="18" x="9" y="3" rx="2" /></svg>
+                        } @else if (game.gameType === 'matching') {
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
+                        } @else if (game.gameType === 'memory') {
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.44 2.5 2.5 0 0 1 0-3.12 3 3 0 0 1 0-3.88 2.5 2.5 0 0 1 0-3.12A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.44 2.5 2.5 0 0 0 0-3.12 3 3 0 0 0 0-3.88 2.5 2.5 0 0 0 0-3.12A2.5 2.5 0 0 0 14.5 2Z"/></svg>
+                        } @else if (game.gameType === 'word_builder') {
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+                        } @else if (game.gameType === 'hangman') {
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22V2h10a2 2 0 0 1 2 2v2"/><circle cx="16" cy="9" r="3"/><path d="M16 12v6m-3-3h6m-5 5h4"/></svg>
+                        } @else if (game.gameType === 'multiple_choice') {
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="m9 12 2 2 4-4"/></svg>
+                        } @else {
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3" /></svg>
+                        }
+                      </div>
+
+                      <div style="font-size: 9px; font-weight: 800; color: #B45309; text-transform: uppercase; background: #FEF3C7; padding: 2px 8px; border-radius: 20px; display: inline-flex; align-items: center; gap: 4px; letter-spacing: 0.5px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4m-2-2v4m7-2h.01M19 12h.01"/></svg>
+                        {{ t('Mode Arcade', 'Arcade Mode') }}
+                      </div>
+                      
+                      <div class="card-value" style="font-size:14.5px; color:var(--text-primary); font-weight:800; margin-top:8px; display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden">{{ game.title }}</div>
+                      <p style="font-size:11.5px; color:var(--text-secondary); margin:6px 0 0 0; line-height: 1.4">
+                        {{ game.words.length }} mots · <span style="font-weight:600">{{ getGameLabel(game.gameType) }}</span> ({{ getDiffLabel(game.difficulty) }})
+                      </p>
                     </div>
-                    <div class="card-value" style="font-size:14px; color:var(--text-primary); font-weight:700; margin-top:8px; display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden">{{ game.title }}</div>
-                    <p style="font-size:11.5px; color:var(--text-secondary); margin:6px 0 0 0">
-                      {{ game.words.length }} mots · {{ getGameLabel(game.gameType) }} ({{ getDiffLabel(game.difficulty) }})
-                    </p>
                   </div>
-                  <div style="font-size:11.5px; color:#D97706; font-weight:700; margin-top:4px; padding: 12px 16px; border-top: 1px solid #FEF3C7; display:flex; align-items:center; gap:4px; background: #FFFDF5;">
-                    Lancer la Partie <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+
+                  <div style="font-size:12px; color:#D97706; font-weight:800; margin-top:4px; padding: 12px 18px; border-top: 1.5px solid var(--border-weak); display:flex; align-items:center; gap:4px; background: #FFFDF9; transition: background 0.2s">
+                    <span>{{ t('Lancer la Partie', 'Start Game') }}</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                   </div>
                 </div>
               } @empty {
+                <!-- Default Word Matching Game Card -->
                 <div class="card exercise-card game-card" (click)="playDefaultVocabGame()" 
-                     style="border-left: 4px solid #D97706; border-radius: 12px; cursor: pointer; transition: all 0.3s; background: white; box-shadow: 0 4px 12px rgba(217, 119, 6, 0.04); position: relative; overflow: hidden;">
-                  <div style="position: absolute; top: -20px; right: -20px; width: 60px; height: 60px; background: rgba(217, 119, 6, 0.05); border-radius: 50%;"></div>
-                  
-                  <div style="padding: 16px;">
-                    <div class="lesson-icon amber" style="margin-bottom:12px; width:44px; height:44px; border-radius:12px; background:#FFFBEB; border:1.5px solid #FDE68A; display:flex; align-items:center; justify-content:center">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
+                     style="border-left: 5px solid #6366F1; border-radius: 16px; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); background: white; box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.05); position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; border: 1.5px solid var(--border-weak)">
+                  <div>
+                    <!-- Vocab Cover Header -->
+                    <div style="width: 100%; height: 110px; background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%); overflow: hidden; position: relative">
+                      <div style="position:absolute; inset:0; opacity:0.12; background-image: radial-gradient(circle, white 10%, transparent 11%), radial-gradient(circle, white 10%, transparent 11%); background-size: 16px 16px; background-position: 0 0, 8px 8px;"></div>
+                      <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:white">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15))"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
+                      </div>
+                      <div style="position: absolute; bottom: 0; left: 0; right: 0; height: 30px; background: linear-gradient(to top, rgba(255,255,255,1), rgba(255,255,255,0))"></div>
                     </div>
-                    <div style="font-size: 9px; font-weight: 800; color: #B45309; text-transform: uppercase; background: #FEF3C7; padding: 2px 8px; border-radius: 20px; display: inline-block; letter-spacing: 0.5px;">🎮 Mode Arcade</div>
-                    <div class="card-value" style="font-size:14px; color:var(--text-primary); font-weight:700; margin-top:8px">Association de Mots</div>
-                    <p style="font-size:11.5px; color:var(--text-secondary); margin:6px 0 0 0">Associez les termes anglais avec leur traduction française.</p>
+
+                    <div style="padding: 0 18px 14px 18px; position:relative; margin-top: -18px; z-index: 2;">
+                      <div style="width:40px; height:40px; border-radius:12px; border:2px solid #C7D2FE; background:#EEF2FF; display:flex; align-items:center; justify-content:center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 12px">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
+                      </div>
+                      
+                      <div style="font-size: 9px; font-weight: 800; color: #4338CA; text-transform: uppercase; background: #E0E7FF; padding: 2px 8px; border-radius: 20px; display: inline-flex; align-items: center; gap: 4px; letter-spacing: 0.5px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4m-2-2v4m7-2h.01M19 12h.01"/></svg>
+                        {{ t('Mode Arcade', 'Arcade Mode') }}
+                      </div>
+                      
+                      <div class="card-value" style="font-size:14.5px; color:var(--text-primary); font-weight:800; margin-top:8px">{{ t('Association de Mots', 'Word Matching') }}</div>
+                      <p style="font-size:11.5px; color:var(--text-secondary); margin:6px 0 0 0; line-height: 1.4">
+                        {{ t('Associez les termes anglais avec leur traduction française.', 'Match English terms with their French translation.') }}
+                      </p>
+                    </div>
                   </div>
-                  <div style="font-size:11.5px; color:#D97706; font-weight:700; margin-top:4px; padding: 12px 16px; border-top: 1px solid #FEF3C7; display:flex; align-items:center; gap:4px; background: #FFFDF5;">
-                    Lancer la Partie <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+
+                  <div style="font-size:12px; color:#4F46E5; font-weight:800; margin-top:4px; padding: 12px 18px; border-top: 1.5px solid var(--border-weak); display:flex; align-items:center; gap:4px; background: #FBFBFF; transition: background 0.2s">
+                    <span>{{ t('Lancer la Partie', 'Start Game') }}</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                   </div>
                 </div>
               }
@@ -291,88 +544,10 @@ const defaultWordsBank = [
           </div>
         </div>
 
-        <!-- Group Vocab Leaderboard Widget -->
-        <div style="margin-top: 24px;">
-          <div class="section-title" style="display:flex; align-items:center; gap:8px">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="8" r="7"></circle>
-              <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
-            </svg>
-            <span>Classement du Groupe (Vocabulaire)</span>
-          </div>
-          
-          <div class="card" style="padding: 0; overflow: hidden; border: 1px solid var(--border-weak); background: #FFF;">
-            <div style="background: #FFFDF5; padding: 12px 16px; border-bottom: 1px solid #FDE68A;">
-              <span style="font-size: 11.5px; font-weight: 700; color: #B45309;">
-                Niveau : {{ currentUser()?.level || 'A1' }} · Meilleurs scores de votre groupe
-              </span>
-            </div>
-            
-            <div style="overflow-x: auto;">
-              <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
-                <thead>
-                  <tr style="border-bottom: 1px solid var(--border-weak); background: var(--surface-2); text-align: left; color: var(--text-muted); font-weight: 700; font-size: 11px; text-transform: uppercase;">
-                    <th style="padding: 10px 16px; width: 60px;">Rang</th>
-                    <th style="padding: 10px 16px;">Élève</th>
-                    <th style="padding: 10px 16px;">Jeu</th>
-                    <th style="padding: 10px 16px; text-align: center;">Score</th>
-                    <th style="padding: 10px 16px; text-align: center;">Temps</th>
-                    <th style="padding: 10px 16px; text-align: right;">XP</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (row of vocabLeaderboard(); track row.id; let idx = $index) {
-                    <tr [style.background]="row.studentId === currentUser()?.id ? '#FFFDF5' : 'transparent'" 
-                        style="border-bottom: 1px solid var(--border-weak); transition: background 0.2s;"
-                        onmouseover="this.style.background='var(--surface-2)'"
-                        onmouseout="this.style.background=this.getAttribute('data-is-user') === 'true' ? '#FFFDF5' : 'transparent'"
-                        [attr.data-is-user]="row.studentId === currentUser()?.id">
-                      <td style="padding: 12px 16px; font-weight: 700; text-align: center;">
-                        @if (idx === 0) {
-                          🥇
-                        } @else if (idx === 1) {
-                          🥈
-                        } @else if (idx === 2) {
-                          🥉
-                        } @else {
-                          #{{ idx + 1 }}
-                        }
-                      </td>
-                      <td style="padding: 12px 16px; font-weight: 600; color: var(--text-primary);">
-                        <span style="margin-right: 6px;">{{ row.avatar }}</span>
-                        <span>{{ row.studentName }}</span>
-                        @if (row.studentId === currentUser()?.id) {
-                          <span style="font-size: 9px; background: #D97706; color: #FFF; padding: 2px 6px; border-radius: 10px; margin-left: 6px;">Moi</span>
-                        }
-                      </td>
-                      <td style="padding: 12px 16px; color: var(--text-secondary);">
-                        {{ row.gameTitle }}
-                      </td>
-                      <td style="padding: 12px 16px; font-weight: 700; text-align: center; color: #10B981;">
-                        {{ row.score }}%
-                      </td>
-                      <td style="padding: 12px 16px; text-align: center; color: var(--text-muted);">
-                        {{ row.timeSpent }}s
-                      </td>
-                      <td style="padding: 12px 16px; text-align: right; font-weight: 700; color: #4F46E5;">
-                        +{{ row.xp }} XP
-                      </td>
-                    </tr>
-                  } @empty {
-                    <tr>
-                      <td colspan="6" style="padding: 24px; text-align: center; color: var(--text-muted); font-style: italic;">
-                        Aucun score enregistré pour ce groupe pour le moment. Jouez pour être le premier !
-                      </td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
+
       } @else {
-        <div style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.65); display:flex; justify-content:center; align-items:center; z-index:99999; padding:16px">
-          <div class="card" style="width:100%; max-width:580px; background:#FFF; border-radius:12px; padding:24px; box-shadow:0 10px 25px rgba(0,0,0,0.25); max-height:90vh; overflow-y:auto">
+        <div style="position:fixed; inset:0; background:rgba(15,23,42,0.55); backdrop-filter:blur(8px); display:flex; justify-content:center; align-items:center; z-index:99999; padding:16px; overflow:auto">
+          <div class="card" style="width:100%; max-width:580px; min-height:450px; display:flex; flex-direction:column; justify-content:space-between; background:#FFF; color:var(--text-primary); border-radius:12px; padding:24px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.15), 0 10px 10px -5px rgba(0,0,0,0.04); max-height:92vh; overflow-y:auto; margin:auto">
             
             <!-- Modal Header -->
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; border-bottom:1px solid var(--border-weak); padding-bottom:12px">
@@ -383,19 +558,21 @@ const defaultWordsBank = [
                     <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
                     <line x1="12" x2="12" y1="19" y2="22" />
                   </svg>
-                  <span>Oral Speaking Exercise</span>
-                } @else if (activeExercise() === 'quiz') {
+                  <span>{{ t("Exercice d'expression orale", "Oral Speaking Exercise") }}</span>
+                } @else if (activeExercise() === 'quiz' && activeQuiz()) {
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2">
                     <path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
                   </svg>
-                  <span>Classroom Quiz</span>
+                  <span>{{ t("Quiz de classe", "Classroom Quiz") }}</span>
+                } @else if (activeExercise() === 'quiz') {
+                  <span style="font-size:16px; font-weight:700; color:var(--text-primary)">{{ t("Chargement du quiz...", "Loading quiz...") }}</span>
                 } @else if (activeExercise() === 'exercise') {
-                  <span [style.color]="getExerciseColor(activeExerciseItem()?.type || '')">{{ getExerciseEmoji(activeExerciseItem()?.type || '') }} {{ getExerciseLabel(activeExerciseItem()?.type || '') }} Exercise</span>
+                  <span [style.color]="getExerciseColor(activeExerciseItem()?.type || '')">{{ getExerciseEmoji(activeExerciseItem()?.type || '') }} {{ t("Exercice de " + getExerciseLabel(activeExerciseItem()?.type || ''), getExerciseLabel(activeExerciseItem()?.type || '') + " Exercise") }}</span>
                 } @else {
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2">
                     <rect x="3" y="3" width="7" height="9" rx="1" /><rect x="14" y="3" width="7" height="5" rx="1" /><rect x="14" y="12" width="7" height="9" rx="1" /><rect x="3" y="16" width="7" height="5" rx="1" />
                   </svg>
-                  <span>Vocabulary Game</span>
+                  <span>{{ t("Jeu de vocabulaire", "Vocabulary Game") }}</span>
                 }
               </h3>
               <button (click)="exitExercise()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; padding:4px; display:flex; align-items:center; justify-content:center">
@@ -420,8 +597,11 @@ const defaultWordsBank = [
                   <!-- Writing Exercise -->
                   @if (activeExerciseItem()?.type === 'writing') {
                     <div style="background: #F5F3FF; border: 1px solid #DDD6FE; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
-                      <div style="font-size: 13px; font-weight: 700; color: #6D28D9; margin-bottom: 6px;">✍️ Subject</div>
-                      <p style="font-size: 13px; color: var(--text-primary); line-height: 1.6; margin: 0;">{{ activeExerciseItem()?.subject }}</p>
+                      <div style="font-size: 13px; font-weight: 700; color: #6D28D9; margin-bottom: 6px; display:flex; align-items:center; gap:6px">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                        <span>Subject</span>
+                      </div>
+                      <p style="font-size: 13px; color: var(--text-primary); line-height: 1.6; margin: 0; white-space: pre-wrap;">{{ activeExerciseItem()?.subject }}</p>
                     </div>
                     <textarea [ngModel]="studentResponse()" (ngModelChange)="studentResponse.set($event)" rows="6" placeholder="Write your answer here..."
                               style="width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 12px; font-size: 13px; resize: vertical;"></textarea>
@@ -431,8 +611,11 @@ const defaultWordsBank = [
                   <!-- Speaking Exercise -->
                   @else if (activeExerciseItem()?.type === 'speaking') {
                     <div style="background: #F0FDF4; border: 1px solid #A7F3D0; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
-                      <div style="font-size: 13px; font-weight: 700; color: #065F46; margin-bottom: 6px;">🎙️ Speaking Prompt</div>
-                      <p style="font-size: 13px; color: var(--text-primary); line-height: 1.6; margin: 0;">{{ activeExerciseItem()?.speakingPrompt }}</p>
+                      <div style="font-size: 13px; font-weight: 700; color: #065F46; margin-bottom: 6px; display:flex; align-items:center; gap:6px">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+                        <span>Speaking Prompt</span>
+                      </div>
+                      <p style="font-size: 13px; color: var(--text-primary); line-height: 1.6; margin: 0; white-space: pre-wrap;">{{ activeExerciseItem()?.speakingPrompt }}</p>
                     </div>
                     
                     <!-- Recorder Component -->
@@ -498,8 +681,11 @@ const defaultWordsBank = [
                       </div>
                     }
                     <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
-                      <div style="font-size: 13px; font-weight: 700; color: #1E40AF; margin-bottom: 6px;">👂 Instructions</div>
-                      <p style="font-size: 13px; color: var(--text-primary); line-height: 1.6; margin: 0;">{{ activeExerciseItem()?.listeningInstruction }}</p>
+                      <div style="font-size: 13px; font-weight: 700; color: #1E40AF; margin-bottom: 6px; display:flex; align-items:center; gap:6px">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+                        <span>Instructions</span>
+                      </div>
+                      <p style="font-size: 13px; color: var(--text-primary); line-height: 1.6; margin: 0; white-space: pre-wrap;">{{ activeExerciseItem()?.listeningInstruction }}</p>
                     </div>
                     <textarea [ngModel]="studentResponse()" (ngModelChange)="studentResponse.set($event)" rows="4" placeholder="Write your summary or answers here..."
                               style="width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 12px; font-size: 13px; resize: vertical;"></textarea>
@@ -509,8 +695,11 @@ const defaultWordsBank = [
                   <!-- Translation Exercise -->
                   @else if (activeExerciseItem()?.type === 'translation') {
                     <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
-                      <div style="font-size: 13px; font-weight: 700; color: #92400E; margin-bottom: 6px;">🌍 Text to translate ({{ activeExerciseItem()?.translationDirection === 'fr-en' ? 'FR → EN' : 'EN → FR' }})</div>
-                      <p style="font-size: 14px; color: var(--text-primary); line-height: 1.7; margin: 0; font-style: italic;">{{ activeExerciseItem()?.textToTranslate }}</p>
+                      <div style="font-size: 13px; font-weight: 700; color: #92400E; margin-bottom: 6px; display:flex; align-items:center; gap:6px">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
+                        <span>Text to translate ({{ activeExerciseItem()?.translationDirection === 'fr-en' ? 'FR → EN' : 'EN → FR' }})</span>
+                      </div>
+                      <p style="font-size: 14px; color: var(--text-primary); line-height: 1.7; margin: 0; font-style: italic; white-space: pre-wrap;">{{ activeExerciseItem()?.textToTranslate }}</p>
                     </div>
                     <textarea [ngModel]="studentResponse()" (ngModelChange)="studentResponse.set($event)" rows="5" placeholder="Your translation here..."
                               style="width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 12px; font-size: 13px; resize: vertical;"></textarea>
@@ -520,8 +709,11 @@ const defaultWordsBank = [
                   <!-- Pronunciation Exercise -->
                   @else if (activeExerciseItem()?.type === 'pronunciation') {
                     <div style="text-align: center; padding: 24px; background: #FFF1F2; border: 1px solid #FECDD3; border-radius: 12px; margin-bottom: 16px;">
-                      <div style="font-size: 13px; font-weight: 700; color: #9F1239; margin-bottom: 12px;">🔊 Read this aloud:</div>
-                      <p style="font-size: 18px; font-weight: 700; color: var(--text-primary); line-height: 1.6; margin: 0;">{{ activeExerciseItem()?.textToPronounce }}</p>
+                      <div style="font-size: 13px; font-weight: 700; color: #9F1239; margin-bottom: 12px; display:flex; align-items:center; justify-content:center; gap:6px">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9 2 9 2 15 6 15 11 19 11 5M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                        <span>Read this aloud:</span>
+                      </div>
+                      <p style="font-size: 18px; font-weight: 700; color: var(--text-primary); line-height: 1.6; margin: 0; white-space: pre-wrap;">{{ activeExerciseItem()?.textToPronounce }}</p>
                     </div>
 
                     <!-- Recorder Component -->
@@ -579,22 +771,29 @@ const defaultWordsBank = [
                   <!-- Vocabulary Exercise -->
                   @else if (activeExerciseItem()?.type === 'vocabulary') {
                     <div style="background: #EEF2FF; border: 1px solid #C7D2FE; border-radius: 12px; padding: 20px; margin-bottom: 16px; text-align: center;">
-                      <div style="font-size: 11px; font-weight: 700; color: #4F46E5; text-transform: uppercase; margin-bottom: 12px;">📚 Flashcard Review Mode</div>
+                      <div style="font-size: 11px; font-weight: 700; color: #4F46E5; text-transform: uppercase; margin-bottom: 12px; display:flex; align-items:center; justify-content:center; gap:6px">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5v-15z"/></svg>
+                        <span>Flashcard Review Mode</span>
+                      </div>
                       
-                      @if ((activeExerciseItem()?.wordList || []).length > 0) {
-                        @let wList = activeExerciseItem()?.wordList || [];
+                      @if (getWordList(activeExerciseItem()).length > 0) {
+                        @let wList = getWordList(activeExerciseItem());
                         @let curWord = wList[vocabularyActiveIdx() || 0];
+                        @let curWordStr = getWordString(curWord);
 
                         <div style="background: white; border: 1.5px solid #C7D2FE; border-radius: 10px; padding: 24px; min-height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.02)">
                           <div style="font-size: 24px; font-weight: 800; color: #1E1B4B; display: flex; align-items: center; gap: 8px;">
-                            <span>{{ curWord }}</span>
-                            <button (click)="speakWord(curWord)" style="background:none; border:none; color:#4F46E5; cursor:pointer; padding:4px; display:inline-flex; align-items:center;" title="Listen">
+                            <span>{{ curWordStr }}</span>
+                            <button (click)="speakWord(curWordStr)" style="background:none; border:none; color:#4F46E5; cursor:pointer; padding:4px; display:inline-flex; align-items:center;" title="Listen">
                               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
                                 <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
                               </svg>
                             </button>
                           </div>
+                          @if (getWordTranslation(curWord); as trans) {
+                            <span style="font-size: 14px; color: var(--text-secondary); margin-top: 4px; font-weight: 600;">{{ trans }}</span>
+                          }
                           <span style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">Click speaker to pronounce</span>
                         </div>
 
@@ -612,8 +811,10 @@ const defaultWordsBank = [
                   }
                 } @else {
                   <!-- Submitted State -->
-                  <div style="text-align: center; padding: 32px 16px;">
-                    <div style="font-size: 48px; margin-bottom: 12px;">✅</div>
+                  <div style="text-align: center; padding: 32px 16px; display:flex; flex-direction:column; align-items:center">
+                    <div style="width:64px; height:64px; border-radius:50%; background:#ECFDF5; border:1px solid #10B981; display:flex; align-items:center; justify-content:center; margin:0 auto 16px auto; color:#10B981">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    </div>
                     <h3 style="font-size: 18px; font-weight: 800; color: var(--text-primary); margin: 0 0 6px 0;">Exercise Submitted!</h3>
                     <p style="font-size: 13px; color: var(--text-muted); margin: 0 0 20px 0;">+{{ activeExerciseItem()?.points }} XP credited to your account.</p>
                     <button (click)="activeExercise.set('list')" style="background: #059669; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 700; cursor: pointer;">Back to Exercises</button>
@@ -746,70 +947,118 @@ const defaultWordsBank = [
                 } @else {
                   <!-- QUIZ RESULTS SCREEN -->
                   <div style="text-align:center; padding:20px 0">
-                    <div style="width:64px; height:64px; border-radius:50%; background:#ECFDF5; border:1px solid #10B981; display:flex; align-items:center; justify-content:center; margin:0 auto 16px auto">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
-                      </svg>
-                    </div>
-                    
-                    <h3 style="font-size:18px; font-weight:800; margin-bottom:6px; color:var(--text-primary)">
-                      {{ quiz.type === 'Oral Practice' ? 'Oral Practice Submitted!' : 'Quiz Completed!' }}
-                    </h3>
-                    
-                    @if (quiz.type === 'Oral Practice') {
-                      <p style="font-size:13px; color:var(--text-secondary); margin-bottom:16px; max-width:380px; margin-left:auto; margin-right:auto">
-                        Your oral audio responses have been sent directly to the teacher for grading review! You will receive a notification once graded.
-                      </p>
-                      <div style="background:#E6F4EA; padding:8px 16px; border-radius:20px; display:inline-block; font-size:12.5px; font-weight:700; color:#0F766E; margin-bottom:20px">
-                        +50 XP Earned
+
+                    @if (quiz.id.startsWith('placement-test') && !placementAllDone()) {
+                      <!-- MID-PLACEMENT: brief loading spinner, auto-advance fires in 400ms -->
+                      <div style="padding:32px 0; display:flex; flex-direction:column; align-items:center; gap:16px">
+                        <div style="width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg,#4F46E5,#7C3AED); display:flex; align-items:center; justify-content:center">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                        </div>
+                        <div style="font-size:16px; font-weight:800; color:#4F46E5">Étape complétée !</div>
+                        <div style="font-size:12.5px; color:var(--text-muted)">Chargement de l'étape suivante...</div>
+                        <div style="display:flex; gap:6px">
+                          <div style="width:8px; height:8px; border-radius:50%; background:#4F46E5; animation:bounce 1.2s infinite 0s"></div>
+                          <div style="width:8px; height:8px; border-radius:50%; background:#6366F1; animation:bounce 1.2s infinite 0.2s"></div>
+                          <div style="width:8px; height:8px; border-radius:50%; background:#8B5CF6; animation:bounce 1.2s infinite 0.4s"></div>
+                        </div>
                       </div>
+
                     } @else {
-                      <p style="font-size:13.5px; color:var(--text-secondary); margin-bottom:12px">
-                        You scored <strong style="color:#059669">{{ quizScore() }}%</strong> ({{ quizCorrectCount() }} / {{ quiz.questions.length }} correct answers)
-                      </p>
-                      <div style="background:#EEF2FF; padding:8px 16px; border-radius:20px; display:inline-block; font-size:12.5px; font-weight:700; color:#4F46E5; margin-bottom:20px">
-                        +{{ quizScore() >= 60 ? '50' : '10' }} XP Earned
+                      <!-- REGULAR QUIZ or LAST PLACEMENT STEP -->
+                      <div style="width:64px; height:64px; border-radius:50%; background:#ECFDF5; border:1px solid #10B981; display:flex; align-items:center; justify-content:center; margin:0 auto 16px auto">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+                        </svg>
                       </div>
-                      
-                      <!-- Explanations for wrong answers -->
-                      @if (quizScore() < 100) {
-                        <div style="margin-top:20px; text-align:left; background:var(--surface-2); border:1px solid var(--border-weak); border-radius:10px; padding:16px; max-width:500px; margin-left:auto; margin-right:auto">
-                          <h4 style="font-size:14px; font-weight:700; color:var(--text-primary); margin:0 0 12px 0; display:flex; align-items:center; gap:6px">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-right:4px"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
-                            Corrections & Explications
-                          </h4>
-                          <div style="display:flex; flex-direction:column; gap:10px">
-                            @for (q of quiz.questions; track q; let qi = $index) {
-                              @if (getUserAnswer(qi) !== q.correctOption) {
-                                <div style="background:#FFF; border:1px solid #FCA5A5; border-radius:8px; padding:10px 12px; border-left:3px solid #EF4444">
-                                  <div style="font-size:12px; font-weight:600; color:#991B1B; margin-bottom:4px">
-                                    Question {{ qi + 1 }}: {{ q.question }}
-                                  </div>
-                                  <div style="font-size:11px; color:var(--text-secondary); margin-bottom:3px">
-                                    ❌ Votre réponse: <strong style="color:#EF4444">{{ getUserAnswerText(qi) }}</strong>
-                                  </div>
-                                  <div style="font-size:11px; color:var(--text-secondary); margin-bottom:6px">
-                                    ✅ Bonne réponse: <strong style="color:#059669">{{ getCorrectAnswerText(q) }}</strong>
-                                  </div>
-                                  @if (q.explanation) {
-                                    <div style="font-size:11px; color:#4B5563; background:#FEF3C7; padding:6px 8px; border-radius:6px; margin-top:4px; font-style:italic">
-                                      💡 {{ q.explanation }}
+                      <h3 style="font-size:18px; font-weight:800; margin-bottom:6px; color:var(--text-primary)">
+                        {{ placementAllDone() ? 'Test de Placement Terminé !' : (quiz.type === 'Oral Practice' ? 'Oral Practice Submitted!' : 'Quiz Completed!') }}
+                      </h3>
+
+                      @if (!placementAllDone()) {
+                        @if (quiz.type === 'Oral Practice') {
+                          <p style="font-size:13px; color:var(--text-secondary); margin-bottom:16px; max-width:380px; margin-left:auto; margin-right:auto">
+                            Your oral audio responses have been sent directly to the teacher for grading review! You will receive a notification once graded.
+                          </p>
+                          <div style="background:#E6F4EA; padding:8px 16px; border-radius:20px; display:inline-block; font-size:12.5px; font-weight:700; color:#0F766E; margin-bottom:20px">
+                            +50 XP Earned
+                          </div>
+                        } @else {
+                          <p style="font-size:13.5px; color:var(--text-secondary); margin-bottom:12px">
+                            You scored <strong style="color:#059669">{{ quizScore() }}%</strong> ({{ quizCorrectCount() }} / {{ quiz.questions.length }} correct answers)
+                          </p>
+                          <div style="background:#EEF2FF; padding:8px 16px; border-radius:20px; display:inline-block; font-size:12.5px; font-weight:700; color:#4F46E5; margin-bottom:20px">
+                            +{{ quizScore() >= 60 ? '50' : '10' }} XP Earned
+                          </div>
+                          @if (quizScore() < 100) {
+                            <div style="margin-top:20px; text-align:left; background:var(--surface-2); border:1px solid var(--border-weak); border-radius:10px; padding:16px; max-width:500px; margin-left:auto; margin-right:auto">
+                              <h4 style="font-size:14px; font-weight:700; color:var(--text-primary); margin:0 0 12px 0; display:flex; align-items:center; gap:6px">
+                                Corrections &amp; Explications
+                              </h4>
+                              <div style="display:flex; flex-direction:column; gap:10px">
+                                @for (q of quiz.questions; track q; let qi = $index) {
+                                  @if (getUserAnswer(qi) !== q.correctOption) {
+                                    <div style="background:#FFF; border:1px solid #FCA5A5; border-radius:8px; padding:10px 12px; border-left:3px solid #EF4444">
+                                      <div style="font-size:12px; font-weight:600; color:#991B1B; margin-bottom:4px">Question {{ qi + 1 }}: {{ q.question }}</div>
+                                      <div style="font-size:11px; color:var(--text-secondary); margin-bottom:3px; display:flex; align-items:center; gap:6px">
+                                        <span>Votre réponse : <strong style="color:#EF4444">{{ getUserAnswerText(qi) }}</strong></span>
+                                      </div>
+                                      <div style="font-size:11px; color:var(--text-secondary); margin-bottom:6px; display:flex; align-items:center; gap:6px">
+                                        <span>Bonne réponse : <strong style="color:#059669">{{ getCorrectAnswerText(q) }}</strong></span>
+                                      </div>
+                                      @if (q.explanation) {
+                                        <div style="font-size:11px; color:#4B5563; background:#FEF3C7; padding:6px 8px; border-radius:6px; margin-top:4px; font-style:italic">
+                                          {{ q.explanation }}
+                                        </div>
+                                      }
                                     </div>
                                   }
-                                </div>
-                              }
-                            }
-                          </div>
-                        </div>
+                                }
+                              </div>
+                            </div>
+                          }
+                        }
                       }
                     }
-                    
-                    <div style="display:flex; justify-content:center; border-top:1px solid var(--border-weak); padding-top:16px; margin-top:{{ quizScore() < 100 && quiz.type !== 'Oral Practice' ? '20px' : '0' }}">
-                      <button class="btn-p" [style.background]="quiz.type === 'Oral Practice' ? '#0D9488' : '#4F46E5'" [style.border-color]="quiz.type === 'Oral Practice' ? '#0D9488' : '#4F46E5'" (click)="exitExercise()">Close Window</button>
+
+                    <!-- FOOTER ACTIONS -->
+                    <div style="border-top:1px solid var(--border-weak); padding-top:20px; margin-top:20px; text-align:center">
+                      @if (placementAllDone()) {
+                        <!-- Global placement summary -->
+                        <div style="background:linear-gradient(135deg,#EEF2FF,#F5F3FF); border:1.5px solid #C4B5FD; border-radius:14px; padding:20px; margin-bottom:20px; text-align:left">
+                          <div style="font-size:13px; font-weight:800; color:#4F46E5; margin-bottom:14px">Résumé du Placement Test</div>
+                          <div style="display:flex; flex-direction:column; gap:8px">
+                            @for (step of placementStepResults(); track step.title; let si = $index) {
+                              <div style="display:flex; align-items:center; justify-content:space-between; background:white; border-radius:8px; padding:10px 14px; border:1px solid #E0E7FF">
+                                <div style="display:flex; align-items:center; gap:10px">
+                                  <div style="width:24px; height:24px; border-radius:50%; background:#4F46E5; color:white; font-size:11px; font-weight:800; display:flex; align-items:center; justify-content:center">{{ si + 1 }}</div>
+                                  <div>
+                                    <div style="font-size:12px; font-weight:700; color:var(--text-primary)">{{ step.title }}</div>
+                                    <div style="font-size:10.5px; color:var(--text-muted)">{{ step.correct }} / {{ step.total }} correctes</div>
+                                  </div>
+                                </div>
+                                <div [style.color]="step.score >= 60 ? '#059669' : '#D97706'" style="font-size:14px; font-weight:800">{{ step.score }}%</div>
+                              </div>
+                            }
+                          </div>
+                          <div style="margin-top:14px; padding:10px 14px; background:#4F46E5; border-radius:8px; color:white; font-size:12px; font-weight:700; text-align:center">
+                            Votre test de placement est terminé ! Votre professeur analysera vos résultats.
+                          </div>
+                        </div>
+                        <button class="btn-p" style="background:#4F46E5; border-color:#4F46E5" (click)="exitExercise()">Terminer</button>
+                      } @else if (!quiz.id.startsWith('placement-test')) {
+                        <button class="btn-p" [style.background]="quiz.type === 'Oral Practice' ? '#0D9488' : '#4F46E5'" [style.border-color]="quiz.type === 'Oral Practice' ? '#0D9488' : '#4F46E5'" (click)="exitExercise()">Close Window</button>
+                      }
                     </div>
+
                   </div>
                 }
+              } @else {
+                <div style="padding:32px 0; text-align:center; color:var(--text-muted); font-size:14px; line-height:1.6">
+                  {{ t("Nous n'avons pas pu charger le quiz. Veuillez revenir en arrière et sélectionner un quiz valide.", "We couldn't load the quiz. Please go back and select a valid quiz.") }}
+                </div>
               }
+
+
             } @else if (activeExercise() === 'listening') {
               <!-- TAB 3: LISTENING EXERCISE -->
               @if (!listeningFinished()) {
@@ -1653,6 +1902,21 @@ const defaultWordsBank = [
   `]
 })
 export class StudentExercisesComponent {
+  @Input() set mode(val: 'all' | 'quizzes' | 'exercises') {
+    this._mode.set(val || 'all');
+    const u = this.db.getCurrentUser();
+    if (u && u.role === 'student' && u.blocked) {
+      this.activeSubTab.set('quizzes');
+      return;
+    }
+
+    if (val === 'quizzes') {
+      this.activeSubTab.set('quizzes');
+    } else if (val === 'exercises') {
+      this.activeSubTab.set('exercises');
+    }
+  }
+  _mode = signal<'all' | 'quizzes' | 'exercises'>('all');
   isWordBuilderWiggling = signal<boolean>(false);
   isWordBuilderSuccess = signal<boolean>(false);
 
@@ -1720,6 +1984,25 @@ export class StudentExercisesComponent {
   vocabularyActiveIdx = signal<number>(0);
 
   quizzes = signal<Quiz[]>([]);
+  submissions = signal<any[]>([]);
+  quizFilter = signal<'todo' | 'completed' | 'all'>('all');
+
+  filteredQuizzes = computed(() => {
+    const list = this.quizzes();
+    const filter = this.quizFilter();
+    const subs = this.submissions();
+    const user = this.currentUser();
+    if (!user) return list;
+
+    return list.filter(quiz => {
+      const isDone = subs.some(s => s.lessonId === quiz.id && s.studentId === user.id);
+      if (filter === 'todo') return !isDone;
+      if (filter === 'completed') return isDone;
+      return true; // 'all'
+    });
+  });
+  placementQuizzes = signal<Quiz[]>([]);
+  isPlacementExpanded = signal<boolean>(false);
   activeQuiz = signal<Quiz | null>(null);
   currentUser = signal<UserProfile | null>(null);
   
@@ -1739,11 +2022,18 @@ export class StudentExercisesComponent {
   quizCorrectCount = signal<number>(0);
   quizScore = signal<number>(0);
 
+  // Placement Test — accumulated results across all steps
+  placementStepResults = signal<{ title: string; score: number; correct: number; total: number }[]>([]);
+  placementAllDone = signal<boolean>(false);
+
   // Oral / Speaking Exercise States
   recordingState = signal<'idle' | 'recording' | 'finished'>('idle');
   recordSeconds = signal<number>(0);
   private timerInterval: any = null;
   private animInterval: any = null;
+  private mediaRecorder: any = null;
+  private audioChunks: any[] = [];
+  private mediaStream: any = null;
   visualizerHeights = signal<number[]>([15, 30, 45, 25, 60, 40, 75, 50, 30, 15]);
   recordedFiles = signal<{ [key: number]: string }>({}); // questionIdx -> base64
 
@@ -1753,7 +2043,22 @@ export class StudentExercisesComponent {
   matchesFound = signal<number>(0);
   gameFinished = signal<boolean>(false);
 
-  vocabGames = signal<VocabGame[]>([]);
+  vocabGamesRaw = signal<VocabGame[]>([]);
+  channelsList = signal<any[]>([]);
+  vocabGames = computed(() => {
+    const gamesList = this.vocabGamesRaw();
+    const chanList = this.channelsList();
+    const user = this.currentUser();
+    if (!user) return [];
+    
+    const myChannelIds = chanList
+      .filter(c => c.members?.includes(user.id) || !c.isPrivate)
+      .map(c => c.id);
+      
+    return gamesList.filter(game => {
+      return !game.assignedGroupId || myChannelIds.includes(game.assignedGroupId);
+    });
+  });
   activeVocabGame = signal<VocabGame | null>(null);
 
   // Flashcards state
@@ -1809,13 +2114,25 @@ export class StudentExercisesComponent {
   gameSuccessRate = signal<number>(0);
 
   constructor() {
-    this.db.observeQuizzes().subscribe(list => this.quizzes.set(list));
+    this.db.observeQuizzes().subscribe(list => {
+      const all = list.filter(q => !q.isOfficialExam);
+      this.quizzes.set(all.filter(q => !q.id.startsWith('placement-test')));
+      this.placementQuizzes.set(all.filter(q => q.id.startsWith('placement-test')));
+    });
     this.db.observeCurrentUser().subscribe(u => {
       this.currentUser.set(u);
       this.loadLeaderboard();
+      if (u) {
+        this.isPlacementExpanded.set(!u.placementTestTaken);
+        if (u.role === 'student' && u.blocked) {
+          this.activeSubTab.set('quizzes');
+        }
+      }
     });
-    this.db.observeVocabGames().subscribe(list => this.vocabGames.set(list));
+    this.db.observeVocabGames().subscribe(list => this.vocabGamesRaw.set(list));
+    this.db.observeChannels().subscribe(list => this.channelsList.set(list));
     this.db.observeExercises().subscribe(list => this.exercises.set(list.filter(e => e.status === 'published')));
+    this.db.observeSubmissions().subscribe(list => this.submissions.set(list));
   }
 
   playSuccessSound() {
@@ -1892,6 +2209,29 @@ export class StudentExercisesComponent {
     return type === 'Oral Practice' ? '#99F6E4' : '#C7D2FE';
   }
 
+  themeColors: Record<string, { border: string; bg: string; text: string }> = {
+    indigo: { border: '#4F46E5', bg: '#EEF2FF', text: '#3730A3' },
+    emerald: { border: '#10B981', bg: '#ECFDF5', text: '#065F46' },
+    amber: { border: '#F59E0B', bg: '#FFFBEB', text: '#B45309' },
+    rose: { border: '#F43F5E', bg: '#FFF1F2', text: '#9F1239' },
+    purple: { border: '#8B5CF6', bg: '#F5F3FF', text: '#6D28D9' }
+  };
+
+  getTheme(color: string | undefined) {
+    return this.themeColors[color || 'indigo'] || this.themeColors['indigo'];
+  }
+
+  getGradient(color?: string): string {
+    const gradients: Record<string, string> = {
+      indigo: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)',
+      emerald: 'linear-gradient(135deg, #34D399 0%, #059669 100%)',
+      amber: 'linear-gradient(135deg, #FBBF24 0%, #D97706 100%)',
+      rose: 'linear-gradient(135deg, #FB7185 0%, #E11D48 100%)',
+      purple: 'linear-gradient(135deg, #A78BFA 0%, #7C3AED 100%)'
+    };
+    return gradients[color || 'indigo'] || gradients['indigo'];
+  }
+
   openExercise(ex: Exercise) {
     this.activeExerciseItem.set(ex);
     this.studentResponse.set('');
@@ -1902,30 +2242,79 @@ export class StudentExercisesComponent {
   }
 
   // --- Exercise Audio Recording ---
-  startExerciseAudioRecording() {
+  async startExerciseAudioRecording() {
     this.exerciseRecordingState.set('recording');
     this.exerciseRecordSeconds.set(0);
     this.exerciseAudioFile.set(null);
-    
-    this.timerInterval = setInterval(() => {
-      this.exerciseRecordSeconds.set(this.exerciseRecordSeconds() + 1);
-    }, 1000);
+    this.audioChunks = [];
 
-    this.animInterval = setInterval(() => {
-      const fresh = this.visualizerHeights().map(() => Math.floor(Math.random() * 70) + 15);
-      this.visualizerHeights.set(fresh);
-    }, 150);
+    try {
+      this.mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      this.mediaRecorder = new MediaRecorder(this.mediaStream);
+      
+      this.mediaRecorder.ondataavailable = (event: any) => {
+        if (event.data.size > 0) {
+          this.audioChunks.push(event.data);
+        }
+      };
+
+      this.mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(this.audioChunks, { type: 'audio/wav' });
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          this.exerciseAudioFile.set(reader.result as string);
+        };
+        reader.readAsDataURL(audioBlob);
+      };
+
+      this.mediaRecorder.start();
+
+      this.timerInterval = setInterval(() => {
+        this.exerciseRecordSeconds.set(this.exerciseRecordSeconds() + 1);
+      }, 1000);
+
+      this.animInterval = setInterval(() => {
+        const fresh = this.visualizerHeights().map(() => Math.floor(Math.random() * 70) + 15);
+        this.visualizerHeights.set(fresh);
+      }, 150);
+
+    } catch (e) {
+      console.warn('Microphone permission blocked or not available. Running simulation...', e);
+      this.timerInterval = setInterval(() => {
+        this.exerciseRecordSeconds.set(this.exerciseRecordSeconds() + 1);
+      }, 1000);
+
+      this.animInterval = setInterval(() => {
+        const fresh = this.visualizerHeights().map(() => Math.floor(Math.random() * 70) + 15);
+        this.visualizerHeights.set(fresh);
+      }, 150);
+    }
   }
 
   stopExerciseAudioRecording() {
+    if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+      this.mediaRecorder.stop();
+    } else {
+      const simulatedAudioData = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
+      this.exerciseAudioFile.set(simulatedAudioData);
+    }
+
+    if (this.mediaStream) {
+      this.mediaStream.getTracks().forEach((track: any) => track.stop());
+    }
+
     clearInterval(this.timerInterval);
     clearInterval(this.animInterval);
     this.exerciseRecordingState.set('finished');
-    const simulatedAudioData = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
-    this.exerciseAudioFile.set(simulatedAudioData);
   }
 
   resetExerciseAudioRecording() {
+    if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+      this.mediaRecorder.stop();
+    }
+    if (this.mediaStream) {
+      this.mediaStream.getTracks().forEach((track: any) => track.stop());
+    }
     clearInterval(this.timerInterval);
     clearInterval(this.animInterval);
     this.exerciseRecordingState.set('idle');
@@ -1934,7 +2323,11 @@ export class StudentExercisesComponent {
   }
 
   playExerciseAudioPlayback() {
-    this.speakWord("Playing back your recorded voice response for the training exercise");
+    const file = this.exerciseAudioFile();
+    if (file) {
+      const audio = new Audio(file);
+      audio.play().catch(err => console.warn('Audio playback failed:', err));
+    }
   }
 
   getYoutubeEmbedUrl(url: string): string {
@@ -1972,11 +2365,19 @@ export class StudentExercisesComponent {
   }
 
   getExerciseLabel(type: string): string {
-    const map: Record<string, string> = {
-      writing: 'Writing', speaking: 'Speaking', listening: 'Listening',
-      translation: 'Translation', pronunciation: 'Pronunciation', vocabulary: 'Vocabulary'
+    const map: Record<string, {fr: string, en: string}> = {
+      writing: { fr: 'Écrit', en: 'Writing' },
+      speaking: { fr: 'Oral', en: 'Speaking' },
+      listening: { fr: 'Écoute', en: 'Listening' },
+      translation: { fr: 'Traduction', en: 'Translation' },
+      pronunciation: { fr: 'Prononciation', en: 'Pronunciation' },
+      vocabulary: { fr: 'Vocabulaire', en: 'Vocabulary' }
     };
-    return map[type] || type;
+    const entry = map[type];
+    if (entry) {
+      return this.t(entry.fr, entry.en);
+    }
+    return type;
   }
 
   async submitExerciseResponse() {
@@ -2002,12 +2403,13 @@ export class StudentExercisesComponent {
 
     const user = this.currentUser();
     if (user) {
-      this.db.updateUserXP(user.id, (ex.points || 20));
+      this.db.updateUserXP(user.id, (ex.points || 20), true);
     }
     await this.db.submitHomework(ex.id, `[Exercise] ${ex.title}`, type, content, ex.points);
   }
 
   startQuiz(quiz: Quiz) {
+    if (this.isQuizDisabled(quiz)) return;
     this.activeQuiz.set(quiz);
     this.activeExercise.set('quiz');
     this.currentQuestionIdx.set(0);
@@ -2017,6 +2419,59 @@ export class StudentExercisesComponent {
     this.quizScore.set(0);
     this.recordedFiles.set({});
     this.resetAudioRecording();
+    // If starting the FIRST placement step, clear accumulated results
+    if (quiz.id.startsWith('placement-test')) {
+      const placements = this.placementQuizzes();
+      if (placements.length > 0 && placements[0].id === quiz.id) {
+        this.placementStepResults.set([]);
+        this.placementAllDone.set(false);
+      }
+    }
+  }
+
+  /** Returns the next placement quiz step after the current one, or null if it's the last step. */
+  nextPlacementQuiz(currentQuiz: Quiz): Quiz | null {
+    const placements = this.placementQuizzes();
+    const idx = placements.findIndex(q => q.id === currentQuiz.id);
+    if (idx === -1 || idx >= placements.length - 1) return null;
+    return placements[idx + 1];
+  }
+
+  isQuizCompleted(quizId: string): boolean {
+    const user = this.currentUser();
+    if (!user) return false;
+    return this.submissions().some(s => s.lessonId === quizId && s.studentId === user.id);
+  }
+
+  isPlacementStepLocked(quiz: Quiz): boolean {
+    const placements = this.placementQuizzes();
+    const idx = placements.findIndex(q => q.id === quiz.id);
+    if (idx <= 0) return false; // First step is always unlocked
+
+    const prevQuiz = placements[idx - 1];
+    return !this.isQuizCompleted(prevQuiz.id);
+  }
+
+  getQuizSubmissionsCount(quizId: string): number {
+    const user = this.currentUser();
+    if (!user) return 0;
+    return this.submissions().filter(s => s.lessonId === quizId && s.studentId === user.id).length;
+  }
+
+  isQuizDeadlinePassed(quiz: Quiz): boolean {
+    if (!quiz.deadline) return false;
+    const now = new Date();
+    const limit = new Date(quiz.deadline);
+    return now > limit;
+  }
+
+  isQuizAttemptsReached(quizId: string): boolean {
+    if (quizId.startsWith('placement-test')) return false;
+    return this.getQuizSubmissionsCount(quizId) >= 4;
+  }
+
+  isQuizDisabled(quiz: Quiz): boolean {
+    return this.isQuizAttemptsReached(quiz.id) || this.isQuizDeadlinePassed(quiz);
   }
 
   startExercise(type: 'quiz' | 'game') {
@@ -2059,6 +2514,7 @@ export class StudentExercisesComponent {
   exitExercise() {
     this.activeExercise.set('list');
     this.activeQuiz.set(null);
+    this.placementAllDone.set(false);
     this.resetAudioRecording();
     this.stopWordTimer();
   }
@@ -2521,8 +2977,7 @@ export class StudentExercisesComponent {
     if (this.currentQuestionIdx() + 1 === quiz.questions.length) {
       const pct = Math.round((this.quizCorrectCount() / quiz.questions.length) * 100);
       this.quizScore.set(pct);
-      this.quizFinished.set(true);
-      
+
       const xp = pct >= 60 ? 50 : 10;
       const user = this.currentUser();
       if (user) {
@@ -2530,39 +2985,115 @@ export class StudentExercisesComponent {
         const quizSummary = `Score: ${pct}% (${this.quizCorrectCount()} / ${quiz.questions.length} correctes). Réponses de l'étudiant: ${JSON.stringify(this.userAnswers())}`;
         this.db.submitHomework(quiz.id, `[Quiz] ${quiz.title}`, 'text', quizSummary, quiz.points || xp);
       }
+
+      // --- Placement test: auto-advance or finalize ---
+      if (quiz.id.startsWith('placement-test')) {
+        // Save this step's result
+        this.placementStepResults.update(results => [
+          ...results,
+          { title: quiz.title, score: pct, correct: this.quizCorrectCount(), total: quiz.questions.length }
+        ]);
+        const next = this.nextPlacementQuiz(quiz);
+        if (next) {
+          // Auto-advance to next step immediately — no intermediate results screen
+          setTimeout(() => this.startQuiz(next), 400);
+          return;
+        } else {
+          // Last step — show global summary
+          this.placementAllDone.set(true);
+          this.quizFinished.set(true);
+          // Mark placement test as completed
+          const u = this.currentUser();
+          if (u) this.db.updateCurrentUserProfile({ placementTestTaken: true, blocked: false });
+        }
+      } else {
+        this.quizFinished.set(true);
+      }
     } else {
       this.currentQuestionIdx.update(i => i + 1);
       this.selectedOption.set(null);
     }
   }
 
-  startAudioRecording() {
+  async startAudioRecording() {
     this.recordingState.set('recording');
     this.recordSeconds.set(0);
-    
-    this.timerInterval = setInterval(() => {
-      this.recordSeconds.set(this.recordSeconds() + 1);
-    }, 1000);
+    this.audioChunks = [];
 
-    this.animInterval = setInterval(() => {
-      const fresh = this.visualizerHeights().map(() => Math.floor(Math.random() * 70) + 15);
-      this.visualizerHeights.set(fresh);
-    }, 150);
+    try {
+      this.mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      this.mediaRecorder = new MediaRecorder(this.mediaStream);
+      
+      this.mediaRecorder.ondataavailable = (event: any) => {
+        if (event.data.size > 0) {
+          this.audioChunks.push(event.data);
+        }
+      };
+
+      this.mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(this.audioChunks, { type: 'audio/wav' });
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64data = reader.result as string;
+          this.recordedFiles.set({
+            ...this.recordedFiles(),
+            [this.currentQuestionIdx()]: base64data
+          });
+        };
+        reader.readAsDataURL(audioBlob);
+      };
+
+      this.mediaRecorder.start();
+
+      this.timerInterval = setInterval(() => {
+        this.recordSeconds.set(this.recordSeconds() + 1);
+      }, 1000);
+
+      this.animInterval = setInterval(() => {
+        const fresh = this.visualizerHeights().map(() => Math.floor(Math.random() * 70) + 15);
+        this.visualizerHeights.set(fresh);
+      }, 150);
+
+    } catch (e) {
+      console.warn('Microphone permission blocked or not available. Running simulation...', e);
+      this.timerInterval = setInterval(() => {
+        this.recordSeconds.set(this.recordSeconds() + 1);
+      }, 1000);
+
+      this.animInterval = setInterval(() => {
+        const fresh = this.visualizerHeights().map(() => Math.floor(Math.random() * 70) + 15);
+        this.visualizerHeights.set(fresh);
+      }, 150);
+    }
   }
 
   stopAudioRecording() {
+    if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+      this.mediaRecorder.stop();
+    } else {
+      const simulatedAudioData = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
+      this.recordedFiles.set({
+        ...this.recordedFiles(),
+        [this.currentQuestionIdx()]: simulatedAudioData
+      });
+    }
+
+    if (this.mediaStream) {
+      this.mediaStream.getTracks().forEach((track: any) => track.stop());
+    }
+
     clearInterval(this.timerInterval);
     clearInterval(this.animInterval);
     this.recordingState.set('finished');
-    
-    const simulatedAudioData = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
-    this.recordedFiles.set({
-      ...this.recordedFiles(),
-      [this.currentQuestionIdx()]: simulatedAudioData
-    });
   }
 
   resetAudioRecording() {
+    if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+      this.mediaRecorder.stop();
+    }
+    if (this.mediaStream) {
+      this.mediaStream.getTracks().forEach((track: any) => track.stop());
+    }
     clearInterval(this.timerInterval);
     clearInterval(this.animInterval);
     this.recordingState.set('idle');
@@ -2577,8 +3108,8 @@ export class StudentExercisesComponent {
     if (this.currentQuestionIdx() + 1 === quiz.questions.length) {
       const user = this.currentUser();
       if (user) {
-        const simulatedPayload = this.recordedFiles()[0] || 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
-        this.db.submitHomework(quiz.id, `[Quiz] ${quiz.title}`, 'audio', simulatedPayload, quiz.points || 50);
+        const payload = this.recordedFiles()[this.currentQuestionIdx()] || 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
+        this.db.submitHomework(quiz.id, `[Quiz] ${quiz.title}`, 'audio', payload, quiz.points || 50);
         this.db.updateUserXP(user.id, 50, true);
       }
       this.quizFinished.set(true);
@@ -2596,7 +3127,11 @@ export class StudentExercisesComponent {
   }
 
   playAudioPlayback() {
-    this.speakWord(`Playing back your recorded voice response for question number ${this.currentQuestionIdx() + 1}`);
+    const file = this.recordedFiles()[this.currentQuestionIdx()];
+    if (file) {
+      const audio = new Audio(file);
+      audio.play().catch(err => console.warn('Audio playback failed:', err));
+    }
   }
 
   formatDuration(sec: number): string {
@@ -2607,6 +3142,23 @@ export class StudentExercisesComponent {
 
   getVisualizerBarHeight(idx: number): number {
     return this.visualizerHeights()[idx] || 15;
+  }
+
+  getWordList(ex: Exercise | null): any[] {
+    if (!ex) return [];
+    return ex.wordList || (ex as any).words || [];
+  }
+
+  getWordString(w: any): string {
+    if (!w) return '';
+    if (typeof w === 'object') return w.word || '';
+    return String(w);
+  }
+
+  getWordTranslation(w: any): string {
+    if (!w) return '';
+    if (typeof w === 'object') return w.translation || '';
+    return '';
   }
 
   speakWord(word: string) {

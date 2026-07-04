@@ -41,13 +41,18 @@ import { DialogService } from '../../services/dialog.service';
 
           <!-- Active Test Modal Dialog (Upgrade to Glassmorphic design) -->
           @if (showPlacementTest()) {
-            <div style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15, 23, 42, 0.4); backdrop-filter: blur(8px); display:flex; justify-content:center; align-items:center; z-index:99999; padding:16px">
-              <div class="card" style="width:100%; max-width:550px; background:#FFF; border-radius:16px; padding:28px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); border: 1px solid var(--border-weak); animation: scaleUp 0.2s ease-out">
+            <div style="position:fixed; inset:0; background:rgba(15, 23, 42, 0.4); backdrop-filter: blur(8px); display:flex; justify-content:center; align-items:center; z-index:99999; padding:16px; overflow:auto">
+              <div class="card" style="width:100%; max-width:550px; background:#FFF; color:var(--text-primary); border-radius:16px; padding:28px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); border: 1px solid var(--border-weak); animation: scaleUp 0.2s ease-out; margin:auto">
                 
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px">
                   <h3 style="font-size:17px; font-weight:800; color:#4F46E5; margin:0; display:flex; align-items:center; gap:8px">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
                     {{ t('Test de Niveau', 'Placement Test') }}
+                    @if (placementQuestions()[currentQuestionIndex()]?.category; as cat) {
+                      <span style="font-size:9.5px; background:#EEF2FF; color:#4F46E5; padding:3px 8px; border-radius:20px; font-weight:800; letter-spacing:0.5px; text-transform:uppercase; margin-left:6px">
+                        {{ cat }}
+                      </span>
+                    }
                   </h3>
                   <div style="display:flex; align-items:center; gap:12px">
                     <span style="font-size:12px; color:var(--text-muted); font-weight:600">Question {{ currentQuestionIndex() + 1 }} sur {{ placementQuestions().length }}</span>
@@ -92,6 +97,28 @@ import { DialogService } from '../../services/dialog.service';
                         (click)="selectAnswer(getOptionLetter(oIdx))">
                         <strong style="color:#4F46E5; margin-right:8px; background:rgba(79, 70, 229, 0.08); width:20px; height:20px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center">{{ getOptionLetter(oIdx) }}</strong> {{ opt }}
                       </button>
+                    }
+                    
+                    @if (q.options && q.options.length === 0) {
+                      <div style="display:flex; flex-direction:column; gap:12px">
+                        @if (q.question.toLowerCase().includes('read') || q.question.toLowerCase().includes('speak') || q.question.toLowerCase().includes('introduce')) {
+                          <div style="background:#ECFDF5; border:1px solid #A7F3D0; padding:12px; border-radius:10px; display:flex; align-items:center; gap:8px">
+                            <span style="font-size:18px">🎙️</span>
+                            <span style="font-size:12.5px; color:#065F46; font-weight:600">{{ t('Exercice Oral — Parlez à voix haute puis écrivez ou résumez votre réponse ci-dessous.', 'Oral Exercise — Speak aloud then type or summarize your answer below.') }}</span>
+                          </div>
+                        } @else {
+                          <div style="background:#F0F9FF; border:1px solid #B9E6FE; padding:12px; border-radius:10px; display:flex; align-items:center; gap:8px">
+                            <span style="font-size:18px">✍️</span>
+                            <span style="font-size:12.5px; color:#0369A1; font-weight:600">{{ t('Exercice Écrit — Rédigez votre réponse ci-dessous.', 'Written Exercise — Type your response below.') }}</span>
+                          </div>
+                        }
+                        <textarea 
+                          [value]="selectedAnswers()[currentQuestionIndex()] || ''"
+                          (input)="selectAnswerText($event)"
+                          [placeholder]="t('Saisissez votre réponse ici...', 'Type your response here...')"
+                          style="width:100%; min-height:120px; padding:12px; border-radius:10px; border:2px solid var(--border); outline:none; font-family:inherit; font-size:13.5px; resize:vertical">
+                        </textarea>
+                      </div>
                     }
                   </div>
                 }
@@ -279,15 +306,15 @@ import { DialogService } from '../../services/dialog.service';
             </p>
           </div>
 
-          <!-- Progress indicator -->
-          <div style="display:flex; align-items:center; gap:12px; background:white; padding:8px 14px; border-radius:10px; border:1px solid #E9D5FF">
-            <div style="text-align:left">
+          <!-- Info indicator -->
+          <div style="display:flex; align-items:center; gap:12px; background:white; padding:10px 14px; border-radius:10px; border:1px solid #E9D5FF; width: 100%">
+            <div style="text-align:left; flex-shrink: 0">
               <span style="font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase">{{ t('Niveau actuel', 'Current level') }}</span>
               <div style="font-size:14px; font-weight:800; color:#8B5CF6">{{ currentUser()?.level || 'A1' }}</div>
             </div>
-            <button class="btn-p" style="background:#8B5CF6; border-color:#8B5CF6; font-size:11.5px; padding:6px 12px; border-radius:6px; font-weight:700" (click)="navigateToProfileCertificates()">
-              {{ t('Mes Certificats', 'My Certificates') }}
-            </button>
+            <div style="font-size:11px; color:#5B21B6; font-weight:600; line-height:1.3; flex:1; text-align:right">
+              💡 {{ t('Les certificats officiels sont remis par votre professeur après validation de vos examens.', 'Official certificates are issued by your teacher after validating your exams.') }}
+            </div>
           </div>
         </div>
       </div>
@@ -495,11 +522,33 @@ export class StudentDashboardComponent {
     });
 
     this.db.observeQuizzes().subscribe(list => {
-      this.quizzes.set(list);
-      const pt = list.find(q => q.id === 'placement-test');
-      if (pt) {
-        this.placementQuestions.set(pt.questions);
-      }
+      this.quizzes.set(list.filter(q => !q.isOfficialExam));
+      const placementQuizzes = list.filter(q => q.id.startsWith('placement-test'));
+      const order = [
+        'placement-test',
+        'placement-test-grammar',
+        'placement-test-vocabulary',
+        'placement-test-listening',
+        'placement-test-translation',
+        'placement-test-pronunciation',
+        'placement-test-speaking'
+      ];
+      placementQuizzes.sort((a, b) => {
+        return order.indexOf(a.id) - order.indexOf(b.id);
+      });
+      
+      const allQuestions: any[] = [];
+      placementQuizzes.forEach(q => {
+        const categoryLabel = q.id === 'placement-test' ? 'General' : q.title.replace(' Level Placement Test', '');
+        q.questions.forEach(quest => {
+          allQuestions.push({
+            ...quest,
+            category: categoryLabel,
+            quizId: q.id
+          });
+        });
+      });
+      this.placementQuestions.set(allQuestions);
     });
 
     this.db.observeAnnouncements().subscribe(() => {
@@ -644,6 +693,14 @@ export class StudentDashboardComponent {
     });
   }
 
+  selectAnswerText(event: any) {
+    const txt = (event.target as HTMLTextAreaElement).value;
+    this.selectedAnswers.set({
+      ...this.selectedAnswers(),
+      [this.currentQuestionIndex()]: txt
+    });
+  }
+
   nextQuestion() {
     if (this.currentQuestionIndex() < this.placementQuestions().length - 1) {
       this.currentQuestionIndex.set(this.currentQuestionIndex() + 1);
@@ -665,23 +722,29 @@ export class StudentDashboardComponent {
     }
   }
 
-  navigateToProfileCertificates() {
-    this.db.openProfileCertificates = true;
-    this.navigateToTab.emit('profile');
-  }
+
 
   submitPlacementTest() {
     const questions = this.placementQuestions();
     const answers = this.selectedAnswers();
     let correctCount = 0;
+    let totalScoreable = 0;
     
     questions.forEach((q, idx) => {
-      if (answers[idx] === q.correctOption) {
-        correctCount++;
+      if (q.options && q.options.length > 0) {
+        totalScoreable++;
+        if (answers[idx] === q.correctOption) {
+          correctCount++;
+        }
+      } else {
+        if (answers[idx] && String(answers[idx]).trim().length > 0) {
+          correctCount++;
+          totalScoreable++;
+        }
       }
     });
 
-    const totalQuestions = questions.length;
+    const totalQuestions = totalScoreable || 1;
     const scorePct = (correctCount / totalQuestions) * 100;
     
     // Calculate level based on score percentage
