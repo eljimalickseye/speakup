@@ -159,6 +159,17 @@ interface ChatMember {
               }
             </div>
           </div>
+          
+          <!-- Topic banner if present -->
+          @if (activeChannelTopic()) {
+            <div style="background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%); border-bottom: 1px solid var(--border-weak); padding: 10px 16px; display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: #3730A3; font-weight: 600; box-shadow: inset 0 -2px 4px rgba(0,0,0,0.02)">
+              <span style="font-size: 16px; line-height: 1">🎯</span>
+              <div style="flex: 1">
+                <span style="text-transform: uppercase; font-size: 9px; letter-spacing: 0.05em; color: #4F46E5; display: block; font-weight: 800; margin-bottom: 2px">Active Mission / Sujet de discussion</span>
+                <span style="color: var(--text-primary)">{{ activeChannelTopic() }}</span>
+              </div>
+            </div>
+          }
 
           <div class="chat-scroll-container" #scrollContainer>
             @for (msg of messages(); track msg.timestamp) {
@@ -1620,8 +1631,14 @@ export class StudentChatComponent implements OnDestroy {
     return (match && match[2].length === 11) ? match[2] : null;
   }
 
+  private safeUrlCache = new Map<string, SafeResourceUrl>();
+
   getSafeYoutubeUrl(id: string): SafeResourceUrl {
-    return this.sanitizer.bypassSecurityTrustResourceUrl(`https://www.youtube.com/embed/${id}?autoplay=1`);
+    if (!this.safeUrlCache.has(id)) {
+      const safe = this.sanitizer.bypassSecurityTrustResourceUrl(`https://www.youtube.com/embed/${id}?autoplay=1`);
+      this.safeUrlCache.set(id, safe);
+    }
+    return this.safeUrlCache.get(id)!;
   }
 
   // ── Image Emoji Reactions ──────────────────────────────────────────────
@@ -1765,6 +1782,11 @@ export class StudentChatComponent implements OnDestroy {
   @ViewChild('scrollContainer') private scrollContainer!: ElementRef;
 
   activeChannel = signal<string>('general');
+  activeChannelTopic = computed(() => {
+    const active = this.activeChannel();
+    const match = this.channels().find(c => c.id === active);
+    return match ? match.topic : undefined;
+  });
   messages = signal<ChatMessage[]>([]);
   newMessageContent = '';
   unreadCounts = signal<{[channelId: string]: number}>({});

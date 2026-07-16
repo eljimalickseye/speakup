@@ -104,6 +104,14 @@ interface GuestCredentials {
                         @if (user.blocked) {
                           <span style="font-size:9px; background:#FEE2E2; color:#EF4444; padding:2px 6px; border-radius:4px; font-weight:700">BLOQUÉ</span>
                         }
+                        @if (user.isPaid) {
+                          <span style="font-size:9px; background:#E6F4EA; color:#137333; padding:2px 6px; border-radius:4px; font-weight:700">💳 EN RÈGLE</span>
+                        } @else {
+                          <span style="font-size:9px; background:#FCE8E6; color:#C5221F; padding:2px 6px; border-radius:4px; font-weight:700">⚠️ IMPAYÉ</span>
+                          @if (user.paymentRemindersActive) {
+                            <span style="font-size:9px; background:#FEF7E0; color:#B06000; padding:2px 6px; border-radius:4px; font-weight:700; animation: pulse-live 2s infinite">🔔 RAPPELS</span>
+                          }
+                        }
                       </div>
                       <div style="font-size:11px; color:var(--text-muted); margin-top:2px">
                         {{ user.level }} · {{ user.role | titlecase }}
@@ -131,6 +139,24 @@ interface GuestCredentials {
                         <option value="B2">Groupe B2 (Upper Int.)</option>
                         <option value="C1">Groupe C1 (Advanced)</option>
                       </select>
+                    }
+
+                    <!-- Payment status controls -->
+                    @if (user.role === 'student' || user.role === 'guest') {
+                      <div style="display:flex; align-items:center; gap:8px; background:rgba(79,70,229,0.05); padding:4px 8px; border-radius:6px; border:1px solid rgba(79,70,229,0.15); height:30px">
+                        <label style="display:flex; align-items:center; gap:4px; font-size:11px; font-weight:700; color:var(--text-primary); cursor:pointer; margin:0">
+                          <input type="checkbox" [checked]="user.isPaid ?? false" (change)="togglePaymentStatus(user)" style="cursor:pointer" />
+                          <span>💳 Payé</span>
+                        </label>
+                        
+                        @if (!user.isPaid) {
+                          <div style="width:1px; height:14px; background:rgba(79,70,229,0.2)"></div>
+                          <label style="display:flex; align-items:center; gap:4px; font-size:11px; font-weight:700; color:#B45309; cursor:pointer; margin:0" title="Activer les rappels de paiement">
+                            <input type="checkbox" [checked]="user.paymentRemindersActive ?? false" (change)="togglePaymentReminders(user)" style="cursor:pointer" />
+                            <span>🔔 Rappels</span>
+                          </label>
+                        }
+                      </div>
                     }
 
                     @if (user.role === 'guest' || user.role === 'student') {
@@ -504,6 +530,24 @@ export class TeacherUserManagementComponent {
           this.dialogService.alert('Supprimée', 'Fiche supprimée avec succès.', 'success');
         });
       }
+    });
+  }
+
+  togglePaymentStatus(user: UserProfile) {
+    const nextVal = !user.isPaid;
+    const updates: Partial<UserProfile> = { isPaid: nextVal };
+    if (nextVal) {
+      updates.paymentRemindersActive = false;
+    }
+    this.db.updateUserProfile(user.id, updates).then(() => {
+      this.dialogService.alert('Paiement mis à jour', `${user.name} est maintenant ${nextVal ? 'en règle (payé)' : 'non réglé'}.`, 'success');
+    });
+  }
+
+  togglePaymentReminders(user: UserProfile) {
+    const nextVal = !user.paymentRemindersActive;
+    this.db.updateUserProfile(user.id, { paymentRemindersActive: nextVal }).then(() => {
+      this.dialogService.alert('Rappels mis à jour', `Les rappels de paiement sont maintenant ${nextVal ? 'activés' : 'désactivés'} pour ${user.name}.`, 'success');
     });
   }
 

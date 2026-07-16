@@ -1,4 +1,5 @@
 import { Component, inject, signal, effect, computed } from '@angular/core';
+import { combineLatest } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { DatabaseService, UserProfile, LiveClass, Submission, Announcement } from '../../services/database.service';
 import { DialogService } from '../../services/dialog.service';
@@ -37,12 +38,15 @@ import { TeacherPaymentsComponent } from '../teacher/payments';
 import { TeacherEventsComponent } from '../teacher/events';
 import { TeacherUserManagementComponent } from '../teacher/user-management';
 import { TeacherResultsComponent } from '../teacher/results';
-import { TeacherVocabGamesComponent } from '../teacher/vocab-games';
 import { TeacherExercisesManagerComponent } from '../teacher/exercises-manager';
-import { TeacherPlacementTestsComponent } from '../teacher/placement-tests';
 import { AdminManagementComponent } from '../admin/admin-management';
 import { NotificationsComponent } from '../shared/notifications';
 import { HistoryLogsComponent } from '../shared/history-logs';
+import { StudentCoachingComponent } from '../student/coaching';
+import { StudentIceBreakerComponent } from '../student/icebreaker';
+import { TeacherCoachingComponent } from '../teacher/coaching';
+import { TeacherWheelGameComponent } from '../teacher/wheel-game';
+import { SidebarComponent } from './sidebar';
 
 @Component({
   selector: 'app-layout',
@@ -82,12 +86,14 @@ import { HistoryLogsComponent } from '../shared/history-logs';
     TeacherEventsComponent,
     TeacherUserManagementComponent,
     TeacherResultsComponent,
-    TeacherVocabGamesComponent,
     TeacherExercisesManagerComponent,
-    TeacherPlacementTestsComponent,
     AdminManagementComponent,
     NotificationsComponent,
-    HistoryLogsComponent
+    HistoryLogsComponent,
+    StudentCoachingComponent, StudentIceBreakerComponent,
+    TeacherCoachingComponent,
+    TeacherWheelGameComponent,
+    SidebarComponent
   ],
   template: `
     @if (currentUser()?.status === 'pending') {
@@ -124,265 +130,40 @@ import { HistoryLogsComponent } from '../shared/history-logs';
       <!-- SIDEBAR BACKDROP (Mobile only) -->
       <div class="sidebar-backdrop" (click)="toggleSidebar(false)"></div>
 
-      <!-- SIDEBAR -->
-      <div class="sidebar">
-        <div class="logo">
-          <img src="logo.png" style="width:28px; height:28px; object-fit:contain; border-radius:6px" alt="logo">
-          <span class="logo-name">SpeakUp</span>
-          @if (currentUser()?.role === 'teacher') {
-            <span class="logo-role">Teacher</span>
-          } @else if (currentUser()?.role === 'admin') {
-            <span class="logo-role" style="background:#EF4444; color:white">Admin</span>
-          }
-        </div>
-        
-        <div class="nav">
-          <!-- STUDENT/GUEST SIDEBAR TABS -->
-          @if (currentUser()?.role === 'student' || currentUser()?.role === 'guest') {
-            <div class="nav-section">{{ t('Apprendre', 'Learn') }}</div>
-            <button class="nav-item" [class.active]="activeTab === 'dashboard'" (click)="setTab('dashboard')"
-                    [style.opacity]="mustTakePlacementTest() ? '0.4' : '1'"
-                    [style.pointer-events]="mustTakePlacementTest() ? 'none' : 'auto'"
-                    [style.cursor]="mustTakePlacementTest() ? 'not-allowed' : 'pointer'">
-              <i class="ti ti-layout-dashboard" aria-hidden="true"></i>{{ t('Tableau de bord', 'Dashboard') }}
-            </button>
-            @if (showGarden()) {
-              <button class="nav-item" [class.active]="activeTab === 'garden'" (click)="setTab('garden')"
-                      [style.opacity]="mustTakePlacementTest() ? '0.4' : '1'"
-                      [style.pointer-events]="mustTakePlacementTest() ? 'none' : 'auto'"
-                      [style.cursor]="mustTakePlacementTest() ? 'not-allowed' : 'pointer'">
-                <i class="ti ti-plant" aria-hidden="true"></i>My Garden
-              </button>
-            }
-            @if (showJourney()) {
-              <button class="nav-item" [class.active]="activeTab === 'journey'" (click)="setTab('journey')"
-                      [style.opacity]="mustTakePlacementTest() ? '0.4' : '1'"
-                      [style.pointer-events]="mustTakePlacementTest() ? 'none' : 'auto'"
-                      [style.cursor]="mustTakePlacementTest() ? 'not-allowed' : 'pointer'">
-                <i class="ti ti-map" aria-hidden="true"></i>SpeakUp Journey
-              </button>
-            }
-            <button class="nav-item" [class.active]="activeTab === 'lessons'" (click)="setTab('lessons')"
-                    [style.opacity]="mustTakePlacementTest() ? '0.4' : '1'"
-                    [style.pointer-events]="mustTakePlacementTest() ? 'none' : 'auto'"
-                    [style.cursor]="mustTakePlacementTest() ? 'not-allowed' : 'pointer'">
-              <i class="ti ti-book" aria-hidden="true"></i>{{ t('Cours & Leçons', 'Lessons') }}
-              @if (newLessonsCount() > 0) {
-                <span class="badge" style="background:#4F46E5; color:white; margin-left:auto">{{ newLessonsCount() }}</span>
-              }
-            </button>
-            <button class="nav-item" [class.active]="activeTab === 'speaking'" [class.hidden]="currentUser()?.role === 'guest'" [disabled]="currentUser()?.role === 'guest'" [class.disabled]="currentUser()?.role === 'guest'" 
-                    [style.opacity]="currentUser()?.role === 'guest' ? '0.5' : (mustTakePlacementTest() ? '0.4' : '1')" 
-                    [style.pointer-events]="currentUser()?.role === 'guest' || mustTakePlacementTest() ? 'none' : 'auto'" 
-                    [style.cursor]="currentUser()?.role === 'guest' || mustTakePlacementTest() ? 'not-allowed' : 'pointer'"
-                    [attr.title]="currentUser()?.role === 'guest' ? 'Unlock with full account' : null" (click)="setTab('speaking')">
-              <i class="ti ti-microphone" aria-hidden="true"></i>{{ t('Pratique Orale', 'Speaking') }}
-            </button>
-            <button class="nav-item" [class.active]="activeTab === 'quizzes'" (click)="setTab('quizzes')"
-                    [style.opacity]="mustTakePlacementTest() ? '0.4' : '1'"
-                    [style.pointer-events]="mustTakePlacementTest() ? 'none' : 'auto'"
-                    [style.cursor]="mustTakePlacementTest() ? 'not-allowed' : 'pointer'">
-              <i class="ti ti-list-check" aria-hidden="true"></i>{{ t('Quiz & Évaluations', 'Quizzes & Tests') }}
-              @if (newQuizzesCount() > 0) {
-                <span class="badge" style="background:#4F46E5; color:white; margin-left:auto">{{ newQuizzesCount() }}</span>
-              }
-            </button>
-            
-            <button class="nav-item" 
-                    [class.active]="activeTab === 'exercises'" 
-                    (click)="setTab('exercises')"
-                    [style.border]="mustTakePlacementTest() ? '1.5px solid #F59E0B' : 'none'"
-                    [style.background]="mustTakePlacementTest() ? '#FFFDF5' : 'transparent'">
-              <i class="ti ti-pencil" aria-hidden="true" [style.color]="mustTakePlacementTest() ? '#D97706' : 'inherit'"></i>
-              <span [style.color]="mustTakePlacementTest() ? '#B45309' : 'inherit'" [style.font-weight]="mustTakePlacementTest() ? '800' : 'normal'">
-                {{ mustTakePlacementTest() ? t('Test de Niveau 🎯', 'Placement Test 🎯') : t('Jeux & Exercices', 'Games & Exercises') }}
-              </span>
-              @if (mustTakePlacementTest()) {
-                <span class="badge" style="background:#D97706; color:white; margin-left:auto; font-size:9.5px; font-weight:800; animation: pulse-live 1.5s infinite">REQ</span>
-              } @else if (newExercisesCount() > 0) {
-                <span class="badge" style="background:#4F46E5; color:white; margin-left:auto">{{ newExercisesCount() }}</span>
-              }
-            </button>
-
-            <button class="nav-item" [class.active]="activeTab === 'dictionary'" (click)="setTab('dictionary')"
-                    [style.opacity]="mustTakePlacementTest() ? '0.4' : '1'"
-                    [style.pointer-events]="mustTakePlacementTest() ? 'none' : 'auto'"
-                    [style.cursor]="mustTakePlacementTest() ? 'not-allowed' : 'pointer'">
-              <i class="ti ti-bookmarks" aria-hidden="true"></i>{{ t('Dictionnaire', 'Dictionary') }}
-            </button>
-            <button class="nav-item" [class.active]="activeTab === 'ebooks'" (click)="setTab('ebooks')"
-                    [style.opacity]="mustTakePlacementTest() ? '0.4' : '1'"
-                    [style.pointer-events]="mustTakePlacementTest() ? 'none' : 'auto'"
-                    [style.cursor]="mustTakePlacementTest() ? 'not-allowed' : 'pointer'">
-              <i class="ti ti-book" aria-hidden="true"></i>{{ t('Bibliothèque (Ebooks)', 'Ebooks Library') }}
-            </button>
-            
-            <div class="nav-section">{{ t('Communauté', 'Community') }}</div>
-            <button class="nav-item" [class.active]="activeTab === 'chat'" (click)="setTab('chat')"
-                    [style.opacity]="mustTakePlacementTest() ? '0.4' : '1'"
-                    [style.pointer-events]="mustTakePlacementTest() ? 'none' : 'auto'"
-                    [style.cursor]="mustTakePlacementTest() ? 'not-allowed' : 'pointer'">
-              <i class="ti ti-messages" aria-hidden="true"></i>{{ t('Chat en Anglais', 'English Chat') }}
-              @if (chatUnreadCount() > 0) {
-                <span class="badge" style="background:#EF4444; color:white; margin-left:auto">{{ chatUnreadCount() }}</span>
-              }
-            </button>
-            @if (showBoutique()) {
-              <button class="nav-item" [class.active]="activeTab === 'marketplace'" (click)="setTab('marketplace')"
-                      [style.opacity]="mustTakePlacementTest() ? '0.4' : '1'"
-                      [style.pointer-events]="mustTakePlacementTest() ? 'none' : 'auto'"
-                      [style.cursor]="mustTakePlacementTest() ? 'not-allowed' : 'pointer'">
-                <i class="ti ti-shopping-cart" aria-hidden="true"></i>Boutique
-              </button>
-            }
-            <button class="nav-item" [class.active]="activeTab === 'leaderboard'" (click)="setTab('leaderboard')"
-                    [style.opacity]="mustTakePlacementTest() ? '0.4' : '1'"
-                    [style.pointer-events]="mustTakePlacementTest() ? 'none' : 'auto'"
-                    [style.cursor]="mustTakePlacementTest() ? 'not-allowed' : 'pointer'">
-              <i class="ti ti-trophy" aria-hidden="true"></i>{{ t('Classement (XP)', 'Leaderboard') }}
-            </button>
-            <button class="nav-item" [class.active]="activeTab === 'events'" (click)="setTab('events')"
-                    [style.opacity]="mustTakePlacementTest() ? '0.4' : '1'"
-                    [style.pointer-events]="mustTakePlacementTest() ? 'none' : 'auto'"
-                    [style.cursor]="mustTakePlacementTest() ? 'not-allowed' : 'pointer'">
-              <i class="ti ti-calendar-event" aria-hidden="true"></i>{{ t('Événements', 'Events') }}
-            </button>
-            <button class="nav-item" [class.active]="activeTab === 'announcements'" (click)="setTab('announcements')"
-                    [style.opacity]="mustTakePlacementTest() ? '0.4' : '1'"
-                    [style.pointer-events]="mustTakePlacementTest() ? 'none' : 'auto'"
-                    [style.cursor]="mustTakePlacementTest() ? 'not-allowed' : 'pointer'">
-              <i class="ti ti-volume" aria-hidden="true"></i>{{ t('Annonces', 'Announcements') }}
-              @if (unreadAnnouncementsCount() > 0) {
-                <span class="badge red" style="background:#EF4444; color:white; margin-left:auto">{{ unreadAnnouncementsCount() }}</span>
-              }
-            </button>
-            
-            <div class="nav-section">{{ t('Cours en direct', 'Live Classes') }}</div>
-            <button class="nav-item" [class.active]="activeTab === 'live-classes'" (click)="setTab('live-classes')">
-              <i class="ti ti-video" aria-hidden="true"></i>{{ t('Classes en Direct', 'Live Classes') }}
-              @if (activeClassAvailable()) {
-                <span class="badge red" style="background:#EF4444; color:white; animation: pulse-live 1.5s infinite">LIVE</span>
-              }
-            </button>
-            
-            <div class="nav-section">{{ t('Progression', 'Progress') }}</div>
-            <button class="nav-item" [class.active]="activeTab === 'history'" (click)="setTab('history')"
-                    [style.opacity]="mustTakePlacementTest() ? '0.4' : '1'"
-                    [style.pointer-events]="mustTakePlacementTest() ? 'none' : 'auto'"
-                    [style.cursor]="mustTakePlacementTest() ? 'not-allowed' : 'pointer'">
-              <i class="ti ti-history" aria-hidden="true"></i>{{ t('Mon Historique', 'My History') }}
-            </button>
-            <button class="nav-item" [class.active]="activeTab === 'exam'" (click)="setTab('exam')"
-                    [style.opacity]="mustTakePlacementTest() ? '0.4' : '1'"
-                    [style.pointer-events]="mustTakePlacementTest() ? 'none' : 'auto'"
-                    [style.cursor]="mustTakePlacementTest() ? 'not-allowed' : 'pointer'">
-              <i class="ti ti-certificate" aria-hidden="true"></i>{{ t('Mode Examen', 'Exam Mode') }}
-              @if (examModeIsNew() || showExamNewBadge()) {
-                <span class="badge" style="background:#4F46E5; color:white; font-size:9px; margin-left:auto">NEW</span>
-              }
-            </button>
-          } @else if (currentUser()?.role === 'admin') {
-            <!-- ADMIN SIDEBAR TABS -->
-            <div class="ns">{{ t('Administration', 'Administration') }}</div>
-            <button class="ni" [class.active]="activeTab === 'admin-management'" (click)="setTab('admin-management')">
-              <i class="ti ti-settings" aria-hidden="true"></i>{{ t('Console Admin', 'Admin Control') }}
-            </button>
-            <button class="ni" [class.active]="activeTab === 'chat'" (click)="setTab('chat')">
-              <i class="ti ti-messages" aria-hidden="true"></i>{{ t('Chat en Anglais', 'English Chat') }}
-            </button>
-            <button class="ni" [class.active]="activeTab === 'announcements'" (click)="setTab('announcements')">
-              <i class="ti ti-speakerphone" aria-hidden="true"></i>{{ t('Annonces', 'Announcements') }}
-            </button>
-            <button class="ni" [class.active]="activeTab === 'system-history'" (click)="setTab('system-history')">
-              <i class="ti ti-history" aria-hidden="true"></i>{{ t('Logs Système', 'System Logs') }}
-            </button>
-          } @else {
-            <!-- TEACHER SIDEBAR TABS -->
-            <div class="ns">{{ t('Vue Générale', 'Overview') }}</div>
-            <button class="ni" [class.active]="activeTab === 'overview'" (click)="setTab('overview')">
-              <i class="ti ti-layout-dashboard" aria-hidden="true"></i>{{ t("Vue d'ensemble", 'Overview') }}
-            </button>
-            <button class="ni" [class.active]="activeTab === 'chat'" (click)="setTab('chat')">
-              <i class="ti ti-messages" aria-hidden="true"></i>{{ t('Chat en Anglais', 'English Chat') }}
-            </button>
-            <button class="ni" [class.active]="activeTab === 'leaderboard'" (click)="setTab('leaderboard')">
-              <i class="ti ti-trophy" aria-hidden="true"></i>{{ t('Classement & Récompenses', 'Leaderboard & Rewards') }}
-            </button>
-            <button class="ni" [class.active]="activeTab === 'students'" (click)="setTab('students')">
-              <i class="ti ti-users" aria-hidden="true"></i>{{ t('Mes Élèves', 'Students') }}
-            </button>
-            
-            <div class="ns">{{ t('Contenus', 'Content') }}</div>
-            <button class="ni" [class.active]="activeTab === 'create-lesson'" (click)="setTab('create-lesson')">
-              <i class="ti ti-book" aria-hidden="true"></i>{{ t('Créer un cours', 'Create Lesson') }}
-            </button>
-            <button class="ni" [class.active]="activeTab === 'create-quiz'" (click)="setTab('create-quiz')">
-              <i class="ti ti-list-check" aria-hidden="true"></i>{{ t('Gérer les Quiz', 'Quiz Builder') }}
-            </button>
-            <button class="ni" [class.active]="activeTab === 'placement-tests'" (click)="setTab('placement-tests')">
-              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
-              {{ t('Test de Niveau', 'Placement Test') }}
-              @if (pendingPlacementCount() > 0) {
-                <span class="badge" style="background:#EEF2FF; color:#4F46E5; font-size:10px; margin-left:auto; font-weight:700">{{ pendingPlacementCount() }}</span>
-              }
-            </button>
-            <button class="ni" [class.active]="activeTab === 'exercises-manager'" (click)="setTab('exercises-manager')">
-              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px;flex-shrink:0"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><polyline points="9 12 11 14 15 10"/><line x1="9" y1="17" x2="15" y2="17"/></svg>{{ t('Gérer les Exercices', 'Exercises Manager') }}
-            </button>
-            <button class="ni" [class.active]="activeTab === 'vocab-games'" (click)="setTab('vocab-games')">
-              <i class="ti ti-cards" aria-hidden="true"></i>{{ t('Jeux de Vocabulaire', 'Vocabulary Games') }}
-              @if (showVocabNewBadge()) {
-                <span class="badge" style="background:#F59E0B; color:#92400E; font-size:9px; margin-left:auto">NEW</span>
-              }
-            </button>
-            <button class="ni" [class.active]="activeTab === 'grade-homework'" (click)="setTab('grade-homework')">
-              <i class="ti ti-writing" aria-hidden="true"></i>{{ t('Corriger les Devoirs', 'Grade Homework') }}
-              @if (pendingHomeworkCount() > 0) {
-                <span class="badge" style="background:#FEE2E2; color:#DC2626">{{ pendingHomeworkCount() }}</span>
-              }
-            </button>
-            <button class="ni" [class.active]="activeTab === 'results'" (click)="setTab('results')">
-              <i class="ti ti-clipboard-data" aria-hidden="true"></i>{{ t('Résultats Élèves', 'Students Results') }}
-              @if (showResultsNewBadge()) {
-                <span class="badge" style="background:#059669; color:white; font-size:9px; margin-left:auto">NEW</span>
-              }
-            </button>
-            <button class="ni" [class.active]="activeTab === 'ebooks'" (click)="setTab('ebooks')">
-              <i class="ti ti-notebook" aria-hidden="true"></i>{{ t('Gérer les Ebooks', 'Manage Ebooks') }}
-            </button>
-            
-            <div class="ns">{{ t('Classes & Directs', 'Classes & Lives') }}</div>
-            <button class="ni" [class.active]="activeTab === 'attendance'" (click)="setTab('attendance')">
-              <i class="ti ti-calendar-check" aria-hidden="true"></i>{{ t('Feuille de Présences', 'Attendance Sheet') }}
-            </button>
-            <button class="ni" [class.active]="activeTab === 'schedule-class'" (click)="setTab('schedule-class')">
-              <i class="ti ti-video" aria-hidden="true"></i>{{ t('Planifier un Direct', 'Schedule Class') }}
-            </button>
-            
-            <div class="ns">{{ t('Administration', 'Administration') }}</div>
-            <button class="ni" [class.active]="activeTab === 'announcements'" (click)="setTab('announcements')">
-              <i class="ti ti-speakerphone" aria-hidden="true"></i>{{ t('Annonces Générales', 'Announcements') }}
-            </button>
-            <button class="ni" [class.active]="activeTab === 'payments'" (click)="setTab('payments')">
-              <i class="ti ti-credit-card" aria-hidden="true"></i>{{ t('Suivi des Paiements', 'Payments Tracker') }}
-            </button>
-            <button class="ni" [class.active]="activeTab === 'teacher-events'" (click)="setTab('teacher-events')">
-              <i class="ti ti-calendar-event" aria-hidden="true"></i>{{ t('Événements', 'Events') }}
-            </button>
-            <button class="ni" [class.active]="activeTab === 'user-management'" (click)="setTab('user-management')">
-              <i class="ti ti-users" aria-hidden="true"></i>{{ t('Utilisateurs & Modération', 'Users & Moderation') }}
-            </button>
-            <button class="ni" [class.active]="activeTab === 'system-history'" (click)="setTab('system-history')">
-              <i class="ti ti-history" aria-hidden="true"></i>{{ t('Logs Système', 'System Logs') }}
-            </button>
-          }
-        </div>
-      </div>
-      
+      <!-- SIDEBAR (Standalone SidebarComponent) -->
+      <app-sidebar
+        [activeTab]="activeTab"
+        [currentUser]="currentUser()"
+        [activeTheme]="activeTheme()"
+        [activeIceBreakerSession]="activeIceBreakerSession()"
+        [activeClassAvailable]="activeClassAvailable()"
+        [newLessonsCount]="newLessonsCount()"
+        [newQuizzesCount]="newQuizzesCount()"
+        [newExercisesCount]="newExercisesCount()"
+        [chatUnreadCount]="chatUnreadCount()"
+        [unreadAnnouncementsCount]="unreadAnnouncementsCount()"
+        [examModeIsNew]="examModeIsNew()"
+        [showExamNewBadge]="showExamNewBadge()"
+        [showResultsNewBadge]="showResultsNewBadge()"
+        [pendingPlacementCount]="pendingPlacementCount()"
+        [pendingCoachingCount]="pendingCoachingCount()"
+        [pendingHomeworkCount]="pendingHomeworkCount()"
+        [showBoutique]="showBoutique()"
+        [showGarden]="showGarden()"
+        [showJourney]="showJourney()"
+        [mustTakePlacementTest]="mustTakePlacementTest()"
+        (tabChange)="setTab($event)"
+        (editProfile)="currentUser()?.role === 'student' ? setTab('profile') : openProfileEditor()"
+      ></app-sidebar>      
       <!-- MAIN CONTAINER -->
       <div class="main">
         <!-- TOPBAR -->
-        <div class="topbar">
+        <div class="topbar" 
+             [style.background]="activeTheme() === 'manga' ? 'url(manga_header_bg.png) center/cover' : (activeTheme() === 'rose' ? 'url(rose_header_bg.png) center/cover' : 'var(--surface-1)')"
+             [style.minHeight]="(activeTheme() === 'manga' || activeTheme() === 'rose') ? '120px' : 'auto'"
+             [style.padding]="(activeTheme() === 'manga' || activeTheme() === 'rose') ? '12px 24px' : '14px 20px'"
+             [style.borderBottom]="activeTheme() === 'manga' ? '2px solid #000' : (activeTheme() === 'rose' ? '2px solid #FBCFE8' : '0.5px solid var(--border)')"
+             style="position:relative; overflow:visible; z-index:150">
           <!-- Hamburger menu button (Mobile only) -->
           <button class="hamburger-btn" (click)="toggleSidebar(true)">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -390,10 +171,87 @@ import { HistoryLogsComponent } from '../shared/history-logs';
             </svg>
           </button>
 
-          <span class="topbar-title">{{ pageTitle }}</span>
+          <div style="display:flex; flex-direction:column; gap:2px; flex:1">
+            <span class="topbar-title" 
+                  [style.fontSize]="activeTheme() === 'manga' ? '22px' : '16px'" 
+                  [style.fontWeight]="activeTheme() === 'manga' ? '900' : '600'" 
+                  [style.color]="activeTheme() === 'manga' ? 'black' : 'var(--text-primary)'"
+                  style="margin:0">{{ pageTitle }}</span>
+            @if (activeTheme() === 'manga') {
+              <span style="font-size:12px; color:#4B5563; font-weight:700">
+                Pratiquez, jouez, progressez en anglais !
+              </span>
+            }
+          </div>
+
+          @if (activeTheme() === 'manga') {
+            <div style="display:flex; align-items:center; gap:8px; margin:0 auto; position:absolute; left:50%; transform:translateX(-50%); bottom:0; height:100px; pointer-events:none">
+              <!-- speech bubble -->
+              <div style="background:white; border:2px solid black; border-radius:30px; padding:6px 14px; position:relative; font-size:11px; font-weight:800; color:black; display:flex; flex-direction:column; align-items:center; box-shadow:3px 3px 0 rgba(0,0,0,0.15)">
+                <span>一緒に頑張ろう！</span>
+                <span style="font-size:9.5px; opacity:0.8">Let's do our best!</span>
+                <div style="position:absolute; right:-6px; top:50%; transform:translateY(-50%) rotate(45deg); width:12px; height:12px; background:white; border-right:2px solid black; border-top:2px solid black"></div>
+              </div>
+              <img src="luffy_chibi.png" style="height:90px; object-fit:contain; margin-bottom: 5px" alt="Luffy">
+            </div>
+          } @else if (activeTheme() === 'rose') {
+            <div style="display:flex; align-items:center; gap:8px; margin:0 auto; position:absolute; left:50%; transform:translateX(-50%); bottom:0; height:100px; pointer-events:none">
+              <!-- speech bubble -->
+              <div style="background:white; border:2px solid #DB2777; border-radius:30px; padding:6px 14px; position:relative; font-size:11px; font-weight:800; color:#BE185D; display:flex; flex-direction:column; align-items:center; box-shadow:3px 3px 0 rgba(219,39,119,0.15)">
+                <span>一緒に頑張ろう！</span>
+                <span style="font-size:9.5px; opacity:0.8; color:#DB2777">Let's do our best!</span>
+                <div style="position:absolute; right:-6px; top:50%; transform:translateY(-50%) rotate(45deg); width:12px; height:12px; background:white; border-right:2px solid #DB2777; border-top:2px solid #DB2777"></div>
+              </div>
+              <img src="pink_girl_chibi.png" style="height:90px; object-fit:contain; margin-bottom: 5px" alt="Pink Chibi">
+            </div>
+          }
           
+          <!-- Custom Theme Switcher Dropdown (Student only, when enabled by teacher) -->
+          @if (currentUser()?.role === 'student' && showThemes()) {
+            <div style="position:relative; margin-right:12px; margin-left:auto">
+              <button (click)="isThemeMenuOpen.set(!isThemeMenuOpen())" 
+                      style="display:flex; align-items:center; gap:6px; background:var(--surface-2); border:1px solid var(--border-weak); padding:6px 12px; border-radius:20px; font-size:12px; font-weight:700; color:var(--text-secondary); cursor:pointer; transition:all 0.2s; outline:none">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                <span>{{ t('Thèmes', 'Themes') }}</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left:2px"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+              
+              <!-- Dropdown Panel -->
+              @if (isThemeMenuOpen()) {
+                <div style="position:absolute; top:36px; right:0; background:var(--surface-1); border:1px solid var(--border-strong); border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.1); padding:8px; display:flex; flex-direction:column; gap:4px; z-index:999; min-width:180px">
+                  
+                  <button (click)="selectTheme('default')" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:none; padding:8px 12px; font-size:12px; font-weight:700; text-align:left; cursor:pointer; border-radius:6px; color:var(--text-primary)" onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background='none'">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    <span>{{ t('Défaut', 'Default') }}</span>
+                  </button>
+
+                  <button (click)="selectTheme('dark')" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:none; padding:8px 12px; font-size:12px; font-weight:700; text-align:left; cursor:pointer; border-radius:6px; color:var(--text-primary)" onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background='none'">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+                    <span>{{ t('Mode Sombre', 'Dark Mode') }}</span>
+                  </button>
+
+                  <button (click)="selectTheme('manga')" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:none; padding:8px 12px; font-size:12px; font-weight:700; text-align:left; cursor:pointer; border-radius:6px; color:var(--text-primary)" onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background='none'">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                    <span>{{ t('Manga / Anime', 'Manga / Anime') }}</span>
+                  </button>
+
+                  <button (click)="selectTheme('rose')" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:none; padding:8px 12px; font-size:12px; font-weight:700; text-align:left; cursor:pointer; border-radius:6px; color:var(--text-primary)" onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background='none'">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#DB2777" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/></svg>
+                    <span>{{ t('Pétales de Rose', 'Rose Petals') }}</span>
+                  </button>
+
+                  <button (click)="selectTheme('faith')" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:none; padding:8px 12px; font-size:12px; font-weight:700; text-align:left; cursor:pointer; border-radius:6px; color:var(--text-primary)" onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background='none'">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/><path d="M19 3v4M21 5h-4"/></svg>
+                    <span>{{ t('Emerald Faith', 'Emerald Faith') }}</span>
+                  </button>
+                  
+                </div>
+              }
+            </div>
+          }
+
           <!-- Language Switcher Toggle -->
-          <div style="display:flex; align-items:center; gap:4px; margin-left:auto; margin-right:12px; background:var(--surface-2); padding:3px; border-radius:12px; border:1px solid var(--border-weak)">
+          <div style="display:flex; align-items:center; gap:4px; margin-right:12px; background:var(--surface-2); padding:3px; border-radius:12px; border:1px solid var(--border-weak)" [style.marginLeft]="currentUser()?.role === 'student' ? '0' : 'auto'">
             <button (click)="db.setLanguage('fr')" 
                     style="border:none; background:transparent; padding:4px 8px; border-radius:8px; font-size:11px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s"
                     [style.background]="db.activeLang() === 'fr' ? '#4F46E5' : 'transparent'"
@@ -445,30 +303,50 @@ import { HistoryLogsComponent } from '../shared/history-logs';
         
         <!-- CONTENT VIEWPORT -->
         <div class="content">
-          <!-- ── PERSISTENT LIVE BANNER (student only, when live is active) ── -->
-          @if (currentUser()?.role === 'student' && activeClassAvailable() && !activeJitsiCall()) {
-            @let activeLive = getActiveLiveClass();
-            @if (activeLive) {
-              <div style="background:linear-gradient(135deg,#EF4444,#DC2626); color:white; padding:10px 20px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-shrink:0; box-shadow:0 4px 12px rgba(239,68,68,0.4); z-index:100; position:sticky; top:0"
-                   style="animation: slideDown 0.3s ease-out">
-                <div style="display:flex; align-items:center; gap:12px">
-                  <div style="width:10px; height:10px; border-radius:50%; background:white; animation:pulse-live 1.5s infinite; flex-shrink:0"></div>
-                  <div>
-                    <div style="font-size:13px; font-weight:800">🎥 {{ t('Cours en direct en cours !','Live Class in Progress!') }}</div>
-                    <div style="font-size:11px; opacity:0.9">{{ activeLive.title }} — {{ t('Rejoignez maintenant','Join now') }}</div>
+          <!-- Sticky Banners Container -->
+          <div style="position:sticky; top:0; z-index:110; display:flex; flex-direction:column; gap:2px; flex-shrink:0">
+            <!-- ── PERSISTENT LIVE BANNER (student only, when live is active) ── -->
+            @if (currentUser()?.role === 'student' && activeClassAvailable() && !activeJitsiCall()) {
+              @let activeLive = getActiveLiveClass();
+              @if (activeLive) {
+                <div style="background:linear-gradient(135deg,#EF4444,#DC2626); color:white; padding:10px 20px; display:flex; align-items:center; justify-content:space-between; gap:12px; box-shadow:0 4px 12px rgba(239,68,68,0.4)"
+                     style="animation: slideDown 0.3s ease-out">
+                  <div style="display:flex; align-items:center; gap:12px">
+                    <div style="width:10px; height:10px; border-radius:50%; background:white; animation:pulse-live 1.5s infinite; flex-shrink:0"></div>
+                    <div>
+                      <div style="font-size:13px; font-weight:800">🎥 {{ t('Cours en direct en cours !','Live Class in Progress!') }}</div>
+                      <div style="font-size:11px; opacity:0.9">{{ activeLive.title }} — {{ t('Rejoignez maintenant','Join now') }}</div>
+                    </div>
+                  </div>
+                  <div style="display:flex; align-items:center; gap:8px">
+                    <button (click)="joinActiveLive(activeLive)"
+                            style="background:white; color:#DC2626; border:none; border-radius:8px; font-size:12px; font-weight:800; padding:7px 18px; cursor:pointer; display:flex; align-items:center; gap:6px; transition:all 0.2s"
+                            onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                      {{ t('Rejoindre le live','Join Live') }}
+                    </button>
                   </div>
                 </div>
-                <div style="display:flex; align-items:center; gap:8px">
-                  <button (click)="joinActiveLive(activeLive)"
-                          style="background:white; color:#DC2626; border:none; border-radius:8px; font-size:12px; font-weight:800; padding:7px 18px; cursor:pointer; display:flex; align-items:center; gap:6px; transition:all 0.2s"
-                          onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-                    {{ t('Rejoindre le live','Join Live') }}
-                  </button>
+              }
+            }
+
+            <!-- ── PERSISTENT PAYMENT REMINDER BANNER ── -->
+            @if (currentUser()?.role === 'student' && !currentUser()?.isPaid && currentUser()?.paymentRemindersActive) {
+              <div style="background:linear-gradient(135deg,#F59E0B,#D97706); color:white; padding:10px 20px; display:flex; align-items:center; justify-content:space-between; gap:12px; box-shadow:0 4px 12px rgba(217,119,6,0.3)"
+                   style="animation: slideDown 0.3s ease-out">
+                <div style="display:flex; align-items:center; gap:12px">
+                  <div style="font-size:18px; flex-shrink:0">🔔</div>
+                  <div>
+                    <div style="font-size:13px; font-weight:800">{{ t('Rappel de Paiement','Payment Reminder') }}</div>
+                    <div style="font-size:11px; opacity:0.95">
+                      {{ t('Bonjour ' + currentUser()?.name + ', veuillez régulariser votre compte en réglant vos frais d\'inscription ou votre mensualité. Merci !',
+                             'Hello ' + currentUser()?.name + ', please settle your registration fee or monthly tuition to keep your account active. Thank you!') }}
+                    </div>
+                  </div>
                 </div>
               </div>
             }
-          }
+          </div>
           <!-- Student/Guest Views -->
           @if (currentUser()?.role === 'student' || currentUser()?.role === 'guest') {
             @if (activeTab === 'dashboard') {
@@ -509,6 +387,10 @@ import { HistoryLogsComponent } from '../shared/history-logs';
               <app-student-history></app-student-history>
             } @else if (activeTab === 'exam') {
               <app-student-exam></app-student-exam>
+            } @else if (activeTab === 'coaching') {
+              <app-student-coaching></app-student-coaching>
+            } @else if (activeTab === 'ice-breaker') {
+              <app-student-icebreaker></app-student-icebreaker>
             }
           }
           
@@ -537,10 +419,12 @@ import { HistoryLogsComponent } from '../shared/history-logs';
               <app-teacher-quizzes></app-teacher-quizzes>
             } @else if (activeTab === 'exercises-manager') {
               <app-teacher-exercises-manager></app-teacher-exercises-manager>
-            } @else if (activeTab === 'placement-tests') {
-              <app-teacher-placement-tests></app-teacher-placement-tests>
-            } @else if (activeTab === 'vocab-games') {
-              <app-teacher-vocab-games></app-teacher-vocab-games>
+
+            } @else if (activeTab === 'teacher-coaching') {
+              <app-teacher-coaching></app-teacher-coaching>
+            } @else if (activeTab === 'wheel-game') {
+              <app-teacher-wheel-game></app-teacher-wheel-game>
+
             } @else if (activeTab === 'grade-homework') {
               <app-teacher-homework></app-teacher-homework>
             } @else if (activeTab === 'results') {
@@ -729,6 +613,307 @@ import { HistoryLogsComponent } from '../shared/history-logs';
 
 
 
+      <!-- FLOATING HELP GUIDE TRIGGER BUTTON -->
+      <div style="position:fixed; bottom:20px; right:20px; z-index:999; display:flex; align-items:center; gap:8px">
+        <button (click)="openHelpGuide()" 
+                style="width:52px; height:52px; border-radius:50%; background:linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%); border:none; color:white; font-size:22px; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 30px rgba(79,70,229,0.35); transition:all 0.3s ease; border:2px solid rgba(255,255,255,0.15)"
+                onmouseover="this.style.transform = 'scale(1.08) translateY(-3px)'; this.style.boxShadow = '0 12px 35px rgba(79,70,229,0.45)'"
+                onmouseout="this.style.transform = 'scale(1) translateY(0)'; this.style.boxShadow = '0 8px 30px rgba(79,70,229,0.35)'"
+                title="Guide d'utilisation / Tutorial Guide">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A5 5 0 0 0 8 8c0 1 .3 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
+        </button>
+      </div>
+
+      <!-- ONBOARDING GUIDE MODAL OVERLAY -->
+      @if (showHelpGuide()) {
+        <div class="modal-overlay" style="z-index:10000; background:rgba(15, 23, 42, 0.6); backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center" (click)="showHelpGuide.set(false)">
+          <div class="modal-card" style="width:100%; max-width:850px; background:#FFF; border-radius:16px; padding:0; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); border:1px solid rgba(226,232,240,0.8); display:flex; flex-direction:column; max-height:90vh; animation: scaleUp 0.25s ease-out" (click)="$event.stopPropagation()">
+            
+            <!-- Header banner with logo -->
+            <div style="background:linear-gradient(135deg, #1E1B4B 0%, #311042 100%); padding:24px 28px; color:white; position:relative; display:flex; justify-content:space-between; align-items:center">
+              <div>
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px">
+                  <span style="background:rgba(255,255,255,0.15); font-size:13px; padding:4px 12px; border-radius:30px; font-weight:800; border:1px solid rgba(255,255,255,0.2); display:inline-flex; align-items:center; gap:6px">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A5 5 0 0 0 8 8c0 1 .3 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
+                    Guide & Tutoriel
+                  </span>
+                  <span style="font-size:11px; background:#10B981; color:white; padding:2px 8px; border-radius:20px; font-weight:700">Nouveau</span>
+                </div>
+                <h2 style="font-size:20px; font-weight:800; margin:0; color:#F8FAFC">Bienvenue sur la plateforme SpeakUp !</h2>
+                <p style="font-size:12.5px; color:#C7D2FE; margin:4px 0 0 0">Découvrez comment utiliser au mieux votre plateforme interactive.</p>
+              </div>
+              <button (click)="showHelpGuide.set(false)" style="background:rgba(255,255,255,0.1); border:none; color:white; width:36px; height:36px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background 0.2s" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+                <i class="ti ti-x" style="font-size:18px"></i>
+              </button>
+            </div>
+
+            <!-- Tab Row -->
+            <div style="display:flex; background:#F8FAFC; border-bottom:1px solid #E2E8F0; padding:0 24px">
+              <button (click)="helpGuideTab.set('welcome')" [style.border-bottom]="helpGuideTab() === 'welcome' ? '3px solid #4F46E5' : '3px solid transparent'" [style.color]="helpGuideTab() === 'welcome' ? '#4F46E5' : '#64748B'" style="padding:14px 20px; font-weight:700; font-size:13px; background:none; border:none; cursor:pointer; transition:all 0.15s; display:inline-flex; align-items:center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                Bienvenue
+              </button>
+              <button (click)="helpGuideTab.set('student')" [style.border-bottom]="helpGuideTab() === 'student' ? '3px solid #4F46E5' : '3px solid transparent'" [style.color]="helpGuideTab() === 'student' ? '#4F46E5' : '#64748B'" style="padding:14px 20px; font-weight:700; font-size:13px; background:none; border:none; cursor:pointer; transition:all 0.15s; display:inline-flex; align-items:center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"/></svg>
+                Guide Étudiant
+              </button>
+              <button (click)="helpGuideTab.set('teacher')" [style.border-bottom]="helpGuideTab() === 'teacher' ? '3px solid #4F46E5' : '3px solid transparent'" [style.color]="helpGuideTab() === 'teacher' ? '#4F46E5' : '#64748B'" style="padding:14px 20px; font-weight:700; font-size:13px; background:none; border:none; cursor:pointer; transition:all 0.15s; display:inline-flex; align-items:center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><path d="M12 22v-4"/><path d="m17 18-5 4-5-4"/><path d="M2 10h20"/><path d="M20 18H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2z"/></svg>
+                Guide Enseignant
+              </button>
+              <button (click)="helpGuideTab.set('homework')" [style.border-bottom]="helpGuideTab() === 'homework' ? '3px solid #4F46E5' : '3px solid transparent'" [style.color]="helpGuideTab() === 'homework' ? '#4F46E5' : '#64748B'" style="padding:14px 20px; font-weight:700; font-size:13px; background:none; border:none; cursor:pointer; transition:all 0.15s; display:inline-flex; align-items:center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                Focus Devoirs & Corrections
+              </button>
+            </div>
+
+            <!-- Content Area (Scrollable) -->
+            <div style="flex:1; overflow-y:auto; padding:28px 32px; background:#FFF; box-sizing:border-box">
+              
+              <!-- Tab 1: Bienvenue -->
+              @if (helpGuideTab() === 'welcome') {
+                <div style="display:flex; flex-direction:column; gap:20px">
+                  <div style="display:grid; grid-template-columns: 1fr 1.2fr; gap:24px; align-items:center">
+                    <div style="text-align:center; padding:16px; background:#EEF2FF; border-radius:12px; border:1px dashed #C7D2FE; display:flex; flex-direction:column; align-items:center">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#EC4899" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:12px"><path d="M4.5 16.5c-1.5 1.25-2.5 3.5-2.5 3.5s2.25-1 3.5-2.5M14 2 2 14M9 15l-3 3M15 9l-3 3M13 3l8 8-2 2-8-8z"/><path d="M9 15c-1.5-1.5-2.5-3.5-2.5-3.5s2.25 1 3.5 2.5"/><path d="m19 5-4-4"/></svg>
+                      <h4 style="font-size:16px; font-weight:800; color:#1E3A8A; margin:0">Décollage immédiat</h4>
+                      <p style="font-size:11.5px; color:#4F46E5; margin:6px 0 0 0">SpeakUp simplifie l'apprentissage de l'anglais grâce à des cours interactifs et un suivi intelligent.</p>
+                    </div>
+                    <div>
+                      <h3 style="font-size:18px; font-weight:800; color:#1E293B; margin:0 0 10px 0">Qu'est-ce que SpeakUp ?</h3>
+                      <p style="font-size:13.5px; color:#475569; line-height:1.6; margin:0 0 12px 0">
+                        SpeakUp est une plateforme tout-en-un conçue pour rapprocher les élèves et les enseignants. Elle combine des outils de visioconférence intégrés (Live), une messagerie en direct, des modules de quiz, des bibliothèques d'Ebooks et des outils de correction avancés.
+                      </p>
+                      <p style="font-size:13px; font-weight:700; color:#4F46E5; margin:0">
+                        👉 Choisissez un onglet ci-dessus pour découvrir les guides détaillés par rôle.
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div style="border-top:1px solid #E2E8F0; padding-top:20px">
+                    <h4 style="font-size:14px; font-weight:800; color:#1E293B; margin:0 0 12px 0; display:inline-flex; align-items:center; gap:6px">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FBBF24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A5 5 0 0 0 8 8c0 1 .3 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
+                      Raccourcis & Astuces Globales :
+                    </h4>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px">
+                      <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:16px">
+                        <strong style="font-size:12.5px; color:#1E293B; display:inline-flex; align-items:center; gap:6px; margin-bottom:4px">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+                          Traduction instantanée
+                        </strong>
+                        <p style="font-size:11.5px; color:#64748B; margin:4px 0 0 0; line-height:1.4">Basculez à tout moment la langue de la plateforme entre Français (FR) et Anglais (EN) via les boutons du menu haut.</p>
+                      </div>
+                      <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:16px">
+                        <strong style="font-size:12.5px; color:#1E293B; display:inline-flex; align-items:center; gap:6px; margin-bottom:4px">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+                          Alertes en direct
+                        </strong>
+                        <p style="font-size:11.5px; color:#64748B; margin:4px 0 0 0; line-height:1.4">Cliquez sur la cloche de notification pour accéder instantanément aux derniers cours planifiés ou devoirs corrigés.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              }
+
+              <!-- Tab 2: Guide Étudiant -->
+              @if (helpGuideTab() === 'student') {
+                <div style="display:flex; flex-direction:column; gap:20px">
+                  <h3 style="font-size:16px; font-weight:800; color:#1E293B; margin:0">🎓 Guide pour l'Étudiant</h3>
+                  
+                  <div style="display:flex; flex-direction:column; gap:16px">
+                    <div style="display:flex; gap:14px; align-items:flex-start">
+                      <div style="width:32px; height:32px; border-radius:50%; background:#ECFDF5; color:#059669; display:flex; align-items:center; justify-content:center; flex-shrink:0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5v-15z"/></svg>
+                      </div>
+                      <div>
+                        <strong style="font-size:13.5px; color:#1E293B">1. Suivre les Cours & Devoirs</strong>
+                        <p style="font-size:12px; color:#64748B; margin:4px 0 0 0; line-height:1.5">Consultez l'onglet **Cours & Leçons** pour lire vos leçons quotidiennes. En bas de chaque leçon, faites vos exercices et devoirs (par texte, audio ou vidéo) et cliquez sur Soumettre.</p>
+                      </div>
+                    </div>
+
+                    <div style="display:flex; gap:14px; align-items:flex-start">
+                      <div style="width:32px; height:32px; border-radius:50%; background:#ECFDF5; color:#059669; display:flex; align-items:center; justify-content:center; flex-shrink:0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="15" y1="13" x2="15.01" y2="13"/><line x1="18" y1="11" x2="18.01" y2="11"/><rect x="2" y="6" width="20" height="12" rx="3"/></svg>
+                      </div>
+                      <div>
+                        <strong style="font-size:13.5px; color:#1E293B">2. S'exercer de manière ludique</strong>
+                        <p style="font-size:12px; color:#64748B; margin:4px 0 0 0; line-height:1.5">Allez dans **Jeux & Exercices** pour vous entraîner avec les différents types d'activités (Expression Orale, Écriture, Traduction, Prononciation, Quiz chronométrés).</p>
+                      </div>
+                    </div>
+
+                    <div style="display:flex; gap:14px; align-items:flex-start">
+                      <div style="width:32px; height:32px; border-radius:50%; background:#ECFDF5; color:#059669; display:flex; align-items:center; justify-content:center; flex-shrink:0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m22 8-6 4 6 4V8Z"/><rect x="2" y="6" width="14" height="12" rx="2" ry="2"/></svg>
+                      </div>
+                      <div>
+                        <strong style="font-size:13.5px; color:#1E293B">3. Rejoindre un cours en direct</strong>
+                        <p style="font-size:12px; color:#64748B; margin:4px 0 0 0; line-height:1.5">Quand votre professeur démarre un cours en direct, une notification ainsi qu'une **bannière flottante violette** apparaissent. Cliquez sur "Rejoindre" pour participer instantanément à la réunion Jitsi-Meet intégrée.</p>
+                      </div>
+                    </div>
+
+                    <div style="display:flex; gap:14px; align-items:flex-start">
+                      <div style="width:32px; height:32px; border-radius:50%; background:#ECFDF5; color:#059669; display:flex; align-items:center; justify-content:center; flex-shrink:0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34"/><path d="M12 2a6 6 0 0 1 6 6c0 3.3-2 6-6 6s-6-2.7-6-6a6 6 0 0 1 6-6Z"/></svg>
+                      </div>
+                      <div>
+                        <strong style="font-size:13.5px; color:#1E293B">4. Gagner des XP & Progresser</strong>
+                        <p style="font-size:12px; color:#64748B; margin:4px 0 0 0; line-height:1.5">Chaque quiz et exercice résolu vous rapporte des points d'expérience (XP). Suivez votre progression dans le **Tableau de bord** ou comparez-vous avec vos camarades dans le **Classement (XP)**.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              }
+
+              <!-- Tab 3: Guide Enseignant -->
+              @if (helpGuideTab() === 'teacher') {
+                <div style="display:flex; flex-direction:column; gap:20px">
+                  <h3 style="font-size:16px; font-weight:800; color:#1E293B; margin:0">🏫 Guide pour l'Enseignant</h3>
+                  
+                  <div style="display:flex; flex-direction:column; gap:16px">
+                    <div style="display:flex; gap:14px; align-items:flex-start">
+                      <div style="width:32px; height:32px; border-radius:50%; background:#EFF6FF; color:#1D4ED8; display:flex; align-items:center; justify-content:center; flex-shrink:0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                      </div>
+                      <div>
+                        <strong style="font-size:13.5px; color:#1E293B">1. Créer des Cours & Devoirs immersifs</strong>
+                        <p style="font-size:12px; color:#64748B; margin:4px 0 0 0; line-height:1.5">Utilisez l'éditeur canvas plein écran de l'onglet **Create Lesson** ou **Manage Ebooks** pour concevoir des cours structurés avec des toolbar de formatage riche, des pièces jointes, et des vidéos YouTube associées.</p>
+                      </div>
+                    </div>
+
+                    <div style="display:flex; gap:14px; align-items:flex-start">
+                      <div style="width:32px; height:32px; border-radius:50%; background:#EFF6FF; color:#1D4ED8; display:flex; align-items:center; justify-content:center; flex-shrink:0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><circle cx="12" cy="14" r="2"/></svg>
+                      </div>
+                      <div>
+                        <strong style="font-size:13.5px; color:#1E293B">2. Planifier des Classes & Gérer les Directs</strong>
+                        <p style="font-size:12px; color:#64748B; margin:4px 0 0 0; line-height:1.5">Dans l'onglet **Analytics & Classes**, planifiez des cours en direct. Le système vous alerte automatiquement en cas de conflit d'horaires. Cliquez sur le bouton "Start Live" pour lancer le direct et notifier instantanément tous les élèves.</p>
+                      </div>
+                    </div>
+
+                    <div style="display:flex; gap:14px; align-items:flex-start">
+                      <div style="width:32px; height:32px; border-radius:50%; background:#EFF6FF; color:#1D4ED8; display:flex; align-items:center; justify-content:center; flex-shrink:0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                      </div>
+                      <div>
+                        <strong style="font-size:13.5px; color:#1E293B">3. Gérer la Présence & les Résultats</strong>
+                        <p style="font-size:12px; color:#64748B; margin:4px 0 0 0; line-height:1.5">Utilisez la **Feuille d'émargement (Attendance Sheet)** pour noter les présences d'un clic, et l'onglet **Students Results** pour analyser le taux de réussite global et individuel de vos élèves.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              }
+
+              <!-- Tab 4: Focus Devoirs -->
+              @if (helpGuideTab() === 'homework') {
+                <div style="display:flex; flex-direction:column; gap:20px">
+                  <div style="background:linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%); border:1px solid #C7D2FE; border-radius:12px; padding:18px; display:flex; gap:14px; align-items:center; box-shadow:0 4px 6px -1px rgba(0,0,0,0.05)">
+                    <div style="width:40px; height:40px; border-radius:10px; background:#4F46E5; display:flex; align-items:center; justify-content:center; color:white; flex-shrink:0">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                    </div>
+                    <div>
+                      <h4 style="font-size:14.5px; font-weight:800; color:#1E1B4B; margin:0">Focus : Correction Interactive & Orientations</h4>
+                      <p style="font-size:12px; color:#4338CA; margin:4px 0 0 0; line-height:1.4">Découvrez les nouveaux outils haut de gamme intégrés pour annoter et guider le travail de vos élèves en quelques clics.</p>
+                    </div>
+                  </div>
+
+                  <!-- Simulated Toolbar Widget to show off the tools -->
+                  <div style="background:#FFF; border:1px solid #E2E8F0; border-radius:12px; padding:16px; box-shadow:0 2px 8px rgba(0,0,0,0.04)">
+                    <div style="font-size:11px; font-weight:800; color:#64748B; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:12px; display:flex; align-items:center; gap:6px">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                      Outils de correction à votre disposition (Surlignage)
+                    </div>
+                    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px">
+                      
+                      <!-- Tool 1: Correct -->
+                      <div style="background:#F0FDF4; border:1px solid #DCFCE7; border-radius:8px; padding:10px 12px; display:flex; align-items:center; gap:8px">
+                        <div style="width:24px; height:24px; border-radius:50%; background:#22C55E; color:white; display:flex; align-items:center; justify-content:center; flex-shrink:0">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        </div>
+                        <div>
+                          <div style="font-size:12px; font-weight:800; color:#14532D">1. Correct / Très bien</div>
+                          <div style="font-size:10.5px; color:#166534; margin-top:2px">Surligne le mot en vert (Félicitations).</div>
+                        </div>
+                      </div>
+
+                      <!-- Tool 2: Mistake -->
+                      <div style="background:#FEF2F2; border:1px solid #FEE2E2; border-radius:8px; padding:10px 12px; display:flex; align-items:center; gap:8px">
+                        <div style="width:24px; height:24px; border-radius:50%; background:#EF4444; color:white; display:flex; align-items:center; justify-content:center; flex-shrink:0">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </div>
+                        <div>
+                          <div style="font-size:12px; font-weight:800; color:#7F1D1D">2. Faute & Remplacement</div>
+                          <div style="font-size:10.5px; color:#991B1B; margin-top:2px">Surligne en rouge et affiche la correction.</div>
+                        </div>
+                      </div>
+
+                      <!-- Tool 3: Orientation -->
+                      <div style="background:#EFF6FF; border:1px solid #DBEAFE; border-radius:8px; padding:10px 12px; display:flex; align-items:center; gap:8px">
+                        <div style="width:24px; height:24px; border-radius:50%; background:#3B82F6; color:white; display:flex; align-items:center; justify-content:center; flex-shrink:0">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
+                        </div>
+                        <div>
+                          <div style="font-size:12px; font-weight:800; color:#1E3A8A">3. Orientation & Conseil</div>
+                          <div style="font-size:10.5px; color:#1E40AF; margin-top:2px">Surligne en bleu et intègre des conseils.</div>
+                        </div>
+                      </div>
+
+                      <!-- Tool 4: Clear -->
+                      <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:10px 12px; display:flex; align-items:center; gap:8px">
+                        <div style="width:24px; height:24px; border-radius:50%; background:#94A3B8; color:white; display:flex; align-items:center; justify-content:center; flex-shrink:0">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                        </div>
+                        <div>
+                          <div style="font-size:12px; font-weight:800; color:#334155">4. Effacer le marquage</div>
+                          <div style="font-size:10.5px; color:#475569; margin-top:2px">Retire le surlignage du mot sélectionné.</div>
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+
+                  <!-- Quick explanations cards -->
+                  <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px">
+                    <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:14px">
+                      <div style="font-size:12.5px; font-weight:800; color:#0F172A; display:flex; align-items:center; gap:6px; margin-bottom:8px">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        Comment ça marche ?
+                      </div>
+                      <p style="font-size:11.5px; color:#475569; margin:0 0 8px 0; line-height:1.5"><strong>Cliquez sur n'importe quel mot</strong> dans la réponse textuelle de l'élève pour faire apparaître la barre d'édition ci-dessus.</p>
+                      <p style="font-size:11.5px; color:#475569; margin:0; line-height:1.5">Les annotations de couleur s'enregistrent automatiquement et s'affichent sous forme de fiches d'analyse interactives sur le profil de l'étudiant.</p>
+                    </div>
+
+                    <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:14px">
+                      <div style="font-size:12.5px; font-weight:800; color:#0F172A; display:flex; align-items:center; gap:6px; margin-bottom:8px">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                        Outils de productivité
+                      </div>
+                      <ul style="font-size:11px; color:#475569; padding-left:14px; margin:0; line-height:1.6">
+                        <li><strong>Aérer / Formater</strong> : Insère des retours à la ligne intelligents pour structurer les réponses de l'élève.</li>
+                        <li><strong>Repères Temporels (Timestamps)</strong> : Insérez un tag <code>📍 [Audio à 0:12]</code> d'un clic pour pointer la prononciation précise.</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              }
+
+            </div>
+
+            <!-- Footer actions -->
+            <div style="background:#F8FAFC; border-top:1px solid #E2E8F0; padding:16px 24px; display:flex; justify-content:space-between; align-items:center">
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:12px; color:#64748B">
+                <input type="checkbox" [checked]="dontShowAgain()" (change)="toggleDontShowAgainPreference($event)" />
+                <span>Ne plus afficher automatiquement au démarrage</span>
+              </label>
+              
+              <button class="btn-p" (click)="showHelpGuide.set(false)" style="padding:8px 20px; border-radius:8px; cursor:pointer; font-weight:700">
+                J'ai compris !
+              </button>
+            </div>
+
+          </div>
+        </div>
+      }
+
       <!-- GLOBAL JITSI MEET fullscreen OVERLAY -->
       @if (activeJitsiCall(); as call) {
         <div style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:#0B0F19; z-index:9999; display:flex; flex-direction:column">
@@ -890,6 +1075,11 @@ export class LayoutComponent {
   public db = inject(DatabaseService);
   public dialogService = inject(DialogService);
 
+  // Onboarding Help Guide signals
+  showHelpGuide = signal<boolean>(false);
+  helpGuideTab = signal<'welcome' | 'student' | 'teacher' | 'homework'>('welcome');
+  dontShowAgain = signal<boolean>(false);
+
   currentUser = signal<UserProfile | null>(null);
   allUsers = signal<UserProfile[]>([]);
 
@@ -897,9 +1087,12 @@ export class LayoutComponent {
     return this.allUsers().filter(u => u.placementTestTaken === true && (u.role === 'student' || u.role === 'guest')).length;
   });
 
+  pendingCoachingCount = computed(() => {
+    return this.allUsers().filter(u => u.role === 'student' && u.privateCoachingRequested === true && u.isPrivateCoaching !== true).length;
+  });
+
   mustTakePlacementTest = computed(() => {
-    const user = this.currentUser();
-    return !!user && user.role === 'student' && user.blocked;
+    return false;
   });
 
   activeTab = localStorage.getItem('speak_active_tab') || 'dashboard';
@@ -909,13 +1102,13 @@ export class LayoutComponent {
   showBoutique = signal<boolean>(false);
   showGarden = signal<boolean>(false);
   showJourney = signal<boolean>(false);
+  showThemes = signal<boolean>(false);
 
   // Badge notification clearing states
   lastLessonsView = signal<string>(localStorage.getItem('speak_last_lessons_view') || '');
   lastQuizzesView = signal<string>(localStorage.getItem('speak_last_quizzes_view') || '');
   lastExercisesView = signal<string>(localStorage.getItem('speak_last_exercises_view') || '');
   showExamNewBadge = signal<boolean>(localStorage.getItem('speak_seen_exam_mode') !== 'true');
-  showVocabNewBadge = signal<boolean>(localStorage.getItem('speak_seen_vocab_games') !== 'true');
   showResultsNewBadge = signal<boolean>(localStorage.getItem('speak_seen_results') !== 'true');
 
   // Badges stats
@@ -945,6 +1138,9 @@ export class LayoutComponent {
   private lastSubmissions: Submission[] | null = null;
   private lastActiveClassId: string | null = null;
   activeJitsiCall = signal<LiveClass | null>(null);
+  activeIceBreakerSession = signal<boolean>(false);
+  activeTheme = signal<string>(localStorage.getItem('speak_active_theme') || 'default');
+  isThemeMenuOpen = signal<boolean>(false);
 
   activeLang = this.db.activeLang;
 
@@ -968,7 +1164,37 @@ export class LayoutComponent {
       }
     });
 
+    combineLatest([
+      this.db.observeActiveIceBreaker(),
+      this.db.observeCurrentUser()
+    ]).subscribe(([game, user]) => {
+      this.activeIceBreakerSession.set(!!game);
+      if (game && user && (user.role === 'student' || user.role === 'guest')) {
+        if (this.activeTab !== 'ice-breaker') {
+          this.toasts.update(current => current.filter(t => t.title !== this.t('🎮 Activité Ice Breaker !', '🎮 Live Ice Breaker!') && t.title !== '🎮 Activité Ice Breaker !' && t.title !== '🎮 Live Ice Breaker!'));
+          this.showToast({
+            title: this.t('🎮 Activité Ice Breaker !', '🎮 Live Ice Breaker!'),
+            message: game.type === 'wheel' 
+              ? this.t('Le professeur a lancé la Roue des Noms. Rejoins vite pour le tirage !', 'Teacher started Wheel of Names. Join now!') 
+              : game.type === 'buzz'
+              ? this.t('Question Buzz en direct : "' + (game.buzzState?.question || '') + '". Viens répondre !', 'Live Trivia: "' + (game.buzzState?.question || '') + '". Come answer!')
+              : this.t('Défi oral en direct : "' + (game.missionState?.title || '') + '". Enregistre ton vocal !', 'Live spoken challenge: "' + (game.missionState?.title || '') + '". Record your voice!'),
+            type: 'live',
+            icon: 'ti-rotate',
+            action: () => {
+              this.setTab('ice-breaker');
+            },
+            actionText: this.t('Rejoindre', 'Join Game')
+          });
+        }
+      }
+    });
     this.db.observeActiveJitsiCall().subscribe(c => {
+      if (c && c.googleMeetUrl) {
+        window.open(c.googleMeetUrl, '_blank');
+        this.db.setActiveJitsiCall(null);
+        return;
+      }
       this.activeJitsiCall.set(c);
     });
 
@@ -999,9 +1225,9 @@ export class LayoutComponent {
         // Sync active tab for roles
         if (user.role === 'teacher' && ['dashboard', 'lessons', 'speaking', 'exercises', 'quizzes', 'events', 'live-classes', 'admin-management', 'history', 'exam'].includes(this.activeTab)) {
           this.setTab('overview');
-        } else if ((user.role === 'student' || user.role === 'guest') && ['overview', 'students', 'create-lesson', 'create-quiz', 'exercises-manager', 'grade-homework', 'attendance', 'schedule-class', 'payments', 'teacher-events', 'user-management', 'admin-management', 'results', 'vocab-games'].includes(this.activeTab)) {
+        } else if ((user.role === 'student' || user.role === 'guest') && ['overview', 'students', 'create-lesson', 'create-quiz', 'exercises-manager', 'grade-homework', 'attendance', 'schedule-class', 'payments', 'teacher-events', 'user-management', 'admin-management', 'results'].includes(this.activeTab)) {
           this.setTab('dashboard');
-        } else if (user.role === 'admin' && ['dashboard', 'lessons', 'speaking', 'exercises', 'quizzes', 'events', 'live-classes', 'overview', 'students', 'create-lesson', 'create-quiz', 'exercises-manager', 'grade-homework', 'attendance', 'schedule-class', 'payments', 'teacher-events', 'user-management', 'history', 'exam', 'results', 'vocab-games'].includes(this.activeTab)) {
+        } else if (user.role === 'admin' && ['dashboard', 'lessons', 'speaking', 'exercises', 'quizzes', 'events', 'live-classes', 'overview', 'students', 'create-lesson', 'create-quiz', 'exercises-manager', 'grade-homework', 'attendance', 'schedule-class', 'payments', 'teacher-events', 'user-management', 'history', 'exam', 'results'].includes(this.activeTab)) {
           this.setTab('admin-management');
         }
       }
@@ -1012,13 +1238,14 @@ export class LayoutComponent {
     });
 
     this.db.observeLessons().subscribe(list => {
+      const activeLessons = list.filter(l => l.status !== 'draft');
       const lastViewStr = this.lastLessonsView();
       if (!lastViewStr) {
-        this.lessonsCount.set(list.length);
-        this.newLessonsCount.set(list.length);
+        this.lessonsCount.set(activeLessons.length);
+        this.newLessonsCount.set(activeLessons.length);
       } else {
         const lastViewTime = new Date(lastViewStr).getTime();
-        const newLessons = list.filter(l => new Date(l.createdAt).getTime() > lastViewTime);
+        const newLessons = activeLessons.filter(l => new Date(l.createdAt).getTime() > lastViewTime);
         this.lessonsCount.set(newLessons.length);
         this.newLessonsCount.set(newLessons.length);
       }
@@ -1067,6 +1294,10 @@ export class LayoutComponent {
 
     this.db.observeShowJourney().subscribe(val => {
       this.showJourney.set(val);
+    });
+
+    this.db.observeShowThemes().subscribe(val => {
+      this.showThemes.set(val);
     });
 
     this.db.observeAnnouncements().subscribe(list => {
@@ -1227,6 +1458,42 @@ export class LayoutComponent {
         );
       }
     });
+
+    const storedPref = localStorage.getItem('speakup_hide_guide');
+    if (storedPref === 'true') {
+      this.dontShowAgain.set(true);
+    } else {
+      setTimeout(() => this.showHelpGuide.set(true), 1500);
+    }
+  }
+
+  openHelpGuide() {
+    this.helpGuideTab.set('welcome');
+    this.showHelpGuide.set(true);
+  }
+
+  toggleDontShowAgainPreference(event: Event) {
+    const checked = (event.target as HTMLInputElement).checked;
+    this.dontShowAgain.set(checked);
+    if (checked) {
+      localStorage.setItem('speakup_hide_guide', 'true');
+    } else {
+      localStorage.removeItem('speakup_hide_guide');
+    }
+  }
+
+  selectTheme(theme: string) {
+    this.activeTheme.set(theme);
+    localStorage.setItem('speak_active_theme', theme);
+    this.applyTheme(theme);
+    this.isThemeMenuOpen.set(false);
+  }
+
+  applyTheme(theme: string) {
+    document.body.classList.remove('theme-dark', 'theme-manga', 'theme-rose', 'theme-faith');
+    if (theme !== 'default') {
+      document.body.classList.add('theme-' + theme);
+    }
   }
 
   setTab(tabName: string) {
@@ -1290,10 +1557,7 @@ export class LayoutComponent {
       this.showExamNewBadge.set(false);
     }
 
-    if (tabName === 'vocab-games') {
-      localStorage.setItem('speak_seen_vocab_games', 'true');
-      this.showVocabNewBadge.set(false);
-    } else if (tabName === 'results') {
+    if (tabName === 'results') {
       localStorage.setItem('speak_seen_results', 'true');
       this.showResultsNewBadge.set(false);
     }
@@ -1409,7 +1673,7 @@ export class LayoutComponent {
       'exercises-manager': { fr: 'Gérer les Exercices', en: 'Exercises Manager' },
       'grade-homework': { fr: 'Corriger les Devoirs', en: 'Grade Homework' },
       attendance: { fr: 'Feuille de Présences', en: 'Attendance' },
-      'schedule-class': { fr: 'Planifier un Direct', en: 'Schedule Class' },
+      'schedule-class': { fr: 'Analyses & Classes', en: 'Analytics & Classes' },
       announcements: { fr: 'Annonces Générales', en: 'Announcements' },
       payments: { fr: 'Suivi des Paiements', en: 'Payments' },
       'teacher-events': { fr: 'Événements', en: 'Events Registry' },
@@ -1420,7 +1684,10 @@ export class LayoutComponent {
       history: { fr: 'Mon Historique', en: 'My History' },
       exam: { fr: 'Mode Examen', en: 'Exam Mode' },
       results: { fr: 'Résultats Élèves', en: 'Students Results' },
-      'vocab-games': { fr: 'Jeux de Vocabulaire', en: 'Vocabulary Games' }
+      coaching: { fr: 'Accompagnement Privé 🎯', en: 'Private Coaching 🎯' },
+      'teacher-coaching': { fr: 'Coaching Privé 👑', en: 'Private Coaching 👑' },
+      'wheel-game': { fr: 'Ice Breaker Center 🎮', en: 'Ice Breaker Center 🎮' },
+      'ice-breaker': { fr: 'Ice Breaker 🎮', en: 'Ice Breaker 🎮' }
     };
     const val = titles[tab];
     if (val) {

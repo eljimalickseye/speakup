@@ -1,7 +1,8 @@
-import { Component, inject, signal, computed, Input } from '@angular/core';
+import { Component, inject, signal, computed, Input, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DatabaseService, Quiz, Exercise, UserProfile, VocabGame } from '../../services/database.service';
+import { DialogService } from '../../services/dialog.service';
 
 interface MatchCard {
   id: number;
@@ -76,7 +77,7 @@ const defaultWordsBank = [
             }
           </div>
           
-          @if ((_mode() === 'all' || _mode() === 'exercises') && (currentUser()?.placementTestTaken || currentUser()?.role !== 'student')) {
+          @if (_mode() === 'all' || _mode() === 'exercises') {
             <div style="display:flex; gap:6px; background:var(--surface-2); padding:4px; border-radius:10px; border: 1px solid var(--border-weak)">
               @if (_mode() === 'all') {
                 <button (click)="activeSubTab.set('quizzes')" 
@@ -94,13 +95,6 @@ const defaultWordsBank = [
                 <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
                 <span>{{ t('Exercices', 'Exercises') }} ({{ exercises().length }})</span>
               </button>
-              <button (click)="activeSubTab.set('games')" 
-                      style="border:none; padding:8px 16px; border-radius:8px; font-size:12.5px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px; transition:all 0.2s"
-                      [style.background]="activeSubTab() === 'games' ? '#D97706' : 'transparent'"
-                      [style.color]="activeSubTab() === 'games' ? 'white' : 'var(--text-secondary)'">
-                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="3"/><path d="M6 12h4"/><path d="M8 10v4"/><line x1="15" y1="11" x2="15" y2="11"/><line x1="18" y1="13" x2="18" y2="13"/></svg>
-                <span>{{ t('Jeux', 'Games') }} ({{ vocabGames().length || 1 }})</span>
-              </button>
             </div>
           }
         </div>
@@ -108,124 +102,7 @@ const defaultWordsBank = [
         <!-- ===== SECTION 1: QUIZ ===== -->
         @if (activeSubTab() === 'quizzes') {
           <div style="margin-bottom: 28px;">
-            <!-- Mandatory notice banner -->
-            @if (!currentUser()?.placementTestTaken && currentUser()?.role === 'student') {
-              <div style="background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%); border: 2px solid #F59E0B; border-radius: 14px; padding: 16px 20px; margin-bottom: 24px; display: flex; align-items: flex-start; gap: 14px; box-shadow: 0 4px 12px rgba(217, 119, 6, 0.05); animation: pulse-live 2s infinite">
-                <div style="background: #F59E0B; color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3)">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                </div>
-                <div>
-                  <h4 style="margin: 0 0 4px 0; color: #78350F; font-size: 14px; font-weight: 800;">
-                    🎯 {{ t('Test de Niveau Obligatoire', 'Mandatory Placement Test') }}
-                  </h4>
-                  <p style="margin: 0; color: #92400E; font-size: 12.5px; line-height: 1.4; font-weight: 600;">
-                    {{ t('Bonjour ! Afin de déverrouiller le reste de la plateforme et de déterminer votre niveau, veuillez compléter le test de placement ci-dessous. Chaque étape est obligatoire et séquentielle.', 'Hello! In order to unlock the rest of the platform and determine your level, please complete the placement test below. Each step is mandatory and sequential.') }}
-                  </p>
-                </div>
-              </div>
-            }
 
-            <!-- Placement Tests Section -->
-            @if (placementQuizzes().length > 0) {
-              <div style="background:#F8FAFC; border: 1.5px solid #CBD5E1; border-radius: 14px; padding: 16px 20px; margin-bottom: 24px; box-shadow:0 4px 6px -1px rgba(0,0,0,0.02)">
-                <div style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; user-select:none" (click)="isPlacementExpanded.set(!isPlacementExpanded())">
-                  <div style="display:flex; align-items:center; gap:10px">
-                    <div style="background:#EEF2FF; color:#4F46E5; width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
-                    </div>
-                    <div>
-                      <h3 style="font-size:14.5px; font-weight:800; color:#1E1B4B; margin:0">{{ t('Tests de Placement de Niveau', 'English Placement Tests') }}</h3>
-                      <p style="font-size:11px; color:var(--text-muted); margin:2px 0 0 0">{{ t('Évaluez vos compétences initiales pour déterminer votre niveau', 'Assess your starting skills to determine your level') }}</p>
-                    </div>
-                  </div>
-                  
-                  <div style="display:flex; align-items:center; gap:12px">
-                    @if (currentUser()?.placementTestTaken) {
-                      <span style="background:#ECFDF5; color:#047857; font-size:10px; font-weight:800; padding:3px 10px; border-radius:20px; text-transform:uppercase; letter-spacing:0.5px">
-                        {{ t('Complété', 'Completed') }}
-                      </span>
-                    } @else {
-                      <span style="background:#FEF3C7; color:#D97706; font-size:10px; font-weight:800; padding:3px 10px; border-radius:20px; text-transform:uppercase; letter-spacing:0.5px">
-                        {{ t('À Faire', 'To Do') }}
-                      </span>
-                    }
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
-                         [style.transform]="isPlacementExpanded() ? 'rotate(180deg)' : 'rotate(0deg)'"
-                         style="transition: transform 0.2s; color:var(--text-secondary); width: 18px; height: 18px">
-                      <polyline points="6 9 12 15 18 9"/>
-                    </svg>
-                  </div>
-                </div>
-
-                @if (isPlacementExpanded()) {
-                  <div style="height:1px; background:#E2E8F0; margin:16px 0; animation: fadeIn 0.2s"></div>
-                  <div style="display:flex; flex-direction:column; gap:10px; animation: fadeIn 0.2s">
-                    @for (quiz of placementQuizzes(); track quiz.id) {
-                      <div class="card exercise-card" 
-                           (click)="isPlacementStepLocked(quiz) ? null : startQuiz(quiz)"
-                           [style.border-left]="'5px solid ' + (isPlacementStepLocked(quiz) ? '#94A3B8' : getTheme(quiz.colorTheme).border)"
-                           [style.opacity]="isPlacementStepLocked(quiz) ? '0.5' : '1'"
-                           [style.cursor]="isPlacementStepLocked(quiz) ? 'not-allowed' : 'pointer'"
-                           [style.pointer-events]="isPlacementStepLocked(quiz) ? 'none' : 'auto'"
-                           style="padding: 12px 18px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; gap: 16px; transition: transform 0.2s, box-shadow 0.2s; background:white">
-                        
-                        <div style="display: flex; align-items: center; gap: 16px; flex: 1;">
-                          <div [style.background]="isPlacementStepLocked(quiz) ? '#CBD5E1' : (quiz.coverImage ? 'none' : getGradient(quiz.colorTheme))"
-                               style="width: 44px; height: 44px; border-radius: 8px; overflow: hidden; flex-shrink: 0; display: flex; align-items: center; justify-content: center; position: relative">
-                            @if (isPlacementStepLocked(quiz)) {
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color:#64748B"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                            } @else if (quiz.coverImage) {
-                              <img [src]="quiz.coverImage" style="width: 100%; height: 100%; object-fit: cover" />
-                            } @else {
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
-                            }
-                          </div>
-
-                          <div>
-                            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap">
-                              <h4 style="font-size:13.5px; font-weight:800; color:var(--text-primary); margin:0; line-height: 1.3">{{ quiz.title }}</h4>
-                              @if (isQuizCompleted(quiz.id)) {
-                                <span style="background:#ECFDF5; color:#047857; font-size:8.5px; font-weight:800; padding:1px 6px; border-radius:10px; text-transform:uppercase">
-                                  {{ t('Complété', 'Completed') }}
-                                </span>
-                              } @else if (!isPlacementStepLocked(quiz)) {
-                                <span style="background:#FFF9E6; color:#D97706; font-size:8.5px; font-weight:800; padding:1px 6px; border-radius:10px; text-transform:uppercase">
-                                  {{ t('À faire', 'To Do') }}
-                                </span>
-                              }
-                            </div>
-                            <div style="display:flex; align-items:center; gap:8px; font-size:11px; color:var(--text-secondary)">
-                              <span style="display:flex; align-items:center; gap:3px">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                                {{ quiz.timeLimit || 'No limit' }}
-                              </span>
-                              <span>•</span>
-                              <span>{{ quiz.questions.length }} {{ t('questions', 'questions') }}</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
-                          @if (isPlacementStepLocked(quiz)) {
-                            <span style="font-size: 11px; color: #64748B; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; background: #F1F5F9; padding: 4px 8px; border-radius: 6px;">
-                              🔒 Verrouillé
-                            </span>
-                          } @else if (isQuizCompleted(quiz.id)) {
-                            <span style="font-size: 11px; color: #059669; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; background: #E6F4EA; padding: 4px 8px; border-radius: 6px;">
-                              ✓ Fait
-                            </span>
-                          } @else {
-                            <button class="btn-s" style="padding: 6px 14px; font-size: 12px; font-weight: 700; border-radius: 8px; display: inline-flex; align-items: center; gap: 4px;">
-                              {{ t('Commencer', 'Start') }} →
-                            </button>
-                          }
-                        </div>
-                      </div>
-                    }
-                  </div>
-                }
-              </div>
-            }
 
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding: 12px 16px; background: linear-gradient(135deg, #4F46E5 0%, #6366F1 100%); border-radius: 10px; color: white;">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
@@ -276,6 +153,11 @@ const defaultWordsBank = [
 
                     <div>
                       <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 3px; flex-wrap: wrap;">
+                        @if (isItemNew(quiz.id)) {
+                          <span style="background:linear-gradient(135deg, #F59E0B 0%, #D97706 100%); color:white; font-size: 9px; font-weight: 800; padding: 1px 6px; border-radius: 10px; text-transform: uppercase; animation: pulse-live 1.5s infinite">
+                            ✨ New
+                          </span>
+                        }
                         <span [style.background]="quiz.type === 'Oral Practice' ? '#E6F4F1' : '#EEF2FF'"
                               [style.color]="quiz.type === 'Oral Practice' ? '#0D9488' : '#4F46E5'"
                               style="font-size: 9px; font-weight: 800; padding: 1px 6px; border-radius: 10px; text-transform: uppercase;">
@@ -363,26 +245,81 @@ const defaultWordsBank = [
               <span style="background: rgba(255,255,255,0.2); border-radius: 12px; padding: 2px 10px; font-size: 12px; font-weight: 700;">{{ exercises().length }}</span>
             </div>
 
-            @if (exercises().length > 0) {
+            @if (sortedExercises().length > 0) {
               <div class="grid2">
-                @for (ex of exercises(); track ex.id) {
+              @for (ex of sortedExercises(); track ex.id) {
+                  @let exDone = getExerciseStatus(ex.id) === 'Completed';
                   <div class="card exercise-card" (click)="openExercise(ex)"
-                       [style.border-left]="'3px solid ' + getExerciseColor(ex.type)" style="cursor: pointer;">
+                       [style.border-left]="exDone ? '3px solid #94A3B8' : '3px solid ' + getExerciseColor(ex.type)"
+                       [style.background]="exDone ? 'var(--surface-2)' : 'var(--surface-1)'"
+                       [style.opacity]="exDone ? '0.72' : '1'"
+                       style="cursor: pointer; transition: opacity 0.2s, background 0.2s;">
                     <div>
                       <div style="margin-bottom:12px; width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center;"
-                           [style.background]="getExerciseColor(ex.type) + '15'"
-                           [style.border]="'1px solid ' + getExerciseColor(ex.type) + '40'">
-                        <span style="display:flex; align-items:center" [innerHTML]="getExerciseSvg(ex.type)"></span>
+                           [style.background]="exDone ? '#E2E8F0' : getExerciseColor(ex.type) + '15'"
+                           [style.border]="'1px solid ' + (exDone ? '#CBD5E1' : getExerciseColor(ex.type) + '40')">
+                        <span style="display:flex; align-items:center">
+                          @if (exDone) {
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                          } @else {
+                            @switch (ex.type) {
+                              @case ('writing') {
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                              }
+                              @case ('speaking') {
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+                              }
+                              @case ('listening') {
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0284C7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+                              }
+                              @case ('translation') {
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
+                              }
+                              @case ('pronunciation') {
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+                              }
+                              @case ('vocabulary') {
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5v-15z"/></svg>
+                              }
+                            }
+                          }
+                        </span>
                       </div>
-                      <div class="card-label" [style.color]="getExerciseColor(ex.type)" style="font-weight: 700;">{{ getExerciseLabel(ex.type) }}</div>
-                      <div class="card-value" style="font-size:15px; color:var(--text-primary); font-weight:700; margin-top:4px;">{{ ex.title }}</div>
-                      <p style="font-size:12px; color:var(--text-secondary); margin:6px 0 0 0;">
-                        Level {{ ex.level }} · {{ ex.points }} XP
-                      </p>
+                      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px">
+                        <div class="card-label" [style.color]="exDone ? '#94A3B8' : getExerciseColor(ex.type)" style="font-weight: 700; margin:0">{{ getExerciseLabel(ex.type) }}</div>
+                        @if (isItemNew(ex.id) && !exDone) {
+                          <span style="background:linear-gradient(135deg, #F59E0B 0%, #D97706 100%); color:white; font-size: 8.5px; font-weight: 800; padding: 1px 6px; border-radius: 10px; text-transform: uppercase; animation: pulse-live 1.5s infinite">
+                            ✨ New
+                          </span>
+                        }
+                      </div>
+                      <div class="card-value" [style.color]="exDone ? '#94A3B8' : 'var(--text-primary)'" style="font-size:15px; font-weight:700; margin-top:4px;">{{ ex.title }}</div>
+                      <div style="display:flex; align-items:center; gap:8px; margin-top:6px; flex-wrap:wrap">
+                        <span style="font-size: 11px; color: var(--text-secondary)">Level {{ ex.level }} · {{ ex.points }} XP</span>
+                        @if (exDone) {
+                          <span style="background:#F1F5F9; color:#64748B; font-size: 9px; font-weight: 800; padding: 2px 8px; border-radius: 10px; text-transform: uppercase; display:inline-flex; align-items:center; gap:4px; border:1px solid #E2E8F0">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                            {{ t('Fait', 'Done') }}
+                          </span>
+                        } @else if (getExerciseStatus(ex.id) === 'Redo') {
+                          <span style="background:#FEF3C7; color:#D97706; font-size: 9px; font-weight: 800; padding: 1px 6px; border-radius: 10px; text-transform: uppercase;">🔄 {{ t('À refaire', 'Redo') }}</span>
+                        } @else if (getExerciseStatus(ex.id) === 'Pending') {
+                          <span style="background:#EFF6FF; color:#1D4ED8; font-size: 9px; font-weight: 800; padding: 1px 6px; border-radius: 10px; text-transform: uppercase;">{{ t('En attente', 'Pending') }}</span>
+                        } @else {
+                          <span style="background:#F1F5F9; color:#475569; font-size: 9px; font-weight: 800; padding: 1px 6px; border-radius: 10px; text-transform: uppercase;">{{ t('À Faire', 'To Do') }}</span>
+                        }
+                      </div>
                     </div>
-                    <div [style.color]="getExerciseColor(ex.type)" style="font-size:11px; font-weight:600; margin-top:12px; display:flex; align-items:center; gap:4px">
-                      Start <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-left:4px"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-                    </div>
+                    @if (!exDone) {
+                      <div [style.color]="getExerciseColor(ex.type)" style="font-size:11px; font-weight:600; margin-top:12px; display:flex; align-items:center; gap:4px">
+                        {{ getExerciseStatus(ex.id) === 'Redo' ? t('Refaire', 'Redo') : t('Démarrer', 'Start') }} <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-left:4px"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                      </div>
+                    } @else {
+                      <div style="font-size:11px; font-weight:700; margin-top:12px; color:#94A3B8; display:flex; align-items:center; gap:4px">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        {{ t('Complété', 'Completed') }}
+                      </div>
+                    }
                   </div>
                 }
               </div>
@@ -391,113 +328,6 @@ const defaultWordsBank = [
                 No training exercises published by your teacher yet.
               </div>
             }
-          </div>
-        }
-
-        <!-- ===== SECTION 3: VOCAB GAMES ===== -->
-        @if (activeSubTab() === 'games') {
-          <div style="margin-top: 0px; background: #FFFDF5; border: 1.5px solid #FDE68A; border-radius: 16px; padding: 20px; box-shadow: 0 8px 24px rgba(217, 119, 6, 0.04);">
-            <div style="font-size: 13px; font-weight: 800; color: #D97706; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4m-2-2v4m7-2h.01M19 12h.01"/></svg>
-              <span>L'Arcade des Jeux de Vocabulaire</span>
-            </div>
-            
-            <div class="grid2">
-              @for (game of vocabGames(); track game.id) {
-                <div class="card exercise-card game-card" (click)="playVocabGame(game)" 
-                     [style.border-left]="'5px solid ' + (game.colorTheme ? getQuizThemeBorder(game.colorTheme) : '#D97706')"
-                     style="border-radius: 16px; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); background: white; box-shadow: 0 10px 25px -5px rgba(217, 119, 6, 0.05), 0 8px 10px -6px rgba(217, 119, 6, 0.05); position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; border: 1.5px solid var(--border-weak)">
-                  <div>
-                    <!-- Vocab Cover Header -->
-                    <div [style.background]="game.coverImage ? 'none' : getGradient(game.colorTheme || 'amber')"
-                         style="width: 100%; height: 110px; border-radius: 0; overflow: hidden; position: relative">
-                      @if (game.coverImage) {
-                        <img [src]="game.coverImage" style="width: 100%; height: 100%; object-fit: cover" />
-                      } @else {
-                        <div style="position:absolute; inset:0; opacity:0.12; background-image: radial-gradient(circle, white 10%, transparent 11%), radial-gradient(circle, white 10%, transparent 11%); background-size: 16px 16px; background-position: 0 0, 8px 8px;"></div>
-                        <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:white">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15))"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4m-2-2v4m7-2h.01M19 12h.01"/></svg>
-                        </div>
-                      }
-                      <div style="position: absolute; bottom: 0; left: 0; right: 0; height: 30px; background: linear-gradient(to top, rgba(255,255,255,1), rgba(255,255,255,0))"></div>
-                    </div>
-
-                    <div style="padding: 0 18px 14px 18px; position:relative; margin-top: -18px; z-index: 2;">
-                      <div [style.background]="game.colorTheme === 'emerald' ? '#ECFDF5' : (game.colorTheme === 'rose' ? '#FFF1F2' : (game.colorTheme === 'purple' ? '#F5F3FF' : '#FFFBEB'))"
-                           [style.border-color]="game.colorTheme === 'emerald' ? '#A7F3D0' : (game.colorTheme === 'rose' ? '#FECDD3' : (game.colorTheme === 'purple' ? '#DDD6FE' : '#FDE68A'))"
-                           style="width:40px; height:40px; border-radius:12px; border:2px solid; display:flex; align-items:center; justify-content:center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 12px">
-                        @if (game.gameType === 'flashcards') {
-                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="12" height="18" x="3" y="3" rx="2" /><path d="M7 3V21" /><rect width="12" height="18" x="9" y="3" rx="2" /></svg>
-                        } @else if (game.gameType === 'matching') {
-                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
-                        } @else if (game.gameType === 'memory') {
-                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.44 2.5 2.5 0 0 1 0-3.12 3 3 0 0 1 0-3.88 2.5 2.5 0 0 1 0-3.12A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.44 2.5 2.5 0 0 0 0-3.12 3 3 0 0 0 0-3.88 2.5 2.5 0 0 0 0-3.12A2.5 2.5 0 0 0 14.5 2Z"/></svg>
-                        } @else if (game.gameType === 'word_builder') {
-                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
-                        } @else if (game.gameType === 'hangman') {
-                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22V2h10a2 2 0 0 1 2 2v2"/><circle cx="16" cy="9" r="3"/><path d="M16 12v6m-3-3h6m-5 5h4"/></svg>
-                        } @else if (game.gameType === 'multiple_choice') {
-                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="m9 12 2 2 4-4"/></svg>
-                        } @else {
-                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3" /></svg>
-                        }
-                      </div>
-
-                      <div style="font-size: 9px; font-weight: 800; color: #B45309; text-transform: uppercase; background: #FEF3C7; padding: 2px 8px; border-radius: 20px; display: inline-flex; align-items: center; gap: 4px; letter-spacing: 0.5px;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4m-2-2v4m7-2h.01M19 12h.01"/></svg>
-                        {{ t('Mode Arcade', 'Arcade Mode') }}
-                      </div>
-                      
-                      <div class="card-value" style="font-size:14.5px; color:var(--text-primary); font-weight:800; margin-top:8px; display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden">{{ game.title }}</div>
-                      <p style="font-size:11.5px; color:var(--text-secondary); margin:6px 0 0 0; line-height: 1.4">
-                        {{ game.words.length }} mots · <span style="font-weight:600">{{ getGameLabel(game.gameType) }}</span> ({{ getDiffLabel(game.difficulty) }})
-                      </p>
-                    </div>
-                  </div>
-
-                  <div style="font-size:12px; color:#D97706; font-weight:800; margin-top:4px; padding: 12px 18px; border-top: 1.5px solid var(--border-weak); display:flex; align-items:center; gap:4px; background: #FFFDF9; transition: background 0.2s">
-                    <span>{{ t('Lancer la Partie', 'Start Game') }}</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-                  </div>
-                </div>
-              } @empty {
-                <!-- Default Word Matching Game Card -->
-                <div class="card exercise-card game-card" (click)="playDefaultVocabGame()" 
-                     style="border-left: 5px solid #6366F1; border-radius: 16px; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); background: white; box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.05); position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; border: 1.5px solid var(--border-weak)">
-                  <div>
-                    <!-- Vocab Cover Header -->
-                    <div style="width: 100%; height: 110px; background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%); overflow: hidden; position: relative">
-                      <div style="position:absolute; inset:0; opacity:0.12; background-image: radial-gradient(circle, white 10%, transparent 11%), radial-gradient(circle, white 10%, transparent 11%); background-size: 16px 16px; background-position: 0 0, 8px 8px;"></div>
-                      <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:white">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15))"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
-                      </div>
-                      <div style="position: absolute; bottom: 0; left: 0; right: 0; height: 30px; background: linear-gradient(to top, rgba(255,255,255,1), rgba(255,255,255,0))"></div>
-                    </div>
-
-                    <div style="padding: 0 18px 14px 18px; position:relative; margin-top: -18px; z-index: 2;">
-                      <div style="width:40px; height:40px; border-radius:12px; border:2px solid #C7D2FE; background:#EEF2FF; display:flex; align-items:center; justify-content:center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 12px">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
-                      </div>
-                      
-                      <div style="font-size: 9px; font-weight: 800; color: #4338CA; text-transform: uppercase; background: #E0E7FF; padding: 2px 8px; border-radius: 20px; display: inline-flex; align-items: center; gap: 4px; letter-spacing: 0.5px;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4m-2-2v4m7-2h.01M19 12h.01"/></svg>
-                        {{ t('Mode Arcade', 'Arcade Mode') }}
-                      </div>
-                      
-                      <div class="card-value" style="font-size:14.5px; color:var(--text-primary); font-weight:800; margin-top:8px">{{ t('Association de Mots', 'Word Matching') }}</div>
-                      <p style="font-size:11.5px; color:var(--text-secondary); margin:6px 0 0 0; line-height: 1.4">
-                        {{ t('Associez les termes anglais avec leur traduction française.', 'Match English terms with their French translation.') }}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div style="font-size:12px; color:#4F46E5; font-weight:800; margin-top:4px; padding: 12px 18px; border-top: 1.5px solid var(--border-weak); display:flex; align-items:center; gap:4px; background: #FBFBFF; transition: background 0.2s">
-                    <span>{{ t('Lancer la Partie', 'Start Game') }}</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-                  </div>
-                </div>
-              }
-            </div>
           </div>
         }
 
@@ -593,179 +423,201 @@ const defaultWordsBank = [
                   <span style="background: var(--surface-2); border-radius: 12px; padding: 2px 10px; font-weight: 600;">{{ activeExerciseItem()?.points }} XP</span>
                 </div>
 
-                @if (!exerciseSubmitted()) {
-                  <!-- Writing Exercise -->
-                  @if (activeExerciseItem()?.type === 'writing') {
-                    <div style="background: #F5F3FF; border: 1px solid #DDD6FE; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
-                      <div style="font-size: 13px; font-weight: 700; color: #6D28D9; margin-bottom: 6px; display:flex; align-items:center; gap:6px">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-                        <span>Subject</span>
+                @if (getLatestExerciseSubmission(activeExerciseItem()!.id); as prevSub) {
+                  <div class="card" style="background:var(--surface-2); padding:16px; border-radius:8px; margin-bottom:16px; border:1px solid var(--border)">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
+                      <h5 style="font-size:12.5px; font-weight:700; margin:0">{{ t('Soumission précédente :', 'Previous Submission:') }}</h5>
+                      <span class="badge" style="font-size:10px; font-weight:700; text-transform:uppercase; background:#EEF2FF; color:#3730A3">{{ prevSub.type || 'text' }}</span>
+                    </div>
+                    @if (prevSub.type === 'audio') {
+                      <audio [src]="prevSub.content" controls style="width:100%; height:32px; border-radius:30px; margin-bottom:8px"></audio>
+                    } @else {
+                      <p style="font-size:13px; color:var(--text-secondary); margin:0 0 8px 0; font-style:italic; white-space:pre-line">"{{ prevSub.content }}"</p>
+                    }
+                    @if (prevSub.graded) {
+                      <div [style.background]="prevSub.score === 'A refaire' ? '#FEF3C7' : 'transparent'"
+                           [style.padding]="prevSub.score === 'A refaire' ? '10px' : '8px 0'"
+                           [style.border-radius]="prevSub.score === 'A refaire' ? '6px' : '0'"
+                           style="border-top:1px solid var(--border); margin-top:8px">
+                        <span style="font-size:13px; font-weight:700" [style.color]="prevSub.score === 'A refaire' ? '#D97706' : '#065F46'">
+                          {{ t('Note :', 'Grade:') }} {{ prevSub.score === 'A refaire' ? '🔄 ' + t('À refaire', 'Redo requested') : prevSub.score }}
+                        </span>
+                        @if (prevSub.feedback) {
+                          <p style="font-size:12px; color:var(--text-secondary); margin:4px 0 0 0">{{ prevSub.feedback }}</p>
+                        }
                       </div>
-                      <p style="font-size: 13px; color: var(--text-primary); line-height: 1.6; margin: 0; white-space: pre-wrap;">{{ activeExerciseItem()?.subject }}</p>
-                    </div>
-                    <textarea [ngModel]="studentResponse()" (ngModelChange)="studentResponse.set($event)" rows="6" placeholder="Write your answer here..."
-                              style="width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 12px; font-size: 13px; resize: vertical;"></textarea>
-                    <button (click)="submitExerciseResponse()" style="margin-top: 12px; background: #7C3AED; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 700; cursor: pointer; width: 100%;">Submit</button>
-                  }
-
-                  <!-- Speaking Exercise -->
-                  @else if (activeExerciseItem()?.type === 'speaking') {
-                    <div style="background: #F0FDF4; border: 1px solid #A7F3D0; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
-                      <div style="font-size: 13px; font-weight: 700; color: #065F46; margin-bottom: 6px; display:flex; align-items:center; gap:6px">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
-                        <span>Speaking Prompt</span>
-                      </div>
-                      <p style="font-size: 13px; color: var(--text-primary); line-height: 1.6; margin: 0; white-space: pre-wrap;">{{ activeExerciseItem()?.speakingPrompt }}</p>
-                    </div>
-                    
-                    <!-- Recorder Component -->
-                    <div class="card" style="background:#F0FDFA; border:1px dashed #0D9488; border-radius:10px; padding:20px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; margin-bottom:20px">
-                      @if (exerciseRecordingState() === 'idle') {
-                        <button (click)="startExerciseAudioRecording()" style="width:56px; height:56px; border-radius:50%; background:#0D9488; color:white; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 4px 10px rgba(13,148,136,0.3)">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" x2="12" y1="19" y2="22" />
-                          </svg>
-                        </button>
-                        <div style="font-size:12.5px; font-weight:700; color:#0F766E">Start Oral Recording</div>
-                        <div style="font-size:11px; color:var(--text-muted)">Press the mic, read aloud clearly and answer the prompt</div>
-                      } @else if (exerciseRecordingState() === 'recording') {
-                        <div style="display:flex; align-items:center; gap:8px">
-                          <span class="recording-pulse"></span>
-                          <span style="font-size:14px; font-weight:700; color:#EF4444">{{ formatDuration(exerciseRecordSeconds()) }}</span>
+                    } @else {
+                      <div style="border-top:1px solid var(--border); padding-top:8px; margin-top:8px; font-size:12px; color:var(--text-muted); display:flex; justify-content:space-between; align-items:center; gap:4px; flex-wrap:wrap">
+                        <div>
+                          <i class="ti ti-clock"></i> {{ t("En attente de correction.", 'Awaiting grading.') }}
                         </div>
-                        
-                        <!-- Visualizer Waves -->
-                        <div style="width:100%; max-width:280px; height:40px; display:flex; align-items:center; justify-content:center; gap:3px">
-                          @for (bar of [15, 30, 45, 25, 60, 40, 75, 50, 30, 15]; track bar; let bIdx = $index) {
-                            <div [style.height.%]="getVisualizerBarHeight(bIdx)" style="width:5px; background:linear-gradient(to top, #0D9488, #34D399); border-radius:3px; transition:height 0.15s"></div>
-                          }
-                        </div>
-
-                        <button (click)="stopExerciseAudioRecording()" style="width:48px; height:48px; border-radius:50%; background:#EF4444; color:white; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 4px 10px rgba(239,68,68,0.3)">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2" /></svg>
-                        </button>
-                        <div style="font-size:11.5px; color:var(--text-secondary)">Recording audio... click stop when done</div>
-                      } @else if (exerciseRecordingState() === 'finished') {
-                        <div style="display:flex; align-items:center; gap:12px; background:#FFF; padding:12px; border-radius:8px; border:1px solid #2DD4BF; width:100%; max-width:360px">
-                          <button style="width:34px; height:34px; border-radius:50%; border:none; background:#0D9488; color:white; display:flex; align-items:center; justify-content:center; cursor:pointer" (click)="playExerciseAudioPlayback()">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3" /></svg>
+                        @if (canDeleteSubmission(prevSub)) {
+                          <button (click)="deleteMySubmission(prevSub.id)" 
+                                  style="background:#FEF2F2; color:#DC2626; border:1px solid #FCA5A5; padding:4px 10px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:4px; transition: all 0.2s">
+                            🗑️ {{ t('Supprimer (20 min)', 'Delete & Redo') }}
                           </button>
-                          <div style="flex:1">
-                            <div style="font-size:12px; font-weight:600; color:var(--text-primary)">speaking_response.wav</div>
-                            <div style="font-size:10px; color:var(--text-muted)">Duration: {{ formatDuration(exerciseRecordSeconds()) }}</div>
-                          </div>
-                          <button (click)="resetExerciseAudioRecording()" style="background:none; border:none; color:#EF4444; font-size:16px; cursor:pointer" title="Record Again">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                              <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
-                            </svg>
-                          </button>
-                        </div>
-                      }
-                    </div>
-
-                    <button (click)="submitExerciseResponse()" [disabled]="exerciseRecordingState() !== 'finished'" 
-                            [style.opacity]="exerciseRecordingState() === 'finished' ? 1 : 0.5"
-                            style="background: #059669; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 700; cursor: pointer; width: 100%;">
-                      Submit Response
-                    </button>
-                  }
-
-                  <!-- Listening Exercise -->
-                  @else if (activeExerciseItem()?.type === 'listening') {
-                    @if (activeExerciseItem()?.youtubeUrl) {
-                      <div style="border-radius: 10px; overflow: hidden; margin-bottom: 16px; background: #000; display: flex; align-items: center; justify-content: center; padding: 20px;">
-                        <a [href]="activeExerciseItem()?.youtubeUrl" target="_blank" style="color: white; text-decoration: none; display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 14px;">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="#FF0000"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-                          Watch on YouTube
-                        </a>
+                        }
                       </div>
                     }
-                    <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
-                      <div style="font-size: 13px; font-weight: 700; color: #1E40AF; margin-bottom: 6px; display:flex; align-items:center; gap:6px">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
-                        <span>Instructions</span>
-                      </div>
-                      <p style="font-size: 13px; color: var(--text-primary); line-height: 1.6; margin: 0; white-space: pre-wrap;">{{ activeExerciseItem()?.listeningInstruction }}</p>
+                  </div>
+                }
+
+                @if (exerciseSubmitted()) {
+                  <div style="text-align: center; padding: 32px 16px; display:flex; flex-direction:column; align-items:center">
+                    <div style="width:64px; height:64px; border-radius:50%; background:#ECFDF5; border:1px solid #10B981; display:flex; align-items:center; justify-content:center; margin:0 auto 16px auto; color:#10B981">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                     </div>
-                    <textarea [ngModel]="studentResponse()" (ngModelChange)="studentResponse.set($event)" rows="4" placeholder="Write your summary or answers here..."
-                              style="width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 12px; font-size: 13px; resize: vertical;"></textarea>
-                    <button (click)="submitExerciseResponse()" style="margin-top: 12px; background: #0284C7; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 700; cursor: pointer; width: 100%;">Submit</button>
+                    <h3 style="font-size: 18px; font-weight: 800; color: var(--text-primary); margin: 0 0 6px 0;">Exercise Submitted!</h3>
+                    <p style="font-size: 13px; color: var(--text-muted); margin: 0 0 20px 0;">+{{ activeExerciseItem()?.points }} XP credited to your account.</p>
+                    <button (click)="exitExercise()" style="background: #059669; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 700; cursor: pointer;">Back to Exercises</button>
+                  </div>
+                } @else if (!getLatestExerciseSubmission(activeExerciseItem()!.id) || getLatestExerciseSubmission(activeExerciseItem()!.id)?.score === 'A refaire') {
+                  @if (getLatestExerciseSubmission(activeExerciseItem()!.id)?.score === 'A refaire') {
+                    <div style="background:#FFFBEB; border:1px solid #FCD34D; border-radius:8px; padding:12px; margin-bottom:16px; color:#D97706; font-size:12.5px; font-weight:600; display:flex; align-items:center; gap:8px">
+                      <span>🔄</span>
+                      <span>{{ t('Veuillez soumettre à nouveau en prenant en compte le feedback ci-dessus.', 'Please resubmit considering the feedback above.') }}</span>
+                    </div>
                   }
 
-                  <!-- Translation Exercise -->
-                  @else if (activeExerciseItem()?.type === 'translation') {
-                    <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
-                      <div style="font-size: 13px; font-weight: 700; color: #92400E; margin-bottom: 6px; display:flex; align-items:center; gap:6px">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
-                        <span>Text to translate ({{ activeExerciseItem()?.translationDirection === 'fr-en' ? 'FR → EN' : 'EN → FR' }})</span>
-                      </div>
-                      <p style="font-size: 14px; color: var(--text-primary); line-height: 1.7; margin: 0; font-style: italic; white-space: pre-wrap;">{{ activeExerciseItem()?.textToTranslate }}</p>
-                    </div>
-                    <textarea [ngModel]="studentResponse()" (ngModelChange)="studentResponse.set($event)" rows="5" placeholder="Your translation here..."
-                              style="width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 12px; font-size: 13px; resize: vertical;"></textarea>
-                    <button (click)="submitExerciseResponse()" style="margin-top: 12px; background: #D97706; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 700; cursor: pointer; width: 100%;">Submit Translation</button>
-                  }
-
-                  <!-- Pronunciation Exercise -->
-                  @else if (activeExerciseItem()?.type === 'pronunciation') {
-                    <div style="text-align: center; padding: 24px; background: #FFF1F2; border: 1px solid #FECDD3; border-radius: 12px; margin-bottom: 16px;">
-                      <div style="font-size: 13px; font-weight: 700; color: #9F1239; margin-bottom: 12px; display:flex; align-items:center; justify-content:center; gap:6px">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9 2 9 2 15 6 15 11 19 11 5M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-                        <span>Read this aloud:</span>
-                      </div>
-                      <p style="font-size: 18px; font-weight: 700; color: var(--text-primary); line-height: 1.6; margin: 0; white-space: pre-wrap;">{{ activeExerciseItem()?.textToPronounce }}</p>
-                    </div>
-
-                    <!-- Recorder Component -->
-                    <div class="card" style="background:#FFF1F2; border:1px dashed #E11D48; border-radius:10px; padding:20px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; margin-bottom:20px">
-                      @if (exerciseRecordingState() === 'idle') {
-                        <button (click)="startExerciseAudioRecording()" style="width:56px; height:56px; border-radius:50%; background:#E11D48; color:white; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 4px 10px rgba(225,29,72,0.3)">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" x2="12" y1="19" y2="22" />
-                          </svg>
-                        </button>
-                        <div style="font-size:12.5px; font-weight:700; color:#9F1239">Start Oral Recording</div>
-                        <div style="font-size:11px; color:var(--text-muted)">Press the mic, read aloud clearly and answer the prompt</div>
-                      } @else if (exerciseRecordingState() === 'recording') {
-                        <div style="display:flex; align-items:center; gap:8px">
-                          <span class="recording-pulse"></span>
-                          <span style="font-size:14px; font-weight:700; color:#EF4444">{{ formatDuration(exerciseRecordSeconds()) }}</span>
-                        </div>
-                        
-                        <!-- Visualizer Waves -->
-                        <div style="width:100%; max-width:280px; height:40px; display:flex; align-items:center; justify-content:center; gap:3px">
-                          @for (bar of [15, 30, 45, 25, 60, 40, 75, 50, 30, 15]; track bar; let bIdx = $index) {
-                            <div [style.height.%]="getVisualizerBarHeight(bIdx)" style="width:5px; background:linear-gradient(to top, #E11D48, #FDA4AF); border-radius:3px; transition:height 0.15s"></div>
-                          }
-                        </div>
-
-                        <button (click)="stopExerciseAudioRecording()" style="width:48px; height:48px; border-radius:50%; background:#EF4444; color:white; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 4px 10px rgba(239,68,68,0.3)">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2" /></svg>
-                        </button>
-                        <div style="font-size:11.5px; color:var(--text-secondary)">Recording audio... click stop when done</div>
-                      } @else if (exerciseRecordingState() === 'finished') {
-                        <div style="display:flex; align-items:center; gap:12px; background:#FFF; padding:12px; border-radius:8px; border:1px solid #FDA4AF; width:100%; max-width:360px">
-                          <button style="width:34px; height:34px; border-radius:50%; border:none; background:#E11D48; color:white; display:flex; align-items:center; justify-content:center; cursor:pointer" (click)="playExerciseAudioPlayback()">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3" /></svg>
-                          </button>
-                          <div style="flex:1">
-                            <div style="font-size:12px; font-weight:600; color:var(--text-primary)">pronunciation_response.wav</div>
-                            <div style="font-size:10px; color:var(--text-muted)">Duration: {{ formatDuration(exerciseRecordSeconds()) }}</div>
+                  <!-- Unified multipart workspace for text/audio exercises -->
+                  @if (activeExerciseItem()?.type !== 'vocabulary') {
+                    <div style="display:flex; flex-direction:column; gap:16px">
+                      <!-- Subject / Prompt banner based on type -->
+                      @if (activeExerciseItem()?.type === 'writing') {
+                        <div style="background:#F5F3FF; border:1px solid #DDD6FE; border-radius:8px; padding:14px;">
+                          <div style="font-size:12.5px; font-weight:700; color:#6D28D9; margin-bottom:6px; display:flex; align-items:center; gap:6px">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                            <span>{{ t('Sujet d\'expression écrite', 'Writing Prompt Subject') }}</span>
                           </div>
-                          <button (click)="resetExerciseAudioRecording()" style="background:none; border:none; color:#EF4444; font-size:16px; cursor:pointer" title="Record Again">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                              <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
-                            </svg>
-                          </button>
+                          <p style="font-size:13px; color:var(--text-primary); line-height:1.6; margin:0;" [innerHTML]="activeExerciseItem()?.subject"></p>
+                        </div>
+                      } @else if (activeExerciseItem()?.type === 'speaking') {
+                        <div style="background:#F0FDF4; border:1px solid #A7F3D0; border-radius:8px; padding:14px;">
+                          <div style="font-size:12.5px; font-weight:700; color:#065F46; margin-bottom:6px; display:flex; align-items:center; gap:6px">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+                            <span>{{ t('Consigne d\'expression orale', 'Speaking Instruction') }}</span>
+                          </div>
+                          <p style="font-size:13px; color:var(--text-primary); line-height:1.6; margin:0;" [innerHTML]="activeExerciseItem()?.speakingPrompt"></p>
+                        </div>
+                      } @else if (activeExerciseItem()?.type === 'listening') {
+                        @if (activeExerciseItem()?.youtubeUrl) {
+                          <div style="border-radius: 10px; overflow: hidden; margin-bottom: 16px; background: #000; display: flex; align-items: center; justify-content: center; padding: 20px;">
+                            <a [href]="activeExerciseItem()?.youtubeUrl" target="_blank" style="color: white; text-decoration: none; display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 14px;">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="#FF0000"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93$.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                              Watch on YouTube
+                            </a>
+                          </div>
+                        }
+                        <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
+                          <div style="font-size: 13px; font-weight: 700; color: #1E40AF; margin-bottom: 6px; display:flex; align-items:center; gap:6px">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+                            <span>Instructions</span>
+                          </div>
+                          <p style="font-size: 13px; color: var(--text-primary); line-height: 1.6; margin: 0;" [innerHTML]="activeExerciseItem()?.listeningInstruction"></p>
+                        </div>
+                      } @else if (activeExerciseItem()?.type === 'translation') {
+                        <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
+                          <div style="font-size: 13px; font-weight: 700; color: #92400E; margin-bottom: 6px; display:flex; align-items:center; gap:6px">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
+                            <span>Text to translate ({{ activeExerciseItem()?.translationDirection === 'fr-en' ? 'FR → EN' : 'EN → FR' }})</span>
+                          </div>
+                          <p style="font-size: 14px; color: var(--text-primary); line-height: 1.7; margin: 0; font-style: italic;" [innerHTML]="activeExerciseItem()?.textToTranslate"></p>
+                        </div>
+                      } @else if (activeExerciseItem()?.type === 'pronunciation') {
+                        <div style="text-align: center; padding: 24px; background: #FFF1F2; border: 1px solid #FECDD3; border-radius: 12px; margin-bottom: 16px;">
+                          <div style="font-size: 13px; font-weight: 700; color: #9F1239; margin-bottom: 12px; display:flex; align-items:center; justify-content:center; gap:6px">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9 2 9 2 15 6 15 11 19 11 5M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                            <span>Read this aloud:</span>
+                          </div>
+                          <p style="font-size: 18px; font-weight: 700; color: var(--text-primary); line-height: 1.6; margin: 0;" [innerHTML]="activeExerciseItem()?.textToPronounce"></p>
                         </div>
                       }
-                    </div>
 
-                    <button (click)="submitExerciseResponse()" [disabled]="exerciseRecordingState() !== 'finished'"
-                            [style.opacity]="exerciseRecordingState() === 'finished' ? 1 : 0.5"
-                            style="background: #DC2626; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 700; cursor: pointer; width: 100%;">
-                      Submit Response
-                    </button>
+                      <!-- UNIFIED MULTIPART SUBMISSION FORM -->
+                      <div class="homework-workspace">
+                        
+                        <!-- SECTION 1: TEXT ANSWER -->
+                        <div class="homework-section">
+                          <label class="homework-title-row">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                            {{ t('Votre réponse écrite ou notes (optionnel pour l\'oral) :', 'Your written response or notes (optional for speaking) :') }}
+                          </label>
+                          <textarea [ngModel]="studentResponse()" (ngModelChange)="studentResponse.set($event)" 
+                                    placeholder="Saisissez vos explications ou réponses écrites ici..." 
+                                    rows="4"
+                                    class="homework-textarea"></textarea>
+                        </div>
+
+                        <!-- SECTION 2: AUDIO RECORDINGS -->
+                        <div class="homework-section" style="border-color: rgba(16,185,129,0.25)">
+                          <label class="homework-title-row" style="color: #059669">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+                            {{ t('Enregistrements vocaux (Optionnel, multi-parties supporté) :', 'Voice Recordings (Optional, multi-part supported) :') }}
+                          </label>
+
+                          <!-- List of recorded audios -->
+                          @if (recordedAudios().length > 0) {
+                            <div class="audio-list-grid">
+                              @for (aud of recordedAudios(); track aud.id; let idx = $index) {
+                                <div class="audio-card-item">
+                                  <div class="audio-card-header">
+                                    <input type="text" 
+                                           [(ngModel)]="aud.name" 
+                                           placeholder="Nom de cette partie (ex: Partie 1)" 
+                                           class="audio-card-title-input">
+                                    <button (click)="removeRecordedAudio(aud.id)" class="btn-audio-delete" title="Supprimer cet enregistrement">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                                    </button>
+                                  </div>
+                                  <audio [src]="aud.data" controls style="width:100%; height:32px; border-radius:30px"></audio>
+                                </div>
+                              }
+                            </div>
+                          }
+
+                          <!-- Audio recorder widget -->
+                          <div class="audio-widget-recorder">
+                            @if (exerciseRecordingState() === 'idle') {
+                              <button (click)="startExerciseAudioRecording()" class="btn-mic-trigger">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+                              </button>
+                              <div style="font-size:12px; font-weight:700; color:var(--text-secondary)">
+                                {{ t("Cliquez pour enregistrer un vocal", "Click to record a voice message") }}
+                              </div>
+                            } @else if (exerciseRecordingState() === 'recording') {
+                              <div style="display:flex; align-items:center; gap:8px">
+                                <span style="width:10px; height:10px; background:#EF4444; border-radius:50%; display:inline-block; animation: pulse-red 1s infinite"></span>
+                                <span style="font-size:14px; font-weight:800; color:#EF4444">{{ exerciseRecordSeconds() }}s</span>
+                              </div>
+                              
+                              <!-- Visualizer animation -->
+                              <div style="width:100%; max-width:240px; height:32px; display:flex; align-items:center; justify-content:center; gap:3px">
+                                @for (bar of [15, 30, 45, 25, 60, 40, 75, 50, 30, 15]; track bar; let bIdx = $index) {
+                                  <div [style.height.%]="getVisualizerBarHeight(bIdx)" style="width:4px; background:linear-gradient(to top, #EF4444, #FCA5A5); border-radius:2px; transition:height 0.15s"></div>
+                                }
+                              </div>
+
+                              <div style="display:flex; gap:8px; margin-top:4px">
+                                <button (click)="stopExerciseAudioRecording(true)" class="btn-s" style="background:#F3F4F6; color:#374151; border:1px solid #D1D5DB; font-weight:700; cursor:pointer">
+                                  {{ t('Annuler', 'Cancel') }}
+                                </button>
+                                <button (click)="stopExerciseAudioRecording(false)" class="btn-s" style="background:#EF4444; color:white; border:none; font-weight:700; cursor:pointer; box-shadow:0 4px 10px rgba(239,68,68,0.2)">
+                                  {{ t('Sauvegarder cet enregistrement', 'Save Recording') }}
+                                </button>
+                              </div>
+                            }
+                          </div>
+                        </div>
+
+                        <!-- Global Submit Button -->
+                        <button (click)="submitExerciseResponse()" 
+                                [disabled]="isExerciseSubmitDisabled()"
+                                class="btn-submit-premium"
+                                style="width:100%; justify-content:center">
+                          🚀 {{ t('Soumettre mon Exercice', 'Submit Exercise') }}
+                        </button>
+                      </div>
+                    </div>
                   }
 
                   <!-- Vocabulary Exercise -->
@@ -809,16 +661,6 @@ const defaultWordsBank = [
                       }
                     </div>
                   }
-                } @else {
-                  <!-- Submitted State -->
-                  <div style="text-align: center; padding: 32px 16px; display:flex; flex-direction:column; align-items:center">
-                    <div style="width:64px; height:64px; border-radius:50%; background:#ECFDF5; border:1px solid #10B981; display:flex; align-items:center; justify-content:center; margin:0 auto 16px auto; color:#10B981">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                    </div>
-                    <h3 style="font-size: 18px; font-weight: 800; color: var(--text-primary); margin: 0 0 6px 0;">Exercise Submitted!</h3>
-                    <p style="font-size: 13px; color: var(--text-muted); margin: 0 0 20px 0;">+{{ activeExerciseItem()?.points }} XP credited to your account.</p>
-                    <button (click)="activeExercise.set('list')" style="background: #059669; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 700; cursor: pointer;">Back to Exercises</button>
-                  </div>
                 }
               </div>
             }
@@ -1786,6 +1628,203 @@ const defaultWordsBank = [
       70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
       100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
     }
+    .homework-workspace {
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.08);
+      margin-top: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .homework-section {
+      background: var(--surface-2);
+      border: 1.5px solid var(--border-weak);
+      border-radius: 14px;
+      padding: 20px;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .homework-section:focus-within {
+      border-color: #4F46E5;
+      background: var(--surface-1);
+      box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.08);
+    }
+    .homework-title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 750;
+      font-size: 13.5px;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+    }
+    .homework-textarea {
+      width: 100%;
+      border-radius: 10px;
+      border: 1.5px solid var(--border);
+      background: var(--surface-1);
+      color: var(--text-primary);
+      padding: 12px;
+      font-size: 13.5px;
+      line-height: 1.6;
+      outline: none;
+      resize: vertical;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .homework-textarea:focus {
+      border-color: #4F46E5;
+    }
+    .audio-list-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .audio-card-item {
+      background: var(--surface-1);
+      border: 1.5px solid var(--border);
+      padding: 14px;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.01);
+    }
+    .audio-card-item:hover {
+      border-color: #10B981;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.03);
+    }
+    .audio-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+    .audio-card-title-input {
+      font-size: 12.5px;
+      font-weight: 700;
+      border: none;
+      outline: none;
+      color: var(--text-primary);
+      background: transparent;
+      border-bottom: 1.5px dashed var(--border-weak);
+      padding: 2px 0;
+      width: 100%;
+      transition: border-color 0.2s;
+    }
+    .audio-card-title-input:focus {
+      border-color: #10B981;
+    }
+    .btn-audio-delete {
+      background: #FEF2F2;
+      border: none;
+      color: #EF4444;
+      cursor: pointer;
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    .btn-audio-delete:hover {
+      background: #EF4444;
+      color: white;
+      transform: scale(1.05);
+    }
+    .audio-widget-recorder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 20px;
+      background: var(--surface-1);
+      border-radius: 12px;
+      border: 1.5px dashed var(--border);
+      transition: border-color 0.2s;
+    }
+    .audio-widget-recorder:hover {
+      border-color: #10B981;
+    }
+    .btn-mic-trigger {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: #10B981;
+      color: white;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 6px 16px rgba(16,185,129,0.3);
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .btn-mic-trigger:hover {
+      transform: scale(1.08);
+      box-shadow: 0 8px 20px rgba(16,185,129,0.4);
+      background: #059669;
+    }
+    .btn-submit-premium {
+      background: linear-gradient(135deg, #4F46E5 0%, #3730A3 100%);
+      color: white;
+      font-weight: 800;
+      border: none;
+      padding: 14px 28px;
+      font-size: 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      align-self: flex-start;
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .btn-submit-premium:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
+      background: linear-gradient(135deg, #6366F1 0%, #4338CA 100%);
+    }
+    .btn-submit-premium:active:not(:disabled) {
+      transform: translateY(0);
+    }
+    .btn-submit-premium:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    .details-video {
+      background: var(--surface-2);
+      border: 1.5px solid var(--border-weak);
+      border-radius: 14px;
+      padding: 16px;
+      transition: all 0.2s;
+    }
+    .details-video[open] {
+      background: var(--surface-1);
+      border-color: #8B5CF6;
+      box-shadow: 0 4px 12px rgba(139, 92, 246, 0.05);
+    }
+    .summary-video {
+      font-weight: 750;
+      font-size: 13.5px;
+      color: var(--text-primary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      user-select: none;
+      outline: none;
+    }
 
     .exercise-card {
       cursor: pointer;
@@ -1926,6 +1965,7 @@ export class StudentExercisesComponent {
     return currentWordObj.word.toLowerCase().replace(/\s/g, '').split('');
   }
   private db = inject(DatabaseService);
+  private dialogService = inject(DialogService);
 
   activeLang = this.db.activeLang;
 
@@ -1981,24 +2021,76 @@ export class StudentExercisesComponent {
   exerciseRecordingState = signal<'idle' | 'recording' | 'finished'>('idle');
   exerciseRecordSeconds = signal<number>(0);
   exerciseAudioFile = signal<string | null>(null);
+  recordedAudios = signal<Array<{ id: string, name: string, data: string }>>([]);
   vocabularyActiveIdx = signal<number>(0);
 
   quizzes = signal<Quiz[]>([]);
   submissions = signal<any[]>([]);
   quizFilter = signal<'todo' | 'completed' | 'all'>('all');
 
+  clickCounter = signal<number>(0);
+
+  registerClick(itemId: string) {
+    try {
+      const clickedData = localStorage.getItem('speak_clicked_items');
+      const clickedMap = clickedData ? JSON.parse(clickedData) : {};
+      clickedMap[itemId] = new Date().toISOString();
+      localStorage.setItem('speak_clicked_items', JSON.stringify(clickedMap));
+      this.clickCounter.update(c => c + 1);
+    } catch (e) {
+      console.warn('Failed to save click record', e);
+    }
+  }
+
+  isItemNew(itemId: string): boolean {
+    this.clickCounter();
+    try {
+      const clickedData = localStorage.getItem('speak_clicked_items');
+      if (!clickedData) return true;
+      const clickedMap = JSON.parse(clickedData);
+      const clickTimeStr = clickedMap[itemId];
+      if (!clickTimeStr) return true;
+
+      const clickTime = new Date(clickTimeStr).getTime();
+      const now = Date.now();
+      const diffHrs = (now - clickTime) / (1000 * 60 * 60);
+      return diffHrs < 48; // Less than 48 hours (2 days)
+    } catch(e) {
+      return true;
+    }
+  }
+
   filteredQuizzes = computed(() => {
     const list = this.quizzes();
     const filter = this.quizFilter();
-    const subs = this.submissions();
     const user = this.currentUser();
     if (!user) return list;
 
-    return list.filter(quiz => {
-      const isDone = subs.some(s => s.lessonId === quiz.id && s.studentId === user.id);
+    const filtered = list.filter(quiz => {
+      const isDone = this.isQuizCurrentlyCompleted(quiz.id);
       if (filter === 'todo') return !isDone;
       if (filter === 'completed') return isDone;
       return true; // 'all'
+    });
+
+    // Sort so new ones are at the top
+    return [...filtered].sort((a, b) => {
+      const aNew = this.isItemNew(a.id);
+      const bNew = this.isItemNew(b.id);
+      if (aNew && !bNew) return -1;
+      if (!aNew && bNew) return 1;
+      return 0;
+    });
+  });
+
+  sortedExercises = computed(() => {
+    const list = this.exercises();
+    return [...list].sort((a, b) => {
+      const aNew = this.isItemNew(a.id);
+      const bNew = this.isItemNew(b.id);
+      if (aNew && !bNew) return -1;
+      if (!aNew && bNew) return 1;
+      return 0;
     });
   });
   placementQuizzes = signal<Quiz[]>([]);
@@ -2055,9 +2147,28 @@ export class StudentExercisesComponent {
       .filter(c => c.members?.includes(user.id) || !c.isPrivate)
       .map(c => c.id);
       
-    return gamesList.filter(game => {
+    const filteredGames = gamesList.filter(game => {
       return !game.assignedGroupId || myChannelIds.includes(game.assignedGroupId);
     });
+
+    const vocabExercises = this.exercises().filter(e => e.type === 'vocabulary');
+    const mappedExercises = vocabExercises.map(ex => {
+      const g: VocabGame = {
+        id: ex.id,
+        title: ex.title,
+        gameType: (ex as any).gameType || 'matching',
+        difficulty: (ex as any).difficulty || 'easy',
+        category: (ex as any).category || 'General',
+        colorTheme: (ex as any).colorTheme || 'amber',
+        coverImage: (ex as any).coverImage,
+        authorId: ex.authorId || 'teacher',
+        createdAt: ex.createdAt || new Date().toISOString(),
+        words: (ex as any).words || []
+      };
+      return g;
+    });
+
+    return [...filteredGames, ...mappedExercises];
   });
   activeVocabGame = signal<VocabGame | null>(null);
 
@@ -2115,24 +2226,42 @@ export class StudentExercisesComponent {
 
   constructor() {
     this.db.observeQuizzes().subscribe(list => {
-      const all = list.filter(q => !q.isOfficialExam);
+      const all = list.filter(q => !q.isOfficialExam && q.status !== 'draft');
       this.quizzes.set(all.filter(q => !q.id.startsWith('placement-test')));
       this.placementQuizzes.set(all.filter(q => q.id.startsWith('placement-test')));
     });
     this.db.observeCurrentUser().subscribe(u => {
       this.currentUser.set(u);
       this.loadLeaderboard();
-      if (u) {
-        this.isPlacementExpanded.set(!u.placementTestTaken);
-        if (u.role === 'student' && u.blocked) {
-          this.activeSubTab.set('quizzes');
-        }
-      }
     });
     this.db.observeVocabGames().subscribe(list => this.vocabGamesRaw.set(list));
     this.db.observeChannels().subscribe(list => this.channelsList.set(list));
     this.db.observeExercises().subscribe(list => this.exercises.set(list.filter(e => e.status === 'published')));
     this.db.observeSubmissions().subscribe(list => this.submissions.set(list));
+
+    effect(() => {
+      const redirectQuizId = this.db.requestedQuizIdRedirect();
+      if (redirectQuizId) {
+        const found = this.quizzes().find(q => q.id === redirectQuizId);
+        if (found) {
+          this.db.requestedQuizIdRedirect.set(null);
+          this.activeSubTab.set('quizzes');
+          this.startQuiz(found);
+        }
+      }
+    });
+
+    effect(() => {
+      const redirectExId = this.db.requestedExerciseIdRedirect();
+      if (redirectExId) {
+        const found = this.exercises().find(e => e.id === redirectExId);
+        if (found) {
+          this.db.requestedExerciseIdRedirect.set(null);
+          this.activeSubTab.set('exercises');
+          this.openExercise(found);
+        }
+      }
+    });
   }
 
   playSuccessSound() {
@@ -2189,13 +2318,31 @@ export class StudentExercisesComponent {
       { name: 'Sun', letter: 'S', completed: false }
     ];
     
-    const streak = this.currentUser()?.streak || 0;
+    const user = this.currentUser();
+    if (!user) return days;
+
+    const streak = user.streak || 0;
+    const lastDateStr = user.lastPracticeDate;
+    if (!lastDateStr || streak <= 0) return days;
+
+    const todayStr = new Date().toLocaleDateString('en-CA');
     const todayIndex = (new Date().getDay() + 6) % 7; // 0 = Mon, 6 = Sun
-    for (let i = 0; i < 7; i++) {
-      if (i === todayIndex) {
-        days[i].completed = true;
-      } else if (i < todayIndex && todayIndex - i < streak) {
-        days[i].completed = true;
+    
+    // Parse last practice date
+    const lastPractice = new Date(lastDateStr);
+    const today = new Date(todayStr);
+    const diffTime = today.getTime() - lastPractice.getTime();
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+    // If they last practiced today (diffDays === 0) or yesterday (diffDays === 1), their streak is active
+    if (diffDays <= 1) {
+      // If last practice was today, we start from todayIndex. If yesterday, we start from todayIndex - 1.
+      const startIndex = diffDays === 0 ? todayIndex : todayIndex - 1;
+      for (let k = 0; k < streak; k++) {
+        const dayIdx = startIndex - k;
+        if (dayIdx >= 0 && dayIdx < 7) {
+          days[dayIdx].completed = true;
+        }
       }
     }
     return days;
@@ -2233,8 +2380,26 @@ export class StudentExercisesComponent {
   }
 
   openExercise(ex: Exercise) {
+    this.registerClick(ex.id);
+    if (ex.type === 'vocabulary') {
+      const game: VocabGame = {
+        id: ex.id,
+        title: ex.title,
+        gameType: (ex as any).gameType || 'matching',
+        difficulty: (ex as any).difficulty || 'easy',
+        category: (ex as any).category || 'General',
+        colorTheme: (ex as any).colorTheme || 'amber',
+        coverImage: (ex as any).coverImage,
+        authorId: ex.authorId || 'teacher',
+        createdAt: ex.createdAt || new Date().toISOString(),
+        words: (ex as any).words || []
+      };
+      this.playVocabGame(game);
+      return;
+    }
     this.activeExerciseItem.set(ex);
     this.studentResponse.set('');
+    this.recordedAudios.set([]);
     this.exerciseSubmitted.set(false);
     this.vocabularyActiveIdx.set(0);
     this.resetExerciseAudioRecording();
@@ -2242,16 +2407,40 @@ export class StudentExercisesComponent {
   }
 
   // --- Exercise Audio Recording ---
+  // --- Exercise Audio Recording ---
+  private isExerciseRecordingCancelled = false;
+
+  private getBestAudioMimeType(): string {
+    const types = [
+      'audio/webm;codecs=opus',
+      'audio/webm',
+      'audio/ogg;codecs=opus',
+      'audio/ogg',
+      'audio/mp4;codecs=mp4a.40.2',
+      'audio/mp4'
+    ];
+    for (const t of types) {
+      if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(t)) return t;
+    }
+    return '';
+  }
+
   async startExerciseAudioRecording() {
     this.exerciseRecordingState.set('recording');
     this.exerciseRecordSeconds.set(0);
     this.exerciseAudioFile.set(null);
     this.audioChunks = [];
+    this.isExerciseRecordingCancelled = false;
 
     try {
       this.mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      this.mediaRecorder = new MediaRecorder(this.mediaStream);
-      
+      const mimeType = this.getBestAudioMimeType();
+      const options: MediaRecorderOptions = { audioBitsPerSecond: 128000 };
+      if (mimeType) options.mimeType = mimeType;
+
+      this.mediaRecorder = new MediaRecorder(this.mediaStream, options);
+      const actualMime = this.mediaRecorder.mimeType || mimeType || 'audio/webm';
+
       this.mediaRecorder.ondataavailable = (event: any) => {
         if (event.data.size > 0) {
           this.audioChunks.push(event.data);
@@ -2259,10 +2448,21 @@ export class StudentExercisesComponent {
       };
 
       this.mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(this.audioChunks, { type: 'audio/wav' });
+        if (this.isExerciseRecordingCancelled) return;
+        const audioBlob = new Blob(this.audioChunks, { type: actualMime });
         const reader = new FileReader();
         reader.onloadend = () => {
-          this.exerciseAudioFile.set(reader.result as string);
+          const base64data = reader.result as string;
+          const nextIdx = this.recordedAudios().length + 1;
+          this.recordedAudios.update(list => [
+            ...list,
+            {
+              id: 'aud-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+              name: `Partie ${nextIdx}`,
+              data: base64data
+            }
+          ]);
+          this.exerciseAudioFile.set(base64data);
         };
         reader.readAsDataURL(audioBlob);
       };
@@ -2291,12 +2491,27 @@ export class StudentExercisesComponent {
     }
   }
 
-  stopExerciseAudioRecording() {
+  stopExerciseAudioRecording(cancel = false) {
+    this.isExerciseRecordingCancelled = cancel;
     if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+      if (cancel) {
+        this.audioChunks = [];
+      }
       this.mediaRecorder.stop();
     } else {
-      const simulatedAudioData = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
-      this.exerciseAudioFile.set(simulatedAudioData);
+      if (!cancel) {
+        const simulatedAudioData = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
+        const nextIdx = this.recordedAudios().length + 1;
+        this.recordedAudios.update(list => [
+          ...list,
+          {
+            id: 'aud-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+            name: `Partie ${nextIdx}`,
+            data: simulatedAudioData
+          }
+        ]);
+        this.exerciseAudioFile.set(simulatedAudioData);
+      }
     }
 
     if (this.mediaStream) {
@@ -2305,7 +2520,7 @@ export class StudentExercisesComponent {
 
     clearInterval(this.timerInterval);
     clearInterval(this.animInterval);
-    this.exerciseRecordingState.set('finished');
+    this.exerciseRecordingState.set('idle');
   }
 
   resetExerciseAudioRecording() {
@@ -2387,15 +2602,17 @@ export class StudentExercisesComponent {
     let type: 'text' | 'audio' | 'video' = 'text';
     let content = '';
 
-    if (ex.type === 'writing' || ex.type === 'listening' || ex.type === 'translation') {
-      content = this.studentResponse();
-      if (!content.trim()) return;
-      type = 'text';
-    } else if (ex.type === 'speaking' || ex.type === 'pronunciation') {
-      content = this.exerciseAudioFile() || 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
-      type = 'audio';
-    } else if (ex.type === 'vocabulary') {
+    if (ex.type === 'vocabulary') {
       content = `Vocabulary theme "${ex.theme || ''}" reviewed and completed.`;
+      type = 'text';
+    } else {
+      const payload = {
+        isMultipart: true,
+        text: this.studentResponse(),
+        audios: this.recordedAudios(),
+        video: ''
+      };
+      content = JSON.stringify(payload);
       type = 'text';
     }
 
@@ -2403,13 +2620,14 @@ export class StudentExercisesComponent {
 
     const user = this.currentUser();
     if (user) {
-      this.db.updateUserXP(user.id, (ex.points || 20), true);
+      this.db.updateUserXP(user.id, (ex.points || 20), true, ex.id);
     }
     await this.db.submitHomework(ex.id, `[Exercise] ${ex.title}`, type, content, ex.points);
   }
 
   startQuiz(quiz: Quiz) {
     if (this.isQuizDisabled(quiz)) return;
+    this.registerClick(quiz.id);
     this.activeQuiz.set(quiz);
     this.activeExercise.set('quiz');
     this.currentQuestionIdx.set(0);
@@ -2441,6 +2659,33 @@ export class StudentExercisesComponent {
     const user = this.currentUser();
     if (!user) return false;
     return this.submissions().some(s => s.lessonId === quizId && s.studentId === user.id);
+  }
+
+  isQuizCurrentlyCompleted(quizId: string): boolean {
+    const user = this.currentUser();
+    if (!user) return false;
+    const list = this.submissions().filter(s => s.lessonId === quizId && s.studentId === user.id);
+    if (list.length === 0) return false;
+    const latest = list.reduce((prev, current) => (new Date(prev.submittedAt) > new Date(current.submittedAt)) ? prev : current);
+    return latest.score !== 'A refaire';
+  }
+
+  getLatestExerciseSubmission(exId: string): any | null {
+    const user = this.currentUser();
+    if (!user) return null;
+    const list = this.submissions().filter(s => s.lessonId === exId && s.studentId === user.id);
+    if (list.length === 0) return null;
+    return list.reduce((prev, current) => (new Date(prev.submittedAt) > new Date(current.submittedAt)) ? prev : current);
+  }
+
+  getExerciseStatus(exId: string): string {
+    const user = this.currentUser();
+    if (!user) return 'To Do';
+    const list = this.submissions().filter(s => s.lessonId === exId && s.studentId === user.id);
+    if (list.length === 0) return 'To Do';
+    const latest = list.reduce((prev, current) => (new Date(prev.submittedAt) > new Date(current.submittedAt)) ? prev : current);
+    if (latest.score === 'A refaire') return 'Redo';
+    return latest.graded ? 'Completed' : 'Pending';
   }
 
   isPlacementStepLocked(quiz: Quiz): boolean {
@@ -2517,6 +2762,50 @@ export class StudentExercisesComponent {
     this.placementAllDone.set(false);
     this.resetAudioRecording();
     this.stopWordTimer();
+  }
+
+  canDeleteSubmission(sub: any): boolean {
+    if (!sub || sub.graded) return false;
+    return true; // Timezone-proof fallback: allow deletion of any ungraded submission
+  }
+
+  async deleteMySubmission(subId: string) {
+    this.dialogService.confirm(
+      this.t('Supprimer la soumission ? 🗑️', 'Delete submission? 🗑️'),
+      this.t(
+        'Voulez-vous supprimer votre devoir ? Cette action est disponible pendant 20 minutes après la soumission.',
+        'Do you want to delete your homework? This option is available for 20 minutes after submission.'
+      ),
+      async () => {
+        await this.db.deleteSubmission(subId);
+        // Also reset local signal state if currently showing the finished view
+        this.exerciseSubmitted.set(false);
+        this.dialogService.alert(
+          this.t('Supprimé', 'Deleted'),
+          this.t(
+            'Votre soumission a été supprimée. Vous pouvez maintenant soumettre une nouvelle version.',
+            'Your submission has been deleted. You can now submit a new version.'
+          ),
+          'success'
+        );
+      }
+    );
+  }
+
+  removeRecordedAudio(id: string) {
+    this.recordedAudios.update(list => list.filter(aud => aud.id !== id));
+  }
+
+  isExerciseSubmitDisabled(): boolean {
+    const ex = this.activeExerciseItem();
+    if (!ex) return true;
+    if (ex.type === 'writing' || ex.type === 'translation') {
+      return !this.studentResponse().trim();
+    }
+    if (ex.type === 'speaking' || ex.type === 'pronunciation') {
+      return this.recordedAudios().length === 0;
+    }
+    return false;
   }
 
   startGameWithConfig() {
@@ -2739,6 +3028,14 @@ export class StudentExercisesComponent {
     if (user) {
       this.db.updateUserXP(user.id, xp, true);
       this.saveVocabGameScore(user, rate, xp, timeSpent);
+
+      const game = this.activeVocabGame();
+      if (game && game.id !== 'default' && !game.id.startsWith('vg-mock')) {
+        const correspondingEx = this.exercises().find(e => e.id === game.id);
+        const pts = correspondingEx ? correspondingEx.points : xp;
+        const scoreReport = `Score: ${rate}% (${correct} / ${totalWords} correct words). Time spent: ${timeSpent}s.`;
+        this.db.submitHomework(game.id, `[Vocabulary Game] ${game.title}`, 'text', scoreReport, pts);
+      }
     }
   }
 
@@ -2981,7 +3278,7 @@ export class StudentExercisesComponent {
       const xp = pct >= 60 ? 50 : 10;
       const user = this.currentUser();
       if (user) {
-        this.db.updateUserXP(user.id, xp, true);
+        this.db.updateUserXP(user.id, xp, true, quiz.id);
         const quizSummary = `Score: ${pct}% (${this.quizCorrectCount()} / ${quiz.questions.length} correctes). Réponses de l'étudiant: ${JSON.stringify(this.userAnswers())}`;
         this.db.submitHomework(quiz.id, `[Quiz] ${quiz.title}`, 'text', quizSummary, quiz.points || xp);
       }
@@ -2995,8 +3292,8 @@ export class StudentExercisesComponent {
         ]);
         const next = this.nextPlacementQuiz(quiz);
         if (next) {
-          // Auto-advance to next step immediately — no intermediate results screen
-          setTimeout(() => this.startQuiz(next), 400);
+          // Auto-advance to next step immediately
+          this.startQuiz(next);
           return;
         } else {
           // Last step — show global summary
@@ -3110,9 +3407,28 @@ export class StudentExercisesComponent {
       if (user) {
         const payload = this.recordedFiles()[this.currentQuestionIdx()] || 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
         this.db.submitHomework(quiz.id, `[Quiz] ${quiz.title}`, 'audio', payload, quiz.points || 50);
-        this.db.updateUserXP(user.id, 50, true);
+        this.db.updateUserXP(user.id, 50, true, quiz.id);
       }
-      this.quizFinished.set(true);
+
+      // --- Placement test: auto-advance or finalize ---
+      if (quiz.id.startsWith('placement-test')) {
+        this.placementStepResults.update(results => [
+          ...results,
+          { title: quiz.title, score: 100, correct: quiz.questions.length, total: quiz.questions.length }
+        ]);
+        const next = this.nextPlacementQuiz(quiz);
+        if (next) {
+          this.startQuiz(next);
+          return;
+        } else {
+          this.placementAllDone.set(true);
+          this.quizFinished.set(true);
+          const u = this.currentUser();
+          if (u) this.db.updateCurrentUserProfile({ placementTestTaken: true, blocked: false });
+        }
+      } else {
+        this.quizFinished.set(true);
+      }
     } else {
       this.currentQuestionIdx.update(i => i + 1);
       
@@ -3254,7 +3570,7 @@ export class StudentExercisesComponent {
       const user = this.currentUser();
       if (user) {
         const xp = this.listeningScore() >= 60 ? 50 : 10;
-        this.db.updateUserXP(user.id, xp, true);
+        this.db.updateUserXP(user.id, xp, true, this.activeExerciseItem()?.id || 'listening-practice');
       }
     } else {
       this.currentListeningIdx.update(i => i + 1);

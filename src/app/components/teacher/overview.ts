@@ -2,7 +2,7 @@ import { Component, Output, EventEmitter, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { combineLatest } from 'rxjs';
 import { FormsModule } from '@angular/forms';
-import { DatabaseService, LiveClass, UserProfile, Submission, Announcement, WordOfTheDay } from '../../services/database.service';
+import { DatabaseService, LiveClass, UserProfile, Submission, Announcement, WordOfTheDay, SpeakingPrompt } from '../../services/database.service';
 import { DialogService } from '../../services/dialog.service';
 
 @Component({
@@ -13,11 +13,11 @@ import { DialogService } from '../../services/dialog.service';
     <div class="page" style="height: 100%">
       @if (!activeMeeting()) {
         <!-- TEACHER BIO/PROFILE SUMMARY -->
-        <div class="card" style="margin-bottom:20px; display:flex; gap:16px; align-items:center; background:linear-gradient(135deg, #EEF2FF 0%, #FFFFFF 100%); border:1px solid #C7D2FE; border-radius:12px; padding:16px">
-          <div class="av" style="width:48px; height:48px; font-size:18px; background:#3730A3; color:white; font-weight:700; display:flex; align-items:center; justify-content:center; border-radius:50%">
+        <div class="card" style="margin-bottom:20px; display:flex; gap:16px; align-items:center; background:linear-gradient(135deg, #EEF2FF 0%, #FFFFFF 100%); border:1px solid #C7D2FE; border-radius:12px; padding:16px; flex-wrap:wrap">
+          <div class="av" style="width:48px; height:48px; font-size:18px; background:#3730A3; color:white; font-weight:700; display:flex; align-items:center; justify-content:center; border-radius:50%; flex-shrink:0">
             {{ teacherProfile()?.avatar }}
           </div>
-          <div style="flex:1">
+          <div style="flex:1; min-width:200px">
             <div style="font-size:15px; font-weight:700; color:var(--text-primary)">
               Welcome back, Teacher {{ teacherProfile()?.name }}!
             </div>
@@ -29,6 +29,12 @@ import { DialogService } from '../../services/dialog.service';
               }
             </div>
           </div>
+          <button (click)="openDailySuggestionModal()" class="btn-p" style="font-size:12.5px; padding:8px 16px; background:linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%); border:none; display:flex; align-items:center; gap:8px; font-weight:700; border-radius:8px; cursor:pointer">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            Défis du Jour 📅
+          </button>
         </div>
 
         <!-- METRICS CARDS -->
@@ -245,7 +251,7 @@ import { DialogService } from '../../services/dialog.service';
             </div>
 
             <!-- Journey Toggle -->
-            <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0">
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px dashed rgba(16, 185, 129, 0.2)">
               <div>
                 <strong style="font-size:13px; color:#065F46; display:block">Activer SpeakUp Journey 🗺️</strong>
                 <span style="font-size:11px; color:#047857">Permet aux élèves d'accomplir des missions de voyage avec une liste d'objectifs.</span>
@@ -254,6 +260,20 @@ import { DialogService } from '../../services/dialog.service';
                 <input type="checkbox" [checked]="showJourney()" (change)="toggleJourney(!showJourney())" style="opacity:0; width:0; height:0" />
                 <span [style.background]="showJourney() ? '#10B981' : '#CBD5E1'" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; transition:0.3s; border-radius:24px; display:block">
                   <span [style.transform]="showJourney() ? 'translateX(20px)' : 'translateX(0px)'" style="position:absolute; content:''; height:18px; width:18px; left:3px; bottom:3px; background-color:white; transition:0.3s; border-radius:50%; display:block"></span>
+                </span>
+              </label>
+            </div>
+
+            <!-- Themes Toggle -->
+            <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0">
+              <div>
+                <strong style="font-size:13px; color:#065F46; display:block">Activer le Sélecteur de Thème 🎨</strong>
+                <span style="font-size:11px; color:#047857">Permet aux élèves de choisir un thème personnalisé (Manga, Rose, Emerald...)</span>
+              </div>
+              <label class="switch-toggle" style="position:relative; display:inline-block; width:44px; height:24px">
+                <input type="checkbox" [checked]="showThemes()" (change)="toggleThemes(!showThemes())" style="opacity:0; width:0; height:0" />
+                <span [style.background]="showThemes() ? '#10B981' : '#CBD5E1'" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; transition:0.3s; border-radius:24px; display:block">
+                  <span [style.transform]="showThemes() ? 'translateX(20px)' : 'translateX(0px)'" style="position:absolute; content:''; height:18px; width:18px; left:3px; bottom:3px; background-color:white; transition:0.3s; border-radius:50%; display:block"></span>
                 </span>
               </label>
             </div>
@@ -277,6 +297,142 @@ import { DialogService } from '../../services/dialog.service';
             <button class="btn-p" style="background:#EF4444; border-color:#EF4444" (click)="endClass()">
               Terminer le cours pour tous
             </button>
+          </div>
+        </div>
+      }
+      
+      <!-- DAILY SUGGESTIONS MODAL FOR TEACHERS -->
+      @if (showDailySuggestionModal()) {
+        <div class="modal-backdrop" style="position:fixed; inset:0; background:rgba(15, 23, 42, 0.7); backdrop-filter:blur(8px); z-index:9999; display:flex; align-items:center; justify-content:center; padding:16px" (click)="skipDailySuggestion()">
+          <div class="modal-card" style="width:100%; max-width:700px; background:#FFFFFF; border-radius:16px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); overflow:hidden; border-top:5px solid #4F46E5; display:flex; flex-direction:column; animation:modalPop 0.3s cubic-bezier(0.16, 1, 0.3, 1); border-color:#4F46E5" (click)="$event.stopPropagation()">
+            
+            <!-- Modal Header -->
+            <div style="background:linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%); padding:20px 24px; color:white; position:relative">
+              <h3 style="font-size:18px; font-weight:800; margin:0; display:flex; align-items:center; gap:8px">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/>
+                </svg>
+                <span>Configuration des Défis du Jour 📅</span>
+              </h3>
+              <p style="font-size:12px; margin:6px 0 0; color:#E2E7FF; line-height:1.4">
+                Personnalisez les prompts de pratique orale (Speaking Practice) et le Mot du Jour (Word of the Day) pour vos étudiants aujourd'hui.
+              </p>
+              <button (click)="skipDailySuggestion()" style="position:absolute; top:20px; right:20px; background:none; border:none; color:#E2E7FF; cursor:pointer; font-size:20px; transition: color 0.15s" onmouseover="this.style.color='white'" onmouseout="this.style.color='#E2E7FF'">
+                ✕
+              </button>
+            </div>
+
+            <!-- Tabs Navigation -->
+            <div style="display:flex; border-bottom:1px solid #E2E8F0; background:#F8FAFC">
+              <button (click)="activeModalTab.set('speaking')" [style.border-bottom]="activeModalTab() === 'speaking' ? '3px solid #4F46E5' : '3px solid transparent'" [style.color]="activeModalTab() === 'speaking' ? '#4F46E5' : '#64748B'" style="flex:1; padding:14px; font-weight:700; font-size:13.5px; border:none; background:none; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition: all 0.2s">
+                🎙️ Pratique Orale (Défis)
+              </button>
+              <button (click)="activeModalTab.set('word')" [style.border-bottom]="activeModalTab() === 'word' ? '3px solid #4F46E5' : '3px solid transparent'" [style.color]="activeModalTab() === 'word' ? '#4F46E5' : '#64748B'" style="flex:1; padding:14px; font-weight:700; font-size:13.5px; border:none; background:none; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition: all 0.2s">
+                📝 Mot du Jour
+              </button>
+            </div>
+
+            <!-- Tabs Content (Scrollable Container) -->
+            <div style="padding:24px; max-height:55vh; overflow-y:auto; background:#FFFFFF; display:flex; flex-direction:column; gap:16px">
+              
+              <!-- TAB 1: SPEAKING PROMPTS -->
+              @if (activeModalTab() === 'speaking') {
+                <div style="display:flex; flex-direction:column; gap:16px">
+                  <div style="font-size:12.5px; color:#475569; line-height:1.5; background:#EEF2FF; border:1px solid #C7D2FE; border-radius:8px; padding:12px; display:flex; gap:8px; align-items:start">
+                    <span style="font-size:16px; line-height:1">💡</span>
+                    <span>Modifiez les prompts d'expression orale pour chaque niveau de difficulté. Vos élèves verront ces prompts aujourd'hui sur leur tableau de bord.</span>
+                  </div>
+                  
+                  @for (p of modalSpeakingPrompts(); track p.level) {
+                    <div style="border:1px solid #E2E8F0; border-radius:10px; padding:14px; background:#F8FAFC">
+                      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px">
+                        <span style="background:#4F46E5; color:white; font-size:11px; font-weight:700; padding:2px 8px; border-radius:12px; text-transform:uppercase">
+                          Niveau {{ p.level }}
+                        </span>
+                      </div>
+                      <div style="display:flex; flex-direction:column; gap:10px">
+                        <div>
+                          <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:4px">Prompt de conversation (Anglais)</label>
+                          <textarea [(ngModel)]="p.text" rows="2" class="form-input" style="font-size:13px; padding:8px; border-radius:6px; resize:vertical; width:100%; border:1px solid #CBD5E1" placeholder="Ex: Describe your childhood..."></textarea>
+                        </div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px">
+                          <div>
+                            <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:4px">Traduction Française</label>
+                            <input [(ngModel)]="p.translation" type="text" class="form-input" style="font-size:13px; padding:8px; height:36px; border-radius:6px; width:100%; border:1px solid #CBD5E1" placeholder="Ex: Décrivez votre enfance..." />
+                          </div>
+                          <div>
+                            <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:4px">Indice / Tip (Anglais)</label>
+                            <input [(ngModel)]="p.hint" type="text" class="form-input" style="font-size:13px; padding:8px; height:36px; border-radius:6px; width:100%; border:1px solid #CBD5E1" placeholder="Ex: Use past simple tense..." />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+              
+              <!-- TAB 2: WORD OF THE DAY -->
+              @if (activeModalTab() === 'word') {
+                <div style="display:flex; flex-direction:column; gap:16px">
+                  <div style="font-size:12.5px; color:#475569; line-height:1.5; background:#FFFBEB; border:1px solid #FDE68A; border-radius:8px; padding:12px; display:flex; gap:8px; align-items:start">
+                    <span style="font-size:16px; line-height:1">💡</span>
+                    <span>Modifiez le Mot du Jour (Word of the Day). Les élèves pourront écouter sa prononciation et s'entraîner à l'utiliser.</span>
+                  </div>
+                  
+                  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px">
+                    <div class="input-row" style="margin-bottom:0">
+                      <label style="font-size:11px; font-weight:700; color:#475569; margin-bottom:4px; display:block">Mot en Anglais</label>
+                      <input [(ngModel)]="modalWordOfTheDay().word" placeholder="Ex: Resilience" class="form-input" style="height:36px; font-size:13px; border:1px solid #CBD5E1; width:100%" />
+                    </div>
+                    <div class="input-row" style="margin-bottom:0">
+                      <label style="font-size:11px; font-weight:700; color:#475569; margin-bottom:4px; display:block">Traduction Française</label>
+                      <input [(ngModel)]="modalWordOfTheDay().translation" placeholder="Ex: Résilience" class="form-input" style="height:36px; font-size:13px; border:1px solid #CBD5E1; width:100%" />
+                    </div>
+                    <div class="input-row" style="margin-bottom:0">
+                      <label style="font-size:11px; font-weight:700; color:#475569; margin-bottom:4px; display:block">Type de mot</label>
+                      <select [(ngModel)]="modalWordOfTheDay().partOfSpeech" class="form-select" style="height:36px; font-size:13px; border:1px solid #CBD5E1; width:100%; min-height:36px">
+                        <option value="noun">Nom (noun)</option>
+                        <option value="verb">Verbe (verb)</option>
+                        <option value="adjective">Adjectif (adjective)</option>
+                        <option value="adverb">Adverbe (adverb)</option>
+                        <option value="phrase">Expression (phrase)</option>
+                      </select>
+                    </div>
+                    <div class="input-row" style="margin-bottom:0">
+                      <label style="font-size:11px; font-weight:700; color:#475569; margin-bottom:4px; display:block">Phonétique</label>
+                      <input [(ngModel)]="modalWordOfTheDay().phonetic" placeholder="Ex: /rɪˈzɪl.jəns/" class="form-input" style="height:36px; font-size:13px; border:1px solid #CBD5E1; width:100%" />
+                    </div>
+                  </div>
+
+                  <div class="input-row" style="margin-bottom:0">
+                    <label style="font-size:11px; font-weight:700; color:#475569; margin-bottom:4px; display:block">Définition</label>
+                    <input [(ngModel)]="modalWordOfTheDay().definition" placeholder="Ex: The capacity to recover quickly from difficulties..." class="form-input" style="height:36px; font-size:13px; border:1px solid #CBD5E1; width:100%" />
+                  </div>
+
+                  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; flex-wrap:wrap">
+                    <div class="input-row" style="margin-bottom:0">
+                      <label style="font-size:11px; font-weight:700; color:#475569; margin-bottom:4px; display:block">Exemple d'utilisation (Anglais)</label>
+                      <input [(ngModel)]="modalWordOfTheDay().example" placeholder="Ex: She showed great resilience." class="form-input" style="height:36px; font-size:13px; border:1px solid #CBD5E1; width:100%" />
+                    </div>
+                    <div class="input-row" style="margin-bottom:0">
+                      <label style="font-size:11px; font-weight:700; color:#475569; margin-bottom:4px; display:block">Exemple d'utilisation (Français)</label>
+                      <input [(ngModel)]="modalWordOfTheDay().exampleTranslation" placeholder="Ex: Elle a fait preuve d'une grande résilience." class="form-input" style="height:36px; font-size:13px; border:1px solid #CBD5E1; width:100%" />
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+
+            <!-- Modal Footer -->
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:16px 24px; border-top:1px solid #E2E8F0; background:#F8FAFC; flex-wrap:wrap; gap:10px">
+              <button (click)="skipDailySuggestion()" class="btn-s" style="border-color:#94A3B8; color:#475569; font-weight:700; height:38px; padding:0 18px; border-radius:8px">
+                Conserver actuel ➔
+              </button>
+              <button (click)="saveDailySuggestion()" class="btn-p" style="background:linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%); border:none; color:white; font-weight:700; height:38px; padding:0 22px; display:flex; align-items:center; gap:8px; border-radius:8px">
+                <span>Mettre à jour & Fermer 🎉</span>
+              </button>
+            </div>
+            
           </div>
         </div>
       }
@@ -310,6 +466,20 @@ export class TeacherOverviewComponent {
   showBoutique = signal<boolean>(false);
   showGarden = signal<boolean>(false);
   showJourney = signal<boolean>(false);
+  showThemes = signal<boolean>(false);
+
+  showDailySuggestionModal = signal<boolean>(false);
+  activeModalTab = signal<'speaking' | 'word'>('speaking');
+  modalSpeakingPrompts = signal<SpeakingPrompt[]>([]);
+  modalWordOfTheDay = signal<WordOfTheDay>({
+    word: '',
+    phonetic: '',
+    partOfSpeech: 'noun',
+    translation: '',
+    definition: '',
+    example: '',
+    exampleTranslation: ''
+  });
 
   @Output() navigateToTab = new EventEmitter<string>();
 
@@ -319,7 +489,16 @@ export class TeacherOverviewComponent {
     });
 
     this.db.observeWordOfTheDay().subscribe(w => {
-      if (w) this.wordOfTheDay.set({ ...w });
+      if (w) {
+        this.wordOfTheDay.set({ ...w });
+        this.modalWordOfTheDay.set({ ...w });
+      }
+    });
+
+    this.db.observeSpeakingPrompts().subscribe(prompts => {
+      if (prompts && prompts.length > 0) {
+        this.modalSpeakingPrompts.set(JSON.parse(JSON.stringify(prompts)));
+      }
     });
 
     this.db.observeShowBoutique().subscribe(val => {
@@ -334,8 +513,15 @@ export class TeacherOverviewComponent {
       this.showJourney.set(val);
     });
 
+    this.db.observeShowThemes().subscribe(val => {
+      this.showThemes.set(val);
+    });
+
     this.db.observeCurrentUser().subscribe(user => {
       this.teacherProfile.set(user);
+      if (user && user.role === 'teacher') {
+        this.checkAndShowDailySuggestion();
+      }
     });
 
     // Total students & status alerts combine subscriptions
@@ -514,5 +700,47 @@ export class TeacherOverviewComponent {
   toggleJourney(val: boolean) {
     this.db.updateShowJourney(val);
     this.dialogService.alert('Configuration mise à jour ⚙️', `Le SpeakUp Journey a été ${val ? 'activé' : 'masqué'} pour tous les élèves et une notification leur a été envoyée.`, 'success');
+  }
+
+  toggleThemes(val: boolean) {
+    this.db.updateShowThemes(val);
+    this.dialogService.alert('Configuration mise à jour ⚙️', `Le Sélecteur de Thème a été ${val ? 'activé' : 'masqué'} pour tous les élèves.`, 'success');
+  }
+
+  checkAndShowDailySuggestion() {
+    const today = new Date().toLocaleDateString('en-CA');
+    const lastShown = localStorage.getItem('speak_teacher_suggestion_last_shown_date');
+    if (lastShown !== today) {
+      this.openDailySuggestionModal();
+    }
+  }
+
+  openDailySuggestionModal() {
+    // Re-pull live prompts from the behavior subject or use copy
+    this.db.observeSpeakingPrompts().subscribe(prompts => {
+      if (prompts && prompts.length > 0) {
+        this.modalSpeakingPrompts.set(JSON.parse(JSON.stringify(prompts)));
+      }
+    });
+    this.modalWordOfTheDay.set(JSON.parse(JSON.stringify(this.wordOfTheDay())));
+    this.activeModalTab.set('speaking');
+    this.showDailySuggestionModal.set(true);
+  }
+
+  saveDailySuggestion() {
+    const today = new Date().toLocaleDateString('en-CA');
+    this.db.updateSpeakingPrompts(this.modalSpeakingPrompts()).then(() => {
+      this.db.updateWordOfTheDay(this.modalWordOfTheDay()).then(() => {
+        localStorage.setItem('speak_teacher_suggestion_last_shown_date', today);
+        this.showDailySuggestionModal.set(false);
+        this.dialogService.alert('Succès 🎉', 'Les défis de conversation et le Mot du Jour ont été mis à jour pour tous les étudiants.', 'success');
+      });
+    });
+  }
+
+  skipDailySuggestion() {
+    const today = new Date().toLocaleDateString('en-CA');
+    localStorage.setItem('speak_teacher_suggestion_last_shown_date', today);
+    this.showDailySuggestionModal.set(false);
   }
 }

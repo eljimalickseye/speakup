@@ -1,7 +1,7 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { DatabaseService, UserProfile, RegistrationRequest, Attendance } from '../../services/database.service';
+import { DatabaseService, UserProfile, RegistrationRequest, Attendance, ChatChannel } from '../../services/database.service';
 import { DialogService } from '../../services/dialog.service';
 
 @Component({
@@ -79,6 +79,9 @@ import { DialogService } from '../../services/dialog.service';
             <span class="badge" style="background:#EF4444; color:white; padding:2px 8px; border-radius:12px; font-size:10px; margin-left:4px">{{ pendingRequestsCount() }}</span>
           }
         </button>
+        <button class="tab" [class.active]="activeTab() === 'groups'" (click)="activeTab.set('groups')">
+          Groupes de discussion
+        </button>
         <button class="tab" [class.active]="activeTab() === 'profile'" (click)="activeTab.set('profile')">
           Student profile {{ selectedStudent() ? ' (' + selectedStudent()!.name + ')' : '' }}
         </button>
@@ -118,6 +121,16 @@ import { DialogService } from '../../services/dialog.service';
                   }
                 </div>
                 <span style="font-size:12px; font-weight:600; color:var(--text-primary)">{{ student.name }}</span>
+                <div style="margin-left:4px; display:inline-flex; gap:2px; align-items:center; vertical-align:middle">
+                  @if (student.isPaid) {
+                    <span style="font-size:8px; font-weight:800; background:#E6F4EA; color:#137333; padding:1px 4px; border-radius:3px" title="En règle (Payé)">💳 En règle</span>
+                  } @else {
+                    <span style="font-size:8px; font-weight:800; background:#FCE8E6; color:#C5221F; padding:1px 4px; border-radius:3px" title="Non réglé">⚠️ Impayé</span>
+                    @if (student.paymentRemindersActive) {
+                      <span style="font-size:8px; font-weight:800; background:#FEF7E0; color:#B06000; padding:1px 4px; border-radius:3px; animation: pulse-live 2s infinite" title="Rappels de paiement activés">🔔 Rappel</span>
+                    }
+                  }
+                </div>
               </div>
               <div style="width:60px; font-size:12px">{{ student.level }}</div>
               <div style="width:80px; text-align:center; font-size:12px">{{ getAttendancePercentage(student.id) }}%</div>
@@ -397,6 +410,39 @@ import { DialogService } from '../../services/dialog.service';
                       <span>Allow Voice Messages</span>
                     </label>
                   </div>
+                  <div class="input-row" style="margin-bottom:0; display:flex; flex-direction:column; justify-content:center">
+                    <label style="font-weight:600; font-size:11px; margin-bottom:6px">Statut de Paiement</label>
+                    <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:11px; font-weight:700; color:#10B981">
+                      <input type="checkbox" [checked]="student.isPaid ?? false" (change)="toggleStudentPayment(student)" style="cursor:pointer" />
+                      <span>💳 En règle (A payé)</span>
+                    </label>
+                  </div>
+                  <div class="input-row" style="margin-bottom:0; display:flex; flex-direction:column; justify-content:center">
+                    <label style="font-weight:600; font-size:11px; margin-bottom:6px">Rappels de Paiement</label>
+                    <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:11px; font-weight:700; color:#D97706" [style.opacity]="student.isPaid ? 0.5 : 1">
+                      <input type="checkbox" [checked]="student.paymentRemindersActive ?? false" [disabled]="student.isPaid ?? false" (change)="toggleStudentReminders(student)" style="cursor:pointer" />
+                      <span>🔔 Activer Rappels</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- XP & Progress Management -->
+              <div class="card" style="margin-top:0; margin-bottom:16px; border: 1px dashed var(--border-weak); background:var(--surface-1); padding:16px; border-radius:8px">
+                <h4 style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:12px; display:flex; align-items:center; gap:6px; margin-top:0">
+                  <i class="ti ti-crown" style="color:#D97706"></i>
+                  <span>XP & Progress Management</span>
+                </h4>
+                
+                <div style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap">
+                  <div class="input-row" style="margin-bottom:0; flex:1; min-width:120px">
+                    <label style="font-weight:600; font-size:11px">Modify XP points</label>
+                    <input type="number" [value]="student.xp" (change)="updateStudentXPDirect(student.id, $event)" style="background:#FFF; padding:6px; font-size:11px; border-radius:4px; border:1px solid var(--border); width:100%" />
+                  </div>
+                  
+                  <button class="btn-s" (click)="resetStudentXP(student)" style="background:#FEF2F2; border-color:#FCA5A5; color:#DC2626; font-weight:700; height:32px; font-size:11px; padding:0 12px; display:flex; align-items:center; gap:4px">
+                    <i class="ti ti-trash"></i> Reset XP to 0
+                  </button>
                 </div>
               </div>
 
@@ -472,6 +518,134 @@ import { DialogService } from '../../services/dialog.service';
           }
         </div>
       }
+
+      <!-- GROUPS VIEW -->
+      @if (activeTab() === 'groups') {
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px">
+          <div>
+            <h3 style="margin:0; font-size:16px; font-weight:800; color:var(--text-primary)">Groupes de discussion actifs</h3>
+            <p style="margin:2px 0 0 0; font-size:12px; color:var(--text-muted)">Créez et gérez les groupes de discussion et leurs missions.</p>
+          </div>
+          <button class="btn-p" style="background:#4F46E5; border-color:#4F46E5; font-size:13px; padding:8px 16px; border-radius:8px; display:flex; align-items:center; gap:6px; height:36px" (click)="showCreateGroupModal.set(true)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Créer un Groupe / Mission
+          </button>
+        </div>
+
+        <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap:16px">
+          @for (group of groupChannels(); track group.id) {
+            <div style="background:#FFF; border:1px solid var(--border-weak); border-radius:12px; padding:16px; box-shadow:0 4px 6px rgba(0,0,0,0.02); display:flex; flex-direction:column; justify-content:space-between">
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px">
+                  <span style="font-size:14px; font-weight:800; color:#4F46E5; background:#EEF2FF; padding:4px 10px; border-radius:6px">#{{ group.name }}</span>
+                  <button (click)="deleteGroup(group.id, group.name)" style="background:none; border:none; color:#EF4444; cursor:pointer; font-size:14px; padding:2px" title="Supprimer le groupe">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                  </button>
+                </div>
+                
+                <div style="margin-bottom:12px">
+                  <span style="font-size:10px; font-weight:800; color:var(--text-muted); text-transform:uppercase; display:block; margin-bottom:3px">Membres</span>
+                  <span style="font-size:12px; color:var(--text-primary); font-weight:600">{{ getStudentNames(group.members) }}</span>
+                </div>
+                
+                <div style="background:var(--surface-2); border-radius:8px; padding:10px; border-left:3px solid #4F46E5">
+                  <span style="font-size:9.5px; font-weight:800; color:#4F46E5; text-transform:uppercase; display:block; margin-bottom:2px">Mission 🎯</span>
+                  <span style="font-size:11.5px; color:var(--text-primary); font-style:italic; line-height:1.4">{{ group.topic }}</span>
+                </div>
+              </div>
+
+              <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px; border-top:1px dashed var(--border-weak); padding-top:10px">
+                <a href="#/chat" (click)="db.requestedTabRedirect.set('chat')" style="font-size:11px; font-weight:700; color:#4F46E5; text-decoration:none; display:flex; align-items:center; gap:4px">
+                  Rejoindre le chat →
+                </a>
+              </div>
+            </div>
+          } @empty {
+            <div style="grid-column:1/-1; text-align:center; padding:40px; background:#FFF; border:1px dashed var(--border-weak); border-radius:12px">
+              <span style="font-size:36px; display:block; margin-bottom:8px">👥</span>
+              <p style="font-size:13px; color:var(--text-muted); margin:0">Aucun groupe de discussion privé n'a été créé pour le moment.</p>
+            </div>
+          }
+        </div>
+
+        <!-- CREATE GROUP MODAL -->
+        @if (showCreateGroupModal()) {
+          <div class="cert-modal-overlay" (click)="showCreateGroupModal.set(false)" style="z-index:99999">
+            <div class="cert-modal-card" style="max-width:540px; background:#FFF; border-radius:16px; padding:24px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.15)" (click)="$event.stopPropagation()">
+              <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-weak); padding-bottom:12px; margin-bottom:16px">
+                <h3 style="margin:0; font-size:15px; font-weight:800; color:#4F46E5; display:flex; align-items:center; gap:6px">
+                  👥 Créer un Groupe / Mission de discussion
+                </h3>
+                <button (click)="showCreateGroupModal.set(false)" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:18px">
+                  ×
+                </button>
+              </div>
+
+              <div style="display:flex; flex-direction:column; gap:12px">
+                <div>
+                  <label style="color:#4F46E5; font-weight:700; font-size:11px; display:block; margin-bottom:4px">Nom du groupe (ex: groupe-a)</label>
+                  <input type="text" [(ngModel)]="groupName" placeholder="e.g. groupe-intermediate" style="background:#FFF; padding:8px; border-radius:6px; border:1.5px solid var(--border); width:100%; font-size:12px" />
+                </div>
+
+                <div>
+                  <label style="color:#4F46E5; font-weight:700; font-size:11px; display:block; margin-bottom:4px">Sujet de discussion (Mission) 🎯</label>
+                  <textarea [(ngModel)]="groupTopic" placeholder="Décrivez la mission de discussion pour les étudiants..." rows="3" style="background:#FFF; padding:8px; border-radius:6px; border:1.5px solid var(--border); width:100%; font-size:12px"></textarea>
+                  
+                  <!-- Suggested Topics Generator -->
+                  <div style="margin-top:6px">
+                    <span style="font-size:10px; font-weight:700; color:var(--text-muted); display:block; margin-bottom:4px">💡 Sujets suggérés (cliquez pour remplir) :</span>
+                    <div style="display:flex; flex-wrap:wrap; gap:4px">
+                      @for (t of suggestedTopics; track t.title) {
+                        <button (click)="selectTopic(t.prompt)" style="font-size:9.5px; padding:3px 6px; border:1px solid #C7D2FE; background:#EEF2FF; color:#4F46E5; border-radius:4px; cursor:pointer" [title]="t.prompt">
+                          {{ t.title }} ({{ t.level }})
+                        </button>
+                      }
+                    </div>
+                  </div>
+                </div>
+
+                <div style="border-top:1px solid var(--border-weak); padding-top:10px">
+                  <label style="color:#4F46E5; font-weight:700; font-size:11px; display:block; margin-bottom:6px">Sélectionner les étudiants :</label>
+                  <div style="max-height:130px; overflow-y:auto; display:flex; flex-direction:column; gap:4px; background:var(--surface-2); padding:8px; border-radius:6px; border:1px solid var(--border-weak)">
+                    @for (stud of students(); track stud.id) {
+                      <label style="display:flex; align-items:center; gap:8px; font-size:12px; cursor:pointer; color:var(--text-primary)">
+                        <input type="checkbox" [checked]="selectedStudentsForGroup().includes(stud.id)" (click)="toggleStudentForGroup(stud.id)" />
+                        <span>{{ stud.name }} ({{ stud.level }})</span>
+                      </label>
+                    }
+                  </div>
+                  <span style="font-size:9.5px; color:var(--text-muted); display:block; margin-top:2px">Si aucun élève n'est coché pour la répartition automatique, tous les élèves seront inclus.</span>
+                </div>
+
+                <div style="border-top:1px solid var(--border-weak); padding-top:12px; margin-top:6px; display:grid; grid-template-columns: 1.2fr 1fr; gap:16px; align-items:center">
+                  <!-- Automatic split configuration -->
+                  <div>
+                    <label style="color:#4F46E5; font-weight:700; font-size:11px; display:block; margin-bottom:4px">Répartition Automatique</label>
+                    <div style="display:flex; align-items:center; gap:6px">
+                      <select [(ngModel)]="selectedAutoSplitSize" style="background:#FFF; padding:6px; border-radius:6px; border:1.5px solid var(--border); font-size:11.5px; flex:1">
+                        <option [value]="2">Groupes de 2 (2x2)</option>
+                        <option [value]="3">Groupes de 3 (3x3)</option>
+                        <option [value]="4">Groupes de 4 (4x4)</option>
+                      </select>
+                      <button class="btn-p" style="background:#0D9488; border-color:#0D9488; font-size:11px; padding:6px 10px; font-weight:700; height: 32px" (click)="createGroupAutoSplit()">
+                        Répartir
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Manual Creation button -->
+                  <div style="display:flex; justify-content:flex-end; gap:8px; align-self:flex-end">
+                    <button class="btn-s" (click)="showCreateGroupModal.set(false)" style="height:32px; font-size:11px; padding:0 12px">Annuler</button>
+                    <button class="btn-p" style="height:32px; font-size:11px; padding:0 12px; background:#4F46E5; border-color:#4F46E5" (click)="createGroupManual()">Créer Manuel</button>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        }
+      }
+
 
       <!-- FULL SCREEN PRINTABLE CERTIFICATE VIEW MODAL FOR TEACHER -->
       @if (selectedCertificate(); as lvl) {
@@ -681,6 +855,23 @@ export class TeacherStudentsComponent {
   newStudentRegFee = 10000;
   newStudentMonthlyFee = 7000;
 
+  // Discussion Groups Management Signals & Properties
+  channels = signal<ChatChannel[]>([]);
+  groupChannels = computed(() => this.channels().filter(c => c.isPrivate && c.id.startsWith('chan-') && c.topic));
+  showCreateGroupModal = signal<boolean>(false);
+  groupName = signal<string>('');
+  groupTopic = signal<string>('');
+  selectedStudentsForGroup = signal<string[]>([]);
+  selectedAutoSplitSize = signal<number>(2);
+
+  suggestedTopics = [
+    { level: 'A1-A2', title: 'Introduce Yourself 👥', prompt: 'Talk about your family, your hometown, and your favorite hobbies. Keep sentences short and simple.' },
+    { level: 'A1-A2', title: 'My Daily Routine ⏰', prompt: 'Discuss what you do from the moment you wake up until you go to sleep. Use words like: first, then, after, finally.' },
+    { level: 'B1-B2', title: 'Future of Tech 🤖', prompt: 'Discuss how artificial intelligence will change jobs in the next 10 years. Share your fears and hopes.' },
+    { level: 'B1-B2', title: 'Healthy Habits 🍎', prompt: 'Debate what is more important for health: eating organic food or doing intensive exercise daily.' },
+    { level: 'C1-C2', title: 'Cultural Differences 🌍', prompt: 'Analyse how direct vs indirect communication styles impact international business relations. Give examples.' }
+  ];
+
   constructor() {
     this.db.observeRegistrationRequests().subscribe(list => {
       this.registrationRequests.set(list);
@@ -703,6 +894,10 @@ export class TeacherStudentsComponent {
 
     this.db.observeAttendance().subscribe(list => {
       this.attendance.set(list);
+    });
+
+    this.db.observeChannels().subscribe(list => {
+      this.channels.set(list);
     });
   }
 
@@ -775,6 +970,64 @@ export class TeacherStudentsComponent {
     const value = target.checked;
     this.db.updateUserProfile(studentId, { [property]: value });
     this.dialogService.alert('Permission Updated', `Student voice chat permissions updated!`, 'success');
+  }
+
+  toggleStudentPayment(student: UserProfile) {
+    const nextVal = !student.isPaid;
+    const updates: Partial<UserProfile> = { isPaid: nextVal };
+    if (nextVal) {
+      updates.paymentRemindersActive = false;
+    }
+    this.db.updateUserProfile(student.id, updates).then(() => {
+      this.dialogService.alert('Paiement mis à jour', `Le statut de paiement de ${student.name} a été mis à jour.`, 'success');
+      const active = this.selectedStudent();
+      if (active && active.id === student.id) {
+        this.selectedStudent.set({ ...active, ...updates });
+      }
+    });
+  }
+
+  toggleStudentReminders(student: UserProfile) {
+    const nextVal = !student.paymentRemindersActive;
+    this.db.updateUserProfile(student.id, { paymentRemindersActive: nextVal }).then(() => {
+      this.dialogService.alert('Rappels mis à jour', `Rappels de paiement ${nextVal ? 'activés' : 'désactivés'} pour ${student.name}.`, 'success');
+      const active = this.selectedStudent();
+      if (active && active.id === student.id) {
+        this.selectedStudent.set({ ...active, paymentRemindersActive: nextVal });
+      }
+    });
+  }
+
+  updateStudentXPDirect(studentId: string, event: Event) {
+    const input = event.target as HTMLInputElement;
+    const value = parseInt(input.value, 10);
+    if (isNaN(value)) return;
+    this.db.updateUserProfile(studentId, { xp: value }).then(() => {
+      this.dialogService.alert('XP mis à jour', `Les points XP de l'élève ont été mis à jour à ${value} XP.`, 'success');
+      const active = this.selectedStudent();
+      if (active && active.id === studentId) {
+        this.selectedStudent.set({ ...active, xp: value });
+      }
+    });
+  }
+
+  resetStudentXP(student: UserProfile) {
+    this.dialogService.show({
+      title: 'Réinitialiser les XP',
+      message: `Voulez-vous vraiment réinitialiser les points XP de ${student.name} à 0 ?`,
+      type: 'confirm',
+      confirmText: 'Réinitialiser',
+      cancelText: 'Annuler',
+      onConfirm: () => {
+        this.db.updateUserProfile(student.id, { xp: 0 }).then(() => {
+          this.dialogService.alert('XP réinitialisés', `Les points XP de ${student.name} ont été remis à 0.`, 'success');
+          const active = this.selectedStudent();
+          if (active && active.id === student.id) {
+            this.selectedStudent.set({ ...active, xp: 0 });
+          }
+        });
+      }
+    });
   }
 
   addStudent() {
@@ -946,5 +1199,106 @@ export class TeacherStudentsComponent {
     }
     if (code.length !== 2) return '';
     return `https://flagcdn.com/w20/${code.toLowerCase()}.png`;
+  }
+
+  // Discussion Groups Management Methods
+  toggleStudentForGroup(id: string) {
+    const active = this.selectedStudentsForGroup();
+    if (active.includes(id)) {
+      this.selectedStudentsForGroup.set(active.filter(x => x !== id));
+    } else {
+      this.selectedStudentsForGroup.set([...active, id]);
+    }
+  }
+
+  selectTopic(topicPrompt: string) {
+    this.groupTopic.set(topicPrompt);
+  }
+
+  createGroupManual() {
+    if (!this.groupName().trim() || !this.groupTopic().trim() || this.selectedStudentsForGroup().length === 0) {
+      this.dialogService.alert('Erreur', 'Veuillez remplir le nom, le sujet et sélectionner au moins un étudiant.', 'info');
+      return;
+    }
+    const name = this.groupName().trim().toLowerCase().replace(/[^a-z0-9-_]/g, '-');
+    const topic = this.groupTopic().trim();
+    const members = [...this.selectedStudentsForGroup()];
+    
+    this.db.addChannel(name, true, members, topic).then(() => {
+      this.dialogService.alert('Groupe Créé', `Le groupe #${name} a été créé avec succès avec la mission associée !`, 'success');
+      // Reset fields
+      this.groupName.set('');
+      this.groupTopic.set('');
+      this.selectedStudentsForGroup.set([]);
+      this.showCreateGroupModal.set(false);
+    });
+  }
+
+  createGroupAutoSplit() {
+    const studentsList = this.selectedStudentsForGroup().length > 0 
+      ? this.selectedStudentsForGroup() 
+      : this.students().map(s => s.id);
+      
+    if (studentsList.length < 2) {
+      this.dialogService.alert('Erreur', 'Il faut au moins 2 étudiants pour faire des groupes.', 'info');
+      return;
+    }
+    if (!this.groupTopic().trim()) {
+      this.dialogService.alert('Erreur', 'Veuillez définir un sujet de discussion (mission).', 'info');
+      return;
+    }
+    
+    const size = this.selectedAutoSplitSize();
+    const shuffled = [...studentsList].sort(() => Math.random() - 0.5);
+    const baseName = this.groupName().trim() || 'group';
+    const topic = this.groupTopic().trim();
+    
+    // Clean slices to avoid single-student groups if possible
+    const groups: string[][] = [];
+    for (let i = 0; i < shuffled.length; i += size) {
+      groups.push(shuffled.slice(i, i + size));
+    }
+    if (groups.length > 1 && groups[groups.length - 1].length === 1) {
+      const last = groups.pop()!;
+      groups[groups.length - 1] = [...groups[groups.length - 1], ...last];
+    }
+    
+    let groupIndex = 1;
+    const promises = [];
+    for (const groupMembers of groups) {
+      const name = `${baseName}-${groupIndex}`.toLowerCase().replace(/[^a-z0-9-_]/g, '-');
+      promises.push(this.db.addChannel(name, true, groupMembers, topic));
+      groupIndex++;
+    }
+    
+    Promise.all(promises).then(() => {
+      this.dialogService.alert('Groupes Créés', `${groups.length} groupes créés avec succès par répartition automatique !`, 'success');
+      this.groupName.set('');
+      this.groupTopic.set('');
+      this.selectedStudentsForGroup.set([]);
+      this.showCreateGroupModal.set(false);
+    });
+  }
+
+  deleteGroup(chanId: string, name: string) {
+    this.dialogService.show({
+      title: 'Supprimer le groupe',
+      message: `Voulez-vous vraiment supprimer le groupe #${name} ? Tous ses messages seront effacés.`,
+      type: 'confirm',
+      confirmText: 'Supprimer',
+      cancelText: 'Annuler',
+      onConfirm: () => {
+        this.db.deleteChannel(chanId).then(() => {
+          this.dialogService.alert('Supprimé', 'Le groupe a été supprimé.', 'success');
+        });
+      }
+    });
+  }
+
+  getStudentNames(members: string[] | undefined): string {
+    if (!members) return '';
+    return members
+      .map(mId => this.students().find(s => s.id === mId)?.name || mId)
+      .join(', ');
   }
 }

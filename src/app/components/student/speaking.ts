@@ -150,9 +150,7 @@ interface SpeakingPrompt {
                 <div class="lesson-meta" style="font-weight: 700; color:#059669; font-size:12px; margin-top:2px">
                   Grade Score: {{ sub.score }} · +{{ sub.xpReward }} XP Awarded
                 </div>
-                <div class="lesson-meta" style="color:var(--text-secondary); margin-top:6px; font-style:italic; font-size:12.5px; line-height:1.4">
-                  "{{ sub.feedback }}"
-                </div>
+                <div [innerHTML]="sub.feedback"></div>
               </div>
               <span class="pill done">Reviewed</span>
             </div>
@@ -234,6 +232,22 @@ export class StudentSpeakingComponent implements OnDestroy {
   
   private mediaRecorder: MediaRecorder | null = null;
   private audioChunks: Blob[] = [];
+  private recordedMimeType = '';
+
+  private getBestAudioMimeType(): string {
+    const types = [
+      'audio/webm;codecs=opus',
+      'audio/webm',
+      'audio/ogg;codecs=opus',
+      'audio/ogg',
+      'audio/mp4;codecs=mp4a.40.2',
+      'audio/mp4'
+    ];
+    for (const t of types) {
+      if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(t)) return t;
+    }
+    return '';
+  }
   private timerInterval: any;
 
   // Web Audio Visualizer states
@@ -256,12 +270,21 @@ export class StudentSpeakingComponent implements OnDestroy {
       if (w) this.wordOfTheDay.set(w);
     });
 
+    this.db.observeSpeakingPrompts().subscribe(prompts => {
+      if (prompts && prompts.length > 0) {
+        this.speakingPrompts = prompts;
+        const lvl = this.selectedLevel();
+        const match = this.speakingPrompts.find(p => p.level === lvl) || this.speakingPrompts[2] || prompts[0];
+        if (match) this.activePrompt.set(match);
+      }
+    });
+
     // Determine active level of student to pre-select matching prompt
     this.db.observeCurrentUser().subscribe(u => {
       const lvl = u?.level || 'B1';
       this.selectedLevel.set(lvl);
       const match = this.speakingPrompts.find(p => p.level === lvl) || this.speakingPrompts[2];
-      this.activePrompt.set(match);
+      if (match) this.activePrompt.set(match);
     });
 
     this.db.observeSubmissions().subscribe(list => {
@@ -285,8 +308,16 @@ export class StudentSpeakingComponent implements OnDestroy {
     this.isSubmitted.set(false);
     
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      this.mediaRecorder = new MediaRecorder(stream);
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, sampleRate: 44100 }
+      });
+
+      const mimeType = this.getBestAudioMimeType();
+      const options: MediaRecorderOptions = { audioBitsPerSecond: 128000 };
+      if (mimeType) options.mimeType = mimeType;
+
+      this.mediaRecorder = new MediaRecorder(stream, options);
+      this.recordedMimeType = this.mediaRecorder.mimeType || mimeType || 'audio/webm';
       
       this.mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
@@ -295,7 +326,7 @@ export class StudentSpeakingComponent implements OnDestroy {
       };
 
       this.mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(this.audioChunks, { type: 'audio/wav' });
+        const audioBlob = new Blob(this.audioChunks, { type: this.recordedMimeType });
         const url = URL.createObjectURL(audioBlob);
         this.audioUrl.set(url);
         
@@ -303,7 +334,7 @@ export class StudentSpeakingComponent implements OnDestroy {
         stream.getTracks().forEach(track => track.stop());
       };
 
-      this.mediaRecorder.start();
+      this.mediaRecorder.start(250); // collect chunks every 250ms
       this.recorderState.set('recording');
       
       this.recordTimer.set(0);

@@ -151,6 +151,21 @@ import { DatabaseService, LiveClass, UserProfile } from '../../services/database
                     "{{ c.description }}"
                   </p>
 
+                  <!-- Google Meet Link Box for Student -->
+                  @if (c.googleMeetUrl) {
+                    <div style="background:#FAF5FF; border:1px solid #E9D5FF; border-radius:8px; padding:12px; margin-bottom:12px; margin-top:8px">
+                      <div style="font-size:11px; font-weight:700; color:#7E22CE; display:flex; align-items:center; gap:4px">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                        <span>Lien Google Meet</span>
+                      </div>
+                      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px; flex-wrap:wrap; gap:8px">
+                        <a [href]="c.googleMeetUrl" target="_blank" (click)="joinClass(c)" style="font-size:12px; font-weight:600; color:#4F46E5; text-decoration:underline; cursor:pointer; font-family:monospace">
+                          {{ c.googleMeetUrl }}
+                        </a>
+                      </div>
+                    </div>
+                  }
+
                   <div class="event-details-actions">
                     @if (canJoinClass(c)) {
                       <button class="btn-p join-session-accent" (click)="joinClass(c)">

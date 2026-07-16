@@ -498,7 +498,7 @@ export class StudentExamComponent implements OnDestroy {
 
   constructor() {
     this.db.observeCurrentUser().subscribe(u => this.currentUser.set(u));
-    this.db.observeQuizzes().subscribe(list => this.quizzes.set(list));
+    this.db.observeQuizzes().subscribe(list => this.quizzes.set(list.filter(q => q.status !== 'draft')));
     this.db.observeExamAttempts().subscribe(list => {
       const user = this.currentUser();
       if (user) this.examAttempts.set(this.db.getStudentExamAttempts(user.id));
@@ -507,8 +507,13 @@ export class StudentExamComponent implements OnDestroy {
 
   private sanitizer = inject(DomSanitizer);
 
+  private safeUrlCache = new Map<string, SafeResourceUrl>();
+
   getYouTubeEmbedUrl(url: string | undefined): SafeResourceUrl {
     if (!url) return this.sanitizer.bypassSecurityTrustResourceUrl('');
+    if (this.safeUrlCache.has(url)) {
+      return this.safeUrlCache.get(url)!;
+    }
     let videoId = '';
     try {
       if (url.includes('youtu.be/')) {
@@ -522,7 +527,9 @@ export class StudentExamComponent implements OnDestroy {
     } catch (e) {
       console.warn('Error parsing YouTube URL', e);
     }
-    return this.sanitizer.bypassSecurityTrustResourceUrl(`https://www.youtube.com/embed/${videoId}`);
+    const safe = this.sanitizer.bypassSecurityTrustResourceUrl(`https://www.youtube.com/embed/${videoId}`);
+    this.safeUrlCache.set(url, safe);
+    return safe;
   }
 
   examQuizzes = computed<Quiz[]>(() =>

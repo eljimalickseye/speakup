@@ -538,64 +538,6 @@ interface QuestionDraft {
         </div>
       }
 
-      <!-- PLACEMENT TESTS TAB -->
-      @if (activeTab() === 'placement') {
-        <div>
-          <!-- Header -->
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px">
-            <div>
-              <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v1H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-4V5a3 3 0 0 0-3-3z"/><path d="m9 12 2 2 4-4"/></svg>
-                <h3 style="font-size:15px; font-weight:800; color:var(--text-primary); margin:0">{{ t('Tests de Niveau', 'Placement Tests') }}</h3>
-              </div>
-              <p style="font-size:12px; color:var(--text-muted); margin:0">{{ t('Ces tests évaluent automatiquement les nouveaux élèves à leur première connexion.', 'These tests automatically evaluate new students on first login.') }}</p>
-            </div>
-          </div>
-
-          <!-- Placement Test Cards Grid -->
-          <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:16px">
-            @for (pt of getPlacementTests(); track pt.id) {
-              <div class="card" style="padding:0; overflow:hidden; border:1px solid var(--border); border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.04); transition: box-shadow 0.2s, transform 0.2s"
-                   onmouseover="this.style.boxShadow='0 8px 24px rgba(0,0,0,0.1)'; this.style.transform='translateY(-2px)'"
-                   onmouseout="this.style.boxShadow='0 2px 8px rgba(0,0,0,0.04)'; this.style.transform='translateY(0)'">
-
-                <!-- Card Top Bar -->
-                <div [style.background]="pt.id.includes('grammar') ? 'linear-gradient(135deg,#4F46E5,#7C3AED)' : pt.id.includes('vocabulary') ? 'linear-gradient(135deg,#0D9488,#059669)' : pt.id.includes('speaking') ? 'linear-gradient(135deg,#F59E0B,#D97706)' : pt.id.includes('listening') ? 'linear-gradient(135deg,#3B82F6,#2563EB)' : pt.id.includes('translation') ? 'linear-gradient(135deg,#EC4899,#BE185D)' : pt.id.includes('pronunciation') ? 'linear-gradient(135deg,#EF4444,#DC2626)' : 'linear-gradient(135deg,#64748B,#475569)'"
-                     style="padding:14px 16px; color:white; position:relative; overflow:hidden">
-                  <div style="position:absolute; top:-10px; right:-10px; width:60px; height:60px; background:rgba(255,255,255,0.08); border-radius:50%"></div>
-                  <div style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1px; opacity:0.8; margin-bottom:4px">{{ t('Test de Niveau', 'Placement Test') }}</div>
-                  <div style="font-size:13px; font-weight:800; line-height:1.3">{{ pt.title }}</div>
-                  <div style="margin-top:8px; display:flex; align-items:center; gap:6px">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    <span style="font-size:11px; opacity:0.8">{{ pt.questions.length }} {{ t('questions', 'questions') }} · {{ pt.timeLimit }}</span>
-                  </div>
-                </div>
-
-                <!-- Questions Preview -->
-                <div style="padding:12px 16px; flex:1">
-                  @for (q of pt.questions.slice(0, 2); track q.question; let qi = $index) {
-                    <div style="font-size:11.5px; color:var(--text-secondary); margin-bottom:6px; display:flex; align-items:flex-start; gap:6px">
-                      <span style="background:#EEF2FF; color:#4F46E5; font-size:9px; font-weight:800; padding:1px 5px; border-radius:10px; flex-shrink:0; margin-top:1px">Q{{ qi + 1 }}</span>
-                      <span style="line-height:1.4">{{ q.question | slice:0:60 }}{{ q.question.length > 60 ? '...' : '' }}</span>
-                    </div>
-                  }
-                  @if (pt.questions.length > 2) {
-                    <div style="font-size:11px; color:var(--text-muted); margin-top:4px">+ {{ pt.questions.length - 2 }} {{ t('autres questions', 'more questions') }}</div>
-                  }
-                </div>
-
-                <!-- Actions -->
-                <div style="padding:10px 16px; border-top:1px solid var(--border-weak); display:flex; gap:8px">
-                  <button class="btn-s" style="flex:1; font-size:11.5px; padding:6px 10px; border-color:#4F46E5; color:#4F46E5; display:flex; align-items:center; justify-content:center; gap:4px" (click)="editQuiz(pt); activeTab.set('create')">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                    {{ t('Modifier', 'Edit') }}
-                  </button>
-                </div>
-              </div>
-            }
-          </div>
-        </div>
-      }
     </div>
   `,
   styles: [`

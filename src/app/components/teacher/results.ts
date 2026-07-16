@@ -431,7 +431,7 @@ export class TeacherResultsComponent {
     return this.submissions().map(sub => ({
       sub,
       student: this.users().find(u => u.id === sub.studentId),
-      quiz: this.quizzes().find(q => q.title === sub.lessonTitle)
+      quiz: this.quizzes().find(q => q.id === sub.lessonId || sub.lessonTitle.includes(q.title))
     }));
   });
 
@@ -457,7 +457,18 @@ export class TeacherResultsComponent {
       if (field === 'student') cmp = (a.student?.name || a.sub.studentName).localeCompare(b.student?.name || b.sub.studentName);
       else if (field === 'quiz') cmp = a.sub.lessonTitle.localeCompare(b.sub.lessonTitle);
       else if (field === 'date') cmp = new Date(a.sub.submittedAt).getTime() - new Date(b.sub.submittedAt).getTime();
-      else if (field === 'score') cmp = (a.sub.score || '').localeCompare(b.sub.score || '');
+      else if (field === 'score') {
+        const scoreMap: Record<string, number> = {
+          'A — Excellent': 4,
+          'B — Good': 3,
+          'C — Satisfactory': 2,
+          'D — Needs improvement': 1,
+          'A refaire': 0
+        };
+        const sA = scoreMap[a.sub.score || ''] ?? -1;
+        const sB = scoreMap[b.sub.score || ''] ?? -1;
+        cmp = sA - sB;
+      }
       return asc ? cmp : -cmp;
     });
     return list;
@@ -519,6 +530,7 @@ export class TeacherResultsComponent {
   }
 
   getScoreClass(score: string): string {
+    if (score === 'A refaire') return 'score-badge poor';
     if (score.startsWith('A')) return 'score-badge excellent';
     if (score.startsWith('B')) return 'score-badge good';
     if (score.startsWith('C')) return 'score-badge average';

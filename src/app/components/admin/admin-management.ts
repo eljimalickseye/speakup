@@ -203,6 +203,14 @@ import { DialogService } from '../../services/dialog.service';
                       @if (user.blocked || user.status === 'suspended') {
                         <span style="font-size:9px; background:#FEE2E2; color:#EF4444; padding:2px 6px; border-radius:4px; font-weight:700">BLOQUÉ / SUSPENDU</span>
                       }
+                      @if (user.isPaid) {
+                        <span style="font-size:9px; background:#E6F4EA; color:#137333; padding:2px 6px; border-radius:4px; font-weight:700">💳 EN RÈGLE</span>
+                      } @else {
+                        <span style="font-size:9px; background:#FCE8E6; color:#C5221F; padding:2px 6px; border-radius:4px; font-weight:700">⚠️ IMPAYÉ</span>
+                        @if (user.paymentRemindersActive) {
+                          <span style="font-size:9px; background:#FEF7E0; color:#B06000; padding:2px 6px; border-radius:4px; font-weight:700; animation: pulse-live 2s infinite">🔔 RAPPELS</span>
+                        }
+                      }
                     </div>
                     @if (user.username && user.password) {
                       <div style="font-size:10px; color:var(--text-secondary); margin-top:4px; background:var(--surface-1); padding:4px 8px; border-radius:4px; display:inline-flex; align-items:center; gap:8px">
@@ -223,6 +231,22 @@ import { DialogService } from '../../services/dialog.service';
                       <option value="rejected">❌ Refusé</option>
                       <option value="suspended">🚫 Suspendu</option>
                     </select>
+                  </div>
+                  
+                  <!-- Payment status controls -->
+                  <div style="display:flex; align-items:center; gap:8px; background:rgba(79,70,229,0.05); padding:4px 8px; border-radius:6px; border:1px solid rgba(79,70,229,0.15)">
+                    <label style="display:flex; align-items:center; gap:4px; font-size:11px; font-weight:700; color:var(--text-primary); cursor:pointer">
+                      <input type="checkbox" [checked]="user.isPaid ?? false" (change)="togglePaymentStatus(user)" style="cursor:pointer" />
+                      <span>💳 En règle (Payé)</span>
+                    </label>
+                    
+                    @if (!user.isPaid) {
+                      <div style="width:1px; height:14px; background:rgba(79,70,229,0.2)"></div>
+                      <label style="display:flex; align-items:center; gap:4px; font-size:11px; font-weight:700; color:#B45309; cursor:pointer" title="Activer les rappels de paiement">
+                        <input type="checkbox" [checked]="user.paymentRemindersActive ?? false" (change)="togglePaymentReminders(user)" style="cursor:pointer" />
+                        <span>🔔 Rappels</span>
+                      </label>
+                    }
                   </div>
                   
                   <div style="display:flex; gap:4px">
@@ -254,6 +278,14 @@ import { DialogService } from '../../services/dialog.service';
                       @if (user.blocked || user.status === 'suspended') {
                         <span style="font-size:9px; background:#FEE2E2; color:#EF4444; padding:2px 6px; border-radius:4px; font-weight:700">BLOQUÉ / SUSPENDU</span>
                       }
+                      @if (user.isPaid) {
+                        <span style="font-size:9px; background:#E6F4EA; color:#137333; padding:2px 6px; border-radius:4px; font-weight:700">💳 EN RÈGLE</span>
+                      } @else {
+                        <span style="font-size:9px; background:#FCE8E6; color:#C5221F; padding:2px 6px; border-radius:4px; font-weight:700">⚠️ IMPAYÉ</span>
+                        @if (user.paymentRemindersActive) {
+                          <span style="font-size:9px; background:#FEF7E0; color:#B06000; padding:2px 6px; border-radius:4px; font-weight:700; animation: pulse-live 2s infinite">🔔 RAPPELS</span>
+                        }
+                      }
                     </div>
                     @if (user.username && user.password) {
                       <div style="font-size:10px; color:var(--text-secondary); margin-top:4px; background:var(--surface-1); padding:4px 8px; border-radius:4px; display:inline-flex; align-items:center; gap:8px">
@@ -275,6 +307,22 @@ import { DialogService } from '../../services/dialog.service';
                       <option value="rejected">❌ Refusé</option>
                       <option value="suspended">🚫 Suspendu</option>
                     </select>
+                  </div>
+                  
+                  <!-- Payment status controls -->
+                  <div style="display:flex; align-items:center; gap:8px; background:rgba(79,70,229,0.05); padding:4px 8px; border-radius:6px; border:1px solid rgba(79,70,229,0.15)">
+                    <label style="display:flex; align-items:center; gap:4px; font-size:11px; font-weight:700; color:var(--text-primary); cursor:pointer">
+                      <input type="checkbox" [checked]="user.isPaid ?? false" (change)="togglePaymentStatus(user)" style="cursor:pointer" />
+                      <span>💳 En règle (Payé)</span>
+                    </label>
+                    
+                    @if (!user.isPaid) {
+                      <div style="width:1px; height:14px; background:rgba(79,70,229,0.2)"></div>
+                      <label style="display:flex; align-items:center; gap:4px; font-size:11px; font-weight:700; color:#B45309; cursor:pointer" title="Activer les rappels de paiement">
+                        <input type="checkbox" [checked]="user.paymentRemindersActive ?? false" (change)="togglePaymentReminders(user)" style="cursor:pointer" />
+                        <span>🔔 Rappels</span>
+                      </label>
+                    }
                   </div>
                   
                   <div style="display:flex; gap:4px">
@@ -539,6 +587,24 @@ export class AdminManagementComponent {
         message: `Le statut de votre compte a été changé en : ${status}.`,
         type: 'reminder'
       });
+    });
+  }
+
+  togglePaymentStatus(user: UserProfile) {
+    const nextVal = !user.isPaid;
+    const updates: Partial<UserProfile> = { isPaid: nextVal };
+    if (nextVal) {
+      updates.paymentRemindersActive = false;
+    }
+    this.db.updateUserProfile(user.id, updates).then(() => {
+      this.dialogService.alert('Paiement mis à jour', `${user.name} est maintenant ${nextVal ? 'en règle (payé)' : 'non réglé'}.`, 'success');
+    });
+  }
+
+  togglePaymentReminders(user: UserProfile) {
+    const nextVal = !user.paymentRemindersActive;
+    this.db.updateUserProfile(user.id, { paymentRemindersActive: nextVal }).then(() => {
+      this.dialogService.alert('Rappels mis à jour', `Les rappels de paiement sont maintenant ${nextVal ? 'activés' : 'désactivés'} pour ${user.name}.`, 'success');
     });
   }
 

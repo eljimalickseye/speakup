@@ -24,7 +24,7 @@ import { DatabaseService, SystemLog, UserProfile, ChatChannel } from '../../serv
         <!-- Filter by User -->
         <div class="input-row" style="margin:0">
           <label style="font-size:11px; font-weight:700; color:var(--text-secondary); margin-bottom:4px; display:block">Utilisateur</label>
-          <select [(ngModel)]="filterUser" style="height:36px; font-size:12px; background:#FFF; border:1px solid var(--border); border-radius:6px; padding:0 8px; width:100%">
+          <select [ngModel]="filterUser()" (ngModelChange)="filterUser.set($event)" style="height:36px; font-size:12px; background:#FFF; border:1px solid var(--border); border-radius:6px; padding:0 8px; width:100%">
             <option value="">Tous les utilisateurs</option>
             @for (u of users(); track u.id) {
               <option [value]="u.id">{{ u.name }} ({{ u.role }})</option>
@@ -35,7 +35,7 @@ import { DatabaseService, SystemLog, UserProfile, ChatChannel } from '../../serv
         <!-- Filter by Action Type -->
         <div class="input-row" style="margin:0">
           <label style="font-size:11px; font-weight:700; color:var(--text-secondary); margin-bottom:4px; display:block">Type d'action</label>
-          <select [(ngModel)]="filterAction" style="height:36px; font-size:12px; background:#FFF; border:1px solid var(--border); border-radius:6px; padding:0 8px; width:100%">
+          <select [ngModel]="filterAction()" (ngModelChange)="filterAction.set($event)" style="height:36px; font-size:12px; background:#FFF; border:1px solid var(--border); border-radius:6px; padding:0 8px; width:100%">
             <option value="">Toutes les actions</option>
             <option value="login">🔑 Connexion</option>
             <option value="create_quiz">📝 Création Quiz</option>
@@ -50,15 +50,17 @@ import { DatabaseService, SystemLog, UserProfile, ChatChannel } from '../../serv
             <option value="quiz_completed">🏆 Quiz Terminé</option>
             <option value="exercise_completed">✏️ Exercice Effectué</option>
             <option value="vocab_game_played">🎮 Vocab Game</option>
-            <option value="message_sent">💬 Message Envoyé</option>
-            <option value="progression_updated">📈 Progression / XP</option>
+            <option value="live_started">🎬 Début Live</option>
+            <option value="live_ended">🏁 Fin Live</option>
+            <option value="live_joined">📥 Entrée Live</option>
+            <option value="live_left">📤 Sortie Live</option>
           </select>
         </div>
 
         <!-- Filter by Group -->
         <div class="input-row" style="margin:0">
           <label style="font-size:11px; font-weight:700; color:var(--text-secondary); margin-bottom:4px; display:block">Groupe / Classe</label>
-          <select [(ngModel)]="filterGroup" style="height:36px; font-size:12px; background:#FFF; border:1px solid var(--border); border-radius:6px; padding:0 8px; width:100%">
+          <select [ngModel]="filterGroup()" (ngModelChange)="filterGroup.set($event)" style="height:36px; font-size:12px; background:#FFF; border:1px solid var(--border); border-radius:6px; padding:0 8px; width:100%">
             <option value="">Tous les groupes</option>
             @for (c of groups(); track c.id) {
               <option [value]="c.id">{{ c.name }}</option>
@@ -69,7 +71,7 @@ import { DatabaseService, SystemLog, UserProfile, ChatChannel } from '../../serv
         <!-- Filter by Date -->
         <div class="input-row" style="margin:0">
           <label style="font-size:11px; font-weight:700; color:var(--text-secondary); margin-bottom:4px; display:block">Date</label>
-          <input type="date" [(ngModel)]="filterDate" style="height:36px; font-size:12px; background:#FFF; border:1px solid var(--border); border-radius:6px; padding:0 8px; width:100%" />
+          <input type="date" [ngModel]="filterDate()" (ngModelChange)="filterDate.set($event)" style="height:36px; font-size:12px; background:#FFF; border:1px solid var(--border); border-radius:6px; padding:0 8px; width:100%" />
         </div>
       </div>
 
@@ -136,10 +138,10 @@ export class HistoryLogsComponent {
   users = signal<UserProfile[]>([]);
   groups = signal<ChatChannel[]>([]);
 
-  filterUser = '';
-  filterAction = '';
-  filterGroup = '';
-  filterDate = '';
+  filterUser = signal<string>('');
+  filterAction = signal<string>('');
+  filterGroup = signal<string>('');
+  filterDate = signal<string>('');
 
   constructor() {
     this.db.observeSystemLogs().subscribe(list => this.logs.set(list));
@@ -149,28 +151,32 @@ export class HistoryLogsComponent {
 
   filteredLogs = computed(() => {
     let list = this.logs();
+    const user = this.filterUser();
+    const action = this.filterAction();
+    const group = this.filterGroup();
+    const date = this.filterDate();
 
-    if (this.filterUser) {
-      list = list.filter(l => l.userId === this.filterUser);
+    if (user) {
+      list = list.filter(l => l.userId === user);
     }
-    if (this.filterAction) {
-      list = list.filter(l => l.action === this.filterAction);
+    if (action) {
+      list = list.filter(l => l.action === action);
     }
-    if (this.filterGroup) {
-      list = list.filter(l => l.groupId === this.filterGroup);
+    if (group) {
+      list = list.filter(l => l.groupId === group);
     }
-    if (this.filterDate) {
-      list = list.filter(l => l.createdAt.startsWith(this.filterDate));
+    if (date) {
+      list = list.filter(l => l.createdAt.startsWith(date));
     }
 
     return list;
   });
 
   clearFilters() {
-    this.filterUser = '';
-    this.filterAction = '';
-    this.filterGroup = '';
-    this.filterDate = '';
+    this.filterUser.set('');
+    this.filterAction.set('');
+    this.filterGroup.set('');
+    this.filterDate.set('');
   }
 
   getRoleClass(role: string): string {
@@ -191,9 +197,12 @@ export class HistoryLogsComponent {
       case 'homework_graded': return '💯';
       case 'quiz_completed': return '🏆';
       case 'exercise_completed': return '✏️';
-      case 'vocab_game_played': return '🎮';
       case 'message_sent': return '💬';
       case 'progression_updated': return '📈';
+      case 'live_started': return '🎬';
+      case 'live_ended': return '🏁';
+      case 'live_joined': return '📥';
+      case 'live_left': return '📤';
       default: return '⚡';
     }
   }
@@ -215,6 +224,10 @@ export class HistoryLogsComponent {
       case 'vocab_game_played': return 'Partie Vocabulaire';
       case 'message_sent': return 'Message Envoyé';
       case 'progression_updated': return 'Progression Mise à jour';
+      case 'live_started': return 'Début Live';
+      case 'live_ended': return 'Fin Live';
+      case 'live_joined': return 'Entrée Live';
+      case 'live_left': return 'Sortie Live';
       default: return action;
     }
   }

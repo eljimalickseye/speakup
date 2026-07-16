@@ -95,9 +95,9 @@ import { DatabaseService, Submission, UserProfile, Quiz, ActivityLog } from '../
             </div>
           }
           @for (sub of homeworkHistory(); track sub.id) {
-            <div class="card" style="padding:14px 16px; border-left:4px solid {{ sub.graded ? '#059669' : '#F59E0B' }}; display:flex; align-items:center; justify-content:space-between; margin:0">
+            <div class="card" style="padding:14px 16px; border-left:4px solid {{ sub.score === 'A refaire' ? '#F59E0B' : (sub.graded ? '#059669' : '#F59E0B') }}; display:flex; align-items:center; justify-content:space-between; margin:0">
               <div style="display:flex; align-items:center; gap:12px; flex:1">
-                <div style="width:36px; height:36px; border-radius:8px; background:{{ sub.graded ? '#ECFDF5' : '#FFFBEB' }}; display:flex; align-items:center; justify-content:center; flex-shrink:0; color: {{ sub.graded ? '#059669' : '#D97706' }}">
+                <div style="width:36px; height:36px; border-radius:8px; background:{{ sub.score === 'A refaire' ? '#FFFBEB' : (sub.graded ? '#ECFDF5' : '#FFFBEB') }}; display:flex; align-items:center; justify-content:center; flex-shrink:0; color: {{ sub.score === 'A refaire' ? '#D97706' : (sub.graded ? '#059669' : '#D97706') }}">
                   @if (sub.type === 'audio') {
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
                   } @else {
@@ -112,15 +112,20 @@ import { DatabaseService, Submission, UserProfile, Quiz, ActivityLog } from '../
                       · <span style="color:#059669; font-weight:600">+{{ sub.xpReward }} XP</span>
                     }
                   </div>
+                  @if (sub.feedback) {
+                    <div style="font-size:11px; background:var(--surface-2); border-left:3px solid #6366F1; padding:6px 10px; border-radius:6px; margin-top:6px; color:var(--text-secondary); line-height:1.4">
+                      <div [innerHTML]="'<strong>💬 Feedback:</strong> ' + sub.feedback"></div>
+                    </div>
+                  }
                 </div>
               </div>
               <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px">
-                <span class="pill" [class.done]="sub.graded" [class.new]="!sub.graded" style="font-size:10px">
-                  {{ sub.graded ? '✓ Corrigé' : '⏳ En attente' }}
+                <span class="pill" [class.y]="sub.score === 'A refaire'" [class.done]="sub.graded && sub.score !== 'A refaire'" [class.new]="!sub.graded" style="font-size:10px">
+                  {{ sub.score === 'A refaire' ? '🔄 À refaire' : (sub.graded ? '✓ Corrigé' : '⏳ En attente') }}
                 </span>
                 @if (sub.graded && sub.score) {
                   <div class="score-chip" style="font-size:11.5px; font-weight:800; padding:2px 8px; background:#EEF2FF; color:#4F46E5; border-radius:12px">
-                    Note: {{ sub.score }}
+                    Note: {{ sub.score === 'A refaire' ? t('À refaire', 'Redo') : sub.score }}
                   </div>
                 }
               </div>
@@ -361,6 +366,11 @@ import { DatabaseService, Submission, UserProfile, Quiz, ActivityLog } from '../
 })
 export class StudentHistoryComponent {
   private db = inject(DatabaseService);
+  activeLang = this.db.activeLang;
+
+  t(fr: string, en: string): string {
+    return this.activeLang() === 'fr' ? fr : en;
+  }
 
   currentUser = signal<UserProfile | null>(null);
   activityLogs = signal<any[]>([]);
@@ -418,7 +428,18 @@ export class StudentHistoryComponent {
       const tB = new Date(b.submittedAt).getTime();
       if (this.sortOrder() === 'newest') return tB - tA;
       if (this.sortOrder() === 'oldest') return tA - tB;
-      if (this.sortOrder() === 'score') return parseFloat(b.score || '0') - parseFloat(a.score || '0');
+      if (this.sortOrder() === 'score') {
+        const scoreMap: Record<string, number> = {
+          'A — Excellent': 4,
+          'B — Good': 3,
+          'C — Satisfactory': 2,
+          'D — Needs improvement': 1,
+          'A refaire': 0
+        };
+        const sA = scoreMap[a.score || ''] ?? 0;
+        const sB = scoreMap[b.score || ''] ?? 0;
+        return sB - sA;
+      }
       return 0;
     });
   });
@@ -468,14 +489,14 @@ export class StudentHistoryComponent {
   });
 
   completedCount = computed(() => {
-    return this.submissions().filter(s => s.graded && (s.type === 'text' || s.type === 'audio' || s.type === 'video')).length +
+    return this.submissions().filter(s => s.graded && s.score !== 'A refaire' && (s.type === 'text' || s.type === 'audio' || s.type === 'video')).length +
            this.activityLogs().filter(l => l.status === 'completed' && l.type === 'quiz').length +
            this.vocabAttempts().length +
            this.examAttempts().length;
   });
 
   pendingCount = computed(() => {
-    return this.submissions().filter(s => !s.graded && (s.type === 'text' || s.type === 'audio' || s.type === 'video')).length;
+    return this.submissions().filter(s => (!s.graded || s.score === 'A refaire') && (s.type === 'text' || s.type === 'audio' || s.type === 'video')).length;
   });
 
   totalXP = computed(() => {

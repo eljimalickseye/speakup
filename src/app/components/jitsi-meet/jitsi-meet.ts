@@ -1,9 +1,9 @@
-import { Component, ElementRef, ViewChild, AfterViewInit, OnDestroy, Input, Output, EventEmitter, signal, inject } from '@angular/core';
+import { Component, ElementRef, ViewChild, AfterViewInit, OnDestroy, Input, Output, EventEmitter, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { environment } from '../../../environments/environment';
 import { DialogService } from '../../services/dialog.service';
-import { DatabaseService } from '../../services/database.service';
+import { DatabaseService, LivePoll } from '../../services/database.service';
 import {
   Room,
   RoomEvent,
@@ -233,7 +233,18 @@ interface ParticipantModel {
 
                   <!-- Overlay label -->
                   <div class="overlay-label">
-                    <span class="name-text">{{ p.name }}</span>
+                    <span class="name-text" style="display:inline-flex; align-items:center; gap:4px">
+                      <span>{{ p.name }}</span>
+                      @if (isHandRaised(p.identity)) {
+                        <span class="hand-raise-indicator" 
+                              [style.cursor]="isTeacher ? 'pointer' : 'default'" 
+                              (click)="isTeacher && lowerStudentHand(p.identity); $event.stopPropagation()"
+                              [title]="isTeacher ? t('Abaisser la main', 'Lower hand') : t('Main levée', 'Hand raised')"
+                              style="animation: pulse-live 1.5s infinite; background: #FEF3C7; border: 1.5px solid #FCD34D; color: #D97706; border-radius: 50%; width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; box-shadow: 0 1px 3px rgba(0,0,0,0.2)">
+                          ✋
+                        </span>
+                      }
+                    </span>
                     <span class="role-badge" [class.bot]="p.isBot" [class.teacher]="!p.isBot && !p.isLocal && isTeacherCard(p.identity)">
                       {{ getRoleLabel(p) }}
                     </span>
@@ -343,6 +354,118 @@ interface ParticipantModel {
             </div>
           </div>
         }
+
+        <!-- Right Side Panel (In-room Live Polls) -->
+        @if (showPollsPanel()) {
+          <div class="chat-sidebar" style="background:#FFF">
+            <div class="chat-sidebar-header" style="display:flex; justify-content:space-between; align-items:center; width:100%; padding: 12px 16px; box-sizing: border-box; border-bottom:1px solid var(--border-weak)">
+              <div style="display:flex; align-items:center; gap:6px">
+                <span style="font-size:14px">📊</span>
+                <span style="font-weight:700">{{ t('Sondages en Direct', 'Live Polls') }}</span>
+              </div>
+              @if (isTeacher) {
+                <button (click)="showPollCreator.set(!showPollCreator())" 
+                        style="background:#4F46E5; border:none; color:white; border-radius:6px; cursor:pointer; padding:4px 8px; font-size:10.5px; font-weight:700">
+                  {{ showPollCreator() ? t('Fermer', 'Close') : t('+ Créer', '+ Create') }}
+                </button>
+              }
+            </div>
+            
+            <div class="chat-messages-container" style="padding:16px; display:flex; flex-direction:column; gap:16px; height:calc(100% - 48px); overflow-y:auto; box-sizing:border-box">
+              
+              <!-- POLL CREATOR VIEW (Teacher Only) -->
+              @if (isTeacher && showPollCreator()) {
+                <div style="background:var(--surface-2); border:1.5px dashed #4F46E5; border-radius:8px; padding:14px; display:flex; flex-direction:column; gap:10px">
+                  <h4 style="margin:0; font-size:12px; font-weight:700">{{ t('Nouveau Sondage', 'New Poll') }}</h4>
+                  
+                  <div class="input-row" style="margin:0">
+                    <label style="font-size:10px; font-weight:600; color:var(--text-muted)">{{ t('Question', 'Question') }}</label>
+                    <input type="text" [(ngModel)]="pollQuestion" [placeholder]="t('ex: Avez-vous compris ?', 'e.g. Do you understand?')" style="width:100%; padding:8px; border:1px solid var(--border); border-radius:4px; font-size:11.5px; background:#FFF" />
+                  </div>
+                  
+                  <div style="display:flex; flex-direction:column; gap:6px">
+                    <label style="font-size:10px; font-weight:600; color:var(--text-muted)">{{ t('Options de réponse', 'Answer Options') }}</label>
+                    @for (opt of pollOptions; track $index) {
+                      <div style="display:flex; gap:6px; align-items:center">
+                        <input type="text" [(ngModel)]="pollOptions[$index]" [placeholder]="t('Option ' + ($index + 1), 'Option ' + ($index + 1))" style="flex:1; padding:6px; border:1px solid var(--border); border-radius:4px; font-size:11px; background:#FFF" />
+                        @if (pollOptions.length > 2) {
+                          <button (click)="removePollOption($index)" style="background:none; border:none; color:#EF4444; cursor:pointer; font-size:13.5px">×</button>
+                        }
+                      </div>
+                    }
+                    @if (pollOptions.length < 5) {
+                      <button (click)="addPollOption()" style="background:none; border:none; color:#4F46E5; font-size:10.5px; font-weight:700; cursor:pointer; align-self:flex-start; padding:2px 0">+ {{ t('Ajouter option', 'Add Option') }}</button>
+                    }
+                  </div>
+                  
+                  <button (click)="submitNewPoll()" [disabled]="!pollQuestion.trim()" class="btn-p" style="font-size:11.5px; padding:6px 12px; height:32px; border-radius:6px; margin-top:4px">
+                    🚀 {{ t('Lancer le sondage', 'Launch Poll') }}
+                  </button>
+                </div>
+              }
+
+              <!-- POLLS LIST VIEW -->
+              @for (poll of polls(); track poll.id) {
+                <div class="card" style="border:1px solid var(--border); padding:14px; border-radius:8px; display:flex; flex-direction:column; gap:10px; background:#FFF"
+                     [style.border-left]="poll.active ? '4px solid #EF4444' : '4px solid var(--border-strong)'">
+                  <div style="display:flex; justify-content:space-between; align-items:center">
+                    <span class="badge" [style.background]="poll.active ? '#FEE2E2' : '#F3F4F6'" [style.color]="poll.active ? '#EF4444' : '#6B7280'" style="font-size:8px; font-weight:800; text-transform:uppercase">
+                      {{ poll.active ? t('En cours', 'Live') : t('Terminé', 'Closed') }}
+                    </span>
+                    <span style="font-size:10px; color:var(--text-muted)">{{ getTotalVotesCount(poll) }} votes</span>
+                  </div>
+                  
+                  <h4 style="margin:0; font-size:12.5px; font-weight:700; color:var(--text-primary)">{{ poll.question }}</h4>
+                  
+                  <!-- Options rendering -->
+                  <div style="display:flex; flex-direction:column; gap:8px">
+                    @for (opt of poll.options; track $index) {
+                      <!-- Voter mode: Active Poll & Not voted yet -->
+                      @if (poll.active && !hasVoted(poll) && !isTeacher) {
+                        <button (click)="vote(poll.id, $index)" 
+                                style="width:100%; text-align:left; background:#FFF; border:1px solid var(--border); padding:8px 12px; border-radius:6px; font-size:11.5px; font-weight:600; cursor:pointer; color:var(--text-secondary); transition:all 0.15s"
+                                onmouseover="this.style.borderColor='#4F46E5'; this.style.color='#4F46E5'; this.style.background='#EEF2FF'"
+                                onmouseout="this.style.borderColor='var(--border)'; this.style.color='var(--text-secondary)'; this.style.background='#FFF'">
+                          {{ opt }}
+                        </button>
+                      } @else {
+                        <!-- Results mode: Voted or Closed or Teacher view -->
+                        <div style="position:relative; background:#F8FAFC; border:1px solid var(--border-weak); padding:8px 12px; border-radius:6px; overflow:hidden">
+                          <!-- Background progress bar -->
+                          <div [style.width.%]="getOptionPercentage(poll, $index)" style="position:absolute; top:0; left:0; height:100%; background:#EEF2FF; z-index:1; transition:width 0.5s ease-out"></div>
+                          
+                          <!-- Option label and percentages overlay -->
+                          <div style="position:relative; z-index:2; display:flex; justify-content:space-between; align-items:center; font-size:11.5px">
+                            <span style="font-weight:600" [style.color]="$index === getMyVote(poll) ? '#4F46E5' : 'var(--text-secondary)'">
+                              {{ opt }}
+                              @if ($index === getMyVote(poll)) {
+                                <span style="font-size:10px; color:#4F46E5; margin-left:4px">✓ {{ t('Votre vote', 'Your vote') }}</span>
+                              }
+                            </span>
+                            <span style="font-weight:700; color:var(--text-primary)">
+                              {{ getOptionPercentage(poll, $index) }}% ({{ getOptionVotesCount(poll, $index) }})
+                            </span>
+                          </div>
+                        </div>
+                      }
+                    }
+                  </div>
+
+                  <!-- Close button (Teacher Only) -->
+                  @if (isTeacher && poll.active) {
+                    <button (click)="closeActivePoll(poll.id)" class="btn-s" style="border-color:#EF4444; color:#EF4444; font-size:11px; padding:4px 8px; height:28px; width:100%; margin-top:4px">
+                      🚫 {{ t('Terminer le sondage', 'Close Poll') }}
+                    </button>
+                  }
+                </div>
+              } @empty {
+                <div style="padding:40px; text-align:center; color:var(--text-muted); font-size:12px">
+                  📊 {{ t('Aucun sondage lancé pour le moment.', 'No polls launched yet.') }}
+                </div>
+              }
+            </div>
+          </div>
+        }
       </div>
 
       <!-- Action Panel controls (Mic, Cam, Screen Share, Whiteboard, Chat, Recording, Exit) -->
@@ -399,6 +522,24 @@ interface ParticipantModel {
                   title="Discussion en direct"
                   style="display:inline-flex; align-items:center; justify-content:center">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </button>
+
+          <!-- Raise Hand toggle -->
+          <button (click)="toggleHandRaise()" 
+                  class="control-btn" 
+                  [class.active]="hasHandRaised()"
+                  [title]="hasHandRaised() ? t('Baisser la main', 'Lower hand') : t('Lever la main', 'Raise hand')"
+                  style="display:inline-flex; align-items:center; justify-content:center">
+            <span style="font-size:16px">✋</span>
+          </button>
+
+          <!-- Polls toggle -->
+          <button (click)="togglePollsPanel()" 
+                  class="control-btn" 
+                  [class.active]="showPollsPanel()"
+                  [title]="t('Sondages en direct', 'Live Polls')"
+                  style="display:inline-flex; align-items:center; justify-content:center">
+            <span style="font-size:16px">📊</span>
           </button>
 
           <!-- Record toggle (Only host/teacher can record call) -->
@@ -1311,10 +1452,21 @@ export class JitsiMeet implements AfterViewInit, OnDestroy {
   // Live Chat and Whiteboard States
   showChat = signal<boolean>(false);
   showWhiteboard = signal<boolean>(false);
+  showPollsPanel = signal<boolean>(false);
   chatMessages = signal<any[]>([]);
   whiteboardElements = signal<any[]>([]);
   newChatMessage = '';
   activeEditingStickyId = signal<string | null>(null);
+
+  // Hand Raise State
+  raisedHandUserIds = signal<string[]>([]);
+
+  // Live Polls State
+  polls = signal<LivePoll[]>([]);
+  activePoll = computed(() => this.polls().find(p => p.active) || null);
+  showPollCreator = signal<boolean>(false);
+  pollQuestion = '';
+  pollOptions = ['', ''];
   
   // Whiteboard drawing tools
   whiteboardTool = signal<'pen' | 'rect' | 'circle' | 'line' | 'arrow' | 'sticky' | 'eraser' | 'select'>('pen');
@@ -1379,13 +1531,31 @@ export class JitsiMeet implements AfterViewInit, OnDestroy {
       this.scrollToBottom();
     });
 
-    // 2. Subscribe to Whiteboard drawing updates
-    this.wbSub = this.db.observeWhiteboard(this.classId).subscribe(elements => {
-      this.whiteboardElements.set(elements || []);
+    // 2. Subscribe to Whiteboard elements feed
+    this.wbSub = this.db.observeWhiteboard(this.classId).subscribe(elems => {
+      this.whiteboardElements.set(elems || []);
       this.redrawCanvas();
     });
 
-    // 3. Subscribe to Speech Prompter active script
+    // 3. Subscribe to Hand Raises feed
+    this.db.observeHandRaises(this.classId).subscribe(ids => {
+      const current = this.raisedHandUserIds();
+      const added = ids.filter(id => !current.includes(id));
+      if (added.length > 0) {
+        const myId = this.db.getCurrentUser()?.id;
+        if (added.some(id => id !== myId)) {
+          this.playHandRaiseChime();
+        }
+      }
+      this.raisedHandUserIds.set(ids || []);
+    });
+
+    // 4. Subscribe to Live Polls feed
+    this.db.observePolls(this.classId).subscribe(list => {
+      this.polls.set(list || []);
+    });
+
+    // 5. Subscribe to Speech Prompter active script
     this.prompterSub = this.db.observeSpeechPrompter(this.classId).subscribe((data: any) => {
       if (data) {
         if (data.targetStudent === 'all' || data.targetStudent === this.userName) {
@@ -1404,7 +1574,9 @@ export class JitsiMeet implements AfterViewInit, OnDestroy {
     
     try {
       // 1. Generate local access token client-side using API credentials
-      const identity = this.isTeacher ? `teacher_${Date.now()}` : `student_${Date.now()}`;
+      const user = this.db.getCurrentUser();
+      const userId = user ? user.id : `guest_${Date.now()}`;
+      const identity = `${this.isTeacher ? 'teacher' : 'student'}_${userId}`;
       const token = await this.generateToken(this.roomName, identity, this.userName);
 
       // 2. Instantiate LiveKit room
@@ -1420,6 +1592,9 @@ export class JitsiMeet implements AfterViewInit, OnDestroy {
       await this.room.connect(environment.livekit.url, token);
       this.statusText = 'Connected';
       console.log('Connected to LiveKit room successfully:', this.roomName);
+
+      // Log entry check-in action
+      this.db.logAction('live_joined', `A rejoint le cours en direct: "${this.roomName}"`, this.classId);
 
       // 5. Publish microphone and camera tracks
       try {
@@ -1629,6 +1804,8 @@ export class JitsiMeet implements AfterViewInit, OnDestroy {
   toggleWhiteboard() {
     this.showWhiteboard.set(!this.showWhiteboard());
     if (this.showWhiteboard()) {
+      this.showChat.set(false);
+      this.showPollsPanel.set(false);
       setTimeout(() => {
         this.initCanvasSize();
         this.redrawCanvas();
@@ -2208,8 +2385,140 @@ export class JitsiMeet implements AfterViewInit, OnDestroy {
   toggleChat() {
     this.showChat.set(!this.showChat());
     if (this.showChat()) {
+      this.showWhiteboard.set(false);
+      this.showPollsPanel.set(false);
       setTimeout(() => this.scrollToBottom(), 100);
     }
+  }
+
+  togglePollsPanel() {
+    this.showPollsPanel.set(!this.showPollsPanel());
+    if (this.showPollsPanel()) {
+      this.showChat.set(false);
+      this.showWhiteboard.set(false);
+    }
+  }
+
+  // --- LIVE HAND RAISE LOGIC ---
+  isHandRaised(identity: string): boolean {
+    const userId = identity.split('_')[1];
+    if (!userId) return false;
+    return this.raisedHandUserIds().includes(userId);
+  }
+
+  hasHandRaised(): boolean {
+    const myId = this.db.getCurrentUser()?.id;
+    if (!myId) return false;
+    return this.raisedHandUserIds().includes(myId);
+  }
+
+  toggleHandRaise() {
+    const myId = this.db.getCurrentUser()?.id;
+    if (!myId || !this.classId) return;
+
+    if (this.hasHandRaised()) {
+      this.db.lowerHand(this.classId, myId);
+    } else {
+      this.db.raiseHand(this.classId, myId);
+    }
+  }
+
+  lowerStudentHand(identity: string) {
+    const userId = identity.split('_')[1];
+    if (userId && this.classId) {
+      this.db.lowerHand(this.classId, userId);
+    }
+  }
+
+  playHandRaiseChime() {
+    try {
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587.33, now); // D5
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+      osc.start(now);
+      osc.stop(now + 0.4);
+    } catch (e) {
+      console.warn(e);
+    }
+  }
+
+  // --- LIVE POLLS LOGIC ---
+  addPollOption() {
+    if (this.pollOptions.length < 5) {
+      this.pollOptions.push('');
+    }
+  }
+
+  removePollOption(index: number) {
+    if (this.pollOptions.length > 2) {
+      this.pollOptions.splice(index, 1);
+    }
+  }
+
+  async submitNewPoll() {
+    if (!this.pollQuestion.trim() || !this.classId) return;
+    const options = this.pollOptions.filter(o => o.trim() !== '');
+    if (options.length < 2) {
+      this.dialogService.alert('Erreur', 'Veuillez saisir au moins 2 options.', 'info');
+      return;
+    }
+
+    await this.db.createPoll(this.classId, this.pollQuestion, options);
+    
+    // Reset form
+    this.pollQuestion = '';
+    this.pollOptions = ['', ''];
+    this.showPollCreator.set(false);
+    this.dialogService.alert('Sondage Créé 📊', 'Le sondage a été publié en direct avec succès.', 'success');
+  }
+
+  async closeActivePoll(pollId: string) {
+    if (this.classId) {
+      await this.db.closePoll(this.classId, pollId);
+    }
+  }
+
+  hasVoted(poll: LivePoll): boolean {
+    const myId = this.db.getCurrentUser()?.id;
+    return !!(myId && poll.votes && myId in poll.votes);
+  }
+
+  getMyVote(poll: LivePoll): number {
+    const myId = this.db.getCurrentUser()?.id;
+    if (!myId || !poll.votes) return -1;
+    return poll.votes[myId] ?? -1;
+  }
+
+  async vote(pollId: string, optionIndex: number) {
+    const myId = this.db.getCurrentUser()?.id;
+    if (myId && this.classId) {
+      await this.db.castVote(this.classId, pollId, myId, optionIndex);
+    }
+  }
+
+  getOptionPercentage(poll: LivePoll, optionIndex: number): number {
+    if (!poll.votes) return 0;
+    const totalVotes = Object.keys(poll.votes).length;
+    if (totalVotes === 0) return 0;
+    const votesForOption = Object.values(poll.votes).filter(val => val === optionIndex).length;
+    return Math.round((votesForOption / totalVotes) * 100);
+  }
+
+  getOptionVotesCount(poll: LivePoll, optionIndex: number): number {
+    if (!poll.votes) return 0;
+    return Object.values(poll.votes).filter(val => val === optionIndex).length;
+  }
+
+  getTotalVotesCount(poll: LivePoll): number {
+    if (!poll.votes) return 0;
+    return Object.keys(poll.votes).length;
   }
 
   sendTextMessage() {
@@ -2533,6 +2842,10 @@ export class JitsiMeet implements AfterViewInit, OnDestroy {
       this.room.disconnect();
     }
     this.statusText = 'Ended';
+    
+    // Log exit check-out action
+    this.db.logAction('live_left', `A quitté (fin) le cours en direct: "${this.roomName}"`, this.classId);
+
     this.onMeetingEnd.emit();
   }
 
@@ -2542,6 +2855,10 @@ export class JitsiMeet implements AfterViewInit, OnDestroy {
       this.room.disconnect();
     }
     this.statusText = 'Ended';
+
+    // Log exit check-out action
+    this.db.logAction('live_left', `A quitté le cours en direct: "${this.roomName}"`, this.classId);
+
     this.onMeetingLeave.emit();
   }
 
@@ -2559,6 +2876,9 @@ export class JitsiMeet implements AfterViewInit, OnDestroy {
     if (this.prompterSub) this.prompterSub.unsubscribe();
     
     if (this.room) {
+      if (this.statusText === 'Connected') {
+        this.db.logAction('live_left', `A quitté le cours en direct (fermeture): "${this.roomName}"`, this.classId);
+      }
       this.room.disconnect();
       this.room = null;
     }

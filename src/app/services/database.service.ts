@@ -103,7 +103,15 @@ export interface UserProfile {
   garden?: UserGarden;
   clubId?: string;
   readNotifications?: string[];
+  completedItems?: string[];
   deletedNotifications?: string[];
+  isPaid?: boolean;
+  paymentRemindersActive?: boolean;
+  isPrivateCoaching?: boolean;
+  privateCoachingGoal?: string;
+  privateCoachingRoadmap?: { id: string; text: string; done: boolean }[];
+  privateCoachingRequested?: boolean;
+  privateCoachingNotes?: string;
 }
 
 export interface SystemLog {
@@ -174,6 +182,39 @@ export interface Ebook {
   coverImageUrl?: string;
   status?: 'draft' | 'published';
   pages?: EbookPage[];
+  interactiveEnabled?: boolean;
+  audioUrl?: string;
+}
+
+export interface EbookHighlight {
+  id: string;
+  bookId: string;
+  studentId: string;
+  studentName: string;
+  pageIdx: number;
+  sentenceIdx: number;
+  text: string;
+  xpAwarded?: number;
+  timestamp: string;
+}
+
+export interface LiveIceBreaker {
+  id: string;
+  type: 'wheel' | 'buzz' | 'mission';
+  status: 'active' | 'ended';
+  wheelState?: {
+    selectedStudent?: string;
+    challenge?: string;
+  };
+  buzzState?: {
+    question: string;
+    answers: { studentId: string; studentName: string; answer: string; correct?: boolean; timestamp: string }[];
+  };
+  missionState?: {
+    title: string;
+    description: string;
+    submissions: { studentId: string; studentName: string; audioUrl: string; correct?: boolean; timestamp: string }[];
+  };
 }
 
 export interface AbuseReport {
@@ -254,6 +295,17 @@ export interface Submission {
   submittedAt: string;
 }
 
+export interface CoachingMessage {
+  id: string;
+  studentId: string;
+  senderId: string;
+  senderName: string;
+  senderRole: 'student' | 'teacher';
+  text: string;
+  timestamp: string;
+  audioUrl?: string;
+}
+
 export interface Attendance {
   id: string;
   date: string;
@@ -271,6 +323,16 @@ export interface LiveClass {
   jitsiRoom: string;
   status: 'waiting' | 'active' | 'completed';
   studentId?: string;
+  googleMeetUrl?: string;
+}
+
+export interface LivePoll {
+  id: string;
+  question: string;
+  options: string[];
+  votes: { [userId: string]: number };
+  active: boolean;
+  createdAt: string;
 }
 
 export interface Announcement {
@@ -318,6 +380,18 @@ export interface Exercise {
   // Vocabulary
   theme?: string;
   wordList?: string[];
+  gameType?: 'flashcards' | 'matching' | 'memory' | 'word_builder' | 'hangman' | 'multiple_choice';
+  difficulty?: 'easy' | 'medium' | 'hard';
+  category?: string;
+  colorTheme?: string;
+  coverImage?: string;
+  words?: {
+    word: string;
+    definition: string;
+    translation: string;
+    imageUrl?: string;
+    pronunciation?: string;
+  }[];
 }
 
 export interface ActivityLog {
@@ -345,6 +419,15 @@ export interface WordOfTheDay {
   definition: string;
   example: string;
   exampleTranslation: string;
+  updatedAt?: string;
+}
+
+export interface SpeakingPrompt {
+  id: string;
+  level: string;
+  text: string;
+  translation: string;
+  hint: string;
   updatedAt?: string;
 }
 
@@ -454,6 +537,7 @@ export interface ChatChannel {
   createdByRole?: string;
   members?: string[];
   isPrivate?: boolean;
+  topic?: string;
 }
 
 @Injectable({
@@ -482,6 +566,9 @@ export class DatabaseService {
   private channels$ = new BehaviorSubject<ChatChannel[]>([]);
   private ebooks$ = new BehaviorSubject<Ebook[]>([]);
   private reports$ = new BehaviorSubject<AbuseReport[]>([]);
+  activeHighlightSession$ = new BehaviorSubject<{ bookId: string; active: boolean } | null>(null);
+  ebookHighlights$ = new BehaviorSubject<EbookHighlight[]>([]);
+  activeIceBreaker$ = new BehaviorSubject<LiveIceBreaker | null>(null);
   private exercises$ = new BehaviorSubject<Exercise[]>([]);
   private activityLogs$ = new BehaviorSubject<ActivityLog[]>([]);
   private systemLogs$ = new BehaviorSubject<SystemLog[]>([]);
@@ -502,6 +589,37 @@ export class DatabaseService {
     example: 'We usually eat breakfast in the kitchen.',
     exampleTranslation: 'Nous prenons habituellement notre petit-déjeuner dans la cuisine.'
   });
+
+  private speakingPrompts$ = new BehaviorSubject<SpeakingPrompt[]>([
+    {
+      id: 'prompt-a1',
+      level: 'A1',
+      text: 'Introduce yourself: say your name, age, nationality, and where you live.',
+      translation: 'Présentez-vous : dites votre nom, votre âge, votre nationalité et où vous habitez.',
+      hint: 'Use simple present tense: "My name is...", "I am... years old", "I live in..."'
+    },
+    {
+      id: 'prompt-a2',
+      level: 'A2',
+      text: 'Describe a typical day in your life: what time do you wake up, and what do you do?',
+      translation: 'Décrivez une journée typique de votre vie : à quelle heure vous réveillez-vous et que faites-vous ?',
+      hint: 'Describe routines: "First, I wake up at...", "Then I have breakfast...", "In the evening, I..."'
+    },
+    {
+      id: 'prompt-b1',
+      level: 'B1',
+      text: 'Describe your favorite hobby and explain why you enjoy doing it.',
+      translation: 'Décrivez votre loisir préféré et expliquez pourquoi vous aimez le pratiquer.',
+      hint: 'Express personal feelings: "I have been practicing... for...", "It helps me relax because..."'
+    },
+    {
+      id: 'prompt-b2',
+      level: 'B2',
+      text: 'Discuss the advantages and disadvantages of technology in our modern daily lives.',
+      translation: 'Discutez des avantages et des inconvénients de la technologie dans notre vie quotidienne moderne.',
+      hint: 'Formulate structured debates: "On the one hand...", "However, a major drawback is...", "In my opinion..."'
+    }
+  ]);
   
   private clubs$ = new BehaviorSubject<LearningClub[]>([]);
   private marketplaceItems$ = new BehaviorSubject<MarketplaceItem[]>([]);
@@ -510,12 +628,16 @@ export class DatabaseService {
   private showBoutique$ = new BehaviorSubject<boolean>(false);
   private showGarden$ = new BehaviorSubject<boolean>(false);
   private showJourney$ = new BehaviorSubject<boolean>(false);
+  private showThemes$ = new BehaviorSubject<boolean>(false);
   
   private currentUser$ = new BehaviorSubject<UserProfile | null>(null);
   private activeJitsiCall$ = new BehaviorSubject<LiveClass | null>(null);
 
   activeLang = signal<'fr' | 'en'>((localStorage.getItem('speakup_lang') as 'fr' | 'en') || 'en');
   requestedTabRedirect = signal<string | null>(null);
+  requestedExerciseIdRedirect = signal<string | null>(null);
+  requestedQuizIdRedirect = signal<string | null>(null);
+  requestedExamIdRedirect = signal<string | null>(null);
 
   setLanguage(lang: 'fr' | 'en') {
     this.activeLang.set(lang);
@@ -549,10 +671,20 @@ export class DatabaseService {
     const journeyLocal = localStorage.getItem('speak_settings_show_journey') === 'true';
     this.showJourney$.next(journeyLocal);
 
+    const themesLocal = localStorage.getItem('speak_settings_show_themes') === 'true';
+    this.showThemes$.next(themesLocal);
+
     const localWord = localStorage.getItem('speak_word_of_the_day');
     if (localWord) {
       try {
         this.wordOfTheDay$.next(JSON.parse(localWord));
+      } catch (e) {}
+    }
+
+    const localPrompts = localStorage.getItem('speak_speaking_prompts');
+    if (localPrompts) {
+      try {
+        this.speakingPrompts$.next(JSON.parse(localPrompts));
       } catch (e) {}
     }
 
@@ -581,6 +713,21 @@ export class DatabaseService {
     setTimeout(() => {
       this.pingPresence();
     }, 1500);
+
+    const sub = combineLatest([
+      this.observeUsers(),
+      this.observeSubmissions()
+    ]).subscribe(([users, submissions]) => {
+      if (users.length > 0 && submissions.length > 0) {
+        const migrated = localStorage.getItem('speak_xp_recalculated_migration_v1');
+        if (!migrated) {
+          this.recalculateAllStudentsXP().then(() => {
+            localStorage.setItem('speak_xp_recalculated_migration_v1', 'true');
+          });
+        }
+        sub.unsubscribe();
+      }
+    });
   }
 
   // Initial Mock Data Setup
@@ -649,7 +796,14 @@ export class DatabaseService {
       }
     });
 
-    localStorage.setItem('speak_users', JSON.stringify(users));
+    try {
+      localStorage.setItem('speak_users', JSON.stringify(users));
+    } catch (e: any) {
+      console.warn('Failed to initialize speak_users:', e);
+      if (e.name === 'QuotaExceededError' || e.code === 22 || e.code === 1014) {
+        this.healLocalStorageQuota('speak_users', users);
+      }
+    }
 
     users.forEach((u: UserProfile) => {
       if (u.countryFlag && u.countryFlag.trim().length === 2) {
@@ -788,6 +942,14 @@ export class DatabaseService {
     const ebooks = getLocal('speak_ebooks', defaultEbooks);
     this.ebooks$.next(ebooks);
 
+    const activeSession = getLocal('active_highlight_session', null);
+    this.activeHighlightSession$.next(activeSession);
+    const highlights = getLocal('ebook_highlights', []);
+    this.ebookHighlights$.next(highlights);
+
+    const activeGame = getLocal('active_icebreaker', null);
+    this.activeIceBreaker$.next(activeGame);
+
     const defaultReports: AbuseReport[] = [];
     const reports = getLocal('speak_reports', defaultReports);
     this.reports$.next(reports);
@@ -923,7 +1085,14 @@ export class DatabaseService {
         }
       }
     });
-    localStorage.setItem('speak_users', JSON.stringify(users));
+    try {
+      localStorage.setItem('speak_users', JSON.stringify(users));
+    } catch (e: any) {
+      console.warn('Failed to save speak_users during schema upgrade:', e);
+      if (e.name === 'QuotaExceededError' || e.code === 22 || e.code === 1014) {
+        this.healLocalStorageQuota('speak_users', users);
+      }
+    }
 
     this.users$.next(users);
     this.lessons$.next(lessons);
@@ -1308,6 +1477,18 @@ export class DatabaseService {
       }
     });
 
+    // 18b. Subscribe to settings/speaking_prompts
+    onSnapshot(doc(this.firestore, 'settings', 'speaking_prompts'), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (data && data['prompts']) {
+          const list = data['prompts'] as SpeakingPrompt[];
+          this.speakingPrompts$.next(list);
+          this.saveLocal('speak_speaking_prompts', list);
+        }
+      }
+    });
+
     // 19. Subscribe to settings/show_boutique & show_garden & show_journey
     onSnapshot(doc(this.firestore, 'settings', 'show_boutique'), (docSnap) => {
       if (docSnap.exists()) {
@@ -1333,6 +1514,15 @@ export class DatabaseService {
         const value = !!data['value'];
         this.showJourney$.next(value);
         localStorage.setItem('speak_settings_show_journey', String(value));
+      }
+    });
+
+    onSnapshot(doc(this.firestore, 'settings', 'show_themes'), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        const value = !!data['value'];
+        this.showThemes$.next(value);
+        localStorage.setItem('speak_settings_show_themes', String(value));
       }
     });
 
@@ -1385,11 +1575,95 @@ export class DatabaseService {
         this.recalculateJourneyProgress(user.id, subs, logs, dict, vocab);
       }
     });
+
+    onSnapshot(doc(this.firestore, 'highlight_sessions', 'active'), (docSnap) => {
+      if (docSnap.exists()) {
+        this.activeHighlightSession$.next(docSnap.data() as any);
+      } else {
+        this.activeHighlightSession$.next(null);
+      }
+    });
+
+    onSnapshot(collection(this.firestore, 'ebook_highlights'), (snap) => {
+      const highlights: EbookHighlight[] = [];
+      snap.forEach(docSnap => highlights.push(docSnap.data() as EbookHighlight));
+      const sorted = highlights.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      this.ebookHighlights$.next(sorted);
+      this.saveLocal('ebook_highlights', sorted);
+    });
+
+    onSnapshot(doc(this.firestore, 'icebreaker', 'active'), (docSnap) => {
+      if (docSnap.exists()) {
+        this.activeIceBreaker$.next(docSnap.data() as LiveIceBreaker);
+      } else {
+        this.activeIceBreaker$.next(null);
+      }
+    });
   }
 
   // --- LOCAL WRITE HELPERS ---
   private saveLocal(key: string, data: any) {
-    localStorage.setItem(key, JSON.stringify(data));
+    try {
+      localStorage.setItem(key, JSON.stringify(data));
+    } catch (e: any) {
+      console.warn(`Failed to save key "${key}" to localStorage:`, e);
+      if (e.name === 'QuotaExceededError' || e.code === 22 || e.code === 1014) {
+        this.healLocalStorageQuota(key, data);
+      }
+    }
+  }
+
+  private healLocalStorageQuota(retryKey?: string, retryData?: any) {
+    console.log('Attempting to heal localStorage quota by cleaning up large resources...');
+    try {
+      // 1. Clean up speak_submissions in localStorage (remove heavy base64 from all audio/video submissions)
+      const rawSubs = localStorage.getItem('speak_submissions');
+      if (rawSubs) {
+        let subs = JSON.parse(rawSubs);
+        if (Array.isArray(subs)) {
+          let cleaned = false;
+          subs = subs.map(sub => {
+            if ((sub.type === 'audio' || sub.type === 'video') && sub.content && sub.content.length > 500) {
+              cleaned = true;
+              return { ...sub, content: '[Optimized: Audio/Video cleared to free up space]' };
+            }
+            return sub;
+          });
+          if (cleaned) {
+            localStorage.setItem('speak_submissions', JSON.stringify(subs));
+            console.log('Cleaned up all audio/video submissions from localStorage.');
+          }
+        }
+      }
+      
+      // 2. Clean up retryData if it is for speak_submissions
+      if (retryKey === 'speak_submissions' && Array.isArray(retryData)) {
+        retryData = retryData.map(sub => {
+          if ((sub.type === 'audio' || sub.type === 'video') && sub.content && sub.content.length > 500) {
+            return { ...sub, content: '[Optimized: Audio/Video cleared to free up space]' };
+          }
+          return sub;
+        });
+      }
+
+      // 3. Retry the original save operation if provided
+      if (retryKey && retryData) {
+        localStorage.setItem(retryKey, JSON.stringify(retryData));
+        console.log(`Successfully recovered and saved key "${retryKey}".`);
+      }
+    } catch (err) {
+      console.error('Failed to heal localStorage quota:', err);
+      // Secondary fallback: aggressively clear non-essential logs to free up space
+      try {
+        localStorage.removeItem('speak_logs');
+        if (retryKey && retryData) {
+          localStorage.setItem(retryKey, JSON.stringify(retryData));
+          console.log(`Aggressively recovered and saved key "${retryKey}" after removing logs.`);
+        }
+      } catch (innerErr) {
+        console.error('Aggressive recovery failed:', innerErr);
+      }
+    }
   }
 
   // --- USER OPERATIONS ---
@@ -1399,11 +1673,11 @@ export class DatabaseService {
 
   async checkAndResetStreak(user: UserProfile) {
     if (user.role === 'student' && user.streak > 0 && user.lastPracticeDate) {
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = new Date().toLocaleDateString('en-CA');
       const today = new Date(todayStr);
       const last = new Date(user.lastPracticeDate);
       const diffTime = today.getTime() - last.getTime();
-      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
       
       if (diffDays > 1) {
         const list = [...this.users$.value];
@@ -1998,15 +2272,30 @@ export class DatabaseService {
     }
   }
 
-  async updateUserXP(userId: string, xpToAdd: number, addStreak = false) {
+  async updateUserXP(userId: string, xpToAdd: number, addStreak = false, itemId?: string) {
     const list = [...this.users$.value];
     const userIndex = list.findIndex(u => u.id === userId);
     if (userIndex !== -1) {
       const user = list[userIndex];
+      const completedItems = user.completedItems ? [...user.completedItems] : [];
+
+      if (itemId) {
+        if (completedItems.includes(itemId)) {
+          // Already awarded XP for this item, only update last practice date/streak if requested but do NOT add XP
+          if (addStreak) {
+            xpToAdd = 0;
+          } else {
+            return;
+          }
+        } else {
+          completedItems.push(itemId);
+        }
+      }
+
       const newCoins = (user.coins || 0) + xpToAdd; // 1 Coin per 1 XP
       
       let newStreak = user.streak || 0;
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = new Date().toLocaleDateString('en-CA');
       const lastDate = (user as any).lastPracticeDate;
 
       if (addStreak) {
@@ -2016,7 +2305,7 @@ export class DatabaseService {
           const today = new Date(todayStr);
           const last = new Date(lastDate);
           const diffTime = today.getTime() - last.getTime();
-          const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+          const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
           
           if (diffDays === 1) {
             newStreak = (user.streak || 0) + 1;
@@ -2033,7 +2322,8 @@ export class DatabaseService {
         coins: newCoins,
         streak: newStreak,
         lastPracticeDate: addStreak ? todayStr : (lastDate || ''),
-        lastActive: 'Today'
+        lastActive: 'Today',
+        completedItems
       };
       
       list[userIndex] = updated;
@@ -2090,7 +2380,8 @@ export class DatabaseService {
             coins: updated.coins,
             streak: updated.streak,
             lastPracticeDate: updated.lastPracticeDate,
-            lastActive: updated.lastActive
+            lastActive: updated.lastActive,
+            completedItems: updated.completedItems
           });
         } catch (e) {
           console.warn('Firebase update failed, working in local mode.', e);
@@ -2126,7 +2417,7 @@ export class DatabaseService {
 
     if (this.useFirebase) {
       try {
-        await setDoc(doc(this.firestore, 'lessons', newLesson.id), newLesson);
+        await setDoc(doc(this.firestore, 'lessons', newLesson.id), this.cleanDocData(newLesson));
       } catch (e) {
         console.warn(e);
       }
@@ -2148,7 +2439,7 @@ export class DatabaseService {
 
       if (this.useFirebase) {
         try {
-          await setDoc(doc(this.firestore, 'lessons', lessonId), updated);
+          await setDoc(doc(this.firestore, 'lessons', lessonId), this.cleanDocData(updated));
         } catch (e) {
           console.warn(e);
         }
@@ -2178,7 +2469,7 @@ export class DatabaseService {
   // --- QUIZ OPERATIONS ---
   observeQuizzes(): Observable<Quiz[]> { return this.quizzes$.asObservable(); }
 
-  async addQuiz(quiz: Omit<Quiz, 'id'>) {
+  async addQuiz(quiz: Omit<Quiz, 'id'>): Promise<Quiz> {
     const newQuiz: Quiz = {
       ...quiz,
       id: 'quiz-' + Date.now()
@@ -2190,12 +2481,13 @@ export class DatabaseService {
 
     if (this.useFirebase) {
       try {
-        await setDoc(doc(this.firestore, 'quizzes', newQuiz.id), newQuiz);
+        await setDoc(doc(this.firestore, 'quizzes', newQuiz.id), this.cleanDocData(newQuiz));
       } catch (e) {
         console.warn(e);
       }
     }
     await this.logAction('create_quiz', `Quiz créé : "${newQuiz.title}"`);
+    return newQuiz;
   }
 
   async updateQuiz(quizId: string, updatedData: Partial<Quiz>) {
@@ -2212,7 +2504,7 @@ export class DatabaseService {
 
       if (this.useFirebase) {
         try {
-          await setDoc(doc(this.firestore, 'quizzes', quizId), updated);
+          await setDoc(doc(this.firestore, 'quizzes', quizId), this.cleanDocData(updated));
         } catch (e) {
           console.warn(e);
         }
@@ -2294,11 +2586,11 @@ export class DatabaseService {
       this.saveLocal('speak_submissions', list);
 
       // Award XP to the student
-      await this.updateUserXP(sub.studentId, xpReward);
+      await this.updateUserXP(sub.studentId, xpReward, false, 'grade:' + sub.lessonId);
 
       if (this.useFirebase) {
         try {
-          await setDoc(doc(this.firestore, 'submissions', subId), updated);
+          await setDoc(doc(this.firestore, 'submissions', subId), this.cleanDocData(updated));
         } catch (e) {
           console.warn(e);
         }
@@ -2317,6 +2609,77 @@ export class DatabaseService {
         await deleteDoc(doc(this.firestore, 'submissions', subId));
       } catch (e) {
         console.warn(e);
+      }
+    }
+  }
+
+  async recalculateAllStudentsXP() {
+    const users = [...this.users$.value];
+    const submissions = this.submissions$.value;
+    let anyChanges = false;
+    
+    for (let i = 0; i < users.length; i++) {
+      const user = users[i];
+      if (user.role !== 'student') continue;
+      
+      let newXP = 0;
+      const completedItems = new Set<string>();
+      
+      // Filter submissions for this student, sorted by date ascending
+      const mySubmissions = [...submissions]
+        .filter(s => s.studentId === user.id)
+        .sort((a, b) => new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime());
+      
+      mySubmissions.forEach(sub => {
+        const itemKey = sub.lessonId || sub.lessonTitle;
+        if (!itemKey) return;
+        
+        // 1. Submission XP (only once per item ID)
+        if (!completedItems.has(itemKey)) {
+          completedItems.add(itemKey);
+          
+          if (sub.lessonTitle.startsWith('[Quiz]')) {
+            newXP += sub.xpReward || 50;
+          } else {
+            newXP += sub.xpReward || 20;
+          }
+        }
+        
+        // 2. Grading XP (only once per item ID)
+        const gradeKey = 'grade:' + itemKey;
+        if (sub.graded && !completedItems.has(gradeKey)) {
+          completedItems.add(gradeKey);
+          newXP += sub.xpReward || 20;
+        }
+      });
+      
+      if (user.xp !== newXP || !user.completedItems || user.completedItems.length !== completedItems.size) {
+        user.xp = newXP;
+        user.coins = newXP;
+        user.completedItems = Array.from(completedItems);
+        anyChanges = true;
+      }
+    }
+    
+    if (anyChanges) {
+      this.users$.next(users);
+      this.saveLocal('speak_users', users);
+      
+      // Save to Firebase
+      if (this.useFirebase) {
+        for (const u of users) {
+          if (u.role === 'student') {
+            try {
+              await updateDoc(doc(this.firestore, 'users', u.id), {
+                xp: u.xp,
+                coins: u.coins,
+                completedItems: u.completedItems || []
+              });
+            } catch (e) {
+              console.warn(e);
+            }
+          }
+        }
       }
     }
   }
@@ -2375,7 +2738,7 @@ export class DatabaseService {
 
     if (this.useFirebase) {
       try {
-        await setDoc(doc(this.firestore, 'schedules', newClass.id), newClass);
+        await setDoc(doc(this.firestore, 'schedules', newClass.id), this.cleanDocData(newClass));
       } catch (e) {
         console.warn(e);
       }
@@ -2412,6 +2775,157 @@ export class DatabaseService {
         await deleteDoc(doc(this.firestore, 'schedules', classId));
       } catch (e) {
         console.warn(e);
+      }
+    }
+  }
+
+  // --- LIVE HAND RAISE OPERATIONS ---
+  observeHandRaises(classId: string): Observable<string[]> {
+    const localKey = 'speak_handraises_' + classId;
+    return new Observable<string[]>(sub => {
+      sub.next(this.getLocal(localKey, []));
+
+      if (this.useFirebase) {
+        try {
+          const unsub = onSnapshot(doc(this.firestore, 'schedules', classId, 'handRaises', 'current'), (docSnap) => {
+            if (docSnap.exists()) {
+              const list = docSnap.data()?.['userIds'] || [];
+              this.saveLocal(localKey, list);
+              sub.next(list);
+            } else {
+              sub.next([]);
+            }
+          });
+          return () => unsub();
+        } catch (e) {
+          console.warn(e);
+        }
+      }
+
+      const handler = (e: StorageEvent) => {
+        if (e.key === localKey) {
+          sub.next(JSON.parse(e.newValue || '[]'));
+        }
+      };
+      window.addEventListener('storage', handler);
+      return () => window.removeEventListener('storage', handler);
+    });
+  }
+
+  async raiseHand(classId: string, userId: string) {
+    const localKey = 'speak_handraises_' + classId;
+    const list = this.getLocal(localKey, []);
+    if (!list.includes(userId)) {
+      list.push(userId);
+      this.saveLocal(localKey, list);
+    }
+    if (this.useFirebase) {
+      try {
+        await setDoc(doc(this.firestore, 'schedules', classId, 'handRaises', 'current'), { userIds: list });
+      } catch (e) { console.warn(e); }
+    }
+  }
+
+  async lowerHand(classId: string, userId: string) {
+    const localKey = 'speak_handraises_' + classId;
+    let list = this.getLocal(localKey, []);
+    list = list.filter((id: string) => id !== userId);
+    this.saveLocal(localKey, list);
+    if (this.useFirebase) {
+      try {
+        await setDoc(doc(this.firestore, 'schedules', classId, 'handRaises', 'current'), { userIds: list });
+      } catch (e) { console.warn(e); }
+    }
+  }
+
+  // --- LIVE POLLS OPERATIONS ---
+  observePolls(classId: string): Observable<LivePoll[]> {
+    const localKey = 'speak_polls_' + classId;
+    return new Observable<LivePoll[]>(sub => {
+      sub.next(this.getLocal(localKey, []));
+
+      if (this.useFirebase) {
+        try {
+          const unsub = onSnapshot(collection(this.firestore, 'schedules', classId, 'polls'), (snap) => {
+            const list: LivePoll[] = [];
+            snap.forEach(docSnap => list.push(docSnap.data() as LivePoll));
+            list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            this.saveLocal(localKey, list);
+            sub.next(list);
+          });
+          return () => unsub();
+        } catch (e) {
+          console.warn(e);
+        }
+      }
+
+      const handler = (e: StorageEvent) => {
+        if (e.key === localKey) {
+          sub.next(JSON.parse(e.newValue || '[]'));
+        }
+      };
+      window.addEventListener('storage', handler);
+      return () => window.removeEventListener('storage', handler);
+    });
+  }
+
+  async createPoll(classId: string, question: string, options: string[]) {
+    const localKey = 'speak_polls_' + classId;
+    const list = this.getLocal(localKey, []);
+    list.forEach((p: any) => p.active = false);
+
+    const newPoll: LivePoll = {
+      id: 'poll-' + Date.now(),
+      question,
+      options,
+      votes: {},
+      active: true,
+      createdAt: new Date().toISOString()
+    };
+
+    list.unshift(newPoll);
+    this.saveLocal(localKey, list);
+
+    if (this.useFirebase) {
+      try {
+        await setDoc(doc(this.firestore, 'schedules', classId, 'polls', newPoll.id), newPoll);
+      } catch (e) { console.warn(e); }
+    }
+    return newPoll;
+  }
+
+  async castVote(classId: string, pollId: string, userId: string, optionIndex: number) {
+    const localKey = 'speak_polls_' + classId;
+    const list = this.getLocal(localKey, []);
+    const idx = list.findIndex((p: any) => p.id === pollId);
+    if (idx !== -1) {
+      list[idx].votes[userId] = optionIndex;
+      this.saveLocal(localKey, list);
+
+      if (this.useFirebase) {
+        try {
+          await updateDoc(doc(this.firestore, 'schedules', classId, 'polls', pollId), {
+            [`votes.${userId}`]: optionIndex
+          });
+        } catch (e) { console.warn(e); }
+      }
+    }
+  }
+
+  async closePoll(classId: string, pollId: string) {
+    const localKey = 'speak_polls_' + classId;
+    const list = this.getLocal(localKey, []);
+    const idx = list.findIndex((p: any) => p.id === pollId);
+    if (idx !== -1) {
+      list[idx].active = false;
+      this.saveLocal(localKey, list);
+
+      if (this.useFirebase) {
+        try {
+          await updateDoc(doc(this.firestore, 'schedules', classId, 'polls', pollId), {
+            active: false
+          });
+        } catch (e) { console.warn(e); }
       }
     }
   }
@@ -2575,6 +3089,70 @@ export class DatabaseService {
         console.warn(e);
       }
     }
+  }
+
+  // --- PRIVATE COACHING OPERATIONS ---
+
+  observeCoachingMessages(studentId: string): Observable<CoachingMessage[]> {
+    const subject = new BehaviorSubject<CoachingMessage[]>([]);
+    const localKey = 'speak_coaching_' + studentId;
+    subject.next(this.getLocal(localKey, []));
+
+    if (this.useFirebase && this.firestore) {
+      try {
+        const colRef = collection(this.firestore, 'coaching_messages');
+        const q = query(colRef, where('studentId', '==', studentId));
+        onSnapshot(q, (snap) => {
+          const list: CoachingMessage[] = [];
+          snap.forEach(d => list.push(d.data() as CoachingMessage));
+          list.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+          subject.next(list);
+          this.saveLocal(localKey, list);
+        });
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+    return subject.asObservable();
+  }
+
+  async sendCoachingMessage(studentId: string, text: string, audioUrl?: string) {
+    const activeUser = this.currentUser$.value;
+    if (!activeUser) return;
+
+    const newMsg: CoachingMessage = {
+      id: 'msg-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+      studentId,
+      senderId: activeUser.id,
+      senderName: activeUser.name,
+      senderRole: activeUser.role === 'teacher' ? 'teacher' : 'student',
+      text,
+      timestamp: new Date().toISOString(),
+      audioUrl
+    };
+
+    const localKey = 'speak_coaching_' + studentId;
+    const list = this.getLocal(localKey, []);
+    list.push(newMsg);
+    this.saveLocal(localKey, list);
+
+    if (this.useFirebase && this.firestore) {
+      try {
+        await setDoc(doc(this.firestore, 'coaching_messages', newMsg.id), newMsg);
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+  }
+
+  async requestPrivateCoaching(studentId: string) {
+    await this.updateUserProfile(studentId, {
+      privateCoachingRequested: true
+    });
+  }
+
+  async updatePrivateCoaching(studentId: string, updates: Partial<UserProfile>) {
+    await this.updateUserProfile(studentId, updates);
   }
 
   async startInstantLiveClass() {
@@ -3116,6 +3694,245 @@ export class DatabaseService {
     }
   }
 
+  observeActiveHighlightSession(): Observable<{ bookId: string; active: boolean } | null> {
+    return this.activeHighlightSession$.asObservable();
+  }
+
+  observeEbookHighlights(): Observable<EbookHighlight[]> {
+    return this.ebookHighlights$.asObservable();
+  }
+
+  async startHighlightSession(bookId: string) {
+    const session = { bookId, active: true };
+    this.activeHighlightSession$.next(session);
+    this.saveLocal('active_highlight_session', session);
+
+    if (this.useFirebase) {
+      try {
+        await setDoc(doc(this.firestore, 'highlight_sessions', 'active'), session);
+      } catch (e) {
+        console.warn('Firestore startHighlightSession failed:', e);
+      }
+    }
+  }
+
+  async stopHighlightSession() {
+    this.activeHighlightSession$.next(null);
+    this.saveLocal('active_highlight_session', null);
+    this.ebookHighlights$.next([]);
+    this.saveLocal('ebook_highlights', []);
+
+    if (this.useFirebase) {
+      try {
+        await deleteDoc(doc(this.firestore, 'highlight_sessions', 'active'));
+      } catch (e) {
+        console.warn('Firestore stopHighlightSession failed:', e);
+      }
+    }
+  }
+
+  async addHighlight(hl: Omit<EbookHighlight, 'id' | 'timestamp'>) {
+    const newHl: EbookHighlight = {
+      ...hl,
+      id: 'hl-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
+      timestamp: new Date().toISOString()
+    };
+    const list = [newHl, ...this.ebookHighlights$.value];
+    this.ebookHighlights$.next(list);
+    this.saveLocal('ebook_highlights', list);
+
+    if (this.useFirebase) {
+      try {
+        await setDoc(doc(this.firestore, 'ebook_highlights', newHl.id), newHl);
+      } catch (e) {
+        console.warn('Firestore addHighlight failed:', e);
+      }
+    }
+  }
+
+  async gradeHighlight(highlightId: string, xp: number) {
+    const list = [...this.ebookHighlights$.value];
+    const idx = list.findIndex(h => h.id === highlightId);
+    if (idx !== -1) {
+      list[idx] = { ...list[idx], xpAwarded: xp };
+      this.ebookHighlights$.next(list);
+      this.saveLocal('ebook_highlights', list);
+
+      const studentId = list[idx].studentId;
+      await this.updateUserXP(studentId, xp, false, 'highlight:' + highlightId);
+
+      if (this.useFirebase) {
+        try {
+          await updateDoc(doc(this.firestore, 'ebook_highlights', highlightId), { xpAwarded: xp });
+        } catch (e) {
+          console.warn('Firestore gradeHighlight failed:', e);
+        }
+      }
+    }
+  }
+
+  observeActiveIceBreaker(): Observable<LiveIceBreaker | null> {
+    return this.activeIceBreaker$.asObservable();
+  }
+
+  async startIceBreaker(type: 'wheel' | 'buzz' | 'mission', data: { question?: string; title?: string; description?: string }) {
+    const game: LiveIceBreaker = {
+      id: 'ib-' + Date.now(),
+      type,
+      status: 'active',
+      wheelState: type === 'wheel' ? {} : undefined,
+      buzzState: type === 'buzz' ? { question: data.question || '', answers: [] } : undefined,
+      missionState: type === 'mission' ? { title: data.title || '', description: data.description || '', submissions: [] } : undefined
+    };
+    
+    this.activeIceBreaker$.next(game);
+    this.saveLocal('active_icebreaker', game);
+
+    if (this.useFirebase) {
+      try {
+        await setDoc(doc(this.firestore, 'icebreaker', 'active'), game);
+      } catch (e) {
+        console.warn('Firestore startIceBreaker failed:', e);
+      }
+    }
+  }
+
+  async updateIceBreakerWheel(selectedStudent: string, challenge: string) {
+    const game = this.activeIceBreaker$.value;
+    if (!game || game.type !== 'wheel') return;
+
+    game.wheelState = { selectedStudent, challenge };
+    this.activeIceBreaker$.next({ ...game });
+    this.saveLocal('active_icebreaker', game);
+
+    if (this.useFirebase) {
+      try {
+        await setDoc(doc(this.firestore, 'icebreaker', 'active'), game);
+      } catch (e) {
+        console.warn('Firestore updateIceBreakerWheel failed:', e);
+      }
+    }
+  }
+
+  async submitIceBreakerBuzz(studentId: string, studentName: string, answer: string) {
+    const game = this.activeIceBreaker$.value;
+    if (!game || game.type !== 'buzz' || !game.buzzState) return;
+
+    const answers = game.buzzState.answers.filter(a => a.studentId !== studentId);
+    answers.push({
+      studentId,
+      studentName,
+      answer,
+      timestamp: new Date().toISOString()
+    });
+
+    game.buzzState.answers = answers;
+    this.activeIceBreaker$.next({ ...game });
+    this.saveLocal('active_icebreaker', game);
+
+    if (this.useFirebase) {
+      try {
+        await setDoc(doc(this.firestore, 'icebreaker', 'active'), game);
+      } catch (e) {
+        console.warn('Firestore submitIceBreakerBuzz failed:', e);
+      }
+    }
+  }
+
+  async submitIceBreakerMission(studentId: string, studentName: string, audioUrl: string) {
+    const game = this.activeIceBreaker$.value;
+    if (!game || game.type !== 'mission' || !game.missionState) return;
+
+    const submissions = game.missionState.submissions.filter(s => s.studentId !== studentId);
+    submissions.push({
+      studentId,
+      studentName,
+      audioUrl,
+      timestamp: new Date().toISOString()
+    });
+
+    game.missionState.submissions = submissions;
+    this.activeIceBreaker$.next({ ...game });
+    this.saveLocal('active_icebreaker', game);
+
+    if (this.useFirebase) {
+      try {
+        await setDoc(doc(this.firestore, 'icebreaker', 'active'), game);
+      } catch (e) {
+        console.warn('Firestore submitIceBreakerMission failed:', e);
+      }
+    }
+  }
+
+  async gradeIceBreakerBuzz(studentId: string, correct: boolean) {
+    const game = this.activeIceBreaker$.value;
+    if (!game || game.type !== 'buzz' || !game.buzzState) return;
+
+    const answers = game.buzzState.answers.map(a => {
+      if (a.studentId === studentId) {
+        return { ...a, correct };
+      }
+      return a;
+    });
+
+    game.buzzState.answers = answers;
+    this.activeIceBreaker$.next({ ...game });
+    this.saveLocal('active_icebreaker', game);
+
+    if (correct) {
+      await this.updateUserXP(studentId, 10, false, `buzz:${game.id}:${studentId}`);
+    }
+
+    if (this.useFirebase) {
+      try {
+        await setDoc(doc(this.firestore, 'icebreaker', 'active'), game);
+      } catch (e) {
+        console.warn('Firestore gradeIceBreakerBuzz failed:', e);
+      }
+    }
+  }
+
+  async gradeIceBreakerMission(studentId: string, correct: boolean) {
+    const game = this.activeIceBreaker$.value;
+    if (!game || game.type !== 'mission' || !game.missionState) return;
+
+    const submissions = game.missionState.submissions.map(s => {
+      if (s.studentId === studentId) {
+        return { ...s, correct };
+      }
+      return s;
+    });
+
+    game.missionState.submissions = submissions;
+    this.activeIceBreaker$.next({ ...game });
+    this.saveLocal('active_icebreaker', game);
+
+    if (correct) {
+      await this.updateUserXP(studentId, 15, false, `mission:${game.id}:${studentId}`);
+    }
+
+    if (this.useFirebase) {
+      try {
+        await setDoc(doc(this.firestore, 'icebreaker', 'active'), game);
+      } catch (e) {
+        console.warn('Firestore gradeIceBreakerMission failed:', e);
+      }
+    }
+  }
+
+  async stopIceBreaker() {
+    this.activeIceBreaker$.next(null);
+    this.saveLocal('active_icebreaker', null);
+
+    if (this.useFirebase) {
+      try {
+        await deleteDoc(doc(this.firestore, 'icebreaker', 'active'));
+      } catch (e) {
+        console.warn('Firestore stopIceBreaker failed:', e);
+      }
+    }
+  }
+
   async incrementEbookViews(ebookId: string) {
     const list = [...this.ebooks$.value];
     const idx = list.findIndex(b => b.id === ebookId);
@@ -3194,7 +4011,7 @@ export class DatabaseService {
     const user = this.currentUser$.value;
     if (user && user.role !== 'admin' && user.role !== 'teacher') {
       const channel = this.channels$.value.find(c => c.id === channelId);
-      if (channel) {
+      if (channel && channel.isPrivate) {
         const members = channel.members || [];
         if (!members.includes(user.id)) {
           return new BehaviorSubject<ChatMessage[]>([]).asObservable();
@@ -3267,7 +4084,7 @@ export class DatabaseService {
 
     if (active.role !== 'admin' && active.role !== 'teacher') {
       const channel = this.channels$.value.find(c => c.id === channelId);
-      if (channel) {
+      if (channel && channel.isPrivate) {
         const members = channel.members || [];
         if (!members.includes(active.id)) {
           throw new Error("Vous n'êtes pas membre de ce groupe.");
@@ -3315,7 +4132,7 @@ export class DatabaseService {
 
     if (active.role !== 'admin' && active.role !== 'teacher') {
       const channel = this.channels$.value.find(c => c.id === channelId);
-      if (channel) {
+      if (channel && channel.isPrivate) {
         const members = channel.members || [];
         if (!members.includes(active.id)) {
           throw new Error("Vous n'êtes pas membre de ce groupe.");
@@ -3472,7 +4289,7 @@ export class DatabaseService {
     return this.channels$.asObservable();
   }
 
-  async addChannel(name: string, isPrivate: boolean = false, members: string[] = []) {
+  async addChannel(name: string, isPrivate: boolean = false, members: string[] = [], topic?: string) {
     const cleanName = name.toLowerCase().trim().replace(/[^a-z0-9-_]/g, '-');
     const id = 'chan-' + Date.now();
     const newChan: ChatChannel = {
@@ -3481,7 +4298,8 @@ export class DatabaseService {
       createdById: this.currentUser$.value?.id || 'teacher',
       createdByRole: this.currentUser$.value?.role || 'teacher',
       isPrivate,
-      members
+      members,
+      topic
     };
 
     const list = [...this.channels$.value, newChan];
@@ -3495,6 +4313,17 @@ export class DatabaseService {
         console.warn('Firestore add channel failed.', e);
       }
     }
+    
+    if (topic) {
+      setTimeout(async () => {
+        try {
+          await this.sendChatMessage(id, `🎯 **Discussion Topic / Mission:**\n${topic}`, 'text');
+        } catch (e) {
+          console.warn('Failed to send initial topic message:', e);
+        }
+      }, 500);
+    }
+
     await this.logAction('create_group', `Groupe créé : "#${cleanName}" (${isPrivate ? 'Privé' : 'Public'})`, id);
   }
 
@@ -3829,7 +4658,7 @@ export class DatabaseService {
     this.exercises$.next(list);
     this.saveLocal('speak_exercises', list);
     if (this.useFirebase) {
-      try { await setDoc(doc(this.firestore, 'exercises', newEx.id), newEx); } catch(e) { console.warn(e); }
+      try { await setDoc(doc(this.firestore, 'exercises', newEx.id), this.cleanDocData(newEx)); } catch(e) { console.warn(e); }
     }
     return newEx;
   }
@@ -3843,7 +4672,7 @@ export class DatabaseService {
       this.exercises$.next(list);
       this.saveLocal('speak_exercises', list);
       if (this.useFirebase) {
-        try { await updateDoc(doc(this.firestore, 'exercises', id), updates); } catch(e) { console.warn(e); }
+        try { await updateDoc(doc(this.firestore, 'exercises', id), this.cleanDocData(updates)); } catch(e) { console.warn(e); }
       }
     }
   }
@@ -4189,6 +5018,24 @@ export class DatabaseService {
         await setDoc(doc(this.firestore, 'settings', 'word_of_the_day'), updated);
       } catch (e) {
         console.warn('Failed to update word of the day in Firestore:', e);
+      }
+    }
+  }
+
+  // --- SPEAKING PROMPTS OPERATIONS ---
+  observeSpeakingPrompts(): Observable<SpeakingPrompt[]> {
+    return this.speakingPrompts$.asObservable();
+  }
+
+  async updateSpeakingPrompts(prompts: SpeakingPrompt[]): Promise<void> {
+    const updated = prompts.map(p => ({ ...p, updatedAt: new Date().toISOString() }));
+    this.speakingPrompts$.next(updated);
+    this.saveLocal('speak_speaking_prompts', updated);
+    if (this.useFirebase) {
+      try {
+        await setDoc(doc(this.firestore, 'settings', 'speaking_prompts'), { prompts: updated, updatedAt: new Date().toISOString() });
+      } catch (e) {
+        console.warn('Failed to update speaking prompts in Firestore:', e);
       }
     }
   }
@@ -4630,6 +5477,20 @@ export class DatabaseService {
         title: 'Nouveau Voyage Disponible ! 🗺️',
         message: 'Le professeur a activé le SpeakUp Journey ! Cliquez pour explorer vos missions et commencer à apprendre.'
       });
+    }
+  }
+
+  observeShowThemes(): Observable<boolean> {
+    return this.showThemes$.asObservable();
+  }
+
+  updateShowThemes(val: boolean) {
+    this.showThemes$.next(val);
+    localStorage.setItem('speak_settings_show_themes', String(val));
+    if (this.useFirebase) {
+      try {
+        setDoc(doc(this.firestore, 'settings', 'show_themes'), { value: val });
+      } catch (e) { console.warn(e); }
     }
   }
 }

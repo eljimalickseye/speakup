@@ -56,7 +56,28 @@ import { DialogService } from '../../services/dialog.service';
                       style="padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid var(--border); display: flex; align-items: center; gap: 4px; transition: all 0.2s;"
                       [style.background]="filterType() === typeItem.value ? typeItem.color : 'var(--surface-2)'"
                       [style.color]="filterType() === typeItem.value ? '#fff' : 'var(--text-secondary)'">
-                <span style="display:flex; align-items:center" [innerHTML]="typeItem.svg"></span>
+                <span style="display:flex; align-items:center">
+                  @switch (typeItem.value) {
+                    @case ('writing') {
+                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                    }
+                    @case ('speaking') {
+                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+                    }
+                    @case ('listening') {
+                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+                    }
+                    @case ('translation') {
+                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
+                    }
+                    @case ('pronunciation') {
+                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+                    }
+                    @case ('vocabulary') {
+                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5v-15z"/></svg>
+                    }
+                  }
+                </span>
                 <span>
                   {{ typeItem.value === 'writing' ? t('Rédaction', 'Writing') : 
                      typeItem.value === 'speaking' ? t('Expression Orale', 'Speaking') : 
@@ -79,7 +100,28 @@ import { DialogService } from '../../services/dialog.service';
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                       <span [style.background]="getTypeColor(ex.type) + '15'" [style.color]="getTypeColor(ex.type)"
                             style="padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; display: flex; align-items: center; gap: 4px;">
-                        <span style="display:inline-flex; align-items:center" [innerHTML]="getTypeSvg(ex.type)"></span>
+                        <span style="display:inline-flex; align-items:center">
+                          @switch (ex.type) {
+                            @case ('writing') {
+                              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                            }
+                            @case ('speaking') {
+                              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+                            }
+                            @case ('listening') {
+                              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+                            }
+                            @case ('translation') {
+                              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
+                            }
+                            @case ('pronunciation') {
+                              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+                            }
+                            @case ('vocabulary') {
+                              <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5v-15z"/></svg>
+                            }
+                          }
+                        </span>
                         <span style="text-transform: capitalize;">
                           {{ ex.type === 'writing' ? t('Rédaction', 'Writing') : 
                              ex.type === 'speaking' ? t('Expression Orale', 'Speaking') : 
@@ -275,8 +317,27 @@ import { DialogService } from '../../services/dialog.service';
                     <!-- Icon bubble -->
                     <div style="width: 56px; height: 56px; border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink:0; transition: transform 0.22s;"
                          [style.background]="typeItem.color + '18'"
-                         [style.transform]="selectedType() === typeItem.value ? 'scale(1.08)' : 'scale(1)'"
-                         [innerHTML]="typeItem.svgLarge">
+                         [style.transform]="selectedType() === typeItem.value ? 'scale(1.08)' : 'scale(1)'">
+                      @switch (typeItem.value) {
+                        @case ('writing') {
+                          <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z" fill="#7C3AED" fill-opacity="0.15"/><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z"/><path d="M20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="#7C3AED" fill-opacity="0.4"/><path d="M20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
+                        }
+                        @case ('speaking') {
+                          <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" fill="#059669" fill-opacity="0.15"/><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+                        }
+                        @case ('listening') {
+                          <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#0284C7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6" fill="#0284C7" fill-opacity="0.15"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+                        }
+                        @case ('translation') {
+                          <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" fill="#D97706" fill-opacity="0.15"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
+                        }
+                        @case ('pronunciation') {
+                          <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" fill="#DC2626" fill-opacity="0.15"/><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+                        }
+                        @case ('vocabulary') {
+                          <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5v-15z" fill="#4F46E5" fill-opacity="0.15"/></svg>
+                        }
+                      }
                     </div>
 
                     <!-- Text -->
@@ -390,14 +451,86 @@ import { DialogService } from '../../services/dialog.service';
                   </div>
                 </div>
 
+                <!-- RICH TEXT TOOLBAR SECTION (Only for non-vocab types) -->
+                @if (selectedType() !== 'vocabulary') {
+                  <div class="editor-toolbar" style="display:flex; align-items:center; gap:4px; background:#F8FAFC; border:1px solid var(--border-weak); border-radius:6px; padding:6px 12px; flex-wrap:wrap; margin-bottom:8px">
+                    <!-- Undo / Redo -->
+                    <button type="button" class="tb-btn" (click)="execCmd('undo')" title="Undo">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+                    </button>
+                    <button type="button" class="tb-btn" (click)="execCmd('redo')" title="Redo">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/></svg>
+                    </button>
+                    
+                    <div class="tb-divider" style="width:1px; height:18px; background:var(--border-weak); margin:0 4px"></div>
 
+                    <!-- Format Text -->
+                    <button type="button" class="tb-btn" (click)="execCmd('bold')" title="Bold">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/></svg>
+                    </button>
+                    <button type="button" class="tb-btn" (click)="execCmd('italic')" title="Italic">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></svg>
+                    </button>
+                    <button type="button" class="tb-btn" (click)="execCmd('underline')" title="Underline">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"/><line x1="4" y1="21" x2="20" y2="21"/></svg>
+                    </button>
+
+                    <div class="tb-divider" style="width:1px; height:18px; background:var(--border-weak); margin:0 4px"></div>
+
+                    <!-- Alignment -->
+                    <button type="button" class="tb-btn" (click)="execCmd('justifyLeft')" title="Align Left">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="17" y1="18" x2="3" y2="18"/></svg>
+                    </button>
+                    <button type="button" class="tb-btn" (click)="execCmd('justifyCenter')" title="Align Center">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="10" x2="6" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="18" y1="18" x2="6" y2="18"/></svg>
+                    </button>
+
+                    <div class="tb-divider" style="width:1px; height:18px; background:var(--border-weak); margin:0 4px"></div>
+
+                    <!-- Headings / Text block type -->
+                    <select style="font-size:10px; padding:2px 4px; border:1px solid var(--border); border-radius:4px; background:white; color:var(--text-primary); cursor:pointer; outline:none; height:22px" (change)="formatBlock($event)">
+                      <option value="p">{{ t('Paragraphe', 'Paragraph') }}</option>
+                      <option value="h3">{{ t('Titre principal', 'Main Heading') }}</option>
+                      <option value="h4">{{ t('Sous-titre', 'Subheading') }}</option>
+                      <option value="blockquote">{{ t('Citation', 'Quote block') }}</option>
+                    </select>
+
+                    <div class="tb-divider" style="width:1px; height:18px; background:var(--border-weak); margin:0 4px"></div>
+
+                    <!-- Colors -->
+                    <div style="display:flex; align-items:center; gap:2px">
+                      @for (c of [
+                        { name: 'Noir', code: '#000000' },
+                        { name: 'Indigo', code: '#4F46E5' },
+                        { name: 'Vert', code: '#10B981' },
+                        { name: 'Orange', code: '#F59E0B' },
+                        { name: 'Rouge', code: '#EF4444' }
+                      ]; track c.code) {
+                        <button type="button" 
+                                (click)="changeColor(c.code)"
+                                [style.background]="c.code"
+                                [title]="c.name"
+                                style="width:12px; height:12px; border-radius:50%; border:1px solid #CBD5E1; cursor:pointer; padding:0; transition:transform 0.15s"
+                                onmouseover="this.style.transform='scale(1.2)'"
+                                onmouseout="this.style.transform='scale(1)'">
+                        </button>
+                      }
+                    </div>
+
+                    <div class="tb-divider" style="width:1px; height:18px; background:var(--border-weak); margin:0 4px"></div>
+
+                    <!-- Bullet list -->
+                    <button type="button" class="tb-btn" (click)="execCmd('insertUnorderedList')" title="Bullet List">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                    </button>
+                  </div>
+                }
 
                 <!-- WRITING SPECIFIC FIELD -->
                 @if (selectedType() === 'writing') {
                   <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
                     <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">{{ labels().writingPromptLabel }}</label>
-                    <textarea [(ngModel)]="formSubject" rows="4" [placeholder]="labels().formSubjectPlaceholder"
-                              style="width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 13px; background: var(--surface-1); color: var(--text-primary); resize: vertical;"></textarea>
+                    <div id="writingEditor" contenteditable="true" class="rich-editor" (input)="onEditorInput($event, 'subject')" (blur)="onEditorInput($event, 'subject')" style="min-height:180px; outline:none; font-size:13.5px; border:1px solid var(--border); border-radius:6px; padding:10px; background:white; color:var(--text-primary); overflow-y:auto" [attr.data-placeholder]="labels().formSubjectPlaceholder"></div>
                   </div>
                 }
 
@@ -405,8 +538,7 @@ import { DialogService } from '../../services/dialog.service';
                 @if (selectedType() === 'speaking') {
                   <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
                     <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">{{ labels().speakingPromptLabel }}</label>
-                    <textarea [(ngModel)]="formSpeakingPrompt" rows="4" [placeholder]="labels().formSpeakingPlaceholder"
-                              style="width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 13px; background: var(--surface-1); color: var(--text-primary); resize: vertical;"></textarea>
+                    <div id="speakingEditor" contenteditable="true" class="rich-editor" (input)="onEditorInput($event, 'speakingPrompt')" (blur)="onEditorInput($event, 'speakingPrompt')" style="min-height:180px; outline:none; font-size:13.5px; border:1px solid var(--border); border-radius:6px; padding:10px; background:white; color:var(--text-primary); overflow-y:auto" [attr.data-placeholder]="labels().formSpeakingPlaceholder"></div>
                   </div>
                 }
 
@@ -420,8 +552,7 @@ import { DialogService } from '../../services/dialog.service';
                     </div>
                     <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
                       <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">{{ labels().listeningPromptLabel }}</label>
-                      <textarea [(ngModel)]="formListeningInstruction" rows="4" [placeholder]="labels().formListeningPlaceholder"
-                                style="width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 13px; background: var(--surface-1); color: var(--text-primary); resize: vertical;"></textarea>
+                      <div id="listeningEditor" contenteditable="true" class="rich-editor" (input)="onEditorInput($event, 'listeningInstruction')" (blur)="onEditorInput($event, 'listeningInstruction')" style="min-height:180px; outline:none; font-size:13.5px; border:1px solid var(--border); border-radius:6px; padding:10px; background:white; color:var(--text-primary); overflow-y:auto" [attr.data-placeholder]="labels().formListeningPlaceholder"></div>
                     </div>
                   </div>
                 }
@@ -438,8 +569,7 @@ import { DialogService } from '../../services/dialog.service';
                     </div>
                     <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
                       <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">{{ labels().translateTextLabel }}</label>
-                      <textarea [(ngModel)]="formTextToTranslate" rows="4" [placeholder]="labels().formTranslationPlaceholder"
-                                style="width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 13px; background: var(--surface-1); color: var(--text-primary); resize: vertical;"></textarea>
+                      <div id="translationEditor" contenteditable="true" class="rich-editor" (input)="onEditorInput($event, 'textToTranslate')" (blur)="onEditorInput($event, 'textToTranslate')" style="min-height:180px; outline:none; font-size:13.5px; border:1px solid var(--border); border-radius:6px; padding:10px; background:white; color:var(--text-primary); overflow-y:auto" [attr.data-placeholder]="labels().formTranslationPlaceholder"></div>
                     </div>
                   </div>
                 }
@@ -448,23 +578,150 @@ import { DialogService } from '../../services/dialog.service';
                 @if (selectedType() === 'pronunciation') {
                   <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
                     <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">{{ labels().pronounceLabel }}</label>
-                    <textarea [(ngModel)]="formTextToPronounce" rows="3" [placeholder]="labels().formSpeakingPlaceholder"
-                              style="width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 13px; background: var(--surface-1); color: var(--text-primary); resize: vertical;"></textarea>
+                    <div id="pronunciationEditor" contenteditable="true" class="rich-editor" (input)="onEditorInput($event, 'textToPronounce')" (blur)="onEditorInput($event, 'textToPronounce')" style="min-height:140px; outline:none; font-size:13.5px; border:1px solid var(--border); border-radius:6px; padding:10px; background:white; color:var(--text-primary); overflow-y:auto" [attr.data-placeholder]="labels().formSpeakingPlaceholder"></div>
                   </div>
                 }
 
-                <!-- VOCABULARY SPECIFIC FIELDS -->
+                <!-- VOCABULARY SPECIFIC FIELDS (ENRICHED) -->
                 @if (selectedType() === 'vocabulary') {
-                  <div style="display: flex; flex-direction: column; gap: 12px;">
-                    <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
-                      <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">{{ labels().vocabThemeLabel }}</label>
-                      <input type="text" [(ngModel)]="formTheme" [placeholder]="labels().formThemePlaceholder"
-                             style="width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 13px; background: var(--surface-1); color: var(--text-primary);" />
+                  <div style="display: flex; flex-direction: column; gap: 16px;">
+                    <!-- Theme & Visual Options -->
+                    <div style="display:grid; grid-template-columns:1fr 1.2fr; gap:16px">
+                      <div class="input-row" style="display: flex; flex-direction: column; gap: 6px; margin-bottom:0">
+                        <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">{{ labels().vocabThemeLabel }}</label>
+                        <input type="text" [(ngModel)]="formTheme" [placeholder]="labels().formThemePlaceholder"
+                               style="width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font-size: 13px; background: var(--surface-1); color: var(--text-primary);" />
+                      </div>
+                      
+                      <!-- Visual theme picker -->
+                      <div class="input-row" style="display: flex; flex-direction: column; gap: 6px; margin-bottom:0">
+                        <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">{{ t('Thème Visuel & Couverture', 'Visual Theme & Cover') }}</label>
+                        <div style="display:flex; align-items:center; gap:12px; margin-top:4px">
+                          <div style="display:flex; gap:6px; align-items:center">
+                            @for (color of ['indigo', 'emerald', 'amber', 'rose', 'purple']; track color) {
+                              <button type="button" (click)="formColorTheme = color"
+                                      [style.background]="color === 'indigo' ? '#4F46E5' : (color === 'emerald' ? '#10B981' : (color === 'amber' ? '#F59E0B' : (color === 'rose' ? '#F43F5E' : '#8B5CF6')))"
+                                      style="width:20px; height:20px; border-radius:50%; border:2px solid; cursor:pointer; transition: transform 0.2s"
+                                      [style.border-color]="formColorTheme === color ? 'var(--text-primary)' : 'transparent'"
+                                      [style.transform]="formColorTheme === color ? 'scale(1.15)' : 'scale(1)'">
+                              </button>
+                            }
+                          </div>
+                          
+                          <!-- Cover Image Upload -->
+                          <div style="display:flex; gap:8px; align-items:center; margin-left:8px">
+                            <button type="button" class="btn-s" style="padding:4px 10px; font-size:11.5px; font-weight:600; display:flex; align-items:center; gap:4px; height:28px" (click)="vocabCoverInput.click()">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                              <span>Cover</span>
+                            </button>
+                            <input type="file" #vocabCoverInput style="display:none" (change)="onCoverImageSelected($event)" accept="image/*" />
+                            @if (formCoverImage) {
+                              <div style="position:relative; width:44px; height:28px; border-radius:4px; overflow:hidden; border:1px solid var(--border-weak)">
+                                <img [src]="formCoverImage" style="width:100%; height:100%; object-fit:cover" />
+                                <button type="button" (click)="formCoverImage = ''" 
+                                        style="position:absolute; top:1px; right:1px; background:#EF4444; color:white; border:none; width:12px; height:12px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:8px; font-weight:bold; cursor:pointer">×</button>
+                              </div>
+                            }
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
-                      <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">{{ labels().vocabListLabel }}</label>
-                      <textarea [(ngModel)]="formWordListRaw" rows="6" placeholder="Airport&#10;Passport&#10;Flight&#10;Boarding Pass"
-                                style="width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 13px; background: var(--surface-1); color: var(--text-primary); resize: vertical; font-family: monospace;"></textarea>
+
+                    <!-- Game Options Row -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                      <!-- Game Type Picker -->
+                      <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
+                        <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">{{ t('Type de Jeu', 'Game Type') }}</label>
+                        <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:6px">
+                          <button type="button" (click)="formGameType = 'flashcards'" [class.active-picker]="formGameType === 'flashcards'" class="btn-picker">
+                            🃏 <span>Flashcards</span>
+                          </button>
+                          <button type="button" (click)="formGameType = 'matching'" [class.active-picker]="formGameType === 'matching'" class="btn-picker">
+                            🔗 <span>{{ t('Association', 'Matching') }}</span>
+                          </button>
+                          <button type="button" (click)="formGameType = 'memory'" [class.active-picker]="formGameType === 'memory'" class="btn-picker">
+                            🧠 <span>Memory</span>
+                          </button>
+                          <button type="button" (click)="formGameType = 'word_builder'" [class.active-picker]="formGameType === 'word_builder'" class="btn-picker">
+                            🏗️ <span>Word Builder</span>
+                          </button>
+                          <button type="button" (click)="formGameType = 'hangman'" [class.active-picker]="formGameType === 'hangman'" class="btn-picker">
+                            🪢 <span>{{ t('Pendu', 'Hangman') }}</span>
+                          </button>
+                          <button type="button" (click)="formGameType = 'multiple_choice'" [class.active-picker]="formGameType === 'multiple_choice'" class="btn-picker">
+                            📝 <span>{{ t('Choix multiple', 'Multiple Choice') }}</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      <!-- Category / Difficulty Pickers -->
+                      <div style="display:flex; flex-direction:column; gap:12px">
+                        <!-- Difficulty -->
+                        <div class="input-row" style="display: flex; flex-direction: column; gap: 4px; margin-bottom:0">
+                          <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">{{ t('Difficulté', 'Difficulty') }}</label>
+                          <div style="display:flex; gap:6px">
+                            <button type="button" style="flex:1" (click)="formDifficulty = 'easy'" [class.active-easy]="formDifficulty === 'easy'" class="btn-diff">
+                              <span>{{ t('Facile', 'Easy') }}</span>
+                            </button>
+                            <button type="button" style="flex:1" (click)="formDifficulty = 'medium'" [class.active-medium]="formDifficulty === 'medium'" class="btn-diff">
+                              <span>{{ t('Moyen', 'Medium') }}</span>
+                            </button>
+                            <button type="button" style="flex:1" (click)="formDifficulty = 'hard'" [class.active-hard]="formDifficulty === 'hard'" class="btn-diff">
+                              <span>{{ t('Difficile', 'Hard') }}</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        <!-- Category -->
+                        <div class="input-row" style="display: flex; flex-direction: column; gap: 4px; margin-bottom:0">
+                          <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">{{ t('Catégorie de vocabulaire', 'Vocabulary Category') }}</label>
+                          <select [(ngModel)]="formCategory" style="width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; font-size: 13px; background: var(--surface-1); color: var(--text-primary);">
+                            <option value="general">{{ t('Général', 'General') }}</option>
+                            <option value="food">Food & Drink</option>
+                            <option value="travel">Travel & Places</option>
+                            <option value="business">Business</option>
+                            <option value="academic">Academic & Science</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Word List Editor Table -->
+                    <div style="margin-top:10px">
+                      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
+                        <strong style="font-size:12px; color:var(--text-secondary)">
+                          {{ t('Liste de Vocabulaire', 'Vocabulary List') }} ({{ formWords.length }})
+                        </strong>
+                        <button type="button" (click)="loadTemplate()"
+                                style="font-size: 10px; padding: 4px 12px; border: 1.5px solid #F59E0B; border-radius: 20px; color: #92400E; background: #FFFBEB; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                          <span>{{ t('Charger le Modèle', 'Load Template') }}</span>
+                        </button>
+                      </div>
+
+                      <div style="display:grid; grid-template-columns:1fr 1fr 1fr 32px; gap:8px; margin-bottom:6px; padding:0 4px">
+                        <span style="font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase">{{ t('Mot Anglais', 'English Word') }}</span>
+                        <span style="font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase">{{ t('Définition', 'Definition') }}</span>
+                        <span style="font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase">{{ t('Traduction', 'Translation') }}</span>
+                        <span></span>
+                      </div>
+
+                      <div style="max-height:220px; overflow-y:auto; padding-right:4px">
+                        @for (w of formWords; track w; let wi = $index) {
+                          <div style="display:grid; grid-template-columns:1fr 1fr 1fr 32px; gap:8px; margin-bottom:6px; align-items:center">
+                            <input type="text" [(ngModel)]="w.word" placeholder="ex. Departure" style="width:100%; border:1px solid var(--border); border-radius:6px; padding:6px 10px; font-size:12px; background:var(--surface-1); color:var(--text-primary)" />
+                            <input type="text" [(ngModel)]="w.definition" placeholder="Action of leaving..." style="width:100%; border:1px solid var(--border); border-radius:6px; padding:6px 10px; font-size:12px; background:var(--surface-1); color:var(--text-primary)" />
+                            <input type="text" [(ngModel)]="w.translation" placeholder="Départ" style="width:100%; border:1px solid var(--border); border-radius:6px; padding:6px 10px; font-size:12px; background:var(--surface-1); color:var(--text-primary)" />
+                            <button type="button" (click)="removeWord(wi)" style="background:#FEE2E2; border:none; border-radius:6px; color:#EF4444; cursor:pointer; width:28px; height:28px; display:flex; align-items:center; justify-content:center;">
+                              ×
+                            </button>
+                          </div>
+                        }
+                      </div>
+
+                      <button type="button" (click)="addWord()"
+                              style="width: 100%; border: 1.5px dashed var(--border); border-radius: 8px; background: var(--surface-2); color: var(--text-secondary); font-size: 12px; font-weight: 600; padding: 6px; margin-top:8px; display:flex; align-items:center; justify-content:center; gap:4px; cursor:pointer">
+                        <span>+ {{ t('Ajouter un mot', 'Add word') }}</span>
+                      </button>
                     </div>
                   </div>
                 }
@@ -507,7 +764,7 @@ import { DialogService } from '../../services/dialog.service';
                   @if (selectedType() === 'writing') {
                     <div style="background: #F5F3FF; border: 1px solid #DDD6FE; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
                       <div style="font-size: 12.5px; font-weight: 700; color: #6D28D9; margin-bottom: 6px;">✍️ {{ labels().subjectPreviewLabel }}</div>
-                      <p style="font-size: 12px; color: var(--text-primary); line-height: 1.6; margin: 0; white-space: pre-line;">{{ labels().subjectPlaceholder }}</p>
+                      <p style="font-size: 12px; color: var(--text-primary); line-height: 1.6; margin: 0;" [innerHTML]="labels().subjectPlaceholder"></p>
                     </div>
                     <textarea disabled rows="3" [placeholder]="labels().studentResponsePlaceholder"
                               style="width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 10px; font-size: 12.5px; resize: none; background: #F9FAFB; cursor: not-allowed;"></textarea>
@@ -518,7 +775,7 @@ import { DialogService } from '../../services/dialog.service';
                   @else if (selectedType() === 'speaking') {
                     <div style="background: #F0FDF4; border: 1px solid #A7F3D0; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
                       <div style="font-size: 12.5px; font-weight: 700; color: #065F46; margin-bottom: 6px;">🎙️ {{ labels().speakingPreviewLabel }}</div>
-                      <p style="font-size: 12px; color: var(--text-primary); line-height: 1.6; margin: 0; white-space: pre-line;">{{ labels().speakingPlaceholder }}</p>
+                      <p style="font-size: 12px; color: var(--text-primary); line-height: 1.6; margin: 0;" [innerHTML]="labels().speakingPlaceholder"></p>
                     </div>
                     
                     <!-- Recorder Component -->
@@ -547,7 +804,7 @@ import { DialogService } from '../../services/dialog.service';
                     }
                     <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
                       <div style="font-size: 12.5px; font-weight: 700; color: #1E40AF; margin-bottom: 6px;">👂 {{ labels().listeningPreviewLabel }}</div>
-                      <p style="font-size: 12px; color: var(--text-primary); line-height: 1.6; margin: 0; white-space: pre-line;">{{ labels().listeningPlaceholder }}</p>
+                      <p style="font-size: 12px; color: var(--text-primary); line-height: 1.6; margin: 0;" [innerHTML]="labels().listeningPlaceholder"></p>
                     </div>
                     <textarea disabled rows="3" [placeholder]="labels().studentResponsePlaceholder"
                               style="width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 10px; font-size: 12.5px; resize: none; background: #F9FAFB; cursor: not-allowed;"></textarea>
@@ -558,7 +815,7 @@ import { DialogService } from '../../services/dialog.service';
                   @else if (selectedType() === 'translation') {
                     <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
                       <div style="font-size: 12.5px; font-weight: 700; color: #92400E; margin-bottom: 6px;">🌍 {{ labels().translationPreviewLabel }} ({{ formTranslationDirection === 'fr-en' ? 'FR → EN' : 'EN → FR' }})</div>
-                      <p style="font-size: 13px; color: var(--text-primary); line-height: 1.7; margin: 0; font-style: italic;">{{ labels().translationPlaceholder }}</p>
+                      <p style="font-size: 13px; color: var(--text-primary); line-height: 1.7; margin: 0; font-style: italic;" [innerHTML]="labels().translationPlaceholder"></p>
                     </div>
                     <textarea disabled rows="3" [placeholder]="labels().studentTranslationPlaceholder"
                               style="width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 10px; font-size: 12.5px; resize: none; background: #F9FAFB; cursor: not-allowed;"></textarea>
@@ -569,7 +826,7 @@ import { DialogService } from '../../services/dialog.service';
                   @else if (selectedType() === 'pronunciation') {
                     <div style="text-align: center; padding: 20px; background: #FFF1F2; border: 1px solid #FECDD3; border-radius: 12px; margin-bottom: 16px;">
                       <div style="font-size: 12.5px; font-weight: 700; color: #9F1239; margin-bottom: 8px;">🔊 {{ labels().pronouncePreviewLabel }}</div>
-                      <p style="font-size: 15px; font-weight: 700; color: var(--text-primary); line-height: 1.6; margin: 0;">{{ labels().pronouncePlaceholder }}</p>
+                      <p style="font-size: 15px; font-weight: 700; color: var(--text-primary); line-height: 1.6; margin: 0;" [innerHTML]="labels().pronouncePlaceholder"></p>
                     </div>
 
                     <!-- Recorder Component -->
@@ -621,7 +878,108 @@ import { DialogService } from '../../services/dialog.service';
         </div><!-- close workspace wrapper -->
       }
     </div>
-  `
+  `,
+  styles: [`
+    .tb-btn {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      background: none;
+      color: #475569;
+      cursor: pointer;
+      padding: 0;
+      transition: all 0.15s;
+    }
+    .tb-btn:hover {
+      background: #E2E8F0;
+      color: #0F172A;
+      border-color: #CBD5E1;
+    }
+    .rich-editor h3 {
+      font-size: 16px;
+      font-weight: 800;
+      color: #1E1B4B;
+      margin-top: 14px;
+      margin-bottom: 8px;
+    }
+    .rich-editor h4 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #4F46E5;
+      margin-top: 12px;
+      margin-bottom: 6px;
+    }
+    .rich-editor blockquote {
+      border-left: 4px solid #CBD5E1;
+      padding-left: 12px;
+      color: #64748B;
+      font-style: italic;
+      margin: 10px 0;
+    }
+    .rich-editor ul, .rich-editor ol {
+      padding-left: 20px;
+      margin: 10px 0;
+    }
+    .rich-editor:empty::before {
+      content: attr(data-placeholder);
+      color: #94A3B8;
+      cursor: text;
+    }
+    .btn-picker {
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 8px;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-picker:hover {
+      background: var(--surface-2);
+      border-color: var(--text-muted);
+    }
+    .btn-picker.active-picker {
+      background: #EFF6FF;
+      border-color: #3B82F6;
+      color: #1D4ED8;
+    }
+    .btn-diff {
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-diff.active-easy {
+      background: #ECFDF5;
+      border-color: #10B981;
+      color: #047857;
+    }
+    .btn-diff.active-medium {
+      background: #FFFBEB;
+      border-color: #F59E0B;
+      color: #B45309;
+    }
+    .btn-diff.active-hard {
+      background: #FFF1F2;
+      border-color: #F43F5E;
+      color: #9F1239;
+    }
+  `]
 })
 export class TeacherExercisesManagerComponent {
   private db = inject(DatabaseService);
@@ -748,6 +1106,15 @@ export class TeacherExercisesManagerComponent {
   formTextToPronounce = '';
   formTheme = '';
   formWordListRaw = '';
+  formGameType: 'flashcards' | 'matching' | 'memory' | 'word_builder' | 'hangman' | 'multiple_choice' = 'matching';
+  formDifficulty: 'easy' | 'medium' | 'hard' = 'easy';
+  formCategory = 'general';
+  formColorTheme = 'indigo';
+  formCoverImage = '';
+  formWords: { word: string; definition: string; translation: string }[] = [
+    { word: '', definition: '', translation: '' },
+    { word: '', definition: '', translation: '' }
+  ];
 
   typesList = [
     { 
@@ -876,9 +1243,106 @@ export class TeacherExercisesManagerComponent {
     this.activeExPanel.set(this.activeExPanel() === name ? 'none' : name);
   }
 
+  // Rich Text Editor Methods (copied from lessons.ts)
+  execCmd(command: string, value: string = '') {
+    document.execCommand(command, false, value);
+    this.syncContentFromDOM();
+  }
+
+  formatBlock(event: any) {
+    const tag = event.target.value;
+    document.execCommand('formatBlock', false, `<${tag}>`);
+    this.syncContentFromDOM();
+  }
+
+  changeFontSize(event: any) {
+    const size = event.target.value;
+    document.execCommand('fontSize', false, size);
+    this.syncContentFromDOM();
+  }
+
+  changeColor(color: string) {
+    document.execCommand('foreColor', false, color);
+    this.syncContentFromDOM();
+  }
+
+  onEditorInput(event: any, field: string) {
+    if (field === 'subject') {
+      this.formSubject = event.target.innerHTML;
+    } else if (field === 'speakingPrompt') {
+      this.formSpeakingPrompt = event.target.innerHTML;
+    } else if (field === 'listeningInstruction') {
+      this.formListeningInstruction = event.target.innerHTML;
+    } else if (field === 'textToTranslate') {
+      this.formTextToTranslate = event.target.innerHTML;
+    } else if (field === 'textToPronounce') {
+      this.formTextToPronounce = event.target.innerHTML;
+    }
+  }
+
+  syncContentFromDOM() {
+    const type = this.selectedType();
+    if (type === 'writing') {
+      const el = document.getElementById('writingEditor');
+      if (el) this.formSubject = el.innerHTML;
+    } else if (type === 'speaking') {
+      const el = document.getElementById('speakingEditor');
+      if (el) this.formSpeakingPrompt = el.innerHTML;
+    } else if (type === 'listening') {
+      const el = document.getElementById('listeningEditor');
+      if (el) this.formListeningInstruction = el.innerHTML;
+    } else if (type === 'translation') {
+      const el = document.getElementById('translationEditor');
+      if (el) this.formTextToTranslate = el.innerHTML;
+    } else if (type === 'pronunciation') {
+      const el = document.getElementById('pronunciationEditor');
+      if (el) this.formTextToPronounce = el.innerHTML;
+    }
+  }
+
+  // Vocabulary specific helpers
+  addWord() {
+    this.formWords.push({ word: '', definition: '', translation: '' });
+  }
+
+  removeWord(idx: number) {
+    if (this.formWords.length > 2) {
+      this.formWords.splice(idx, 1);
+    }
+  }
+
+  loadTemplate() {
+    this.formWords = [
+      { word: 'Airport', definition: 'A place where airplanes take off and land.', translation: 'Aéroport' },
+      { word: 'Passport', definition: 'An official document for international travel.', translation: 'Passeport' },
+      { word: 'Flight', definition: 'A journey made through the air by an airplane.', translation: 'Vol' },
+      { word: 'Boarding Pass', definition: 'A document giving permission to get on a plane.', translation: 'Carte d\'embarquement' },
+      { word: 'Luggage', definition: 'Bags and suitcases that a traveler carries.', translation: 'Bagages' }
+    ];
+  }
+
+  onCoverImageSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        this.formCoverImage = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
   selectType(type: any) {
     this.selectedType.set(type);
     this.currentStep.set(2);
+    // Clear editors
+    setTimeout(() => {
+      const editors = ['writingEditor', 'speakingEditor', 'listeningEditor', 'translationEditor', 'pronunciationEditor'];
+      editors.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = '';
+      });
+    }, 50);
   }
 
   startNew() {
@@ -893,6 +1357,14 @@ export class TeacherExercisesManagerComponent {
       this.currentStep.set(1);
     }
     this.setTab('create');
+    // Clear editors
+    setTimeout(() => {
+      const editors = ['writingEditor', 'speakingEditor', 'listeningEditor', 'translationEditor', 'pronunciationEditor'];
+      editors.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = '';
+      });
+    }, 50);
   }
 
   editExercise(ex: Exercise) {
@@ -916,9 +1388,44 @@ export class TeacherExercisesManagerComponent {
     this.formTextToPronounce = ex.textToPronounce || '';
     this.formTheme = ex.theme || '';
     this.formWordListRaw = (ex.wordList || []).join('\n');
+    this.formGameType = (ex as any).gameType || 'matching';
+    this.formDifficulty = (ex as any).difficulty || 'easy';
+    this.formCategory = (ex as any).category || 'general';
+    this.formColorTheme = (ex as any).colorTheme || 'indigo';
+    this.formCoverImage = (ex as any).coverImage || '';
+    this.formWords = (ex as any).words || (ex.wordList || []).map(w => {
+      const parts = w.split(' - ');
+      return { word: parts[0] || w, definition: '', translation: parts[1] || '' };
+    });
+    if (this.formWords.length === 0) {
+      this.formWords = [
+        { word: '', definition: '', translation: '' },
+        { word: '', definition: '', translation: '' }
+      ];
+    }
 
     this.currentStep.set(2);
     this.setTab('create');
+
+    // Load editor contents
+    setTimeout(() => {
+      if (ex.type === 'writing') {
+        const el = document.getElementById('writingEditor');
+        if (el) el.innerHTML = this.formSubject;
+      } else if (ex.type === 'speaking') {
+        const el = document.getElementById('speakingEditor');
+        if (el) el.innerHTML = this.formSpeakingPrompt;
+      } else if (ex.type === 'listening') {
+        const el = document.getElementById('listeningEditor');
+        if (el) el.innerHTML = this.formListeningInstruction;
+      } else if (ex.type === 'translation') {
+        const el = document.getElementById('translationEditor');
+        if (el) el.innerHTML = this.formTextToTranslate;
+      } else if (ex.type === 'pronunciation') {
+        const el = document.getElementById('pronunciationEditor');
+        if (el) el.innerHTML = this.formTextToPronounce;
+      }
+    }, 50);
   }
 
   async deleteExercise(ex: Exercise) {
@@ -959,12 +1466,6 @@ export class TeacherExercisesManagerComponent {
     if (!type) return;
 
     const user = this.currentUser();
-
-    const words = this.formWordListRaw
-      .split('\n')
-      .map(w => w.trim())
-      .filter(w => w.length > 0);
-
     const status = statusOverride || this.formStatus;
 
     const exerciseData: any = {
@@ -993,7 +1494,13 @@ export class TeacherExercisesManagerComponent {
       exerciseData.textToPronounce = this.formTextToPronounce.trim();
     } else if (type === 'vocabulary') {
       exerciseData.theme = this.formTheme.trim();
-      exerciseData.wordList = words;
+      exerciseData.gameType = this.formGameType;
+      exerciseData.difficulty = this.formDifficulty;
+      exerciseData.category = this.formCategory;
+      exerciseData.colorTheme = this.formColorTheme;
+      exerciseData.coverImage = this.formCoverImage;
+      exerciseData.words = this.formWords.filter(w => w.word.trim().length > 0);
+      exerciseData.wordList = this.formWords.map(w => w.word.trim()).filter(w => w.length > 0);
     }
 
     const id = this.selectedExerciseId();
@@ -1007,8 +1514,19 @@ export class TeacherExercisesManagerComponent {
             : this.t("Le brouillon a été mis à jour avec succès.", "Draft updated successfully."),
           'success'
         );
+
+        if (status === 'published') {
+          await this.db.sendNotification({
+            recipientId: 'all',
+            recipientRole: 'student',
+            type: 'exercise_assigned',
+            title: this.t('🎯 Nouvel exercice disponible', '🎯 New exercise available'),
+            message: this.t(`"${this.formTitle}" a été publié par ${user?.name || 'votre professeur'}`, `"${this.formTitle}" has been published by ${user?.name || 'your teacher'}`),
+            link: 'exercises:' + id
+          });
+        }
       } else {
-        await this.db.addExercise(exerciseData);
+        const newEx = await this.db.addExercise(exerciseData);
         this.dialogService.alert(
           this.t('Succès', 'Success'),
           status === 'published'
@@ -1023,7 +1541,8 @@ export class TeacherExercisesManagerComponent {
             recipientRole: 'student',
             type: 'exercise_assigned',
             title: this.t('🎯 Nouvel exercice disponible', '🎯 New exercise available'),
-            message: this.t(`"${this.formTitle}" a été publié par ${user?.name || 'votre professeur'}`, `"${this.formTitle}" has been published by ${user?.name || 'your teacher'}`)
+            message: this.t(`"${this.formTitle}" a été publié par ${user?.name || 'votre professeur'}`, `"${this.formTitle}" has been published by ${user?.name || 'your teacher'}`),
+            link: 'exercises:' + newEx.id
           });
         }
       }
@@ -1052,6 +1571,15 @@ export class TeacherExercisesManagerComponent {
     this.formTextToPronounce = '';
     this.formTheme = '';
     this.formWordListRaw = '';
+    this.formGameType = 'matching';
+    this.formDifficulty = 'easy';
+    this.formCategory = 'general';
+    this.formColorTheme = 'indigo';
+    this.formCoverImage = '';
+    this.formWords = [
+      { word: '', definition: '', translation: '' },
+      { word: '', definition: '', translation: '' }
+    ];
     this.currentStep.set(1);
     this.selectedType.set(null);
   }
@@ -1077,7 +1605,6 @@ export class TeacherExercisesManagerComponent {
   }
 
   getPreviewWordList(): string[] {
-    if (!this.formWordListRaw) return [];
-    return this.formWordListRaw.split('\n').map(w => w.trim()).filter(w => w.length > 0);
+    return this.formWords.map(w => w.word.trim()).filter(w => w.length > 0);
   }
 }

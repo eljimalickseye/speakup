@@ -2309,5 +2309,248 @@ button:hover, .btn-p:hover, .btn-s:hover {
   font-weight: 600;
 }
 
+/* ==================== USER THEMES CUSTOMIZATION SYSTEM ==================== */
+body.theme-dark {
+  --border: #334155;
+  --border-strong: #475569;
+  --surface-1: #1E293B;
+  --surface-2: #0F172A;
+  --text-primary: #F8FAFC;
+  --text-secondary: #CBD5E1;
+  --text-muted: #64748B;
+  background-color: #0F172A !important;
+  color: #F8FAFC !important;
+}
+body.theme-dark .sidebar, body.theme-dark .card, body.theme-dark .mcard, body.theme-dark .page-header {
+  background-color: #1E293B !important;
+  border-color: #334155 !important;
+}
+body.theme-dark input, body.theme-dark select, body.theme-dark textarea {
+  background-color: #0F172A !important;
+  color: #F8FAFC !important;
+  border-color: #334155 !important;
+}
+
+/* Manga Theme (Premium Comic Neo-Brutalism & Chibi illustrations) */
+body.theme-manga {
+  --border: #000000;
+  --border-strong: #000000;
+  --surface-1: #FFFFFF;
+  --surface-2: #F3F4F6;
+  --text-primary: #1F2937;
+  --text-secondary: #4B5563;
+  --text-muted: #9CA3AF;
+  background-color: #EBF0F6 !important;
+  color: #1F2937 !important;
+}
+
+/* Sidebar: Dark Purple/Blue manga styling */
+body.theme-manga .sidebar {
+  background-color: #110B29 !important;
+  border-right: 2px solid #000000 !important;
+  position: relative;
+  overflow: hidden;
+}
+body.theme-manga .sidebar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(0,0,0,0) 40%, rgba(0,0,0,0.5) 100%);
+  pointer-events: none;
+}
+body.theme-manga .sidebar .logo {
+  border-bottom: 2px solid #000000 !important;
+  background: #1A123D !important;
+}
+body.theme-manga .sidebar .nav-section {
+  color: #8B74FC !important;
+  font-weight: 800 !important;
+}
+body.theme-manga .sidebar .nav-item, body.theme-manga .sidebar .ni {
+  color: #D3C5FD !important;
+  font-weight: 700 !important;
+  border: 1px solid transparent !important;
+}
+body.theme-manga .sidebar .nav-item:hover, body.theme-manga .sidebar .nav-item.active {
+  background-color: #E11D48 !important;
+  color: white !important;
+  border: 2px solid #000000 !important;
+  box-shadow: 3px 3px 0px #000000 !important;
+  transform: translate(-1px, -1px);
+}
+
+/* Cards & Panels: Solid black outlines and offsets */
+body.theme-manga .card, body.theme-manga .mcard {
+  background-color: #FFFFFF !important;
+  border: 2px solid #000000 !important;
+  box-shadow: 4px 4px 0px #000000 !important;
+  border-radius: 12px !important;
+  color: #1F2937 !important;
+}
+
+/* Forms & inputs */
+body.theme-manga input, body.theme-manga select, body.theme-manga textarea {
+  background-color: #FFFFFF !important;
+  color: #000000 !important;
+  border: 2px solid #000000 !important;
+  border-radius: 8px !important;
+  box-shadow: 2px 2px 0px #000000 !important;
+}
+body.theme-manga input:focus {
+  border-color: #E11D48 !important;
+  outline: none;
+}
+
+/* Buttons */
+body.theme-manga .btn-p {
+  background: #E11D48 !important;
+  color: white !important;
+  border: 2px solid #000000 !important;
+  box-shadow: 3px 3px 0px #000000 !important;
+  font-weight: 800 !important;
+  border-radius: 8px !important;
+}
+body.theme-manga .btn-p:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0px #000000 !important;
+}
+body.theme-manga .btn-s {
+  background: #FFFFFF !important;
+  color: #000000 !important;
+  border: 2px solid #000000 !important;
+  box-shadow: 3px 3px 0px #000000 !important;
+  font-weight: 800 !important;
+  border-radius: 8px !important;
+}
+body.theme-manga .btn-s:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0px #000000 !important;
+}
+
+/* Subtle Sharingan watermark overlay */
+body.theme-manga::after {
+  content: "☯";
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  font-size: 56px;
+  color: rgba(225, 29, 72, 0.08);
+  pointer-events: none;
+  animation: spin-sharingan 18s linear infinite;
+  z-index: 9999;
+}
+@keyframes spin-sharingan {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Rose Petals Theme (Soft rose pink, warm cream surfaces) */
+body.theme-rose {
+  --border: #FCE7F3;
+  --border-strong: #FBCFE8;
+  --surface-1: #FFF5F7;
+  --surface-2: #FFF0F3;
+  --text-primary: #881337;
+  --text-secondary: #9F1239;
+  --text-muted: #FB7185;
+  background-color: #FFEAF2 !important;
+  color: #881337 !important;
+}
+
+/* Sidebar: Light pink styling */
+body.theme-rose .sidebar {
+  background-color: #FFF0F3 !important;
+  border-right: 1.5px solid #FBCFE8 !important;
+  position: relative;
+  overflow: hidden;
+}
+body.theme-rose .sidebar .logo {
+  border-bottom: 1.5px solid #FBCFE8 !important;
+  background-color: #FFE4E6 !important;
+}
+body.theme-rose .sidebar .nav-section {
+  color: #BE185D !important;
+  font-weight: 800 !important;
+}
+body.theme-rose .sidebar .nav-item, body.theme-rose .sidebar .ni {
+  color: #9F1239 !important;
+  font-weight: 700 !important;
+}
+body.theme-rose .sidebar .nav-item:hover, body.theme-rose .sidebar .nav-item.active {
+  background-color: #FFD1DC !important;
+  color: #BE185D !important;
+  border: 1.5px solid #FBCFE8 !important;
+  box-shadow: 2px 2px 0px rgba(219, 39, 119, 0.1) !important;
+}
+
+/* Cards & buttons */
+body.theme-rose .card, body.theme-rose .mcard {
+  background-color: #FFF5F7 !important;
+  border-color: #FBCFE8 !important;
+  box-shadow: 0 4px 15px rgba(219, 39, 119, 0.04) !important;
+}
+body.theme-rose .btn-p {
+  background: #DB2777 !important;
+  border-color: #DB2777 !important;
+  color: white !important;
+  font-weight: 800 !important;
+}
+body.theme-rose::before {
+  content: "🌸";
+  position: fixed;
+  top: 10%;
+  left: 20%;
+  font-size: 20px;
+  opacity: 0.25;
+  pointer-events: none;
+  animation: falling-petals 14s linear infinite;
+}
+body.theme-rose::after {
+  content: "🌸";
+  position: fixed;
+  top: -5%;
+  left: 75%;
+  font-size: 26px;
+  opacity: 0.3;
+  pointer-events: none;
+  animation: falling-petals 18s linear infinite;
+}
+
+/* Emerald Faith Theme (Islamic Emerald / Gold) */
+body.theme-faith {
+  --border: #D1FAE5;
+  --border-strong: #A7F3D0;
+  --surface-1: #F0FDF4;
+  --surface-2: #ECFDF5;
+  --text-primary: #064E3B;
+  --text-secondary: #047857;
+  --text-muted: #10B981;
+  background-color: #ECFDF5 !important;
+  color: #064E3B !important;
+}
+body.theme-faith .sidebar, body.theme-faith .card, body.theme-faith .mcard, body.theme-faith .page-header {
+  background-color: #F0FDF4 !important;
+  border-color: #A7F3D0 !important;
+  box-shadow: 0 4px 12px rgba(4, 120, 87, 0.05) !important;
+}
+body.theme-faith .btn-p {
+  background: #047857 !important;
+  border-color: #047857 !important;
+  color: white !important;
+}
+body.theme-faith .logo-mark {
+  background: #047857 !important;
+}
+body.theme-faith::after {
+  content: "🌙";
+  position: fixed;
+  top: 15px;
+  right: 220px;
+  font-size: 24px;
+  color: rgba(4, 120, 87, 0.15);
+  pointer-events: none;
+  z-index: 99;
+}
+
 
 

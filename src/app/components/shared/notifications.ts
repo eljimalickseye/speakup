@@ -47,7 +47,7 @@ import { DatabaseService, AppNotification, UserProfile } from '../../services/da
               <div 
                 class="notif-item"
                 [class.unread]="!notif.read"
-                (click)="markRead(notif); $event.stopPropagation()"
+                (click)="navigateToNotification(notif); closePanel(); $event.stopPropagation()"
                 style="position:relative"
               >
                 <div class="notif-icon" [class]="getNotifIconClass(notif.type)">
@@ -77,7 +77,7 @@ import { DatabaseService, AppNotification, UserProfile } from '../../services/da
     <!-- Real-time Toast Notifications Overlay -->
     <div class="toast-container">
       @for (toast of activeToasts(); track toast.id) {
-        <div class="toast-item" (click)="markRead(toast); removeToast(toast.id)">
+        <div class="toast-item" (click)="navigateToNotification(toast); removeToast(toast.id)">
           <div class="toast-icon-box" [class]="getNotifIconClass(toast.type)">
             <i class="ti" [class]="getNotifIcon(toast.type)"></i>
           </div>
@@ -652,9 +652,26 @@ export class NotificationsComponent {
   navigateToNotification(n: AppNotification) {
     this.markRead(n);
     this.activeModalNotif.set(null);
-    const tab = n.link || this.getTargetTab(n.type);
-    if (tab) {
-      this.db.requestedTabRedirect.set(tab);
+    const link = n.link || this.getTargetTab(n.type);
+    if (link) {
+      if (link.includes(':')) {
+        const parts = link.split(':');
+        const tab = parts[0];
+        const targetId = parts[1];
+        
+        if (tab === 'exercises') {
+          if (targetId.startsWith('quiz-') || targetId.startsWith('placement-test')) {
+            this.db.requestedQuizIdRedirect.set(targetId);
+          } else {
+            this.db.requestedExerciseIdRedirect.set(targetId);
+          }
+        } else if (tab === 'exam') {
+          this.db.requestedExamIdRedirect.set(targetId);
+        }
+        this.db.requestedTabRedirect.set(tab);
+      } else {
+        this.db.requestedTabRedirect.set(link);
+      }
     }
   }
 

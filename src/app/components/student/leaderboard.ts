@@ -371,31 +371,32 @@ import { DialogService } from '../../services/dialog.service';
     .podium-pedestal {
       width: 100%; border-radius: 8px 8px 4px 4px;
       display: flex; flex-direction: column; align-items: center;
+      justify-content: center; gap: 4px;
       padding: 12px 6px; text-align: center;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
     }
 
     .podium-pedestal.gold {
-      height: 100px;
+      min-height: 105px;
       background: linear-gradient(180deg, #FEF3C7 0%, #FFFBEB 100%);
       border: 1px solid #FDE68A; color: #92400E;
     }
 
     .podium-pedestal.silver {
-      height: 80px;
+      min-height: 90px;
       background: linear-gradient(180deg, #F3F4F6 0%, #F9FAFB 100%);
       border: 1px solid #E5E7EB; color: #4B5563;
     }
 
     .podium-pedestal.bronze {
-      height: 65px;
+      min-height: 75px;
       background: linear-gradient(180deg, #FFEDD5 0%, #FFF7ED 100%);
       border: 1px solid #FED7AA; color: #9A3412;
     }
 
-    .podium-rank-num { font-size: 20px; font-weight: 800; opacity: 0.8; }
-    .podium-name { font-size: 11px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-    .podium-score { font-size: 9px; font-weight: 600; opacity: 0.7; }
+    .podium-rank-num { font-size: 20px; font-weight: 800; opacity: 0.8; line-height: 1.1; }
+    .podium-name { font-size: 11px; font-weight: 700; word-break: break-word; line-height: 1.3; max-width: 100%; }
+    .podium-score { font-size: 9px; font-weight: 600; opacity: 0.7; line-height: 1.1; }
 
     .leaderboard-list {
       display: flex; flex-direction: column; gap: 6px;
@@ -469,18 +470,18 @@ export class StudentLeaderboardComponent {
 
   getTop3() {
     const users = this.allUsers().filter(u => u.role === 'student');
-    const sorted = [...users].sort((a, b) => b.xp - a.xp);
+    const sorted = [...users].sort((a, b) => Math.round(b.xp || 0) - Math.round(a.xp || 0));
     return sorted.slice(0, 3);
   }
 
   getListUsers() {
     const users = this.allUsers().filter(u => u.role === 'student');
-    const sorted = [...users].sort((a, b) => b.xp - a.xp);
+    const sorted = [...users].sort((a, b) => Math.round(b.xp || 0) - Math.round(a.xp || 0));
     return sorted.slice(3);
   }
 
   getXPDisplay(user: UserProfile): number {
-    return user.xp || 0;
+    return Math.round(user.xp || 0);
   }
 
   getPercent(current: number, threshold: number): number {

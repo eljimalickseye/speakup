@@ -384,8 +384,21 @@ import { DialogService } from '../../services/dialog.service';
                 @if (showHomeworkInput()) {
                   <div style="margin-left:22px; display:grid; grid-template-columns:1.5fr 1fr; gap:16px; animation: slideDown 0.15s ease-out">
                     <div class="input-row" style="margin-bottom:0">
-                      <label style="font-size:11px; color:var(--text-muted)">{{ t('Description des devoirs', 'Describe homework task') }}</label>
-                      <textarea [(ngModel)]="homeworkInstruction" rows="3" [placeholder]="t('ex. Rédiger un texte de 150 mots...', 'e.g., Write a 150-word text...')" style="width:100%; padding:10px; border-radius:8px; border:1px solid var(--border); outline:none"></textarea>
+                      <label style="font-size:11px; color:var(--text-muted); display:flex; justify-content:space-between; align-items:center; width:100%">
+                        <span>{{ t('Description des devoirs', 'Describe homework task') }}</span>
+                        <span style="display:inline-flex; gap:6px; margin-left:auto">
+                          <button type="button" (click)="execCmdOnHomework('bold')" style="padding:2px 6px; border:1px solid var(--border); border-radius:4px; background:white; font-size:10px; cursor:pointer; font-weight:800" title="Bold">B</button>
+                          <button type="button" (click)="execCmdOnHomework('italic')" style="padding:2px 6px; border:1px solid var(--border); border-radius:4px; background:white; font-size:10px; cursor:pointer; font-style:italic" title="Italic">I</button>
+                          <button type="button" (click)="execCmdOnHomework('underline')" style="padding:2px 6px; border:1px solid var(--border); border-radius:4px; background:white; font-size:10px; cursor:pointer; text-decoration:underline" title="Underline">U</button>
+                        </span>
+                      </label>
+                      <div id="homeworkEditor"
+                           contenteditable="true"
+                           (input)="onHomeworkInput($event)"
+                           (blur)="onHomeworkInput($event)"
+                           style="min-height:80px; padding:10px; border-radius:8px; border:1px solid var(--border); outline:none; background:white; font-size:13px; line-height:1.5; color:var(--text-primary); max-height:150px; overflow-y:auto"
+                           [attr.data-placeholder]="t('ex. Rédiger un texte de 150 mots...', 'e.g., Write a 150-word text...')">
+                      </div>
                     </div>
                     <div class="input-row" style="margin-bottom:0">
                       <label style="font-size:11px; color:var(--text-muted)">{{ t('Date limite de rendu', 'Due Date') }}</label>
@@ -551,7 +564,7 @@ import { DialogService } from '../../services/dialog.service';
       padding-left: 20px;
       margin: 10px 0;
     }
-    .rich-editor:empty::before {
+    .rich-editor:empty::before, #homeworkEditor:empty::before {
       content: attr(data-placeholder);
       color: #94A3B8;
       cursor: text;
@@ -645,6 +658,8 @@ export class TeacherLessonsComponent {
     setTimeout(() => {
       const el = document.getElementById('richEditor');
       if (el) el.innerHTML = '';
+      const hEl = document.getElementById('homeworkEditor');
+      if (hEl) hEl.innerHTML = '';
     }, 50);
   }
 
@@ -737,6 +752,7 @@ export class TeacherLessonsComponent {
       type: 'exercise_assigned',
       title: '📖 Nouveau cours disponible',
       message: `Le cours "${draft?.title || ''}" a été publié. Date limite de rendu : ${draft?.dueDate || '-'}`,
+      link: 'lessons'
     });
 
     this.dialogService.alert(
@@ -765,6 +781,8 @@ export class TeacherLessonsComponent {
     setTimeout(() => {
       const el = document.getElementById('richEditor');
       if (el) el.innerHTML = this.content;
+      const hEl = document.getElementById('homeworkEditor');
+      if (hEl) hEl.innerHTML = this.homeworkInstruction;
     }, 50);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -808,6 +826,7 @@ export class TeacherLessonsComponent {
         type: 'exercise_assigned',
         title: '✏️ Cours d’anglais mis à jour',
         message: `Le cours "${this.title}" a été mis à jour par votre professeur.`,
+        link: 'lessons'
       });
 
       this.dialogService.alert(
@@ -824,6 +843,7 @@ export class TeacherLessonsComponent {
         type: 'exercise_assigned',
         title: '📖 Nouveau cours disponible',
         message: `Le cours "${this.title}" a été publié par ${currentUser?.name || 'votre professeur'}. Date limite : ${this.dueDate}.`,
+        link: 'lessons'
       });
 
       this.dialogService.alert(
@@ -856,6 +876,8 @@ export class TeacherLessonsComponent {
     this.showHomeworkInput.set(true);
     const el = document.getElementById('richEditor');
     if (el) el.innerHTML = '';
+    const hEl = document.getElementById('homeworkEditor');
+    if (hEl) hEl.innerHTML = '';
   }
 
   execCmd(command: string, value: string = '') {
@@ -889,5 +911,21 @@ export class TeacherLessonsComponent {
     if (el) {
       this.content = el.innerHTML;
     }
+  }
+
+  onHomeworkInput(event: any) {
+    this.homeworkInstruction = event.target.innerHTML || '';
+  }
+
+  syncHomeworkFromDOM() {
+    const el = document.getElementById('homeworkEditor');
+    if (el) {
+      this.homeworkInstruction = el.innerHTML || '';
+    }
+  }
+
+  execCmdOnHomework(command: string) {
+    document.execCommand(command, false, '');
+    this.syncHomeworkFromDOM();
   }
 }
