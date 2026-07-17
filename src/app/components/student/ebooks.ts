@@ -792,11 +792,20 @@ export class StudentEbooksComponent {
     if (!content) return [];
 
     // Strip HTML tags
-    const text = content.replace(/<[^>]*>/g, '').trim();
+    const rawText = content.replace(/<[^>]*>/g, '').trim();
+    // Helper: strip leading numbers/separators from any string
+    const stripNum = (s: string) => s.replace(/^\s*\d+[.)\-:]?\s*/, '').trim();
+    // Pre-clean: remove ALL number markers — inline (»23.) AND standalone lines
+    const cleanedText = rawText
+      .replace(/[\u00bb\u00ab»«>]\s*\d+[.)\-]?\s*/g, ' ')  // strip »23. anywhere inline
+      .replace(/^\s*\d+[.)\-:\s]*$/mg, '')                  // strip standalone number lines
+      .replace(/\n{3,}/g, '\n\n')                           // collapse excess blank lines
+      .trim();
+
     const parsed: { english: string; french: string; words: string[] }[] = [];
 
     // --- Strategy 1: Explicit separator per line (EN / FR or EN | FR) ---
-    const lines = text.split(/\n+/).map((l: string) => l.trim()).filter(Boolean);
+    const lines = cleanedText.split(/\n+/).map((l: string) => l.trim()).filter(Boolean);
     const hasSeparators = lines.some((l: string) => l.includes(' / ') || l.includes(' | '));
 
     if (hasSeparators) {
@@ -812,8 +821,8 @@ export class StudentEbooksComponent {
           english = parts[0].trim();
           french = parts.slice(1).join(' | ').trim();
         }
-        const cleanEN = english.replace(/^\d+[\.]\s*/, '').trim();
-        const cleanFR = french.replace(/^\d+[\.]\s*/, '').trim();
+        const cleanEN = stripNum(english);
+        const cleanFR = stripNum(french);
         if (!cleanEN) return;
         parsed.push({ english: cleanEN, french: cleanFR, words: cleanEN.split(/\s+/).filter(Boolean) });
       });
@@ -821,16 +830,16 @@ export class StudentEbooksComponent {
     }
 
     // --- Strategy 2: Numbered mixed format "1 English... French... 2 English..." ---
-    const numberedChunks = text.split(/(?=\d+\s+[A-Z])/);
+    const numberedChunks = cleanedText.split(/(?=\d+\s+[A-Z])/);
     if (numberedChunks.length > 1) {
       for (const chunk of numberedChunks) {
-        const clean = chunk.replace(/^\d+\s*/, '').trim();
+        const clean = stripNum(chunk);
         if (!clean) continue;
         const rawSentences = clean.match(/[^.!?]+[.!?]*/g) || [clean];
         const englishParts: string[] = [];
         const frenchParts: string[] = [];
         for (const s of rawSentences) {
-          const trimmed = s.trim();
+          const trimmed = stripNum(s.trim());
           if (!trimmed) continue;
           if (this.looksLikeFrench(trimmed)) { frenchParts.push(trimmed); }
           else { englishParts.push(trimmed); }
@@ -845,7 +854,7 @@ export class StudentEbooksComponent {
     }
 
     // --- Strategy 3: Sentence-by-sentence language classification ---
-    const sentences = text.match(/[^.!?\n]+[.!?]*/g) || text.split(/\n+/);
+    const sentences = cleanedText.match(/[^.!?\n]+[.!?]*/g) || cleanedText.split(/\n+/);
     let buf = { english: '', french: '' };
     const flush = () => {
       if (!buf.english && !buf.french) return;
@@ -854,7 +863,7 @@ export class StudentEbooksComponent {
       buf = { english: '', french: '' };
     };
     for (const raw of sentences) {
-      const s = raw.trim();
+      const s = stripNum(raw.trim());
       if (!s) continue;
       if (this.looksLikeFrench(s)) {
         buf.french += (buf.french ? ' ' : '') + s;
@@ -864,7 +873,7 @@ export class StudentEbooksComponent {
       }
     }
     flush();
-    return parsed.length > 0 ? parsed : [{ english: text, french: '', words: text.split(/\s+/).filter(Boolean) }];
+    return parsed.length > 0 ? parsed : [{ english: cleanedText, french: '', words: cleanedText.split(/\s+/).filter(Boolean) }];
   }
 
   /** Heuristic: detect French by accent chars or common French function words */

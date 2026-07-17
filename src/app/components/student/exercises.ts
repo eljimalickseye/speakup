@@ -358,7 +358,7 @@ const defaultWordsBank = [
                 <div style="display:flex; flex-direction:column; align-items:center; gap:6px; flex:1">
                   <span style="font-size:9px; font-weight:700; color:#B45309; text-transform:uppercase">{{ day.name }}</span>
                   <div 
-                    [style.background]="day.completed ? 'linear-gradient(135deg, #F59E0B, #D97706)' : '#FFF'"
+                    [style.background]="day.completed ? 'linear-gradient(135deg, #F59E0B, #D97706)' : 'var(--surface-1)'"
                     [style.border-color]="day.completed ? '#D97706' : '#E2E8F0'"
                     [style.color]="day.completed ? '#FFF' : '#94A3B8'"
                     style="width:28px; height:28px; border-radius:50%; border:2px solid; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; box-shadow: 0 2px 4px rgba(0,0,0,0.02)">
@@ -598,7 +598,7 @@ const defaultWordsBank = [
                               </div>
 
                               <div style="display:flex; gap:8px; margin-top:4px">
-                                <button (click)="stopExerciseAudioRecording(true)" class="btn-s" style="background:#F3F4F6; color:#374151; border:1px solid #D1D5DB; font-weight:700; cursor:pointer">
+                                <button (click)="stopExerciseAudioRecording(true)" class="btn-s" style="background:var(--surface-2); color:var(--text-primary); border:1px solid var(--border); font-weight:700; cursor:pointer">
                                   {{ t('Annuler', 'Cancel') }}
                                 </button>
                                 <button (click)="stopExerciseAudioRecording(false)" class="btn-s" style="background:#EF4444; color:white; border:none; font-weight:700; cursor:pointer; box-shadow:0 4px 10px rgba(239,68,68,0.2)">
@@ -633,8 +633,8 @@ const defaultWordsBank = [
                         @let curWord = wList[vocabularyActiveIdx() || 0];
                         @let curWordStr = getWordString(curWord);
 
-                        <div style="background: white; border: 1.5px solid #C7D2FE; border-radius: 10px; padding: 24px; min-height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.02)">
-                          <div style="font-size: 24px; font-weight: 800; color: #1E1B4B; display: flex; align-items: center; gap: 8px;">
+                        <div style="background: var(--surface-1); border: 1.5px solid var(--border); border-radius: 10px; padding: 24px; min-height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.02)">
+                          <div style="font-size: 24px; font-weight: 800; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
                             <span>{{ curWordStr }}</span>
                             <button (click)="speakWord(curWordStr)" style="background:none; border:none; color:#4F46E5; cursor:pointer; padding:4px; display:inline-flex; align-items:center;" title="Listen">
                               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -757,7 +757,7 @@ const defaultWordsBank = [
                                   (ngModelChange)="selectedOption.set($event)"
                                   placeholder="Saisissez votre réponse ici..." 
                                   rows="5" 
-                                  style="width:100%; border:1px solid var(--border); border-radius:8px; padding:12px; font-size:13px; background:#FFF; color:var(--text-primary)"></textarea>
+                                  style="width:100%; border:1px solid var(--border); border-radius:8px; padding:12px; font-size:13px; background:var(--surface-1); color:var(--text-primary)"></textarea>
                       </div>
                     } @else {
                       <!-- STANDARD MULTIPLE CHOICE OPTIONS -->
@@ -1004,7 +1004,7 @@ const defaultWordsBank = [
                      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
                        @for (diff of difficultyLevels; track diff) {
                          <button (click)="selectedConfigDifficulty.set(diff)"
-                                 [style.background]="selectedConfigDifficulty() === diff ? '#FFF9E6' : '#FFF'"
+                                 [style.background]="selectedConfigDifficulty() === diff ? '#FFF9E6' : 'var(--surface-1)'"
                                  [style.border-color]="selectedConfigDifficulty() === diff ? '#D97706' : 'var(--border)'"
                                  [style.color]="selectedConfigDifficulty() === diff ? '#B45309' : 'var(--text-primary)'"
                                  style="padding: 10px; border-radius: 8px; border: 1.5px solid; font-size: 13px; font-weight: 700; cursor: pointer; text-align: center; transition: all 0.2s;">
@@ -1022,7 +1022,7 @@ const defaultWordsBank = [
                      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                        @for (cat of getAvailableCategories(); track cat) {
                          <button (click)="selectedConfigCategory.set(cat)"
-                                 [style.background]="selectedConfigCategory() === cat ? '#EFF6FF' : '#FFF'"
+                                 [style.background]="selectedConfigCategory() === cat ? '#EFF6FF' : 'var(--surface-1)'"
                                  [style.border-color]="selectedConfigCategory() === cat ? '#4F46E5' : 'var(--border)'"
                                  [style.color]="selectedConfigCategory() === cat ? '#1E40AF' : 'var(--text-primary)'"
                                  style="padding: 6px 12px; border-radius: 20px; border: 1.5px solid; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
@@ -1040,7 +1040,7 @@ const defaultWordsBank = [
                      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
                        @for (t of ['No limit', '15s', '30s', '60s']; track t) {
                          <button (click)="selectedConfigTimer.set(t)"
-                                 [style.background]="selectedConfigTimer() === t ? '#ECFDF5' : '#FFF'"
+                                 [style.background]="selectedConfigTimer() === t ? '#ECFDF5' : 'var(--surface-1)'"
                                  [style.border-color]="selectedConfigTimer() === t ? '#10B981' : 'var(--border)'"
                                  [style.color]="selectedConfigTimer() === t ? '#065F46' : 'var(--text-primary)'"
                                  style="padding: 10px 4px; border-radius: 8px; border: 1.5px solid; font-size: 12px; font-weight: 700; cursor: pointer; text-align: center; transition: all 0.2s;">
@@ -1079,7 +1079,7 @@ const defaultWordsBank = [
                           {{ gameLabels().timeLeftLabel }} : {{ secondsLeft() }}s
                         </span>
                       </div>
-                      <div style="width: 100%; height: 6px; background: #F3F4F6; border-radius: 3px; overflow: hidden; border: 1px solid var(--border-weak);">
+                      <div style="width: 100%; height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden; border: 1px solid var(--border-weak);">
                         <div [style.width.%]="(secondsLeft() / timerLimit()) * 100"
                              [style.background]="secondsLeft() < 5 ? '#EF4444' : '#10B981'"
                              style="height: 100%; transition: width 1s linear;">
@@ -1097,7 +1097,7 @@ const defaultWordsBank = [
                                 [class.matched]="card.matched"
                                 [class.error]="card.error"
                                 [style.pointer-events]="card.matched ? 'none' : 'auto'"
-                                style="border: 1.5px solid var(--border); border-radius: 12px; padding: 14px; background: var(--surface-1); color: var(--text-primary); font-weight: 600; font-size: 13px; min-height: 64px; cursor: pointer; display: flex; align-items: center; justify-content: center; position: relative; transition: all 0.2s ease-in-out; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);"
+                                style="border: 1.5px solid var(--border); border-radius: 12px; padding: 14px; font-weight: 600; font-size: 13px; min-height: 64px; cursor: pointer; display: flex; align-items: center; justify-content: center; position: relative; transition: all 0.2s ease-in-out; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);"
                                 [style.border-color]="card.matched ? '#10B981' : (card.error ? '#EF4444' : (card.selected ? '#D97706' : 'var(--border)'))"
                                 [style.background]="card.matched ? '#ECFDF5' : (card.error ? '#FEF2F2' : (card.selected ? '#FEF3C7' : 'var(--surface-1)'))"
                                 [style.color]="card.matched ? '#065F46' : (card.error ? '#991B1B' : (card.selected ? '#92400E' : 'var(--text-primary)'))"
@@ -1151,12 +1151,12 @@ const defaultWordsBank = [
                             </div>
 
                             <!-- Card Front (Revealed) -->
-                            <div style="position:absolute; width:100%; height:100%; backface-visibility:hidden; background:#FFF; border:2px solid #E2E8F0; border-radius:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:8px; transform:rotateY(180deg);"
+                            <div style="position:absolute; width:100%; height:100%; backface-visibility:hidden; background:var(--surface-1); border:2px solid #E2E8F0; border-radius:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:8px; transform:rotateY(180deg);"
                                  [style.border-color]="card.matched ? '#10B981' : (card.error ? '#EF4444' : '#4F46E5')"
-                                 [style.background]="card.matched ? '#ECFDF5' : (card.error ? '#FEF2F2' : '#FFF')">
+                                 [style.background]="card.matched ? '#ECFDF5' : (card.error ? '#FEF2F2' : 'var(--surface-1)')">
                               
                               <div style="font-size:11.5px; font-weight:700; text-align:center; display:flex; flex-direction:column; align-items:center; gap:4px; justify-content:center; width:100%"
-                                   [style.color]="card.matched ? '#065F46' : (card.error ? '#991B1B' : '#1E1B4B')">
+                                   [style.color]="card.matched ? '#065F46' : (card.error ? '#991B1B' : 'var(--text-primary)')">
                                 <span style="word-break: break-word; line-height: 1.2;">{{ card.text }}</span>
                                 @if (card.type === 'english') {
                                   <button (click)="speakWord(card.text); $event.stopPropagation()" 
@@ -1185,9 +1185,9 @@ const defaultWordsBank = [
                       <!-- 3D Card Stack Visual Effect -->
                       <div style="position:relative; width:100%; max-width:360px; height:240px; margin:0 auto">
                         <!-- Deck stacked plate 2 -->
-                        <div style="position:absolute; top:8px; left:8px; width:100%; height:100%; background:#FFF; border:2px solid var(--border-weak); border-radius:16px; transform:rotate(-2.5deg); box-shadow:0 4px 10px rgba(0,0,0,0.02); z-index:1"></div>
+                        <div style="position:absolute; top:8px; left:8px; width:100%; height:100%; background:var(--surface-1); border:2px solid var(--border-weak); border-radius:16px; transform:rotate(-2.5deg); box-shadow:0 4px 10px rgba(0,0,0,0.02); z-index:1"></div>
                         <!-- Deck stacked plate 1 -->
-                        <div style="position:absolute; top:4px; left:4px; width:100%; height:100%; background:#FFF; border:2px solid var(--border-weak); border-radius:16px; transform:rotate(2deg); box-shadow:0 6px 12px rgba(0,0,0,0.03); z-index:2"></div>
+                        <div style="position:absolute; top:4px; left:4px; width:100%; height:100%; background:var(--surface-1); border:2px solid var(--border-weak); border-radius:16px; transform:rotate(2deg); box-shadow:0 6px 12px rgba(0,0,0,0.03); z-index:2"></div>
                         
                         <!-- Active Rotatable Card -->
                         <div (click)="flipCard()" 
@@ -1196,10 +1196,10 @@ const defaultWordsBank = [
                                style="width:100%; height:100%; position:relative; transform-style:preserve-3d; transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); border-radius:16px; box-shadow:0 12px 28px rgba(79, 70, 229, 0.08)">
                             
                             <!-- Front (English) -->
-                            <div style="position:absolute; width:100%; height:100%; backface-visibility:hidden; background:linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%); border:2.5px solid #4F46E5; border-radius:16px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px">
+                            <div style="position:absolute; width:100%; height:100%; backface-visibility:hidden; background:linear-gradient(135deg, var(--surface-2) 0%, var(--surface-1) 100%); border:2.5px solid #4F46E5; border-radius:16px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px">
                               <span style="font-size:10px; font-weight:800; color:#4F46E5; text-transform:uppercase; letter-spacing:1.5px">Anglais</span>
                               <div style="display:flex; align-items:center; gap:8px; margin-top:12px">
-                                <h2 style="font-size:28px; font-weight:850; color:#1E1B4B; margin:0; text-align:center; letter-spacing:-0.5px">{{ activeWords()?.[currentCardIdx()]?.word }}</h2>
+                                <h2 style="font-size:28px; font-weight:850; color:var(--text-primary); margin:0; text-align:center; letter-spacing:-0.5px">{{ activeWords()?.[currentCardIdx()]?.word }}</h2>
                                 <button (click)="speakWord(activeWords()?.[currentCardIdx()]?.word); $event.stopPropagation()"
                                         style="background:rgba(79,70,229,0.08); border:none; color:#4F46E5; cursor:pointer; padding:8px; display:flex; align-items:center; border-radius:50%; transition: all 0.2s;"
                                         onmouseover="this.style.background='rgba(79, 70, 229, 0.15)'"
@@ -1219,7 +1219,7 @@ const defaultWordsBank = [
                             </div>
                             
                             <!-- Back (French & Definition) -->
-                            <div style="position:absolute; width:100%; height:100%; backface-visibility:hidden; background:#FFF; border:2.5px solid #E2E8F0; border-radius:16px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; transform:rotateY(180deg)">
+                            <div style="position:absolute; width:100%; height:100%; backface-visibility:hidden; background:var(--surface-1); border:2.5px solid #E2E8F0; border-radius:16px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; transform:rotateY(180deg)">
                               <span style="font-size:10px; font-weight:800; color:#059669; text-transform:uppercase; letter-spacing:1.5px">Français</span>
                               <h2 style="font-size:26px; font-weight:850; color:#065F46; margin:12px 0 6px 0; text-align:center; letter-spacing:-0.5px">{{ activeWords()?.[currentCardIdx()]?.translation }}</h2>
                               @if (activeWords()?.[currentCardIdx()]?.definition) {
@@ -1326,9 +1326,9 @@ const defaultWordsBank = [
                       <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center; min-height:44px">
                         @for (char of scrambledLetters(); track $index; let scrIdx = $index) {
                           <button (click)="clickScrambledLetter(char, scrIdx)"
-                                  style="width:40px; height:40px; border-radius:8px; border:2px solid #E2E8F0; background:white; color:#334155; font-size:17px; font-weight:800; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow: 0 3px 0 #CBD5E1; transition: all 0.1s;"
-                                  onmousedown="this.style.transform='translateY(2px)'; this.style.boxShadow='0 1px 0 #CBD5E1'"
-                                  onmouseup="this.style.transform='translateY(0px)'; this.style.boxShadow='0 3px 0 #CBD5E1'">
+                                  style="width:40px; height:40px; border-radius:8px; border:2px solid var(--border); background:var(--surface-2); color:var(--text-primary); font-size:17px; font-weight:800; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow: 0 3px 0 var(--border-strong); transition: all 0.1s;"
+                                  onmousedown="this.style.transform='translateY(2px)'; this.style.boxShadow='0 1px 0 var(--border-strong)'"
+                                  onmouseup="this.style.transform='translateY(0px)'; this.style.boxShadow='0 3px 0 var(--border-strong)'">
                             {{ char | uppercase }}
                           </button>
                         }
@@ -1415,7 +1415,7 @@ const defaultWordsBank = [
                       </div>
 
                       <!-- Underscore placeholder word displays -->
-                      <div style="font-size:26px; font-weight:800; letter-spacing:8px; color:#1E1B4B; margin:16px 0; text-align:center; text-transform:uppercase">
+                      <div style="font-size:26px; font-weight:800; letter-spacing:8px; color:var(--text-primary); margin:16px 0; text-align:center; text-transform:uppercase">
                         {{ getHangmanWordDisplay() }}
                       </div>
 
@@ -1424,11 +1424,12 @@ const defaultWordsBank = [
                         @for (letter of ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']; track letter) {
                           <button [disabled]="hangmanGuesses().includes(letter)"
                                   (click)="guessHangmanLetter(letter)"
-                                  style="width:38px; height:38px; border-radius:8px; border:2px solid #E2E8F0; font-size:14px; font-weight:800; cursor:pointer; text-transform:uppercase; transition: all 0.2s;"
-                                  [style.background]="hangmanGuesses().includes(letter) ? '#F1F5F9' : 'white'"
-                                  [style.border-color]="hangmanGuesses().includes(letter) ? '#E2E8F0' : '#E2E8F0'"
-                                  [style.color]="hangmanGuesses().includes(letter) ? '#94A3B8' : '#334155'"
-                                  [style.box-shadow]="hangmanGuesses().includes(letter) ? 'none' : '0 2px 0 #E2E8F0'">
+                                  style="width:38px; height:38px; border-radius:8px; border:2px solid var(--border); font-size:14px; font-weight:800; cursor:pointer; text-transform:uppercase; transition: all 0.2s;"
+                                  [style.background]="hangmanGuesses().includes(letter) ? 'var(--border)' : 'var(--surface-2)'"
+                                  [style.border-color]="hangmanGuesses().includes(letter) ? 'var(--border-strong)' : 'var(--border)'"
+                                  [style.color]="hangmanGuesses().includes(letter) ? 'var(--text-muted)' : 'var(--text-primary)'"
+                                  [style.opacity]="hangmanGuesses().includes(letter) ? '0.55' : '1'"
+                                  [style.box-shadow]="hangmanGuesses().includes(letter) ? 'none' : '0 2px 0 var(--border-strong)'">
                             {{ letter }}
                           </button>
                         }
@@ -1471,7 +1472,7 @@ const defaultWordsBank = [
                             <button (click)="selectMCOption(opt)"
                                     [disabled]="mcSelected() !== null"
                                     style="flex:1; padding:14px; border-radius:10px; border:2px solid var(--border); font-size:13.5px; font-weight:700; text-align:left; cursor:pointer; display:flex; align-items:center; transition: all 0.2s;"
-                                    [style.background]="mcSelected() === opt ? (mcIsCorrect() ? '#ECFDF5' : '#FEF2F2') : (mcSelected() !== null && opt === activeWords()?.[mcGameIdx()]?.word ? '#ECFDF5' : '#FFF')"
+                                    [style.background]="mcSelected() === opt ? (mcIsCorrect() ? '#ECFDF5' : '#FEF2F2') : (mcSelected() !== null && opt === activeWords()?.[mcGameIdx()]?.word ? '#ECFDF5' : 'var(--surface-1)')"
                                     [style.border-color]="mcSelected() === opt ? (mcIsCorrect() ? '#10B981' : '#EF4444') : (mcSelected() !== null && opt === activeWords()?.[mcGameIdx()]?.word ? '#10B981' : 'var(--border)')"
                                     [style.color]="mcSelected() === opt ? (mcIsCorrect() ? '#065F46' : '#991B1B') : (mcSelected() !== null && opt === activeWords()?.[mcGameIdx()]?.word ? '#065F46' : 'var(--text-primary)')">
                               
@@ -1876,10 +1877,14 @@ const defaultWordsBank = [
     }
     
     .quiz-option-btn.active {
-      background: #EFF6FF;
-      border-color: #4F46E5;
-      color: #1E40AF;
-      box-shadow: 0 4px 10px rgba(79, 70, 229, 0.08);
+      background: var(--surface-2) !important;
+      border-color: #4F46E5 !important;
+      border-width: 2px !important;
+      color: var(--text-primary) !important;
+      box-shadow: 0 4px 10px rgba(79, 70, 229, 0.15);
+    }
+    .quiz-option-btn.active span {
+      color: #4F46E5 !important;
     }
 
     .vocab-match-card {

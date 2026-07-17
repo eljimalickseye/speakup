@@ -403,7 +403,7 @@ import { DialogService } from '../../services/dialog.service';
                 <!-- Pages list with individual editors -->
                 @if (formPages().length === 0) {
                   <div style="text-align:center; padding:60px 20px; border:2px dashed var(--border); border-radius:12px; background:#FAFAFA">
-                    <div style="font-size:48px; margin-bottom:12px">📄</div>
+                    <div style="margin-bottom:12px;display:flex;justify-content:center"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div>
                     <p style="font-size:14px; font-weight:700; color:var(--text-primary); margin:0 0 4px 0">{{ t('Aucune page encore','No pages yet') }}</p>
                     <p style="font-size:12px; color:var(--text-muted); margin:0 0 16px 0">{{ t('Cliquez sur Ajouter une page pour commencer à rédiger.','Click Add Page to start writing.') }}</p>
                     <button (click)="addPage()" class="btn-p" style="background:#7C3AED; border-color:#7C3AED">{{ t('+ Ajouter la première page','+ Add First Page') }}</button>
@@ -476,18 +476,20 @@ import { DialogService } from '../../services/dialog.service';
         <!-- ============================================================ -->
         <div style="padding:20px; animation: fadeIn 0.25s">
           <!-- Top header -->
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; flex-wrap:wrap; gap:12px">
             <div>
-              <h2 style="font-size:20px; font-weight:800; color:var(--text-primary); margin:0">
-                📚 {{ t("Gérer la Bibliothèque d'Ebooks", "Manage Ebook Library") }}
+              <h2 style="font-size:22px; font-weight:900; color:#1E1B4B; margin:0; display:flex; align-items:center; gap:10px; font-family:'Outfit',sans-serif">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M8 7h8M8 11h8M8 15h5"/></svg>
+                {{ t("Biblioth\u00e8que d'Ebooks", "Ebook Library") }}
               </h2>
               <p style="margin:4px 0 0 0; font-size:12px; color:var(--text-secondary)">
-                {{ t("Créez, éditez et publiez des guides de cours pour vos étudiants.", "Create, edit and publish course guides for your students.") }}
+                {{ t("Cr\u00e9ez, \u00e9ditez et publiez des guides de cours pour vos \u00e9tudiants.", "Create, edit and publish course guides for your students.") }}
               </p>
             </div>
-            <button (click)="openCreationForm()" class="btn-p" style="height:38px; padding:0 20px; font-weight:700; background:#7C3AED; border-color:#7C3AED; display:inline-flex; align-items:center; gap:8px">
-              ➕
-              {{ t("Créer un Ebook", "Create Ebook") }}
+            <button (click)="openCreationForm()" class="btn-p" style="height:40px; padding:0 22px; font-weight:800; background:linear-gradient(135deg,#7C3AED,#6D28D9); border:none; border-radius:10px; display:inline-flex; align-items:center; gap:8px; font-size:13px; color:white; cursor:pointer; box-shadow:0 4px 14px rgba(124,58,237,0.35); transition:opacity 0.2s"
+                    onmouseover="this.style.opacity='0.88'" onmouseout="this.style.opacity='1'">
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              {{ t("Cr\u00e9er un Ebook", "Create Ebook") }}
             </button>
           </div>
 
@@ -517,7 +519,7 @@ import { DialogService } from '../../services/dialog.service';
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                 {{ t("Brouillons en cours", "Drafts in Progress") }}
               </h3>
-              <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:12px">
+              <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:16px">
                 @for (book of draftsList(); track book.id) {
                   <ng-container *ngTemplateOutlet="bookCard; context: { $implicit: book }"></ng-container>
                 }
@@ -536,7 +538,7 @@ import { DialogService } from '../../services/dialog.service';
                 <p style="font-size:13px; font-weight:600">{{ t("Aucun ebook publié pour l'instant.", "No ebooks published yet.") }}</p>
               </div>
             } @else {
-              <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:12px">
+              <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:16px">
                 @for (book of publishedList(); track book.id) {
                   <ng-container *ngTemplateOutlet="bookCard; context: { $implicit: book }"></ng-container>
                 }
@@ -779,21 +781,33 @@ import { DialogService } from '../../services/dialog.service';
                       </div>
 
                       @if (vb.pages[viewPageIndex()]; as activePg) {
-                        <h3 style="font-size:16px; font-weight:800; margin:0 0 16px 0">{{ activePg.title }}</h3>
+                        <h3 style="font-size:18px; font-weight:900; margin:0 0 24px 0; font-family:'Outfit',sans-serif; letter-spacing:-0.3px; padding-bottom:16px; border-bottom:1px solid; border-color:inherit">
+                          {{ activePg.title }}
+                        </h3>
                         
                         @if (vb.interactiveEnabled !== false) {
-                          <!-- Interactive mode parsed view -->
+                          <!-- Book-style parsed sentences -->
                           @let parsedSents = parseSentences(activePg.content);
-                          <div style="display:flex; flex-direction:column; gap:14px">
-                            @for (sent of parsedSents; track sent.english) {
-                              <div style="padding:6px 12px; border-left:3px solid #6366F1; background:rgba(0,0,0,0.01); border-radius:0 6px 6px 0">
-                                <div style="font-size:15px; font-weight:800; line-height:1.5">{{ sent.english }}</div>
-                                <div style="font-size:12px; color:#64748B; margin-top:2px; font-family:sans-serif">{{ sent.french }}</div>
-                              </div>
+                          <div style="display:flex; flex-direction:column">
+                            @for (sent of parsedSents; track sent.english; let sIdx = $index) {
+                              @if (sent.english || sent.french) {
+                                <div style="padding:14px 0; border-bottom:1px solid rgba(0,0,0,0.06)">
+                                  @if (sent.english) {
+                                    <div style="font-size:15.5px; font-weight:600; line-height:1.65; color:inherit">
+                                      {{ sent.english }}
+                                    </div>
+                                  }
+                                  @if (sent.french) {
+                                    <div style="font-size:13px; font-style:italic; line-height:1.55; margin-top:5px; opacity:0.6">
+                                      {{ sent.french }}
+                                    </div>
+                                  }
+                                </div>
+                              }
                             }
                           </div>
                         } @else {
-                          <div style="white-space:pre-wrap; line-height:1.8" [innerHTML]="activePg.content || ''"></div>
+                          <div style="line-height:1.9; font-size:15px" [innerHTML]="activePg.content || ''"></div>
                         }
                       }
 
@@ -887,50 +901,91 @@ import { DialogService } from '../../services/dialog.service';
       }
       <!-- ============ BOOK CARD TEMPLATE ============ -->
       <ng-template #bookCard let-book>
-        <div style="border:1px solid var(--border-weak); border-radius:12px; padding:16px; display:flex; gap:14px; position:relative; overflow:hidden; background:white; box-shadow:0 2px 8px rgba(0,0,0,0.04); transition:all 0.25s"
-             onmouseover="this.style.boxShadow='0 6px 20px rgba(0,0,0,0.08)'; this.style.transform='translateY(-1px)'"
-             onmouseout="this.style.boxShadow='0 2px 8px rgba(0,0,0,0.04)'; this.style.transform='none'">
+        <div style="border-radius:16px; overflow:hidden; background:white; box-shadow:0 2px 12px rgba(0,0,0,0.06); transition:all 0.3s; display:flex; flex-direction:column; position:relative;"
+             onmouseover="this.style.boxShadow='0 12px 32px rgba(79,70,229,0.13)'; this.style.transform='translateY(-3px)'"
+             onmouseout="this.style.boxShadow='0 2px 12px rgba(0,0,0,0.06)'; this.style.transform='none'">
 
-          <!-- Spine thumb -->
-          <div [style.background]="book.coverImageUrl ? 'url(' + book.coverImageUrl + ') center/cover' : (book.coverGradient || book.coverColor || '#4F46E5')"
-               style="width:56px; height:80px; border-radius:6px; flex-shrink:0; display:flex; align-items:center; justify-content:center; box-shadow:2px 4px 10px rgba(0,0,0,0.12); position:relative; overflow:hidden">
-            <div style="position:absolute; top:0; left:0; width:4px; height:100%; background:rgba(0,0,0,0.2)"></div>
-            @if (!book.coverImageUrl) {
-              <span style="color:white; position:relative; font-size:20px">
-                {{ getBookEmoji(book.coverEmoji) }}
+          <!-- Cover Image / Gradient -->
+          <div [style.background]="book.coverImageUrl ? 'url(' + book.coverImageUrl + ') center/cover no-repeat' : (book.coverGradient || 'linear-gradient(135deg,#4F46E5,#7C3AED)')"
+               style="height:140px; width:100%; position:relative; flex-shrink:0; display:flex; align-items:flex-end; justify-content:space-between; padding:10px 12px;">
+            <!-- Dark overlay for legibility -->
+            <div style="position:absolute;inset:0;background:linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.55) 100%); pointer-events:none"></div>
+            <!-- Status badge top-left -->
+            @if (book.status === 'draft') {
+              <span style="position:absolute;top:10px;left:10px;font-size:9px;font-weight:800;background:#F59E0B;color:white;padding:3px 8px;border-radius:20px;letter-spacing:0.5px;z-index:1">
+                {{ t("BROUILLON","DRAFT") }}
               </span>
+            } @else {
+              <span style="position:absolute;top:10px;left:10px;font-size:9px;font-weight:800;background:#10B981;color:white;padding:3px 8px;border-radius:20px;letter-spacing:0.5px;z-index:1">
+                {{ t("PUBLIÉ","LIVE") }}
+              </span>
+            }
+            <!-- Pages badge top-right -->
+            @if (book.pages && book.pages.length > 0) {
+              <span style="position:absolute;top:10px;right:10px;font-size:9px;font-weight:800;background:rgba(255,255,255,0.22);backdrop-filter:blur(4px);color:white;padding:3px 8px;border-radius:20px;z-index:1">
+                {{ book.pages.length }} {{ book.pages.length === 1 ? t("page","page") : t("pages","pages") }}
+              </span>
+            }
+            <!-- Book icon if no cover image -->
+            @if (!book.coverImageUrl) {
+              <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none">
+                <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M8 7h8M8 11h8M8 15h5"/></svg>
+              </div>
             }
           </div>
 
-          <div style="flex:1; min-width:0; display:flex; flex-direction:column; justify-content:space-between">
-            <div>
-              <div style="display:flex; gap:4px; flex-wrap:wrap; margin-bottom:6px">
-                @if (book.status === 'draft') {
-                  <span style="font-size:9px; font-weight:700; background:#FEF3C7; color:#B45309; padding:1px 6px; border-radius:4px">{{ t("BROUILLON","DRAFT") }}</span>
-                }
-                <span style="font-size:9px; font-weight:700; background:#EEF2FF; color:#4F46E5; padding:1px 6px; border-radius:4px">{{ book.level }}</span>
-                <span style="font-size:9px; font-weight:700; background:#ECFDF5; color:#065F46; padding:1px 6px; border-radius:4px">{{ book.language === 'fr' ? '🇫🇷 FR' : '🇬🇧 EN' }}</span>
-                @if (book.pages && book.pages.length > 0) {
-                  <span style="font-size:9px; font-weight:700; background:#F3E8FF; color:#7C3AED; padding:1px 6px; border-radius:4px">
-                    {{ book.pages.length }} {{ book.pages.length === 1 ? t("page","page") : t("pages","pages") }}
-                  </span>
-                }
-              </div>
-              <h4 style="font-size:13.5px; font-weight:800; color:var(--text-primary); margin:0 0 2px 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis">{{ book.title }}</h4>
-              <p style="font-size:10.5px; color:var(--text-secondary); margin:0; display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden; line-height:1.4">{{ book.description }}</p>
+          <!-- Card Body -->
+          <div style="padding:14px 16px 16px; display:flex; flex-direction:column; gap:10px; flex:1">
+            <!-- Tags row -->
+            <div style="display:flex; gap:5px; flex-wrap:wrap; align-items:center">
+              <span style="font-size:9px; font-weight:800; background:#EEF2FF; color:#4F46E5; padding:2px 7px; border-radius:20px">{{ book.level || 'B1' }}</span>
+              <span style="font-size:9px; font-weight:800; background:#F3E8FF; color:#7C3AED; padding:2px 7px; border-radius:20px">
+                {{ book.language === 'fr' ? 'FR' : 'EN' }}
+              </span>
+              @if (book.genre) {
+                <span style="font-size:9px; font-weight:700; background:#F1F5F9; color:#64748B; padding:2px 7px; border-radius:20px">{{ book.genre }}</span>
+              }
             </div>
-            <div style="display:flex; gap:6px; margin-top:10px; flex-wrap:wrap">
-              <button (click)="openViewModal(book)" class="btn-s" style="height:28px; padding:0 10px; font-size:10.5px; font-weight:700; display:inline-flex; align-items:center; gap:4px; background:#4F46E5; border-color:#4F46E5; color:white">
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-                {{ t("Voir","View") }}
+
+            <!-- Title & description -->
+            <div>
+              <h4 style="font-size:14px; font-weight:900; color:#1E1B4B; margin:0 0 4px 0; line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-family:'Outfit',sans-serif">{{ book.title }}</h4>
+              <p style="font-size:11px; color:#64748B; margin:0; display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.5">{{ book.description || t('Aucune description.','No description.') }}</p>
+            </div>
+
+            <!-- Author & views meta -->
+            <div style="display:flex; align-items:center; gap:10px; font-size:10.5px; color:#94A3B8; padding-top:4px; border-top:1px solid #F1F5F9">
+              <span style="display:flex;align-items:center;gap:4px">
+                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                {{ book.author || t('Prof','Teacher') }}
+              </span>
+              @if (book.views) {
+                <span style="display:flex;align-items:center;gap:4px">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                  {{ book.views }}
+                </span>
+              }
+            </div>
+
+            <!-- Action buttons -->
+            <div style="display:flex; gap:6px; margin-top:2px">
+              <button (click)="openViewModal(book)"
+                      style="flex:1; height:32px; border:none; border-radius:8px; background:linear-gradient(135deg,#4F46E5,#6366F1); color:white; font-size:11px; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:5px; transition:opacity 0.2s"
+                      onmouseover="this.style.opacity='0.88'" onmouseout="this.style.opacity='1'">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                {{ t("Lire","Read") }}
               </button>
-              <button (click)="editDraft(book)" class="btn-s" style="height:28px; padding:0 10px; font-size:10.5px; font-weight:700; display:inline-flex; align-items:center; gap:4px">
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                {{ t("Modifier","Edit") }}
+              <button (click)="editDraft(book)"
+                      style="width:32px; height:32px; border:1.5px solid #E2E8F0; border-radius:8px; background:white; color:#64748B; font-size:11px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; transition:all 0.2s; flex-shrink:0"
+                      onmouseover="this.style.borderColor='#7C3AED';this.style.color='#7C3AED'" onmouseout="this.style.borderColor='#E2E8F0';this.style.color='#64748B'"
+                      title="{{ t('Modifier','Edit') }}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
               </button>
-              <button (click)="deleteEbook(book)" class="btn-s" style="height:28px; padding:0 10px; font-size:10.5px; font-weight:700; display:inline-flex; align-items:center; gap:4px; border-color:#EF4444; color:#EF4444">
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-                {{ t("Supprimer","Delete") }}
+              <button (click)="deleteEbook(book)"
+                      style="width:32px; height:32px; border:1.5px solid #E2E8F0; border-radius:8px; background:white; color:#64748B; font-size:11px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; transition:all 0.2s; flex-shrink:0"
+                      onmouseover="this.style.borderColor='#EF4444';this.style.color='#EF4444'" onmouseout="this.style.borderColor='#E2E8F0';this.style.color='#64748B'"
+                      title="{{ t('Supprimer','Delete') }}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
               </button>
             </div>
           </div>
@@ -1218,11 +1273,20 @@ export class TeacherEbooksComponent {
     if (!content) return [];
 
     // Strip HTML tags
-    const text = content.replace(/<[^>]*>/g, '').trim();
+    const rawText = content.replace(/<[^>]*>/g, '').trim();
+    // Helper: strip leading numbers/separators from any string
+    const stripNum = (s: string) => s.replace(/^\s*\d+[.)\-:]?\s*/, '').trim();
+    // Pre-clean: remove ALL number markers — inline (»23.) AND standalone lines
+    const cleanedText = rawText
+      .replace(/[\u00bb\u00ab»«>]\s*\d+[.)\-]?\s*/g, ' ')  // strip »23. anywhere inline
+      .replace(/^\s*\d+[.)\-:\s]*$/mg, '')                  // strip standalone number lines
+      .replace(/\n{3,}/g, '\n\n')                           // collapse excess blank lines
+      .trim();
+
     const parsed: { english: string; french: string; words: string[] }[] = [];
 
     // --- Strategy 1: Explicit separator per line (EN / FR or EN | FR) ---
-    const lines = text.split(/\n+/).map((l: string) => l.trim()).filter(Boolean);
+    const lines = cleanedText.split(/\n+/).map((l: string) => l.trim()).filter(Boolean);
     const hasSeparators = lines.some((l: string) => l.includes(' / ') || l.includes(' | '));
 
     if (hasSeparators) {
@@ -1238,8 +1302,8 @@ export class TeacherEbooksComponent {
           english = parts[0].trim();
           french = parts.slice(1).join(' | ').trim();
         }
-        const cleanEN = english.replace(/^\d+[\.]\s*/, '').trim();
-        const cleanFR = french.replace(/^\d+[\.]\s*/, '').trim();
+        const cleanEN = stripNum(english);
+        const cleanFR = stripNum(french);
         if (!cleanEN) return;
         parsed.push({ english: cleanEN, french: cleanFR, words: cleanEN.split(/\s+/).filter(Boolean) });
       });
@@ -1247,16 +1311,16 @@ export class TeacherEbooksComponent {
     }
 
     // --- Strategy 2: Numbered mixed format "1 English... French... 2 English..." ---
-    const numberedChunks = text.split(/(?=\d+\s+[A-Z])/);
+    const numberedChunks = cleanedText.split(/(?=\d+\s+[A-Z])/);
     if (numberedChunks.length > 1) {
       for (const chunk of numberedChunks) {
-        const clean = chunk.replace(/^\d+\s*/, '').trim();
+        const clean = stripNum(chunk);
         if (!clean) continue;
         const rawSentences = clean.match(/[^.!?]+[.!?]*/g) || [clean];
         const englishParts: string[] = [];
         const frenchParts: string[] = [];
         for (const s of rawSentences) {
-          const trimmed = s.trim();
+          const trimmed = stripNum(s.trim());
           if (!trimmed) continue;
           if (this.looksLikeFrench(trimmed)) { frenchParts.push(trimmed); }
           else { englishParts.push(trimmed); }
@@ -1271,7 +1335,7 @@ export class TeacherEbooksComponent {
     }
 
     // --- Strategy 3: Sentence-by-sentence language classification ---
-    const sentences = text.match(/[^.!?\n]+[.!?]*/g) || text.split(/\n+/);
+    const sentences = cleanedText.match(/[^.!?\n]+[.!?]*/g) || cleanedText.split(/\n+/);
     let buf = { english: '', french: '' };
     const flush = () => {
       if (!buf.english && !buf.french) return;
@@ -1280,7 +1344,7 @@ export class TeacherEbooksComponent {
       buf = { english: '', french: '' };
     };
     for (const raw of sentences) {
-      const s = raw.trim();
+      const s = stripNum(raw.trim());
       if (!s) continue;
       if (this.looksLikeFrench(s)) {
         buf.french += (buf.french ? ' ' : '') + s;
@@ -1290,7 +1354,7 @@ export class TeacherEbooksComponent {
       }
     }
     flush();
-    return parsed.length > 0 ? parsed : [{ english: text, french: '', words: text.split(/\s+/).filter(Boolean) }];
+    return parsed.length > 0 ? parsed : [{ english: cleanedText, french: '', words: cleanedText.split(/\s+/).filter(Boolean) }];
   }
 
   /** Heuristic: detect French by accent chars or common French function words */
