@@ -429,10 +429,26 @@ import { DialogService } from '../../services/dialog.service';
                     </div>
                   </details>
 
+                  <!-- DYNAMIC HELPER BANNER -->
+                  <div style="margin-bottom: 12px; padding: 10px 14px; border-radius: 8px; font-size: 12.5px; font-weight: 700; display: flex; align-items: center; gap: 8px; transition: all 0.2s"
+                       [style.background]="isUnifiedHomeworkReady() ? '#ECFDF5' : '#FFFBEB'"
+                       [style.border]="isUnifiedHomeworkReady() ? '1px solid #A7F3D0' : '1px solid #FCD34D'"
+                       [style.color]="isUnifiedHomeworkReady() ? '#065F46' : '#B45309'">
+                    @if (isUnifiedHomeworkReady()) {
+                      <span>✅</span>
+                      <span>{{ t('Votre devoir est prêt ! Cliquez sur le bouton ci-dessous pour soumettre.', 'Your homework is ready! Click the button below to submit.') }}</span>
+                    } @else {
+                      <span>💡</span>
+                      <span>{{ t('Pour débloquer la soumission, saisissez une réponse écrite ou enregistrez un vocal ci-dessus.', 'To unlock submission, enter a written response or record a voice note above.') }}</span>
+                    }
+                  </div>
+
                   <!-- SUBMIT BUTTON -->
-                  <button class="btn-submit-premium" (click)="submitUnifiedHomework()" 
-                          [disabled]="!homeworkContent.trim() && recordedAudios().length === 0 && !videoBase64()">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                  <button class="btn-submit-premium" 
+                          [class.ready]="isUnifiedHomeworkReady()"
+                          (click)="handleUnifiedHomeworkSubmit()" 
+                          style="width: 100%; justify-content: center; font-size: 14.5px; padding: 14px 24px">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                     {{ t('Soumettre mon devoir', 'Submit Homework') }}
                   </button>
 
@@ -604,7 +620,7 @@ import { DialogService } from '../../services/dialog.service';
       background: #059669;
     }
     .btn-submit-premium {
-      background: linear-gradient(135deg, #4F46E5 0%, #3730A3 100%);
+      background: linear-gradient(135deg, #64748B 0%, #475569 100%);
       color: white;
       font-weight: 800;
       border: none;
@@ -616,21 +632,20 @@ import { DialogService } from '../../services/dialog.service';
       align-items: center;
       gap: 8px;
       align-self: flex-start;
-      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.3);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
       transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .btn-submit-premium:hover:not(:disabled) {
+    .btn-submit-premium.ready {
+      background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+      box-shadow: 0 4px 18px rgba(16, 185, 129, 0.35);
+    }
+    .btn-submit-premium.ready:hover {
       transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
-      background: linear-gradient(135deg, #6366F1 0%, #4338CA 100%);
+      box-shadow: 0 6px 22px rgba(16, 185, 129, 0.45);
+      background: linear-gradient(135deg, #34D399 0%, #047857 100%);
     }
-    .btn-submit-premium:active:not(:disabled) {
+    .btn-submit-premium:active {
       transform: translateY(0);
-    }
-    .btn-submit-premium:disabled {
-      opacity: 0.55;
-      cursor: not-allowed;
-      box-shadow: none;
     }
     .details-video {
       background: var(--surface-2);
@@ -1028,6 +1043,34 @@ export class StudentLessonsComponent {
 
   removeRecordedAudio(id: string) {
     this.recordedAudios.update(list => list.filter(aud => aud.id !== id));
+  }
+
+  isUnifiedHomeworkReady(): boolean {
+    return !!(this.homeworkContent.trim() || this.recordedAudios().length > 0 || this.videoBase64() || this.recordingState() === 'recording');
+  }
+
+  async handleUnifiedHomeworkSubmit() {
+    // 1. If currently recording audio, auto-stop and save it
+    if (this.recordingState() === 'recording') {
+      this.stopAudioRecording();
+      await new Promise(r => setTimeout(r, 250));
+    }
+
+    // 2. Check if there is any content to submit
+    if (!this.isUnifiedHomeworkReady()) {
+      this.dialogService.alert(
+        this.t('Devoir vide ⚠️', 'Empty Homework ⚠️'),
+        this.t(
+          'Veuillez saisir une réponse écrite ou enregistrer un vocal avant de soumettre votre devoir.',
+          'Please enter a written answer or record a voice note before submitting your homework.'
+        ),
+        'info'
+      );
+      return;
+    }
+
+    // 3. Submit
+    await this.submitUnifiedHomework();
   }
 
   async submitUnifiedHomework() {
