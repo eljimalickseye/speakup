@@ -185,7 +185,7 @@ import { SidebarComponent } from './sidebar';
           </div>
 
           @if (activeTheme() === 'manga') {
-            <div style="display:flex; align-items:center; gap:8px; margin:0 auto; position:absolute; left:50%; transform:translateX(-50%); bottom:0; height:100px; pointer-events:none">
+            <div class="hide-mobile" style="display:flex; align-items:center; gap:8px; margin:0 auto; position:absolute; left:50%; transform:translateX(-50%); bottom:0; height:100px; pointer-events:none">
               <!-- speech bubble -->
               <div style="background:white; border:2px solid black; border-radius:30px; padding:6px 14px; position:relative; font-size:11px; font-weight:800; color:black; display:flex; flex-direction:column; align-items:center; box-shadow:3px 3px 0 rgba(0,0,0,0.15)">
                 <span>一緒に頑張ろう！</span>
@@ -195,7 +195,7 @@ import { SidebarComponent } from './sidebar';
               <img src="luffy_chibi.png" style="height:90px; object-fit:contain; margin-bottom: 5px" alt="Luffy">
             </div>
           } @else if (activeTheme() === 'rose') {
-            <div style="display:flex; align-items:center; gap:8px; margin:0 auto; position:absolute; left:50%; transform:translateX(-50%); bottom:0; height:100px; pointer-events:none">
+            <div class="hide-mobile" style="display:flex; align-items:center; gap:8px; margin:0 auto; position:absolute; left:50%; transform:translateX(-50%); bottom:0; height:100px; pointer-events:none">
               <!-- speech bubble -->
               <div style="background:white; border:2px solid #DB2777; border-radius:30px; padding:6px 14px; position:relative; font-size:11px; font-weight:800; color:#BE185D; display:flex; flex-direction:column; align-items:center; box-shadow:3px 3px 0 rgba(219,39,119,0.15)">
                 <span>一緒に頑張ろう！</span>
@@ -453,6 +453,73 @@ import { SidebarComponent } from './sidebar';
           }
         </div>
 
+        <!-- MOBILE BOTTOM NAVIGATION BAR -->
+        <nav class="mobile-bottom-nav">
+          @if (currentUser()?.role === 'student' || currentUser()?.role === 'guest') {
+            <button (click)="setTab('dashboard')" [class.active]="activeTab === 'dashboard'">
+              <i class="ti ti-layout-dashboard"></i>
+              <span>{{ t('Accueil', 'Home') }}</span>
+            </button>
+
+            <button (click)="setTab('lessons')" [class.active]="activeTab === 'lessons'">
+              <i class="ti ti-book"></i>
+              <span>{{ t('Cours', 'Lessons') }}</span>
+              @if (newLessonsCount() > 0) {
+                <span class="nav-badge">{{ newLessonsCount() }}</span>
+              }
+            </button>
+
+            <button (click)="setTab('exercises')" [class.active]="activeTab === 'exercises'">
+              <i class="ti ti-pencil"></i>
+              <span>{{ t('Jeux', 'Games') }}</span>
+              @if (newExercisesCount() > 0) {
+                <span class="nav-badge">{{ newExercisesCount() }}</span>
+              }
+            </button>
+
+            <button (click)="setTab('chat')" [class.active]="activeTab === 'chat'">
+              <i class="ti ti-messages"></i>
+              <span>Chat</span>
+              @if (chatUnreadCount() > 0) {
+                <span class="nav-badge">{{ chatUnreadCount() }}</span>
+              }
+            </button>
+
+            <button (click)="setTab('ebooks')" [class.active]="activeTab === 'ebooks'">
+              <i class="ti ti-book-2"></i>
+              <span>{{ t('Livres', 'Books') }}</span>
+            </button>
+          } @else if (currentUser()?.role === 'teacher') {
+            <button (click)="setTab('overview')" [class.active]="activeTab === 'overview'">
+              <i class="ti ti-chart-bar"></i>
+              <span>{{ t('Aperçu', 'Overview') }}</span>
+            </button>
+
+            <button (click)="setTab('students')" [class.active]="activeTab === 'students'">
+              <i class="ti ti-users"></i>
+              <span>{{ t('Élèves', 'Students') }}</span>
+            </button>
+
+            <button (click)="setTab('lessons')" [class.active]="activeTab === 'lessons'">
+              <i class="ti ti-book"></i>
+              <span>{{ t('Cours', 'Lessons') }}</span>
+            </button>
+
+            <button (click)="setTab('exercises-manager')" [class.active]="activeTab === 'exercises-manager'">
+              <i class="ti ti-pencil"></i>
+              <span>{{ t('Jeux', 'Games') }}</span>
+            </button>
+
+            <button (click)="setTab('chat')" [class.active]="activeTab === 'chat'">
+              <i class="ti ti-messages"></i>
+              <span>Chat</span>
+              @if (chatUnreadCount() > 0) {
+                <span class="nav-badge">{{ chatUnreadCount() }}</span>
+              }
+            </button>
+          }
+        </nav>
+
         <!-- Floating Toaster Container -->
         <div class="toaster-container">
           @for (toast of toasts(); track toast.id) {
@@ -487,7 +554,7 @@ import { SidebarComponent } from './sidebar';
             
             @if (d.imageUrl) {
               <!-- Split Layout for Announcements / Image Dialogs -->
-              <div style="display:grid; grid-template-columns: 1.15fr 1fr; min-height:480px; max-height:85vh">
+              <div class="modal-grid-split" style="display:grid; grid-template-columns: 1.15fr 1fr; min-height:480px; max-height:85vh">
                 <!-- Left: Beautiful Image Banner with Padded Frame and Blurred Background -->
                 <div style="position:relative; background:#F8FAFC; display:flex; justify-content:center; align-items:center; overflow:hidden; padding:24px">
                   <img [src]="d.imageUrl" style="width:100%; height:100%; object-fit:cover; filter:blur(16px); opacity:0.25; position:absolute; inset:0" alt="">

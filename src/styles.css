@@ -2012,6 +2012,11 @@ select.warm-input {
   backdrop-filter: blur(2px);
 }
 
+/* Mobile Bottom Navigation Bar */
+.mobile-bottom-nav {
+  display: none;
+}
+
 /* Media Queries for Mobile Responsiveness */
 @media (max-width: 1024px) {
   .grid4, .g4 {
@@ -2046,17 +2051,118 @@ select.warm-input {
     display: none !important;
   }
 
-  .grid2, .g2, .grid3, .g3, .grid4, .g4 {
+  .grid2, .g2, .grid3, .g3, .grid4, .g4, .dashboard-grid, .stats-grid, .card-grid {
     grid-template-columns: 1fr !important;
+    gap: 12px !important;
   }
 
   /* Card layout paddings optimization */
   .content {
-    padding: 12px !important;
+    padding: 12px 10px 76px 10px !important;
   }
 
   .topbar {
-    padding: 10px 14px !important;
+    padding: 10px 12px !important;
+    gap: 6px !important;
+  }
+
+  .topbar-title {
+    font-size: 15px !important;
+    max-width: 130px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Mobile Bottom Navigation Bar */
+  .mobile-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 62px;
+    background: var(--surface-1);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+    z-index: 900;
+    align-items: center;
+    justify-content: space-around;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+
+  .mobile-bottom-nav button {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 10px;
+    font-weight: 600;
+    padding: 6px 0;
+    position: relative;
+    cursor: pointer;
+    transition: color 0.2s, transform 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobile-bottom-nav button i {
+    font-size: 20px;
+  }
+
+  .mobile-bottom-nav button.active {
+    color: #4F46E5;
+    font-weight: 800;
+  }
+
+  .mobile-bottom-nav button.active i {
+    transform: translateY(-1px);
+  }
+
+  .mobile-bottom-nav button .nav-badge {
+    position: absolute;
+    top: 4px;
+    right: 50%;
+    transform: translateX(12px);
+    background: #EF4444;
+    color: white;
+    font-size: 9px;
+    font-weight: 800;
+    border-radius: 10px;
+    padding: 1px 5px;
+    line-height: 1.2;
+  }
+
+  /* Mobile Modals & Split Grids */
+  .modal-card {
+    width: 94vw !important;
+    max-width: 94vw !important;
+    margin: 10px auto !important;
+    border-radius: 16px !important;
+    padding: 16px !important;
+  }
+
+  .modal-grid-split {
+    grid-template-columns: 1fr !important;
+    min-height: auto !important;
+    max-height: 85vh !important;
+  }
+
+  /* Responsive Tables Wrapper */
+  .table-responsive, .table-container, .table-wrapper {
+    width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  /* Compact button paddings on mobile */
+  .btn-p, .btn-s {
+    padding: 8px 14px;
+    font-size: 12.5px;
   }
 }
 
