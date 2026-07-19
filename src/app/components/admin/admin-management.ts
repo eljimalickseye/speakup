@@ -219,6 +219,13 @@ import { DialogService } from '../../services/dialog.service';
                         <button (click)="copyCredentials(user)" style="background:none; border:none; cursor:pointer; font-size:11px; color:#4F46E5; padding:0" title="Copier les identifiants">📋</button>
                       </div>
                     }
+                    @if (user.phone) {
+                      <div style="margin-top:4px">
+                        <a [href]="getWhatsAppUrl(user.phone, user.name)" target="_blank" style="background:#25D366; color:white; border-radius:6px; padding:3px 8px; font-size:10.5px; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:4px">
+                          <i class="ti ti-brand-whatsapp"></i> WhatsApp: {{ user.phone }}
+                        </a>
+                      </div>
+                    }
                   </div>
                 </div>
 
@@ -541,6 +548,13 @@ export class AdminManagementComponent {
   teachers = computed(() => this.allUsers().filter(u => u.role === 'teacher' && u.status !== 'pending'));
   students = computed(() => this.allUsers().filter(u => u.role === 'student' && u.status !== 'pending'));
   guests = computed(() => this.allUsers().filter(u => u.role === 'guest'));
+
+  getWhatsAppUrl(phone: string | undefined, name: string | undefined): string {
+    if (!phone) return '#';
+    const cleanPhone = phone.replace(/[^0-9]/g, '');
+    const message = encodeURIComponent(`Bonjour ${name || ''} 👋, votre compte SpeakUp a été approuvé avec succès 🎉 ! Vous pouvez maintenant vous connecter à la plateforme.`);
+    return `https://wa.me/${cleanPhone}?text=${message}`;
+  }
 
   pendingRequests = computed(() => {
     return this.allUsers().filter(u => u.status === 'pending');

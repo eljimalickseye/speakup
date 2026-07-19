@@ -288,11 +288,20 @@ import { DialogService } from '../../services/dialog.service';
                       <img [src]="getFlagUrl(req.countryFlag)" style="width: 16px; height: 12px; object-fit: contain" alt="flag">
                     }
                   </div>
-                  <div style="font-size:11px; color:var(--text-secondary); margin-top:4px">
-                    Niveau demandé : <span style="font-weight:700; color:#4F46E5">{{ req.level }}</span> · Date de demande : {{ req.requestedAt }}
+                  <div style="font-size:11px; color:var(--text-secondary); margin-top:4px; display:flex; gap:8px; align-items:center; flex-wrap:wrap">
+                    <span>Niveau demandé : <strong style="color:#4F46E5">{{ req.level }}</strong></span>
+                    <span>· Date : {{ req.requestedAt }}</span>
+                    @if (req.phone) {
+                      <span>· 📱 <strong>{{ req.phone }}</strong></span>
+                    }
                   </div>
                 </div>
-                <div style="display:flex; gap:8px">
+                <div style="display:flex; gap:8px; align-items:center">
+                  @if (req.phone) {
+                    <a [href]="getWhatsAppUrl(req.phone, req.name)" target="_blank" class="btn-s" style="background:#25D366; color:white; border:none; font-size:11px; padding:6px 12px; display:inline-flex; align-items:center; gap:4px; font-weight:700; text-decoration:none">
+                      <i class="ti ti-brand-whatsapp"></i> WhatsApp
+                    </a>
+                  }
                   <button class="btn-p" style="background:#10B981; border-color:#10B981; font-size:11px; padding:6px 12px" (click)="approveRequest(req.id, req.name)">
                     <i class="ti ti-check"></i> Valider
                   </button>
@@ -899,6 +908,13 @@ export class TeacherStudentsComponent {
     this.db.observeChannels().subscribe(list => {
       this.channels.set(list);
     });
+  }
+
+  getWhatsAppUrl(phone: string | undefined, name: string | undefined): string {
+    if (!phone) return '#';
+    const cleanPhone = phone.replace(/[^0-9]/g, '');
+    const message = encodeURIComponent(`Bonjour ${name || ''} 👋, votre compte SpeakUp a été approuvé avec succès 🎉 ! Vous pouvez maintenant vous connecter à la plateforme.`);
+    return `https://wa.me/${cleanPhone}?text=${message}`;
   }
 
   getAttendancePercentage(studentId: string): number {

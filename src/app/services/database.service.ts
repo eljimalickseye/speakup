@@ -85,6 +85,7 @@ export interface UserProfile {
   placementTestScore?: number;
   placementTestAnswers?: { [key: number]: string };
   voiceChatAllowed?: boolean;
+  phone?: string;
   description?: string;
   username?: string;
   password?: string;
@@ -141,6 +142,9 @@ export interface RegistrationRequest {
   name: string;
   level: string;
   countryFlag: string;
+  phone?: string;
+  username?: string;
+  password?: string;
   requestedAt: string;
   status: 'pending' | 'approved' | 'rejected';
 }
@@ -2014,7 +2018,7 @@ export class DatabaseService {
     return newTeacher;
   }
 
-  async addStudent(name: string, level: string, countryFlag: string = '', registrationFee: number = 10000, monthlyFee: number = 7000) {
+  async addStudent(name: string, level: string, countryFlag: string = '', registrationFee: number = 10000, monthlyFee: number = 7000, phone: string = '') {
     const id = name.toLowerCase().replace(/[^a-z0-9]/g, '') + '-' + Date.now().toString().slice(-4);
     const avatar = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
     const isGuest = level === 'Guest';
@@ -2024,6 +2028,7 @@ export class DatabaseService {
     const newStudent: UserProfile = {
       id,
       name,
+      phone,
       role: isGuest ? 'guest' : 'student',
       level,
       xp: 0,
@@ -2125,7 +2130,7 @@ export class DatabaseService {
     }
   }
 
-  async registerUserProfile(name: string, username: string, password: string, level: string, country: string, role: 'student' | 'teacher') {
+  async registerUserProfile(name: string, username: string, password: string, level: string, country: string, role: 'student' | 'teacher', phone: string = '') {
     const id = name.toLowerCase().replace(/[^a-z0-9]/g, '') + '-' + Date.now().toString().slice(-4);
     const avatar = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'US';
     const generatedUsername = username.trim().toLowerCase();
@@ -2141,6 +2146,7 @@ export class DatabaseService {
       name,
       username: generatedUsername,
       password: password.trim(),
+      phone: phone.trim(),
       level,
       countryFlag: country,
       role,
@@ -3507,12 +3513,15 @@ export class DatabaseService {
     return this.registrationRequests$.asObservable();
   }
 
-  async submitRegistrationRequest(name: string, level: string, countryFlag: string) {
+  async submitRegistrationRequest(name: string, level: string, countryFlag: string, phone: string = '', username: string = '', password: string = '') {
     const newRequest: RegistrationRequest = {
       id: 'req-' + Date.now(),
       name,
       level,
       countryFlag,
+      phone,
+      username,
+      password,
       requestedAt: new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }),
       status: 'pending'
     };
@@ -3551,6 +3560,9 @@ export class DatabaseService {
       // Automatically create the student or teacher profile!
       if (req.level === 'Teacher') {
         const user = await this.addTeacher(req.name);
+        if (user && req.phone) {
+          await this.updateUserProfile(user.id, { phone: req.phone });
+        }
         return user;
       } else {
         const isGuest = req.level === 'Guest';
@@ -3559,8 +3571,15 @@ export class DatabaseService {
           req.level,
           req.countryFlag,
           isGuest ? 0 : 10000,
-          isGuest ? 0 : 7000
+          isGuest ? 0 : 7000,
+          req.phone
         );
+        if (user && (req.username || req.password)) {
+          const updates: Partial<UserProfile> = {};
+          if (req.username) updates.username = req.username;
+          if (req.password) updates.password = req.password;
+          await this.updateUserProfile(user.id, updates);
+        }
         return user;
       }
     }

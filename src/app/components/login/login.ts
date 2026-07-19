@@ -226,6 +226,13 @@ import { DialogService } from '../../services/dialog.service';
               </div>
 
               <div class="warm-field">
+                <label class="warm-label">
+                  <i class="ti ti-brand-whatsapp"></i> Numéro WhatsApp / Téléphone
+                </label>
+                <input type="tel" [(ngModel)]="requestPhone" placeholder="Ex: +221 77 123 45 67" class="warm-input" />
+              </div>
+
+              <div class="warm-field">
                 <label class="warm-label">Pays d'origine</label>
                 <select [(ngModel)]="requestCountry" class="warm-input">
                   <option value="🇸🇳">Sénégal 🇸🇳</option>
@@ -417,6 +424,8 @@ export class LoginComponent {
     }
   }
 
+  requestPhone = '';
+
   guestLogin() {
     window.location.hash = '#/guest-login';
   }
@@ -425,6 +434,7 @@ export class LoginComponent {
     const name = this.requestName.trim();
     const username = this.requestUsername.trim().toLowerCase();
     const password = this.requestPassword.trim();
+    const phone = this.requestPhone.trim();
     const level = this.requestLevel;
     const country = this.requestCountry;
 
@@ -440,10 +450,14 @@ export class LoginComponent {
       this.dialogService.alert('Erreur', 'Le mot de passe doit comporter au moins 6 caractères.', 'info');
       return;
     }
+    if (!phone) {
+      this.dialogService.alert('Erreur', 'Veuillez saisir votre numéro WhatsApp / Téléphone.', 'info');
+      return;
+    }
 
     const role = level === 'Teacher' ? 'teacher' : 'student';
 
-    this.db.registerUserProfile(name, username, password, level, country, role)
+    this.db.registerUserProfile(name, username, password, level, country, role, phone)
       .then((newProfile) => {
         this.closeRequestModal();
         if (newProfile.status === 'approved') {
@@ -467,6 +481,7 @@ export class LoginComponent {
     this.requestName = '';
     this.requestUsername = '';
     this.requestPassword = '';
+    this.requestPhone = '';
     this.requestLevel = 'B1';
     this.requestCountry = '🇸🇳';
   }
