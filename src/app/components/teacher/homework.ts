@@ -439,9 +439,9 @@ import { DialogService } from '../../services/dialog.service';
                       </button>
 
                       <!-- Download -->
-                      <a [href]="sub.content" [download]="sub.studentName + '_recording'" class="ap-btn" title="Download recording">
+                      <button (click)="db.downloadFile(sub.content, sub.studentName + '_recording.wav', 'audio/wav')" class="ap-btn" title="Télécharger l'enregistrement">
                         <i class="ti ti-download" style="font-size:14px"></i>
-                      </a>
+                      </button>
                     </div>
                     <!-- Timestamp bookmark button -->
                     <div style="display:flex; justify-content:center; margin-top:8px">
@@ -1021,7 +1021,7 @@ import { DialogService } from '../../services/dialog.service';
   `]
 })
 export class TeacherHomeworkComponent {
-  private db = inject(DatabaseService);
+  public db = inject(DatabaseService);
   private dialogService = inject(DialogService);
   activeLang = this.db.activeLang;
 

@@ -353,10 +353,10 @@ interface ChatMember {
                             <div style="font-size:12px; font-weight:700; color:var(--text-primary); text-overflow:ellipsis; overflow:hidden; white-space:nowrap; max-width:140px">{{ msg.fileName || 'document.pdf' }}</div>
                             <div style="font-size:10px; color:var(--text-muted)">{{ msg.fileSize || 'Unknown size' }}</div>
                           </div>
-                          <a [href]="msg.content" [download]="msg.fileName || 'download'"
-                             style="width:28px; height:28px; border-radius:50%; background:#4F46E5; color:white; display:flex; align-items:center; justify-content:center; cursor:pointer; text-decoration:none">
+                          <button (click)="db.downloadFile(msg.content, msg.fileName || 'document')"
+                                  style="width:28px; height:28px; border-radius:50%; background:#4F46E5; color:white; display:flex; align-items:center; justify-content:center; cursor:pointer; border:none" title="Télécharger le fichier">
                             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                          </a>
+                          </button>
                         </div>
                       } @else {
                         <div>
@@ -1763,7 +1763,7 @@ export class StudentChatComponent implements OnDestroy {
     reader.readAsDataURL(file);
   }
 
-  private db = inject(DatabaseService);
+  public db = inject(DatabaseService);
   private dialogService = inject(DialogService);
 
   activeLang = this.db.activeLang;

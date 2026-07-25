@@ -179,11 +179,11 @@ import { DialogService } from '../../services/dialog.service';
                           <span style="font-size:10px; color:var(--text-muted); margin-left:6px">({{ att.size }})</span>
                         </div>
                       </div>
-                      <a [href]="att.base64" [download]="att.name"
-                         class="btn-s" style="padding:4px 10px; font-size:11px; text-decoration:none; display:flex; align-items:center; gap:4px">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                      <button (click)="downloadAttachment(att)"
+                              class="btn-s" style="padding:6px 14px; font-size:11.5px; cursor:pointer; display:flex; align-items:center; gap:6px; background:#4F46E5; color:white; border:none; border-radius:6px; font-weight:700">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                         {{ t('Télécharger', 'Download') }}
-                      </a>
+                      </button>
                     </div>
                   }
                 </div>
@@ -802,6 +802,10 @@ export class StudentLessonsComponent {
     const list = this.submissions().filter(s => s.lessonId === lessonId && s.studentId === currentUserId);
     if (list.length === 0) return undefined;
     return list.reduce((prev, current) => (new Date(prev.submittedAt) > new Date(current.submittedAt)) ? prev : current);
+  }
+
+  downloadAttachment(att: { name: string; base64: string; type?: string }) {
+    this.db.downloadFile(att.base64, att.name, att.type);
   }
 
   getSubmissionStatus(lessonId: string): string {

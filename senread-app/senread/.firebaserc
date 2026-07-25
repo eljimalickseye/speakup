@@ -1,0 +1,17 @@
+{
+  "projects": {
+    "default": "senepanda-6f7c5"
+  },
+  "targets": {
+    "senepanda-6f7c5": {
+      "hosting": {
+        "senread": [
+          "senread"
+        ],
+        "koko-stories": [
+          "koko-stories"
+        ]
+      }
+    }
+  }
+}

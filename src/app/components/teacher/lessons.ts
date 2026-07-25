@@ -676,15 +676,32 @@ export class TeacherLessonsComponent {
       else if (file.size < 1048576) sizeStr = (file.size / 1024).toFixed(1) + ' KB';
       else sizeStr = (file.size / 1048576).toFixed(1) + ' MB';
 
+      let mimeType = file.type;
+      if (!mimeType || mimeType === 'application/octet-stream') {
+        const ext = (file.name.split('.').pop() || '').toLowerCase();
+        if (ext === 'doc') mimeType = 'application/msword';
+        else if (ext === 'docx') mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        else if (ext === 'pdf') mimeType = 'application/pdf';
+        else if (ext === 'xls') mimeType = 'application/vnd.ms-excel';
+        else if (ext === 'xlsx') mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+        else if (ext === 'ppt') mimeType = 'application/vnd.ms-powerpoint';
+        else if (ext === 'pptx') mimeType = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+        else mimeType = 'application/octet-stream';
+      }
+
       this.attachments.push({
         name: file.name,
         size: sizeStr,
-        type: file.type || 'application/octet-stream',
+        type: mimeType,
         base64: base64String
       });
       event.target.value = '';
     };
     reader.readAsDataURL(file);
+  }
+
+  downloadAttachment(att: { name: string; base64: string; type?: string }) {
+    this.db.downloadFile(att.base64, att.name, att.type);
   }
 
   removeAttachment(index: number) {

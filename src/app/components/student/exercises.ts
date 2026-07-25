@@ -2640,7 +2640,7 @@ export class StudentExercisesComponent {
     if (user) {
       this.db.updateUserXP(user.id, (ex.points || 20), true, ex.id);
     }
-    await this.db.submitHomework(ex.id, `[Exercise] ${ex.title}`, type, content, ex.points);
+    await this.db.submitHomework(ex.id, `[Exercise] ${ex.title}`, type, content, ex.points, true, '100%', 'Exercice d\'entraînement complété !');
   }
 
   startQuiz(quiz: Quiz) {
@@ -2703,7 +2703,7 @@ export class StudentExercisesComponent {
     if (list.length === 0) return 'To Do';
     const latest = list.reduce((prev, current) => (new Date(prev.submittedAt) > new Date(current.submittedAt)) ? prev : current);
     if (latest.score === 'A refaire') return 'Redo';
-    return latest.graded ? 'Completed' : 'Pending';
+    return (latest.graded || !!latest.score) ? 'Completed' : 'Pending';
   }
 
   isPlacementStepLocked(quiz: Quiz): boolean {
@@ -3078,7 +3078,7 @@ export class StudentExercisesComponent {
         const correspondingEx = this.exercises().find(e => e.id === game.id);
         const pts = correspondingEx ? correspondingEx.points : xp;
         const scoreReport = `Score: ${rate}% (${correct} / ${totalWords} correct words). Time spent: ${timeSpent}s.`;
-        this.db.submitHomework(game.id, `[Vocabulary Game] ${game.title}`, 'text', scoreReport, pts);
+        this.db.submitHomework(game.id, `[Vocabulary Game] ${game.title}`, 'text', scoreReport, pts, true, `${rate}%`, 'Jeu de vocabulaire complété !');
       }
     }
   }
@@ -3324,7 +3324,16 @@ export class StudentExercisesComponent {
       if (user) {
         this.db.updateUserXP(user.id, xp, true, quiz.id);
         const quizSummary = `Score: ${pct}% (${this.quizCorrectCount()} / ${quiz.questions.length} correctes). Réponses de l'étudiant: ${JSON.stringify(this.userAnswers())}`;
-        this.db.submitHomework(quiz.id, `[Quiz] ${quiz.title}`, 'text', quizSummary, quiz.points || xp);
+        this.db.submitHomework(
+          quiz.id, 
+          `[Quiz] ${quiz.title}`, 
+          'text', 
+          quizSummary, 
+          quiz.points || xp, 
+          true, 
+          `${pct}%`, 
+          pct >= 60 ? `Félicitations ! Quiz réussi (${pct}%)` : `Quiz terminé (${pct}%)`
+        );
       }
 
       // --- Placement test: auto-advance or finalize ---
@@ -3450,7 +3459,16 @@ export class StudentExercisesComponent {
       const user = this.currentUser();
       if (user) {
         const payload = this.recordedFiles()[this.currentQuestionIdx()] || 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
-        this.db.submitHomework(quiz.id, `[Quiz] ${quiz.title}`, 'audio', payload, quiz.points || 50);
+        this.db.submitHomework(
+          quiz.id, 
+          `[Quiz] ${quiz.title}`, 
+          'audio', 
+          payload, 
+          quiz.points || 50, 
+          true, 
+          '100%', 
+          'Quiz oral complété avec succès !'
+        );
         this.db.updateUserXP(user.id, 50, true, quiz.id);
       }
 

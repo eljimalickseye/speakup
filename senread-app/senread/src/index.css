@@ -1,0 +1,123 @@
+@import "tailwindcss";
+
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;700&family=Newsreader:ital,wght@0,400;0,500;1,400;1,500&display=swap');
+
+@theme {
+  --color-paper: #F7F4EC;
+  --color-ink: #211E19;
+  --color-deep: #122A28;
+  --color-deep-2: #0D211F;
+  --color-gold: #B08A4E;
+  --color-gold-soft: #D8BD8B;
+  --color-taupe: #8B8172;
+  --color-surface: #EFEAE0;
+  --color-surface-line: #E1DACB;
+
+  --font-display: 'Fraunces', serif;
+  --font-body: 'Inter', sans-serif;
+  --font-reading: 'Newsreader', serif;
+}
+
+/* Dark Mode Color Palette Overrides */
+html.dark {
+  --color-paper: #121212;
+  --color-ink: #F0F0F0;
+  --color-deep: #1F1F1F;
+  --color-deep-2: #161616;
+  --color-gold: #D4AF37;
+  --color-gold-soft: #E5C158;
+  --color-taupe: #9E9E9E;
+  --color-surface: #1E1E1E;
+  --color-surface-line: #2D2D2D;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Dark Mode Card Overrides */
+html.dark .bg-white {
+  background-color: #1E1E1E !important;
+  color: #F0F0F0 !important;
+  border-color: #2D2D2D !important;
+}
+
+html.dark .bg-paper {
+  background-color: #161616 !important;
+  color: #F0F0F0 !important;
+  border-color: #2D2D2D !important;
+}
+
+html.dark .text-ink {
+  color: #F0F0F0 !important;
+}
+
+html.dark .border-surface-line {
+  border-color: #2D2D2D !important;
+}
+
+/* Hide scrollbars on horizontal rails, keep them scrollable */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch; }
+
+/* Safe Area Insets for Mobile (iPhone Notch & Dynamic Island) */
+.pb-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+.pt-safe {
+  padding-top: max(3rem, calc(env(safe-area-inset-top) + 0.75rem));
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.06); opacity: 1; }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2.5s ease-in-out infinite;
+}
+
+.animate-shimmer {
+  animation: shimmer 2.5s infinite;
+}

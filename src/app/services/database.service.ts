@@ -867,7 +867,8 @@ export class DatabaseService {
     if (quizzesModified) {
       localStorage.setItem('speak_quizzes', JSON.stringify(quizzes));
     }
-    const submissions = getLocal('speak_submissions', defaultSubmissions);
+    const rawSubmissions = getLocal('speak_submissions', defaultSubmissions);
+    const submissions = this.sanitizeQuizSubmissions(rawSubmissions);
     const attendance = getLocal('speak_attendance', defaultAttendance);
     const schedules = getLocal('speak_schedules', defaultLiveClasses);
     const announcements = getLocal('speak_announcements', defaultAnnouncements);
@@ -1313,8 +1314,9 @@ export class DatabaseService {
 
     // 4. Subscribe to Submissions
     onSnapshot(collection(this.firestore, 'submissions'), (snap) => {
-      const submissions: Submission[] = [];
-      snap.forEach(docSnap => submissions.push(docSnap.data() as Submission));
+      const rawSubmissions: Submission[] = [];
+      snap.forEach(docSnap => rawSubmissions.push(docSnap.data() as Submission));
+      const submissions = this.sanitizeQuizSubmissions(rawSubmissions);
       this.submissions$.next(submissions);
       this.saveLocal('speak_submissions', submissions);
     });
@@ -2537,12 +2539,64 @@ export class DatabaseService {
     await this.logAction('delete_quiz', `Quiz supprimé : "${title}"`);
   }
 
+  private sanitizeQuizSubmissions(list: Submission[]): Submission[] {
+    if (!Array.isArray(list)) return [];
+    return list.map(sub => {
+      if (!sub) return sub;
+      const isQuizType = (sub.lessonId && (sub.lessonId.startsWith('quiz-') || sub.lessonId.startsWith('placement-test'))) ||
+                         (sub.lessonTitle && (sub.lessonTitle.startsWith('[Quiz]') || sub.lessonTitle.startsWith('[Vocabulary Game]'))) ||
+                         (sub.content && typeof sub.content === 'string' && sub.content.includes('Score:'));
+      
+      if (isQuizType && !sub.graded) {
+        let extractedScore = '100%';
+        if (sub.content && typeof sub.content === 'string' && sub.content.includes('Score:')) {
+          const match = sub.content.match(/Score:\s*(\d+%)/);
+          if (match && match[1]) {
+            extractedScore = match[1];
+          }
+        }
+        return {
+          ...sub,
+          graded: true,
+          score: sub.score || extractedScore,
+          feedback: sub.feedback || `Quiz corrigé automatiquement (${extractedScore})`
+        };
+      }
+      return sub;
+    });
+  }
+
   // --- SUBMISSIONS OPERATIONS ---
   observeSubmissions(): Observable<Submission[]> { return this.submissions$.asObservable(); }
 
-  async submitHomework(lessonId: string, lessonTitle: string, type: 'text' | 'audio' | 'video', content: string, customXpReward?: number) {
+  async submitHomework(
+    lessonId: string, 
+    lessonTitle: string, 
+    type: 'text' | 'audio' | 'video', 
+    content: string, 
+    customXpReward?: number,
+    isGraded: boolean = false,
+    score?: string,
+    feedback?: string
+  ) {
     const activeUser = this.currentUser$.value;
     if (!activeUser) return;
+
+    const isQuizType = isGraded || 
+                       lessonId.startsWith('quiz-') || 
+                       lessonId.startsWith('placement-test') || 
+                       lessonTitle.startsWith('[Quiz]') || 
+                       lessonTitle.startsWith('[Vocabulary Game]') || 
+                       (content && content.includes('Score:'));
+
+    let autoScore = score;
+    if (isQuizType && !autoScore && content && content.includes('Score:')) {
+      const match = content.match(/Score:\s*(\d+%)/);
+      if (match && match[1]) autoScore = match[1];
+    }
+    if (isQuizType && !autoScore) {
+      autoScore = '100%';
+    }
 
     const newSub: Submission = {
       id: 'sub-' + Date.now(),
@@ -2553,16 +2607,18 @@ export class DatabaseService {
       type,
       content,
       xpReward: customXpReward || 50,
-      graded: false,
+      graded: isQuizType ? true : isGraded,
+      score: isQuizType ? autoScore : score,
+      feedback: isQuizType ? (feedback || `Quiz corrigé automatiquement (${autoScore})`) : feedback,
       submittedAt: new Date().toISOString()
     };
 
-    const list = [newSub, ...this.submissions$.value];
+    const list = this.sanitizeQuizSubmissions([newSub, ...this.submissions$.value]);
     this.submissions$.next(list);
     this.saveLocal('speak_submissions', list);
 
     // Increment daily streak for active practice
-    await this.updateUserXP(activeUser.id, 0, true);
+    await this.updateUserXP(activeUser.id, customXpReward || 50, true, lessonId);
 
     if (this.useFirebase) {
       try {
@@ -5510,6 +5566,117 @@ export class DatabaseService {
       try {
         setDoc(doc(this.firestore, 'settings', 'show_themes'), { value: val });
       } catch (e) { console.warn(e); }
+    }
+  }
+
+  /**
+   * Universal file downloader that works seamlessly across Mac, iOS, Windows, Android & Linux.
+   * Converts Base64 data URLs to Blob Object URLs to prevent Safari WebKit data-URI blocks.
+   */
+  downloadFile(fileData: string, fileName: string, fileType?: string) {
+    if (!fileData) return;
+
+    const name = fileName || 'document';
+
+    // 1. If it's a standard web URL (http:// or https://)
+    if (fileData.startsWith('http://') || fileData.startsWith('https://')) {
+      fetch(fileData)
+        .then(res => res.blob())
+        .then(blob => {
+          const blobUrl = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = blobUrl;
+          a.download = name;
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(blobUrl);
+          }, 1000);
+        })
+        .catch(() => {
+          window.open(fileData, '_blank');
+        });
+      return;
+    }
+
+    // 2. Base64 / Data URI handling
+    try {
+      let mimeType = fileType || '';
+      let base64Content = fileData;
+
+      if (fileData.startsWith('data:')) {
+        const parts = fileData.split(',');
+        const meta = parts[0];
+        base64Content = parts[1] || '';
+        const mimeMatch = meta.match(/data:(.*?);/);
+        if (mimeMatch && mimeMatch[1]) {
+          mimeType = mimeMatch[1];
+        }
+      }
+
+      // Infer exact MIME type from file extension if missing or generic
+      const ext = (name.split('.').pop() || '').toLowerCase();
+      if (!mimeType || mimeType === 'application/octet-stream') {
+        if (ext === 'doc') mimeType = 'application/msword';
+        else if (ext === 'docx') mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        else if (ext === 'pdf') mimeType = 'application/pdf';
+        else if (ext === 'xls') mimeType = 'application/vnd.ms-excel';
+        else if (ext === 'xlsx') mimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+        else if (ext === 'ppt') mimeType = 'application/vnd.ms-powerpoint';
+        else if (ext === 'pptx') mimeType = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+        else if (ext === 'txt') mimeType = 'text/plain';
+        else if (ext === 'png') mimeType = 'image/png';
+        else if (ext === 'jpg' || ext === 'jpeg') mimeType = 'image/jpeg';
+        else mimeType = 'application/octet-stream';
+      }
+
+      // Convert Base64 to Uint8Array safely
+      const cleanBase64 = base64Content.replace(/[^A-Za-z0-9+/=]/g, '');
+      const binaryString = window.atob(cleanBase64);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+
+      const blob = new Blob([bytes], { type: mimeType });
+
+      // Support MS SaveOrOpenBlob for legacy Edge/IE
+      if ((navigator as any).msSaveOrOpenBlob) {
+        (navigator as any).msSaveOrOpenBlob(blob, name);
+        return;
+      }
+
+      // Create Object URL
+      const blobUrl = URL.createObjectURL(blob);
+
+      // Create temporary <a> element with target="_blank" for Mac/iOS Safari compatibility
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = name;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      document.body.appendChild(a);
+      a.click();
+
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+      }, 2000);
+
+    } catch (e) {
+      console.warn('Blob conversion failed, attempting direct download element fallback:', e);
+      try {
+        const link = document.createElement('a');
+        link.href = fileData;
+        link.download = name;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } catch (err) {
+        window.open(fileData, '_blank');
+      }
     }
   }
 }
