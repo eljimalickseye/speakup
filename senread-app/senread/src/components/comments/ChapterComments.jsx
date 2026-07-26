@@ -1,11 +1,22 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useApp } from '../../context/AppContext.jsx';
 import { MessageSquareIcon, CheckIcon } from '../ui/Icons.jsx';
 
-export default function ChapterComments({ chapterId, isLight = false, iconOnly = false }) {
+export default function ChapterComments({ bookId, chapterId, onClose, isLight = false, iconOnly = false }) {
   const { userProfile } = useApp();
-  const [isOpen, setIsOpen] = useState(false);
-  const storageKey = `koko_comments_${chapterId || 'default'}`;
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isOpen = onClose ? true : internalOpen;
+
+  const handleClose = (e) => {
+    if (e) e.stopPropagation();
+    if (onClose) {
+      onClose();
+    } else {
+      setInternalOpen(false);
+    }
+  };
+  const storageKey = `koko_comments_${bookId || 'b1'}_${chapterId || 'c1'}`;
 
   const defaultComments = [
     { id: 1, author: 'Awa Ndiaye', text: 'Ce chapitre était magnifique ! La traduction bilingue rend la lecture très fluide.', time: 'Il y a 2h' },
@@ -56,57 +67,57 @@ export default function ChapterComments({ chapterId, isLight = false, iconOnly =
 
   return (
     <>
-      {/* Sleek Trigger Button */}
-      {iconOnly ? (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            setIsOpen(true);
-          }}
-          title={`Commentaires (${comments.length})`}
-          className={`w-9 h-9 rounded-full flex items-center justify-center border transition-all active:scale-95 ${
-            isLight
-              ? 'bg-black/8 border-black/10 text-[#1A1816] hover:border-gold'
-              : 'bg-white/10 border-white/15 text-gold hover:bg-white/20'
-          }`}
-        >
-          <MessageSquareIcon className="w-4.5 h-4.5 text-gold" />
-        </button>
-      ) : (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            setIsOpen(true);
-          }}
-          className={`w-full p-3 rounded-2xl border text-left flex items-center justify-between transition-all ${
-            isLight
-              ? 'bg-white/80 border-black/10 text-[#1A1816] hover:border-gold'
-              : 'bg-white/5 border-white/10 text-paper hover:border-gold-soft'
-          }`}
-        >
-          <div className="flex items-center gap-2">
-            <MessageSquareIcon className="w-4 h-4 text-gold" />
-            <span className="text-[12px] font-bold">Commentaires ({comments.length})</span>
-          </div>
-          <span className="text-[11px] font-bold text-gold bg-gold/10 px-2.5 py-0.5 rounded-full">
-            Ouvrir →
-          </span>
-        </button>
+      {/* Sleek Trigger Button (Only if not controlled by external parent modal) */}
+      {!onClose && (
+        iconOnly ? (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setInternalOpen(true);
+            }}
+            title={`Commentaires (${comments.length})`}
+            className={`w-9 h-9 rounded-full flex items-center justify-center border transition-all active:scale-95 ${
+              isLight
+                ? 'bg-surface border-surface-line text-ink hover:border-gold'
+                : 'bg-white/10 border-white/15 text-gold hover:bg-white/20'
+            }`}
+          >
+            <MessageSquareIcon className="w-4.5 h-4.5 text-gold" />
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setInternalOpen(true);
+            }}
+            className={`w-full p-3 rounded-2xl border text-left flex items-center justify-between transition-all ${
+              isLight
+                ? 'bg-white border-surface-line text-ink hover:border-gold'
+                : 'bg-white/5 border-white/10 text-paper hover:border-gold-soft'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <MessageSquareIcon className="w-4 h-4 text-gold" />
+              <span className="text-[12px] font-bold">Commentaires ({comments.length})</span>
+            </div>
+            <span className="text-[11px] font-bold text-gold bg-gold/10 px-2.5 py-0.5 rounded-full">
+              Ouvrir →
+            </span>
+          </button>
+        )
       )}
 
-      {/* Slide-Up Drawer Modal for Comments */}
-      {isOpen && (
+      {/* Centered / Bottom Drawer Modal for Comments (Portaled directly into document.body) */}
+      {isOpen && typeof document !== 'undefined' && createPortal(
         <div
-          className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fadeIn"
-          onClick={(e) => {
-            e.stopPropagation();
-            setIsOpen(false);
-          }}
+          className="fixed inset-0 z-[99999] bg-black/75 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fadeIn pointer-events-auto"
+          style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
+          onClick={handleClose}
         >
           <div
-            className="bg-paper border-t sm:border border-surface-line rounded-t-3xl sm:rounded-3xl p-5 w-full max-w-md text-left relative shadow-2xl space-y-3.5 max-h-[85vh] flex flex-col pointer-events-auto"
+            className="bg-paper border-t sm:border border-surface-line rounded-t-3xl sm:rounded-3xl p-5 w-full max-w-md text-left relative shadow-2xl space-y-3.5 max-h-[80vh] flex flex-col pointer-events-auto my-0 sm:my-auto"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -119,7 +130,7 @@ export default function ChapterComments({ chapterId, isLight = false, iconOnly =
               </div>
               <button
                 type="button"
-                onClick={() => setIsOpen(false)}
+                onClick={handleClose}
                 className="w-7 h-7 rounded-full bg-surface border border-surface-line flex items-center justify-center text-taupe hover:text-ink font-bold text-[14px]"
               >
                 ×
@@ -188,7 +199,8 @@ export default function ChapterComments({ chapterId, isLight = false, iconOnly =
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

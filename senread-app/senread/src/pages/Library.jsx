@@ -1,26 +1,44 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext.jsx';
-import { getLibrary } from '../lib/api.js';
-import { BookOpenIcon, BookmarkIcon, PlusIcon, TrashIcon, CheckIcon } from '../components/ui/Icons.jsx';
+import { covers } from '../lib/api.js';
+import { BookOpenIcon, BookmarkIcon, PlusIcon, TrashIcon, CheckIcon, PlayIcon, StarIcon } from '../components/ui/Icons.jsx';
+import { CoverArt } from '../components/ui/primitives.jsx';
+import BookCard from '../components/book/BookCard.jsx';
 
 export default function Library() {
+  const navigate = useNavigate();
   const { booksList, bookmarks, savedVocab, addVocabWord, removeVocabWord, appLanguage } = useApp();
   const isEn = appLanguage === 'en';
-  
-  const [activeTab, setActiveTab] = useState('reading'); // 'reading' | 'vocab'
-  const [userLib, setUserLib] = useState([]);
+
+  const [activeTab, setActiveTab] = useState('reading');
+  const [allProgress, setAllProgress] = useState({});
+  const [lastBook, setLastBook] = useState(null);
 
   // Form state for adding new vocabulary word
   const [newEn, setNewEn] = useState('');
   const [newFr, setNewFr] = useState('');
   const [justAdded, setJustAdded] = useState(false);
 
+  // Read reading progress from localStorage
   useEffect(() => {
-    getLibrary().then(setUserLib);
+    const stored = JSON.parse(localStorage.getItem('koko_reading_progress') || '{}');
+    setAllProgress(stored);
+    const last = JSON.parse(localStorage.getItem('koko_last_book') || 'null');
+    setLastBook(last);
   }, []);
 
   const bookmarkedBooks = booksList.filter((b) => bookmarks.includes(b.id));
+
+  // All in-progress books (have progress data)
+  const inProgressBooks = Object.values(allProgress)
+    .sort((a, b) => new Date(b.lastRead) - new Date(a.lastRead))
+    .map((p) => ({ ...p, book: booksList.find((b) => b.id === p.bookId) }))
+    .filter((p) => p.book);
+
+  // Featured book = last opened
+  const featuredProgress = lastBook;
+  const featuredBook = featuredProgress ? booksList.find((b) => b.id === featuredProgress.bookId) : null;
 
   const handleAddVocabSubmit = (e) => {
     e.preventDefault();
@@ -36,8 +54,8 @@ export default function Library() {
   };
 
   return (
-    <div className="px-5 pt-6 pb-6 text-ink space-y-5 animate-fadeIn">
-      {/* Page Title */}
+    <div className="px-5 pt-6 pb-6 text-ink space-y-6 animate-fadeIn">
+      {/* Page Title Header */}
       <div className="flex justify-between items-center text-left">
         <div>
           <span className="text-[11px] font-bold uppercase tracking-widest text-taupe block">
@@ -49,7 +67,82 @@ export default function Library() {
         </div>
       </div>
 
-      {/* Top Navigation Switcher */}
+      {/* FEATURED ACTIVE READING NOVEL HERO CARD */}
+      {featuredBook ? (
+        <div className="bg-[#122A28] text-white rounded-3xl p-5 shadow-xl border border-gold/40 relative overflow-hidden text-left space-y-4">
+          {/* Decorative glow */}
+          <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-gold/10 blur-2xl pointer-events-none" />
+
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-extrabold uppercase tracking-widest text-gold bg-gold/15 px-3 py-1 rounded-full border border-gold/30">
+              📖 {isEn ? 'Continue Reading' : 'Lecture en Cours'}
+            </span>
+            <span className="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/30">
+              {featuredProgress?.progress ?? 0}% {isEn ? 'completed' : 'complété'}
+            </span>
+          </div>
+
+          <div className="flex gap-4 items-center">
+            <div
+              className="w-16 h-24 rounded-2xl flex-shrink-0 relative overflow-hidden shadow-lg border border-gold/30"
+              style={{ background: covers[featuredBook.cover] || covers.c1 }}
+            >
+              {featuredBook.customCoverUrl ? (
+                <img src={featuredBook.customCoverUrl} alt={featuredBook.title} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <BookOpenIcon className="w-6 h-6 opacity-30 text-white" />
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-1.5 flex-1 min-w-0">
+              <h3 className="font-display italic font-bold text-[17px] text-white leading-tight line-clamp-2">
+                {featuredBook.title}
+              </h3>
+              <p className="text-[11.5px] text-white/70">
+                {isEn ? 'by' : 'par'} {featuredBook.author} · {isEn ? `Chapter ${featuredProgress?.chapter || 1}` : `Chapitre ${featuredProgress?.chapter || 1}`}
+              </p>
+
+              {/* Progress Bar */}
+              <div className="w-full bg-black/40 rounded-full h-2 overflow-hidden border border-white/10 mt-2">
+                <div
+                  className="bg-gradient-to-r from-gold to-amber-300 h-full rounded-full transition-all duration-500"
+                  style={{ width: `${featuredProgress?.progress ?? 0}%` }}
+                />
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => navigate(`/book/${featuredBook.id}/read/${featuredProgress?.chapter || 1}`)}
+            className="w-full bg-gold text-deep font-bold text-[13px] py-2.5 rounded-2xl shadow-md active:scale-98 transition-all flex items-center justify-center gap-2"
+          >
+            <PlayIcon className="w-4 h-4 text-deep fill-deep" />
+            <span>{isEn ? 'Resume Reading' : 'Reprendre la Lecture →'}</span>
+          </button>
+        </div>
+      ) : (
+        /* Empty state when no reading started yet */
+        <div className="bg-white border border-surface-line rounded-3xl p-6 text-center space-y-3 shadow-sm">
+          <BookOpenIcon className="w-10 h-10 text-taupe mx-auto opacity-40" />
+          <p className="font-display font-bold text-[15px] text-ink">
+            {isEn ? 'No reading in progress' : 'Aucune lecture en cours'}
+          </p>
+          <p className="text-[12px] text-taupe">
+            {isEn ? 'Open a book to start reading and track your progress.' : 'Ouvrez un roman pour commencer à lire et suivre votre progression.'}
+          </p>
+          <button
+            onClick={() => navigate('/discover')}
+            className="inline-block bg-deep text-paper px-5 py-2.5 rounded-xl font-bold text-[12.5px] shadow-sm"
+          >
+            {isEn ? 'Discover Books →' : 'Découvrir les Romans →'}
+          </button>
+        </div>
+      )}
+
+      {/* Tab navigation */}
       <div className="flex border-b border-surface-line w-full text-center">
         <button
           onClick={() => setActiveTab('reading')}
@@ -57,7 +150,16 @@ export default function Library() {
             activeTab === 'reading' ? 'text-ink border-b-2 border-gold font-extrabold' : 'text-taupe'
           }`}
         >
-          {isEn ? 'Readings & Bookmarks' : 'Lectures & Favoris'} ({userLib.length + bookmarkedBooks.length})
+          {isEn ? 'In Progress' : 'En Cours'} ({inProgressBooks.length})
+        </button>
+
+        <button
+          onClick={() => setActiveTab('bookmarks')}
+          className={`flex-1 pb-2.5 text-[12.5px] font-bold transition-colors ${
+            activeTab === 'bookmarks' ? 'text-ink border-b-2 border-gold font-extrabold' : 'text-taupe'
+          }`}
+        >
+          {isEn ? 'Saved' : 'Favoris'} ({bookmarkedBooks.length})
         </button>
 
         <button
@@ -66,98 +168,95 @@ export default function Library() {
             activeTab === 'vocab' ? 'text-ink border-b-2 border-gold font-extrabold' : 'text-taupe'
           }`}
         >
-          {isEn ? 'Vocabulary Notebook' : 'Carnet de Mots'} ({savedVocab.length})
+          {isEn ? 'Words' : 'Mots'} ({savedVocab.length})
         </button>
       </div>
 
-      {activeTab === 'reading' ? (
-        <div className="space-y-6">
-          {/* Continue Reading Section */}
-          <div className="space-y-3 text-left">
-            <h2 className="font-display font-bold text-[16px]">
-              {isEn ? 'Continue Reading' : 'Lectures en cours'}
-            </h2>
+      {activeTab === 'reading' && (
+        <div className="space-y-3 text-left">
+          <h2 className="font-display font-bold text-[16px]">
+            {isEn ? 'All In-Progress Readings' : 'Toutes les Lectures en Cours'}
+          </h2>
 
-            {userLib.length === 0 || booksList.length === 0 ? (
-              <div className="bg-white border border-surface-line rounded-2xl p-6 text-center space-y-2 shadow-sm">
-                <BookOpenIcon className="w-8 h-8 text-taupe mx-auto" />
-                <p className="font-display font-bold text-[14px]">
-                  {isEn ? 'No reading in progress' : 'Aucune lecture en cours'}
-                </p>
-                <p className="text-[11.5px] text-taupe">
-                  {isEn ? 'Browse the catalog to start your first bilingual novel.' : 'Parcourez le catalogue pour commencer votre premier roman bilingue.'}
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-2.5">
-                {userLib.map((item) => {
-                  const book = booksList.find((b) => b.id === item.bookId);
-                  if (!book) return null;
-
-                  return (
-                    <Link
-                      key={item.bookId}
-                      to={`/book/${book.id}/read/${item.chapter}`}
-                      className="bg-white border border-surface-line rounded-2xl p-3.5 flex items-center justify-between shadow-sm hover:border-gold transition-all block"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-14 rounded bg-surface border border-surface-line flex items-center justify-center font-bold text-[12px] text-taupe">
-                          {book.title?.charAt(0)}
-                        </div>
-                        <div className="text-left">
-                          <p className="font-display font-bold text-[14px] text-ink">{book.title}</p>
-                          <p className="text-[11px] text-taupe">
-                            {isEn ? `Chapter ${item.chapter} · ${item.progress}% completed` : `Chapitre ${item.chapter} · ${item.progress}% complété`}
-                          </p>
-                        </div>
-                      </div>
-                      <span className="text-[11px] font-bold text-gold bg-gold/10 px-3 py-1.5 rounded-full">
-                        {isEn ? 'Resume →' : 'Reprendre →'}
-                      </span>
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Bookmarks Section */}
-          <div className="space-y-3 text-left">
-            <h2 className="font-display font-bold text-[16px]">
-              {isEn ? `Saved Novels (${bookmarkedBooks.length})` : `Romans Sauvegardés (${bookmarkedBooks.length})`}
-            </h2>
-
-            {bookmarkedBooks.length === 0 ? (
-              <div className="bg-white border border-surface-line rounded-2xl p-6 text-center space-y-2 shadow-sm">
-                <p className="text-[12px] text-taupe">
-                  {isEn ? 'No novels saved in your bookmarks.' : 'Aucun roman sauvegardé dans vos favoris.'}
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 gap-3">
-                {bookmarkedBooks.map((b) => (
+          {inProgressBooks.length === 0 ? (
+            <div className="bg-white border border-surface-line rounded-2xl p-6 text-center space-y-2 shadow-sm">
+              <p className="text-[12px] text-taupe">
+                {isEn ? 'Open any book to see your progress here.' : 'Ouvrez un roman pour voir votre progression ici.'}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              {inProgressBooks.map(({ book, bookId, chapter, progress, lastRead }) => {
+                const totalChaps = book.chaptersData?.length || 10;
+                return (
                   <Link
-                    key={b.id}
-                    to={`/book/${b.id}`}
-                    className="bg-white border border-surface-line rounded-2xl p-3 text-left space-y-1 block shadow-sm hover:border-gold"
+                    key={bookId}
+                    to={`/book/${bookId}/read/${chapter}`}
+                    className="bg-white border border-surface-line rounded-2xl p-3.5 flex items-center gap-3 shadow-sm hover:border-gold transition-all block"
                   >
-                    <div className="h-28 rounded-xl bg-gradient-to-br from-deep to-deep-2 text-paper flex items-center justify-center font-display font-bold text-[16px]">
-                      {b.title?.charAt(0)}
+                    {/* Mini cover */}
+                    <div
+                      className="w-10 h-14 rounded-xl flex-shrink-0 overflow-hidden border border-surface-line/50"
+                      style={{ background: covers[book.cover] || covers.c1 }}
+                    >
+                      {book.customCoverUrl ? (
+                        <img src={book.customCoverUrl} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <span className="text-white font-bold text-[11px] opacity-60">{book.title?.charAt(0)}</span>
+                        </div>
+                      )}
                     </div>
-                    <h4 className="font-display font-bold text-[13px] text-ink truncate">{b.title}</h4>
-                    <p className="text-[10.5px] text-taupe truncate">
-                      {isEn ? 'by' : 'par'} {b.author}
-                    </p>
+
+                    <div className="flex-1 min-w-0">
+                      <p className="font-display font-bold text-[14px] text-ink truncate">{book.title}</p>
+                      <p className="text-[11px] text-taupe font-semibold mb-1.5">
+                        {isEn ? `Chapter ${chapter}` : `Chapitre ${chapter}`} / {totalChaps}
+                      </p>
+                      {/* Progress bar */}
+                      <div className="w-full bg-surface rounded-full h-1.5 overflow-hidden">
+                        <div
+                          className="bg-gold h-full rounded-full transition-all"
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    <span className="text-[11px] font-bold text-gold bg-gold/10 px-2.5 py-1 rounded-full border border-gold/20 flex-shrink-0">
+                      {progress}%
+                    </span>
                   </Link>
-                ))}
-              </div>
-            )}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
-      ) : (
-        /* VOCABULARY NOTEBOOK TAB WITH FAST FUNCTIONAL WORD ADDITION */
+      )}
+
+      {activeTab === 'bookmarks' && (
+        <div className="space-y-3 text-left">
+          <h2 className="font-display font-bold text-[16px]">
+            {isEn ? `Saved Novels (${bookmarkedBooks.length})` : `Romans Sauvegardés (${bookmarkedBooks.length})`}
+          </h2>
+
+          {bookmarkedBooks.length === 0 ? (
+            <div className="bg-white border border-surface-line rounded-2xl p-6 text-center space-y-2 shadow-sm">
+              <p className="text-[12px] text-taupe">
+                {isEn ? 'No novels saved in your bookmarks.' : 'Aucun roman sauvegardé dans vos favoris.'}
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-4">
+              {bookmarkedBooks.map((b) => (
+                <BookCard key={b.id} book={b} />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'vocab' && (
         <div className="space-y-5 text-left">
-          {/* Fast Add Word Form */}
           <form onSubmit={handleAddVocabSubmit} className="bg-white p-4 rounded-2xl border border-surface-line shadow-sm space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold text-gold uppercase tracking-wider block">
@@ -175,14 +274,14 @@ export default function Library() {
               <input
                 type="text"
                 required
-                placeholder={isEn ? 'English Word (e.g. Lighthouse)' : 'Mot Anglais (ex: Lighthouse)'}
+                placeholder={isEn ? 'English Word' : 'Mot Anglais'}
                 value={newEn}
                 onChange={(e) => setNewEn(e.target.value)}
                 className="px-3 py-2 rounded-xl bg-paper border border-surface-line text-[12.5px] outline-none font-semibold text-ink"
               />
               <input
                 type="text"
-                placeholder={isEn ? 'French Translation (e.g. Phare)' : 'Traduction Française (ex: Phare)'}
+                placeholder={isEn ? 'French Translation' : 'Traduction Française'}
                 value={newFr}
                 onChange={(e) => setNewFr(e.target.value)}
                 className="px-3 py-2 rounded-xl bg-paper border border-surface-line text-[12.5px] outline-none font-semibold text-ink"
@@ -198,7 +297,6 @@ export default function Library() {
             </button>
           </form>
 
-          {/* Saved Vocabulary List */}
           <div className="space-y-2.5">
             <h3 className="font-display font-bold text-[15px] text-ink">
               {isEn ? `Saved Words (${savedVocab.length})` : `Mots Enregistrés (${savedVocab.length})`}
@@ -211,7 +309,7 @@ export default function Library() {
                   {isEn ? 'Notebook is empty' : 'Votre carnet est vide'}
                 </p>
                 <p className="text-[11.5px] text-taupe">
-                  {isEn ? 'Use the form above or tap words while reading to save them!' : 'Utilisez le formulaire ci-dessus ou touchez des mots en cours de lecture pour les enregistrer !'}
+                  {isEn ? 'Tap words while reading to save them!' : 'Touchez des mots en cours de lecture pour les enregistrer !'}
                 </p>
               </div>
             ) : (
@@ -221,16 +319,12 @@ export default function Library() {
                     <span className="font-display font-bold text-[14px] text-ink capitalize block">{item.en}</span>
                     <span className="text-[12px] text-taupe font-semibold">{item.fr}</span>
                   </div>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => removeVocabWord(item.id)}
-                      className="p-2 rounded-xl bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-colors"
-                      title={isEn ? 'Remove word' : 'Supprimer le mot'}
-                    >
-                      <TrashIcon className="w-4 h-4" />
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => removeVocabWord(item.id)}
+                    className="p-2 rounded-xl bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-colors"
+                  >
+                    <TrashIcon className="w-4 h-4" />
+                  </button>
                 </div>
               ))
             )}

@@ -20,6 +20,24 @@
   </head>
   <body class="bg-paper text-ink selection:bg-gold/20 antialiased overscroll-none">
     <div id="root"></div>
+    <script>
+      (function() {
+        window.addEventListener('error', function (e) {
+          var targetSrc = (e.target && e.target.src) || '';
+          var msg = (e.message || '').toLowerCase();
+          var isModuleError = msg.indexOf('mime') !== -1 || msg.indexOf('module') !== -1 || msg.indexOf('loading chunk') !== -1;
+          var isScriptTarget = e.target && e.target.tagName === 'SCRIPT';
+          if (isModuleError || (isScriptTarget && targetSrc.indexOf('/assets/') !== -1)) {
+            var lastReload = sessionStorage.getItem('koko_reload_ts');
+            var now = Date.now();
+            if (!lastReload || (now - parseInt(lastReload, 10)) > 8000) {
+              sessionStorage.setItem('koko_reload_ts', now.toString());
+              window.location.reload(true);
+            }
+          }
+        }, true);
+      })();
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

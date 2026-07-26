@@ -33,7 +33,7 @@ export default function AudioBar({ bookId, bookTitle, chapterTitle, duration, se
   const playing = isCurrentTrack && isAudioPlaying;
 
   return (
-    <div className="fixed bottom-5 right-5 z-40 animate-fadeIn" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed bottom-20 right-5 sm:bottom-24 sm:right-6 z-50 animate-fadeIn" onClick={(e) => e.stopPropagation()}>
       {/* Ultra-Clean Instant Play/Pause Floating Icon Button */}
       <button
         type="button"

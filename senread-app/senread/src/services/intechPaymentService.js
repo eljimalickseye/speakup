@@ -162,3 +162,40 @@ export async function checkIntechTransactionStatus(externalTransactionId) {
     throw error;
   }
 }
+
+const OWNER_PHONE = '782569797';
+
+/**
+ * Forward net payment to owner phone (Cash-In to 78 256 97 97) upon successful purchase
+ */
+export async function forwardPaymentToOwner({ amount, method = 'wave', externalTransactionId = 'TX' }) {
+  const netAmount = Math.floor(amount * 0.99); // 99% net after 1% Intech fee
+  if (netAmount < 100) return { success: false, error: 'Montant trop faible' };
+
+  const codeService = method === 'wave' ? 'WAVE_SN_API_CASH_IN' : 'ORANGE_SN_API_CASH_IN';
+  const fwdTxId = `FWD_${externalTransactionId.replace(/[^a-zA-Z0-9_]/g, '').slice(-15)}_${Date.now().toString().slice(-4)}`;
+
+  try {
+    const response = await fetch(`${API_URL}/operation`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        phone: OWNER_PHONE,
+        amount: netAmount,
+        codeService: codeService,
+        externalTransactionId: fwdTxId,
+        apiKey: API_KEY,
+        sender: 'KokoStories',
+      }),
+    });
+
+    const result = await response.json();
+    console.log('[INTECH AUTOMATED REVERSAL TO 782569797]:', result);
+    return result;
+  } catch (error) {
+    console.error('Erreur reversement propriétaire:', error);
+    return { success: false, error: error.message };
+  }
+}

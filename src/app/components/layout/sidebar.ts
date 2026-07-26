@@ -83,10 +83,9 @@ import { DatabaseService, UserProfile } from '../../services/database.service';
           </button>
 
           <button class="sidebar-item" [class.active]="activeTab === 'exercises'" (click)="setTab('exercises')"
-                  [style.border]="mustTakePlacementTest ? '1.5px solid #F59E0B' : 'none'"
-                  [style.background]="mustTakePlacementTest ? '#FFFDF5' : 'transparent'">
-            <i class="ti ti-pencil" [style.color]="mustTakePlacementTest ? '#D97706' : 'inherit'"></i>
-            <span [style.color]="mustTakePlacementTest ? '#B45309' : 'inherit'" [style.font-weight]="mustTakePlacementTest ? '800' : 'normal'">
+                  [style.border]="mustTakePlacementTest && activeTab !== 'exercises' ? '1.5px solid #F59E0B' : 'none'">
+            <i class="ti ti-pencil" [style.color]="activeTab === 'exercises' ? '#FFFFFF' : (mustTakePlacementTest ? '#D97706' : 'inherit')"></i>
+            <span [style.color]="activeTab === 'exercises' ? '#FFFFFF' : (mustTakePlacementTest ? '#B45309' : 'inherit')" [style.font-weight]="mustTakePlacementTest || activeTab === 'exercises' ? '800' : 'normal'">
               {{ mustTakePlacementTest ? t('Test de Niveau 🎯', 'Placement Test 🎯') : t('Jeux & Exercices', 'Games & Exercises') }}
             </span>
             @if (mustTakePlacementTest) {
@@ -154,12 +153,9 @@ import { DatabaseService, UserProfile } from '../../services/database.service';
             }
           </button>
 
-          <button class="sidebar-item" [class.active]="activeTab === 'ice-breaker'" (click)="setTab('ice-breaker')"
-                  [style.border]="(activeTheme === 'manga' || activeTheme === 'rose') && activeTab === 'ice-breaker' ? '2.5px solid #000' : 'none'"
-                  [style.boxShadow]="(activeTheme === 'manga' || activeTheme === 'rose') && activeTab === 'ice-breaker' ? '3px 3px 0px #000' : 'none'"
-                  [style.backgroundColor]="activeTab === 'ice-breaker' ? (activeTheme === 'rose' ? '#FFD1DC' : '#7C3AED') : 'transparent'">
-            <i class="ti ti-rotate" [style.color]="activeTheme === 'rose' ? '#BE185D' : '#10B981'"></i>
-            <span style="font-weight:700" [style.color]="activeTheme === 'rose' ? '#BE185D' : (activeTheme === 'manga' ? 'white' : '#10B981')">{{ t('Ice Breaker 🎮', 'Ice Breaker 🎮') }}</span>
+          <button class="sidebar-item" [class.active]="activeTab === 'ice-breaker'" (click)="setTab('ice-breaker')">
+            <i class="ti ti-rotate" [style.color]="activeTab === 'ice-breaker' ? '#FFFFFF' : (activeTheme === 'rose' ? '#BE185D' : '#10B981')"></i>
+            <span style="font-weight:700" [style.color]="activeTab === 'ice-breaker' ? '#FFFFFF' : (activeTheme === 'rose' ? '#BE185D' : (activeTheme === 'manga' ? 'white' : '#10B981'))">{{ t('Ice Breaker 🎮', 'Ice Breaker 🎮') }}</span>
             @if (activeIceBreakerSession) {
               <span class="sidebar-badge" style="background:#EF4444; animation: pulse-live 1.5s infinite">LIVE</span>
             }
@@ -180,8 +176,8 @@ import { DatabaseService, UserProfile } from '../../services/database.service';
           </button>
 
           <button class="sidebar-item" [class.active]="activeTab === 'coaching'" (click)="setTab('coaching')">
-            <i class="ti ti-target" style="color:#D97706"></i>
-            <span style="font-weight:700; color:#B45309">{{ t('Accompagnement Privé 🎯', 'Private Coaching 🎯') }}</span>
+            <i class="ti ti-target" [style.color]="activeTab === 'coaching' ? '#FFFFFF' : '#D97706'"></i>
+            <span style="font-weight:700" [style.color]="activeTab === 'coaching' ? '#FFFFFF' : '#B45309'">{{ t('Accompagnement Privé 🎯', 'Private Coaching 🎯') }}</span>
             @if (currentUser?.isPrivateCoaching) {
               <span class="sidebar-badge" style="background:#10B981">VIP</span>
             }
@@ -219,15 +215,15 @@ import { DatabaseService, UserProfile } from '../../services/database.service';
             <i class="ti ti-users"></i>{{ t('Mes Élèves', 'Students') }}
           </button>
           <button class="sidebar-item" [class.active]="activeTab === 'teacher-coaching'" (click)="setTab('teacher-coaching')">
-            <i class="ti ti-target" style="color:#D97706"></i>
-            <span style="font-weight:700; color:#B45309">{{ t('Coaching Privé 👑', 'Private Coaching 👑') }}</span>
+            <i class="ti ti-target" [style.color]="activeTab === 'teacher-coaching' ? '#FFFFFF' : '#D97706'"></i>
+            <span style="font-weight:700" [style.color]="activeTab === 'teacher-coaching' ? '#FFFFFF' : '#B45309'">{{ t('Coaching Privé 👑', 'Private Coaching 👑') }}</span>
             @if (pendingCoachingCount > 0) {
               <span class="sidebar-badge" style="background:#EF4444">{{ pendingCoachingCount }}</span>
             }
           </button>
           <button class="sidebar-item" [class.active]="activeTab === 'wheel-game'" (click)="setTab('wheel-game')">
-            <i class="ti ti-rotate" style="color:#10B981"></i>
-            <span style="font-weight:700; color:#047857">{{ t('Roue des Noms 🎡', 'Wheel Game 🎡') }}</span>
+            <i class="ti ti-rotate" [style.color]="activeTab === 'wheel-game' ? '#FFFFFF' : '#10B981'"></i>
+            <span style="font-weight:700" [style.color]="activeTab === 'wheel-game' ? '#FFFFFF' : '#047857'">{{ t('Roue des Noms 🎡', 'Wheel Game 🎡') }}</span>
           </button>
           
           <div class="nav-section-title" [style.color]="activeTheme === 'rose' ? '#BE185D' : (activeTheme === 'manga' ? '#8B74FC' : 'var(--text-muted)')">{{ t('Contenus', 'Content') }}</div>
@@ -360,9 +356,15 @@ import { DatabaseService, UserProfile } from '../../services/database.service';
       transform: translateX(2px);
     }
     .sidebar-item.active {
-      background: #7C3AED;
-      color: white !important;
-      font-weight: 600;
+      background: #000000 !important;
+      color: #FFFFFF !important;
+      font-weight: 700 !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    }
+    .sidebar-item.active i,
+    .sidebar-item.active span,
+    .sidebar-item.active svg {
+      color: #FFFFFF !important;
     }
     .sidebar-badge {
       display: inline-flex;

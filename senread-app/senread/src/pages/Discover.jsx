@@ -4,6 +4,7 @@ import { SearchIcon, BookOpenIcon } from '../components/ui/Icons.jsx';
 import { covers } from '../lib/api.js';
 import { CoverArt } from '../components/ui/primitives.jsx';
 import { Link } from 'react-router-dom';
+import BookCard from '../components/book/BookCard.jsx';
 
 export default function Discover() {
   const { booksList, appLanguage, userProfile } = useApp();
@@ -81,38 +82,11 @@ export default function Discover() {
         ))}
       </div>
 
-      {/* Grid of Books with Safe Cover Art Fallback */}
+      {/* Grid of Books with Unified Dynamic Rating Badges */}
       <div className="grid grid-cols-2 gap-4">
-        {filtered.map((b) => {
-          const hasImageError = failedImages[b.id];
-          const isValidCustomCover = b.customCoverUrl && b.customCoverUrl.startsWith('data:') && !hasImageError;
-
-          return (
-            <Link key={b.id} to={`/book/${b.id}`} className="group block text-left">
-              <CoverArt gradient={covers[b.cover] || covers.c1} className="w-full h-[160px] shadow-sm group-hover:shadow-md transition-shadow relative overflow-hidden flex items-center justify-center">
-                {isValidCustomCover ? (
-                  <img
-                    src={b.customCoverUrl}
-                    alt={b.title}
-                    onError={() => handleImageError(b.id)}
-                    className="w-full h-full object-cover rounded-2xl"
-                  />
-                ) : (
-                  <div className="w-full px-2 py-2 text-center text-white space-y-1 flex flex-col items-center justify-center overflow-hidden">
-                    <BookOpenIcon className="w-7 h-7 mx-auto opacity-40 flex-shrink-0 mb-0.5" />
-                    <span className="font-display italic font-bold text-[10.5px] leading-tight block drop-shadow px-1 line-clamp-2 max-w-full break-words">
-                      {b.title}
-                    </span>
-                  </div>
-                )}
-              </CoverArt>
-              <p className="mt-2 text-[12px] font-bold truncate group-hover:text-gold transition-colors">{b.title}</p>
-              <p className="text-[11px] text-taupe truncate">
-                {isEn ? 'by' : 'par'} {b.author}
-              </p>
-            </Link>
-          );
-        })}
+        {filtered.map((b) => (
+          <BookCard key={b.id} book={b} />
+        ))}
 
         {filtered.length === 0 && (
           <div className="col-span-2 bg-white border border-surface-line rounded-2xl p-8 text-center space-y-2 shadow-sm">

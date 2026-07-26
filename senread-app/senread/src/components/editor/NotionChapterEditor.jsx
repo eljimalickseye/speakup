@@ -365,10 +365,10 @@ export default function NotionChapterEditor({
             <button
               type="button"
               onClick={handleAddSentencePair}
-              className="w-full py-3.5 rounded-2xl border-2 border-dashed border-gold/40 text-gold text-[13px] font-bold hover:bg-gold/10 transition-all flex items-center justify-center gap-2"
+              className="w-full py-3 rounded-2xl border-2 border-dashed border-gold/40 text-gold text-[18px] font-extrabold hover:bg-gold/10 transition-all flex items-center justify-center shadow-sm"
+              title="Ajouter une Paire de Phrase"
             >
-              <PlusIcon className="w-4.5 h-4.5" />
-              <span>{isEn ? 'Add Sentence Pair (+ EN / FR)' : 'Ajouter une Paire de Phrase (+ EN / FR)'}</span>
+              +
             </button>
           </div>
         ) : (

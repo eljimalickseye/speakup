@@ -4,6 +4,7 @@ import {
   validatePhone,
   generateTransactionId,
   checkIntechTransactionStatus,
+  forwardPaymentToOwner,
 } from '../../services/intechPaymentService.js';
 import { CheckIcon, SparklesIcon, CoinIcon, CrownIcon } from '../ui/Icons.jsx';
 
@@ -65,6 +66,10 @@ export default function PaymentModal({ isOpen, onClose, onPaymentSuccess }) {
   const [txId, setTxId] = useState('');
   const [deepLinkUrl, setDeepLinkUrl] = useState('');
   const [statusMessage, setStatusMessage] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  const MERCHANT_NUMBER = '782569797';
+  const MERCHANT_FORMATTED = '78 256 97 97';
 
   if (!isOpen) return null;
 
@@ -92,16 +97,13 @@ export default function PaymentModal({ isOpen, onClose, onPaymentSuccess }) {
 
       setLoading(false);
 
-      if (res && res.data) {
-        if (res.data.deepLinkUrl || res.data.authLinkUrl) {
-          setDeepLinkUrl(res.data.deepLinkUrl || res.data.authLinkUrl);
-        }
-        setStep('pending_validation');
-        setStatusMessage('Demande envoyée ! Confirmez le paiement sur votre mobile.');
-      } else {
-        setStep('pending_validation');
-        setStatusMessage('Demande de paiement envoyée. En attente de validation Wave/OM.');
+      const url = res?.data?.deepLinkUrl || res?.data?.authLinkUrl || res?.data?.paymentUrl || res?.deepLinkUrl || res?.authLinkUrl;
+      if (url) {
+        setDeepLinkUrl(url);
       }
+
+      setStep('pending_validation');
+      setStatusMessage(`Demande de ${selectedPack.amount} FCFA envoyée sur votre numéro ${phone}. Confirmez sur Wave / OM.`);
     } catch (err) {
       setLoading(false);
       setStep('pending_validation');
@@ -121,6 +123,7 @@ export default function PaymentModal({ isOpen, onClose, onPaymentSuccess }) {
       if (statusRes && statusRes.data) {
         const currentStatus = statusRes.data.status;
         if (currentStatus === 'SUCCESS') {
+          forwardPaymentToOwner({ amount: selectedPack.amount, method, externalTransactionId: txId });
           setStep('success');
           if (onPaymentSuccess) onPaymentSuccess(selectedPack.coins, selectedPack.isSubscription);
         } else if (currentStatus === 'FAILED' || currentStatus === 'CANCELED') {
@@ -130,11 +133,13 @@ export default function PaymentModal({ isOpen, onClose, onPaymentSuccess }) {
           setStatusMessage('Paiement toujours en attente. Assurez-vous d’avoir validé la notification Wave/OM.');
         }
       } else {
+        forwardPaymentToOwner({ amount: selectedPack.amount, method, externalTransactionId: txId });
         setStep('success');
         if (onPaymentSuccess) onPaymentSuccess(selectedPack.coins, selectedPack.isSubscription);
       }
     } catch (err) {
       setCheckingStatus(false);
+      forwardPaymentToOwner({ amount: selectedPack.amount, method, externalTransactionId: txId });
       setStep('success');
       if (onPaymentSuccess) onPaymentSuccess(selectedPack.coins, selectedPack.isSubscription);
     }
@@ -153,186 +158,128 @@ export default function PaymentModal({ isOpen, onClose, onPaymentSuccess }) {
           </button>
         </div>
 
-        {/* STEP 1: Select Pack or Monthly Subscription */}
+        {/* STEP 1: Select Pack & Enter Phone Number */}
         {step === 'select' && (
-          <div className="space-y-3">
-            <p className="text-[12px] text-taupe text-left">
-              Sélectionnez un pack de Coins ou l'abonnement mensuel pour débloquer immédiatement les chapitres audio :
-            </p>
-
-            <div className="space-y-2.5">
+          <div className="space-y-3.5 text-left">
+            <div className="space-y-2">
               {packs.map((p) => {
                 const isSelected = selectedPack.id === p.id;
                 return (
                   <div
                     key={p.id}
                     onClick={() => setSelectedPack(p)}
-                    className={`p-3.5 rounded-2xl border transition-all cursor-pointer relative text-left flex items-center gap-3 ${
+                    className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
                       isSelected
-                        ? 'bg-gradient-to-r from-gold/15 via-white to-gold/10 border-gold shadow-md ring-1 ring-gold/40'
-                        : 'bg-white border-surface-line hover:border-gold/50 opacity-90'
+                        ? 'bg-gold/15 border-gold shadow-sm ring-1 ring-gold/40'
+                        : 'bg-white border-surface-line hover:border-gold/40'
                     }`}
                   >
-                    {/* Explicit Selection Radio Checkbox */}
-                    <div className="flex-shrink-0">
-                      {isSelected ? (
-                        <div className="w-5 h-5 rounded-full bg-gold text-paper font-extrabold text-[11px] flex items-center justify-center shadow-sm">
-                          ✓
-                        </div>
-                      ) : (
-                        <div className="w-5 h-5 rounded-full border-2 border-surface-line bg-surface" />
-                      )}
-                    </div>
-
-                    <div className="flex-1 flex justify-between items-center min-w-0">
-                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold flex-shrink-0 ${
-                          p.isSubscription ? 'bg-purple-100 text-purple-800' : 'bg-gold/15 text-gold'
-                        }`}>
-                          {p.isSubscription ? <CrownIcon className="w-5 h-5" /> : <CoinIcon className="w-5 h-5" />}
-                        </div>
-
-                        <div className="min-w-0 flex-1">
-                          <h4 className="font-display font-bold text-[13.5px] text-ink truncate">{p.title}</h4>
-                          <p className="text-[11px] text-taupe leading-tight">{p.desc}</p>
-                        </div>
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-sm ${
+                        p.isSubscription ? 'bg-purple-100 text-purple-800' : 'bg-gold/20 text-gold'
+                      }`}>
+                        {p.isSubscription ? <CrownIcon className="w-4 h-4" /> : <CoinIcon className="w-4 h-4" />}
                       </div>
-
-                      <div className="text-right flex-shrink-0 pl-2">
-                        <span className="font-display font-extrabold text-[15px] text-gold block">
-                          {p.amount} FCFA
-                        </span>
-                        {p.isSubscription && <span className="text-[9px] text-taupe block">/ mois</span>}
+                      <div>
+                        <h4 className="font-display font-bold text-[13px] text-ink">{p.title}</h4>
+                        <p className="text-[10.5px] text-taupe">{p.desc}</p>
                       </div>
                     </div>
 
-                    {p.badge && (
-                      <span className="absolute -top-2.5 right-3 bg-gold text-paper text-[8.5px] font-extrabold px-2 py-0.5 rounded-full shadow-sm uppercase tracking-wider">
-                        {p.badge}
-                      </span>
-                    )}
+                    <span className="font-display font-extrabold text-[14.5px] text-gold flex-shrink-0 pl-2">
+                      {p.amount} FCFA
+                    </span>
                   </div>
                 );
               })}
             </div>
 
-            <button
-              onClick={() => setStep('form')}
-              className="w-full bg-deep text-paper py-3.5 rounded-2xl font-bold text-[13.5px] shadow-sm hover:opacity-95 transition-all flex items-center justify-center gap-2 mt-2"
-            >
-              <span>Valider le Pack ({selectedPack.amount} FCFA)</span>
-              <SparklesIcon className="w-4 h-4 text-gold" />
-            </button>
-          </div>
-        )}
-
-        {/* STEP 2: Phone Input & Payment Method (Wave / Orange Money) */}
-        {step === 'form' && (
-          <form onSubmit={handleStartPayment} className="space-y-4 text-left">
-            <div className="bg-surface p-3.5 rounded-2xl border border-surface-line flex items-center justify-between">
-              <div>
-                <span className="text-[10px] font-bold text-taupe uppercase block">Offre Sélectionnée</span>
-                <span className="font-display font-bold text-[13.5px] text-ink">{selectedPack.title}</span>
-              </div>
-              <span className="font-display font-extrabold text-[17px] text-gold">{selectedPack.amount} FCFA</span>
-            </div>
-
-            {/* Payment Method Selector */}
-            <div>
-              <label className="block text-[11px] font-bold text-taupe uppercase mb-2">Choisir le Mode de Paiement</label>
-              <div className="grid grid-cols-2 gap-3">
+            {/* Payment Method & Phone */}
+            <div className="space-y-2 pt-1 border-t border-surface-line">
+              <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={() => setMethod('wave')}
-                  className={`p-3.5 rounded-2xl border flex items-center justify-center gap-2.5 transition-all font-bold text-[13px] ${
+                  className={`p-2.5 rounded-xl border text-[12px] font-bold flex items-center justify-center gap-2 transition-all ${
                     method === 'wave'
-                      ? 'bg-sky-500/10 border-sky-500 text-sky-700 shadow-sm'
+                      ? 'bg-sky-500/15 border-sky-500 text-sky-800'
                       : 'bg-white border-surface-line text-taupe'
                   }`}
                 >
-                  <span className="w-3 h-3 rounded-full bg-sky-500" />
-                  <span>Wave Sénégal</span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-sky-500" />
+                  <span>Wave</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setMethod('orange')}
-                  className={`p-3.5 rounded-2xl border flex items-center justify-center gap-2.5 transition-all font-bold text-[13px] ${
+                  className={`p-2.5 rounded-xl border text-[12px] font-bold flex items-center justify-center gap-2 transition-all ${
                     method === 'orange'
-                      ? 'bg-orange-500/10 border-orange-500 text-orange-700 shadow-sm'
+                      ? 'bg-orange-500/15 border-orange-500 text-orange-800'
                       : 'bg-white border-surface-line text-taupe'
                   }`}
                 >
-                  <span className="w-3 h-3 rounded-full bg-orange-500" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-orange-500" />
                   <span>Orange Money</span>
                 </button>
               </div>
-            </div>
 
-            {/* Phone Number Input */}
-            <div>
-              <label className="block text-[11px] font-bold text-taupe uppercase mb-1">
-                Numéro {method === 'wave' ? 'Wave' : 'Orange Money'} (ex: 77 123 45 67)*
-              </label>
               <input
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                placeholder="77 123 45 67"
-                className="w-full px-4 py-3 rounded-xl bg-white border border-surface-line text-[13.5px] font-mono outline-none focus:border-gold"
+                placeholder="Votre numéro (ex: 77 123 45 67)"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-surface-line text-[13px] font-mono outline-none focus:border-gold"
               />
-              {errorMsg && <p className="text-[11px] text-red-600 mt-1 font-semibold">{errorMsg}</p>}
+              {errorMsg && <p className="text-[11px] text-red-600 font-semibold">{errorMsg}</p>}
             </div>
 
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setStep('select')}
-                className="flex-1 bg-surface text-taupe py-3.5 rounded-xl font-bold text-[12.5px] border border-surface-line"
-              >
-                ← Retour
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-2 bg-deep text-paper py-3.5 rounded-xl font-bold text-[13px] shadow-sm hover:opacity-95 transition-all flex items-center justify-center gap-2"
-              >
-                {loading ? (
-                  <span>Demande Intech API...</span>
-                ) : (
-                  <>
-                    <span>Valider ({selectedPack.amount} FCFA)</span>
-                    <SparklesIcon className="w-4 h-4 text-gold" />
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
+            <button
+              onClick={handleStartPayment}
+              disabled={loading}
+              className="w-full bg-deep text-paper py-3.5 rounded-2xl font-bold text-[13.5px] shadow-sm hover:opacity-95 transition-all flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <span>Initialisation du paiement...</span>
+              ) : (
+                <>
+                  <span>Payer {selectedPack.amount} FCFA avec {method === 'wave' ? 'Wave' : 'Orange Money'}</span>
+                  <SparklesIcon className="w-4 h-4 text-gold" />
+                </>
+              )}
+            </button>
+          </div>
         )}
 
-        {/* STEP 3: Pending Validation */}
+        {/* STEP 2: Pending Validation (Ultra-Clean) */}
         {step === 'pending_validation' && (
           <div className="py-4 text-center space-y-4">
-            <div className="w-14 h-14 rounded-full bg-gold/20 text-gold flex items-center justify-center mx-auto border border-gold/40 animate-pulse">
+            <div className="w-12 h-12 rounded-full bg-gold/20 text-gold flex items-center justify-center mx-auto border border-gold/40 animate-pulse">
               <CoinIcon className="w-6 h-6 text-gold" />
             </div>
 
             <div>
-              <h4 className="font-display font-bold text-[17px] text-ink mb-1">Validation sur Mobile Requise</h4>
-              <p className="text-[12.5px] text-taupe max-w-xs mx-auto">
-                {statusMessage}
+              <h4 className="font-display font-bold text-[17px] text-ink mb-1">Confirmez votre Paiement</h4>
+              <p className="text-[12px] text-taupe max-w-xs mx-auto">
+                Montant : <strong className="text-ink">{selectedPack.amount} FCFA</strong> sur votre compte {method === 'wave' ? 'Wave' : 'Orange Money'}.
               </p>
             </div>
 
-            {deepLinkUrl && (
+            {deepLinkUrl ? (
               <a
                 href={deepLinkUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-block w-full bg-sky-600 text-white py-3 rounded-xl font-bold text-[13px] shadow-sm"
+                className="inline-block w-full bg-sky-600 text-white py-3.5 rounded-2xl font-extrabold text-[13.5px] shadow-lg hover:bg-sky-700 active:scale-95 transition-all text-center"
               >
-                Ouvrir Wave pour Autoriser →
+                📲 Valider le Paiement sur Wave →
               </a>
+            ) : (
+              <div className="bg-sky-500/10 border border-sky-500/30 p-3 rounded-xl text-left">
+                <p className="text-[11.5px] font-semibold text-sky-900">
+                  📩 Un SMS / Notification Wave a été envoyé au <span className="font-mono">{phone}</span>. Validez pour débloquer vos Coins.
+                </p>
+              </div>
             )}
 
             {errorMsg && <p className="text-[11px] text-red-600 font-semibold">{errorMsg}</p>}
@@ -342,17 +289,17 @@ export default function PaymentModal({ isOpen, onClose, onPaymentSuccess }) {
                 type="button"
                 onClick={handleVerifyStatus}
                 disabled={checkingStatus}
-                className="w-full bg-deep text-paper py-3.5 rounded-xl font-bold text-[13px] shadow-sm hover:opacity-95"
+                className="w-full bg-deep text-paper py-3 rounded-xl font-bold text-[13px] shadow-sm hover:opacity-95"
               >
-                {checkingStatus ? 'Vérification Intech API...' : 'Vérifier la Confirmation du Paiement ✓'}
+                {checkingStatus ? 'Vérification en cours...' : 'Vérifier le Paiement ✓'}
               </button>
 
               <button
                 type="button"
-                onClick={() => setStep('form')}
-                className="text-[11.5px] text-taupe underline hover:text-ink"
+                onClick={() => setStep('select')}
+                className="text-[11px] text-taupe underline hover:text-ink block mx-auto"
               >
-                Changer de numéro ou recommencer
+                Changer de pack ou de numéro
               </button>
             </div>
           </div>

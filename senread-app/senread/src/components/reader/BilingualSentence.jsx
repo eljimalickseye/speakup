@@ -22,13 +22,12 @@ export default function BilingualSentence({ en, fr, vocabWord, vocabFr, isLight 
       <p className={`font-reading text-[16px] leading-relaxed ${mainTextColor}`}>
         {words.map((w, i) => {
           if (/^\s+$/.test(w)) return <span key={i}>{w}</span>;
-          const isHighlight = vocabWord && w.toLowerCase().includes(vocabWord.toLowerCase());
           return (
             <span
               key={i}
               onClick={() => setActiveWord(activeWord === i ? null : i)}
               className={`cursor-pointer rounded px-0.5 transition-colors ${
-                isHighlight ? highlightBg : activeWord === i ? (isLight ? 'bg-amber-100' : 'bg-gold-soft/25') : ''
+                activeWord === i ? (isLight ? 'bg-amber-200/80 font-medium text-amber-950' : 'bg-gold/30 font-medium text-gold-soft') : ''
               }`}
             >
               {w}
@@ -36,13 +35,6 @@ export default function BilingualSentence({ en, fr, vocabWord, vocabFr, isLight 
           );
         })}
       </p>
-      
-      {vocabWord && vocabFr && (
-        <div className={`mt-1.5 mb-1 text-[11px] font-sans flex items-center gap-1.5 ${isLight ? 'text-amber-900 font-medium' : 'text-gold-soft/90'}`}>
-          <span className={`font-bold uppercase tracking-wider text-[9px] px-1.5 py-0.5 rounded border ${vocabTagBg}`}>Vocab</span>
-          <span><strong>{vocabWord}</strong> = {vocabFr}</span>
-        </div>
-      )}
 
       <p className={`font-reading italic text-[13.5px] leading-snug ${frenchTextColor} mt-1.5 pl-3.5 border-l ${borderLineColor}`}>
         {fr}

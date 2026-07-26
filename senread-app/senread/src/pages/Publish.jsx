@@ -350,7 +350,7 @@ export default function Publish() {
         <form className="space-y-4 text-left">
           {/* Live Cover Preview & Custom Image Upload */}
           <div className="bg-white border border-surface-line rounded-2xl p-4 flex items-center gap-4 shadow-sm">
-            <CoverArt gradient={covers[selectedCover]} className="w-20 h-28 flex-shrink-0 relative overflow-hidden">
+            <CoverArt gradient={covers[selectedCover]} className="w-20 h-28 flex-shrink-0 relative overflow-hidden flex items-center justify-center p-1">
               {customCoverUrl ? (
                 <img
                   src={customCoverUrl}
@@ -359,16 +359,16 @@ export default function Publish() {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <span className="font-display italic text-[10px] p-1 text-center leading-tight block">
+                <span className="font-display italic font-bold text-[9.5px] p-1 text-center leading-tight block line-clamp-4 max-w-full break-words overflow-hidden drop-shadow">
                   {title || 'Titre du Roman'}
                 </span>
               )}
             </CoverArt>
 
-            <div className="space-y-1 text-left flex-1">
+            <div className="space-y-1 text-left flex-1 min-w-0 overflow-hidden">
               <span className="text-[10px] font-bold text-gold uppercase tracking-wider block">Aperçu Couverture</span>
-              <h3 className="font-display font-bold text-[14px] leading-tight text-ink">{title || 'Titre de votre Roman'}</h3>
-              <p className="text-[11px] text-taupe">par {author || 'Votre Nom d’Auteur'}</p>
+              <h3 className="font-display font-bold text-[14px] leading-tight text-ink break-words line-clamp-2">{title || 'Titre de votre Roman'}</h3>
+              <p className="text-[11px] text-taupe truncate">par {author || 'Votre Nom d’Auteur'}</p>
 
               {/* Upload Custom Image Button */}
               <div className="pt-1">
@@ -516,9 +516,10 @@ export default function Publish() {
             <button
               type="button"
               onClick={handleAddChapter}
-              className="px-3 py-2 rounded-xl text-[12px] font-bold bg-white border border-dashed border-gold text-gold hover:bg-gold/10"
+              className="w-9 h-9 rounded-xl bg-white border border-dashed border-gold text-gold hover:bg-gold/10 flex items-center justify-center font-extrabold text-[18px] flex-shrink-0 shadow-sm transition-all"
+              title="Ajouter un Chapitre"
             >
-              + Nouveau Chapitre
+              +
             </button>
           </div>
 
@@ -665,7 +666,7 @@ export default function Publish() {
             <span className="text-[10.5px] font-bold text-gold uppercase tracking-wider block">Récapitulatif Global</span>
             
             <div className="space-y-1">
-              <h3 className="font-display font-bold text-[16px]">{title || 'Sans titre'}</h3>
+              <h3 className="font-display font-bold text-[16px] break-words line-clamp-2">{title || 'Sans titre'}</h3>
               <p className="text-[12px] text-taupe">par {author || 'Auteur Koko'} · {chapters.length} Chapitres</p>
               <div className="flex gap-2 text-[10px] font-bold pt-1">
                 <span className="bg-gold/15 text-gold px-2.5 py-0.5 rounded-full">{genre}</span>

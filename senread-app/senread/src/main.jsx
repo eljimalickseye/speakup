@@ -37,7 +37,15 @@ if (typeof window !== 'undefined') {
   });
 }
 
-createRoot(document.getElementById('root')).render(
+let rootElement = document.getElementById('root');
+if (!rootElement) {
+  rootElement = document.createElement('div');
+  rootElement.id = 'root';
+  document.body.appendChild(rootElement);
+}
+
+const root = createRoot(rootElement);
+root.render(
   <StrictMode>
     <AppProvider>
       <App />

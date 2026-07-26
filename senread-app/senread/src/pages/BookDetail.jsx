@@ -218,15 +218,18 @@ export default function BookDetail() {
         ) : (
           <BookOpenIcon className="w-12 h-12 opacity-25 text-white" />
         )}
-        <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-md text-white text-[11px] font-extrabold px-3 py-1 rounded-full flex items-center gap-1 border border-white/20 shadow-md">
-          <StarIcon className="w-3.5 h-3.5 text-gold fill-gold" />
-          <span>{dynamicRating} / 5.0</span>
-        </div>
+        {/* Dynamic High-Contrast Gold Glow Badge - Hidden if unrated */}
+        {reviews.length > 0 && dynamicRating && Number(dynamicRating) > 0 && (
+          <div className="absolute top-3 right-3 bg-black/85 backdrop-blur-md text-white text-[11.5px] font-black px-3 py-1 rounded-full flex items-center gap-1.5 border border-[#FFD700]/70 shadow-xl">
+            <StarIcon className="w-4 h-4 text-[#FFD700] fill-[#FFD700] drop-shadow-[0_0_6px_rgba(255,215,0,0.9)]" />
+            <span className="text-white font-extrabold">{dynamicRating} / 5.0</span>
+          </div>
+        )}
       </CoverArt>
 
       {/* Title & Author */}
-      <h1 className="font-display italic font-medium text-[24px] mt-5 mb-0.5 text-left">{book.title}</h1>
-      <p className="text-[13px] text-taupe mb-4 text-left">
+      <h1 className="font-display italic font-medium text-[24px] mt-5 mb-0.5 text-left break-words max-w-full overflow-hidden">{book.title}</h1>
+      <p className="text-[13px] text-taupe mb-4 text-left truncate">
         {isEn ? 'by' : 'par'} {book.author}
       </p>
 
@@ -263,9 +266,9 @@ export default function BookDetail() {
               title={`Give ${star} stars`}
             >
               <StarIcon
-                className={`w-6 h-6 transition-colors ${
+                className={`w-6.5 h-6.5 transition-all ${
                   star <= (hoverRating || userRating || 0)
-                    ? 'fill-gold text-gold drop-shadow-sm'
+                    ? 'text-[#FFD700] fill-[#FFD700] drop-shadow-[0_0_6px_rgba(255,215,0,0.9)]'
                     : 'text-taupe/30 fill-transparent'
                 }`}
               />
@@ -341,14 +344,75 @@ export default function BookDetail() {
       {/* Read Book Main CTA */}
       <Link
         to={`/book/${book.id}/read/1`}
-        className="flex items-center justify-center gap-2 bg-deep text-paper hover:bg-deep-2 transition-all rounded-2xl py-4 font-bold text-[14px] shadow-lg active:scale-95 mb-6"
+        className="flex items-center justify-center gap-2 bg-deep text-paper hover:bg-deep-2 transition-all rounded-2xl py-4 font-bold text-[14px] shadow-lg active:scale-95 mb-4"
       >
         <PlayIcon className="w-4 h-4 text-gold fill-gold" />
         <span>{isEn ? 'Start Reading (Chapter 1)' : 'Commencer la Lecture (Chapitre 1)'}</span>
       </Link>
 
+      {/* CHAPTER LIST — with reading progress */}
+      {book.chaptersData && book.chaptersData.length > 0 && (() => {
+        const allProgress = JSON.parse(localStorage.getItem('koko_reading_progress') || '{}');
+        const bookProgress = allProgress[book.id];
+        const lastReadChapter = bookProgress?.chapter || 0;
+        const totalChapters = book.chaptersData.length;
+
+        return (
+          <div className="bg-white border border-surface-line rounded-2xl shadow-sm mb-5 overflow-hidden text-left">
+            <div className="px-4 py-3 border-b border-surface-line flex items-center justify-between">
+              <h3 className="font-display font-bold text-[15px] text-ink">
+                {isEn ? `Chapters (${totalChapters})` : `Chapitres (${totalChapters})`}
+              </h3>
+              {lastReadChapter > 0 && (
+                <span className="text-[10.5px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                  {Math.round(((lastReadChapter - 1) / totalChapters) * 100)}% {isEn ? 'completed' : 'complété'}
+                </span>
+              )}
+            </div>
+            <div className="divide-y divide-surface-line/60">
+              {book.chaptersData.map((chap, i) => {
+                const chapNum = i + 1;
+                const isRead = chapNum < lastReadChapter;
+                const isCurrent = chapNum === lastReadChapter;
+                return (
+                  <Link
+                    key={chapNum}
+                    to={`/book/${book.id}/read/${chapNum}`}
+                    className={`flex items-center gap-3 px-4 py-3 hover:bg-paper transition-colors ${isCurrent ? 'bg-gold/5' : ''}`}
+                  >
+                    {/* Chapter status dot */}
+                    <div className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center text-[11px] font-extrabold border
+                      ${isRead ? 'bg-emerald-500 border-emerald-500 text-white' :
+                        isCurrent ? 'bg-gold border-gold text-deep' :
+                        'bg-paper border-surface-line text-taupe'}`}>
+                      {isRead ? '✓' : chapNum}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-[13px] font-bold truncate ${isCurrent ? 'text-gold' : 'text-ink'}`}>
+                        {chap.title || `${isEn ? 'Chapter' : 'Chapitre'} ${chapNum}`}
+                      </p>
+                      {isCurrent && (
+                        <p className="text-[10px] text-gold font-bold">
+                          ▶ {isEn ? 'Continue reading' : 'Reprendre la lecture'}
+                        </p>
+                      )}
+                    </div>
+
+                    <span className="text-[11px] font-mono text-taupe flex-shrink-0">
+                      {chap.audioDuration || '—'}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Description */}
-      <p className="text-[13px] leading-relaxed text-[#4A4438] mb-6 text-left">{book.description}</p>
+      <p className="text-[13px] leading-relaxed text-ink opacity-90 mb-6 text-left">{book.description}</p>
+
 
       {/* PURIFIED ACTION NAVIGATION (MODAL AVIS vs REDIRECTION FORUM DÉDIÉ) */}
       <div className="grid grid-cols-2 gap-3 mb-6">

@@ -14,7 +14,7 @@ export function IconButton({ children, active = false, className = '', ...rest }
 
 export function Tag({ children }) {
   return (
-    <span className="text-[10.5px] font-semibold px-2.5 py-1 rounded-full bg-surface text-[#57503f]">
+    <span className="text-[10.5px] font-semibold px-2.5 py-1 rounded-full bg-surface text-ink border border-surface-line font-mono uppercase tracking-wider">
       {children}
     </span>
   );
@@ -43,7 +43,7 @@ export function Ring({ value, size = 30 }) {
       }}
     >
       <div
-        className="rounded-full bg-white flex items-center justify-center text-[8px] font-bold text-taupe"
+        className="rounded-full bg-paper flex items-center justify-center text-[8px] font-bold text-taupe"
         style={{ width: size - 8, height: size - 8 }}
       >
         {pct}%

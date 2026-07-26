@@ -102,7 +102,7 @@ export default function Home() {
 
             <div className="space-y-2 flex-1 min-w-0">
               <div>
-                <h3 className="font-display italic font-bold text-[16px] text-ink truncate leading-tight group-hover:text-gold transition-colors">
+                <h3 className="font-display italic font-bold text-[16px] text-ink break-words line-clamp-2 leading-tight group-hover:text-gold transition-colors max-w-full overflow-hidden">
                   {inProgressItem.title}
                 </h3>
                 <span className="text-[11.5px] text-taupe block">
@@ -125,97 +125,6 @@ export default function Home() {
                 <span>{isEn ? 'Resume' : 'Reprendre'}</span>
               </div>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* FOR YOU ("POUR VOUS") - Compact Horizontal Carousel */}
-      {booksList.length > 0 && (
-        <div className="space-y-2 text-left">
-          <span className="text-[10.5px] font-extrabold uppercase tracking-widest text-taupe block">
-            {isEn ? 'For You' : 'Pour Vous'}
-          </span>
-
-          <div className="flex gap-2.5 overflow-x-auto no-scrollbar pb-1 pt-0.5">
-            {booksList.map((b) => (
-              <Link
-                key={b.id}
-                to={`/book/${b.id}`}
-                className="flex-shrink-0 w-28 group block text-left"
-              >
-                <CoverArt
-                  gradient={covers[b.cover] || covers.c1}
-                  className="w-28 h-36 shadow-sm group-hover:shadow-md group-hover:scale-102 transition-all relative overflow-hidden flex items-center justify-center text-paper rounded-xl"
-                >
-                  {b.customCoverUrl && !imgErrors[b.id] ? (
-                    <img
-                      src={b.customCoverUrl}
-                      alt={b.title}
-                      onError={() => handleImgError(b.id)}
-                      className="w-full h-full object-cover rounded-xl"
-                    />
-                  ) : (
-                    <div className="w-full px-1.5 py-1 text-center flex flex-col items-center justify-center overflow-hidden">
-                      <BookOpenIcon className="w-5 h-5 mx-auto opacity-30 mb-0.5 flex-shrink-0" />
-                      <span className="font-display italic font-bold text-[9.5px] leading-tight block line-clamp-2 max-w-full break-words">
-                        {b.title}
-                      </span>
-                    </div>
-                  )}
-                </CoverArt>
-                <p className="mt-1.5 text-[11px] font-bold text-ink truncate leading-tight group-hover:text-gold transition-colors">
-                  {b.title}
-                </p>
-                <p className="text-[10px] text-taupe truncate">
-                  {isEn ? 'by' : 'par'} {b.author}
-                </p>
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* TRENDING THIS WEEK ("TENDANCES DE LA SEMAINE") - Minimalist Cards */}
-      {booksList.length > 0 && (
-        <div className="space-y-2 text-left">
-          <span className="text-[10.5px] font-extrabold uppercase tracking-widest text-taupe block">
-            {isEn ? 'Trending This Week' : 'Tendances de la Semaine'}
-          </span>
-
-          <div className="flex gap-2.5 overflow-x-auto no-scrollbar pb-1">
-            {booksList.slice(0, 5).map((b) => (
-              <Link
-                key={b.id}
-                to={`/book/${b.id}`}
-                className="flex-shrink-0 w-36 p-2.5 rounded-xl bg-white border border-surface-line shadow-sm hover:border-gold hover:shadow-md transition-all block text-left group"
-              >
-                <CoverArt
-                  gradient={covers[b.cover] || covers.c1}
-                  className="w-full h-20 shadow-sm relative overflow-hidden flex items-center justify-center text-paper mb-1.5 rounded-lg group-hover:scale-102 transition-transform"
-                >
-                  {b.customCoverUrl && !imgErrors[b.id] ? (
-                    <img
-                      src={b.customCoverUrl}
-                      alt={b.title}
-                      onError={() => handleImgError(b.id)}
-                      className="w-full h-full object-cover rounded-lg"
-                    />
-                  ) : (
-                    <div className="w-full px-1.5 py-1 text-center flex flex-col items-center justify-center overflow-hidden">
-                      <span className="font-display italic font-bold text-[9.5px] leading-tight line-clamp-2 max-w-full break-words block">
-                        {b.title}
-                      </span>
-                    </div>
-                  )}
-                </CoverArt>
-
-                <p className="text-[11px] font-bold text-ink truncate group-hover:text-gold transition-colors">{b.title}</p>
-                <span className="text-[9px] text-gold font-extrabold uppercase tracking-wider flex items-center gap-1 mt-0.5">
-                  <StarIcon className="w-2.5 h-2.5 text-gold fill-gold" />
-                  <span>{isEn ? 'Recommended' : 'Recommandé'}</span>
-                </span>
-              </Link>
-            ))}
           </div>
         </div>
       )}

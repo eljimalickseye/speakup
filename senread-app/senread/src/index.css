@@ -60,12 +60,38 @@ html.dark .bg-paper {
   border-color: #2D2D2D !important;
 }
 
+html.dark .bg-surface {
+  background-color: #262626 !important;
+  color: #F0F0F0 !important;
+  border-color: #333333 !important;
+}
+
 html.dark .text-ink {
   color: #F0F0F0 !important;
 }
 
+html.dark .text-taupe {
+  color: #B0B0B0 !important;
+}
+
 html.dark .border-surface-line {
   border-color: #2D2D2D !important;
+}
+
+/* Ensure no text remains dark brown/black in dark mode */
+html.dark p,
+html.dark span,
+html.dark h1,
+html.dark h2,
+html.dark h3,
+html.dark h4,
+html.dark h5,
+html.dark h6,
+html.dark label,
+html.dark input,
+html.dark select,
+html.dark textarea {
+  color: inherit;
 }
 
 /* Hide scrollbars on horizontal rails, keep them scrollable */

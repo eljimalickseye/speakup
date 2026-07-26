@@ -1,11 +1,20 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useApp } from '../../context/AppContext.jsx';
 import { covers } from '../../lib/api.js';
 import { CoverArt } from '../ui/primitives.jsx';
 import { StarIcon, BookOpenIcon } from '../ui/Icons.jsx';
 
 export default function BookCard({ book }) {
+  const { bookReviews } = useApp();
   const [imgError, setImgError] = useState(false);
+
+  // Compute dynamic live rating score strictly from actual reader reviews
+  const reviews = bookReviews?.[book.id] || [];
+  const hasReviews = reviews.length > 0;
+  const computedRating = hasReviews
+    ? (reviews.reduce((acc, r) => acc + (r.rating || 0), 0) / reviews.length).toFixed(1)
+    : null;
 
   const isValidCustomCover = book.customCoverUrl && book.customCoverUrl.startsWith('data:') && !imgError;
 
@@ -14,8 +23,8 @@ export default function BookCard({ book }) {
       to={`/book/${book.id}`}
       className="flex-shrink-0 w-full focus-visible:outline-offset-4 block group text-left"
     >
-      <div className="relative">
-        <CoverArt gradient={covers[book.cover] || covers.c1} className="w-full h-[135px] relative overflow-hidden flex items-center justify-center">
+      <div className="relative overflow-hidden rounded-2xl shadow-sm border border-surface-line/50">
+        <CoverArt gradient={covers[book.cover] || covers.c1} className="w-full aspect-[2/3] h-[175px] relative overflow-hidden flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
           {isValidCustomCover ? (
             <img
               src={book.customCoverUrl}
@@ -33,11 +42,13 @@ export default function BookCard({ book }) {
           )}
         </CoverArt>
 
-        {/* Rating Score Badge */}
-        <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-md text-white text-[9.5px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5 border border-white/20 shadow-sm">
-          <StarIcon className="w-2.5 h-2.5 text-gold fill-gold" />
-          <span>{book.rating || 5.0}</span>
-        </div>
+        {/* Dynamic High-Contrast Gold Glow Rating Badge - Hidden if unrated / 0.0 */}
+        {hasReviews && computedRating && computedRating !== '0.0' && (
+          <div className="absolute top-2 right-2 bg-black/85 backdrop-blur-md text-white text-[10.5px] font-black px-2 py-0.5 rounded-full flex items-center gap-1 border border-[#FFD700]/70 shadow-lg group-hover:scale-110 group-hover:border-[#FFD700] group-hover:shadow-[0_0_12px_rgba(255,215,0,0.7)] transition-all duration-300">
+            <StarIcon className="w-3.5 h-3.5 text-[#FFD700] fill-[#FFD700] drop-shadow-[0_0_5px_rgba(255,215,0,0.9)]" />
+            <span className="text-white font-extrabold tracking-tight drop-shadow">{computedRating}</span>
+          </div>
+        )}
       </div>
 
       <p className="mt-1.5 text-[11px] text-ink font-semibold truncate leading-tight group-hover:text-gold transition-colors">

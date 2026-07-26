@@ -8,7 +8,7 @@ export const books = [
     customCoverUrl: '',
     genres: ['Fiction Littéraire', 'Mystère & Histoire'],
     level: 'B1 · Anglais Intermédiaire',
-    rating: 4.9,
+    rating: 0,
     chapterCount: 3,
     readingTime: '1h 45m',
     description: 'Une aventure bilingue captivante à travers les ruelles coloniales et les légendes oubliées de l\'île de Gorée. Suivez le destin d\'Aïda à la recherche d\'un mystérieux carnet de correspondance laissé au siècle dernier.',

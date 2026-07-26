@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext.jsx';
 import { IconButton, CoverArt } from '../components/ui/primitives.jsx';
@@ -14,6 +14,9 @@ import {
   BookOpenIcon,
   FullscreenIcon,
   MinimizeIcon,
+  HeartIcon,
+  MessageSquareIcon,
+  StarIcon,
 } from '../components/ui/Icons.jsx';
 import BilingualSentence from '../components/reader/BilingualSentence.jsx';
 import AudioBar from '../components/reader/AudioBar.jsx';
@@ -35,6 +38,9 @@ export default function Reader() {
     isChapterUnlocked,
     unlockChapterWithCoins,
     recordReadingSession,
+    bookReactions,
+    toggleBookReaction,
+    bookReviews,
   } = useApp();
 
   const chapterNum = Number(chapter) || 1;
@@ -61,30 +67,110 @@ export default function Reader() {
   const [selectedOption, setSelectedOption] = useState(null);
   const [quizSubmitted, setQuizSubmitted] = useState(false);
 
-  // Modals & Immersive Mode State
+  // Modals & Reader Interaction State
   const [showPreferences, setShowPreferences] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showQuizModal, setShowQuizModal] = useState(false);
+  const [showCommentsModal, setShowCommentsModal] = useState(false);
   const [selectedWord, setSelectedWord] = useState(null);
-  const [isImmersive, setIsImmersive] = useState(false); // Fullscreen Immersive Mode Toggle
-  const [showHudControls, setShowHudControls] = useState(false); // Default to FALSE for zero clutter!
+  const [isImmersive, setIsImmersive] = useState(false);
+  const [showHudControls, setShowHudControls] = useState(false);
+  const [showDock, setShowDock] = useState(false); // Tap canvas to toggle floating interaction dock
 
   const [readingPrefs, setReadingPrefs] = useState({
-    theme: 'cream', // E-Reader style default
+    theme: 'cream',
     bg: '#FAF8F5',
     text: '#1A1816',
     font: "'Newsreader', serif",
     fontSize: 16,
     lineHeight: 1.6,
-    mode: 'flip', // Mode Feuilleter default
+    mode: 'scroll', // Classic Natural Vertical Scroll Default
   });
 
   // Page Flip Index (Page 0 = Real Book Cover, Page 1+ = Chapter Content Pages)
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
 
+  const allChapters = bookData?.chaptersData && bookData.chaptersData.length > 0
+    ? bookData.chaptersData
+    : [chapterData];
+
+  const [activeChapterNum, setActiveChapterNum] = useState(chapterNum);
+  const scrollContainerRef = useRef(null);
+
+  // Sync active chapter on URL route change
+  useEffect(() => {
+    setActiveChapterNum(chapterNum);
+  }, [chapterNum]);
+
+  // Track active chapter in view during continuous scroll
+  useEffect(() => {
+    if (readingPrefs.mode !== 'scroll') return;
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const chapterBlocks = container.querySelectorAll('[data-chapter-num]');
+    if (!chapterBlocks || chapterBlocks.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && entry.intersectionRatio >= 0.25) {
+            const num = Number(entry.target.getAttribute('data-chapter-num'));
+            if (num && num !== activeChapterNum) {
+              setActiveChapterNum(num);
+              // Save reading progress dynamically as user scrolls through chapters
+              if (id && num) {
+                const totalChapters = allChapters.length;
+                const progress = Math.round(((num - 1) / totalChapters) * 100);
+                const progressData = {
+                  bookId: id,
+                  chapter: num,
+                  progress,
+                  lastRead: new Date().toISOString(),
+                };
+                const allProgress = JSON.parse(localStorage.getItem('koko_reading_progress') || '{}');
+                allProgress[id] = progressData;
+                localStorage.setItem('koko_reading_progress', JSON.stringify(allProgress));
+                localStorage.setItem('koko_last_book', JSON.stringify(progressData));
+              }
+            }
+          }
+        });
+      },
+      { root: container, threshold: [0.25, 0.5] }
+    );
+
+    chapterBlocks.forEach((block) => observer.observe(block));
+    return () => observer.disconnect();
+  }, [id, allChapters.length, readingPrefs.mode, activeChapterNum]);
+
   useEffect(() => {
     recordReadingSession();
+    window.scrollTo({ top: 0, behavior: 'instant' });
+
+    if (scrollContainerRef.current) {
+      if (chapterNum > 1) {
+        setTimeout(() => {
+          const targetEl = document.getElementById(`chap-block-${chapterNum}`);
+          if (targetEl) {
+            targetEl.scrollIntoView({ behavior: 'instant', block: 'start' });
+          }
+        }, 50);
+      } else {
+        scrollContainerRef.current.scrollTop = 0;
+      }
+    }
   }, [id, chapterNum]);
+
+  // Loading Failsafe for Chapter Transitions
+  if (!bookData && booksList.length === 0) {
+    return (
+      <div className="px-5 pt-24 pb-12 text-center flex flex-col items-center justify-center space-y-4 animate-fadeIn">
+        <div className="w-12 h-12 rounded-full border-3 border-gold border-t-transparent animate-spin mx-auto" />
+        <p className="font-display font-bold text-[15px] text-ink">Chargement du Chapitre {chapterNum}...</p>
+      </div>
+    );
+  }
 
   // Protected Reader Check for Unapproved Pending Users
   if (isLoggedIn && userProfile.accessStatus === 'PENDING') {
@@ -241,37 +327,44 @@ export default function Reader() {
     setTouchEndX(null);
   };
 
-  // Ultra-Immersive Tap to Turn Page Handler
+  // Tap handler to toggle top and bottom HUD controls on/off
   const handlePageTap = (e) => {
-    if (!isImmersive && readingPrefs.mode !== 'flip') return;
-    
-    if (showHudControls) {
-      setShowHudControls(false);
+    if (e.target && (e.target.closest('button') || e.target.closest('input') || e.target.closest('a'))) {
       return;
     }
 
-    const width = window.innerWidth;
-    const clickX = e.clientX;
-    const ratio = clickX / width;
+    if (readingPrefs.mode === 'flip') {
+      const width = window.innerWidth;
+      const clickX = e.clientX;
+      const ratio = clickX / width;
 
-    if (ratio < 0.38) {
-      turnPage('prev');
-    } else if (ratio > 0.62) {
-      turnPage('next');
+      if (ratio < 0.35) {
+        turnPage('prev');
+      } else if (ratio > 0.65) {
+        turnPage('next');
+      } else {
+        setShowHudControls((prev) => !prev);
+      }
     } else {
-      setShowHudControls(true);
+      // In scroll mode: tap anywhere on text/screen toggles top & bottom bars!
+      setShowHudControls((prev) => !prev);
     }
   };
 
+  const showTopBar = showHudControls;
+
   return (
     <div
-      className="fixed inset-0 h-screen w-screen overflow-hidden flex flex-col justify-between p-3 sm:p-5 select-none transition-colors duration-300"
+      className="fixed inset-0 h-screen w-screen overflow-hidden flex flex-col justify-between select-none transition-colors duration-300"
       style={{ backgroundColor: readingPrefs.bg, color: readingPrefs.text }}
       onClick={handlePageTap}
     >
-      {/* Top Header Controls Bar (Hidden in Immersive mode unless HUD toggled) */}
-      {(!isImmersive || showHudControls) && (
-        <div className="flex justify-between items-center mb-2 animate-fadeIn flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+      {/* Top Header — hidden by default in scroll mode, reveals on tap */}
+      {showTopBar && (
+        <div
+          className="flex justify-between items-center px-3 pt-3 pb-2 animate-fadeIn flex-shrink-0 z-20"
+          onClick={(e) => e.stopPropagation()}
+        >
           <IconButton
             className={isLight ? 'bg-black/8 text-[#1A1816]' : 'bg-white/10 text-[#F3F7F5]'}
             onClick={() => navigate(-1)}
@@ -282,71 +375,35 @@ export default function Reader() {
 
           <div className="text-center truncate px-2 flex-1">
             <span className="text-[11px] font-bold opacity-70 truncate block">{bookData?.title || 'Roman Koko'}</span>
+            <span className="text-[10px] text-taupe opacity-60">Chapitre {chapterNum}</span>
           </div>
 
           <div className="flex gap-1.5 items-center">
-            {/* QUIZ BUTTON IN HEADER */}
             {quiz && (
               <button
                 type="button"
-                title="Quiz du Chapitre (+5 Coins)"
-                onClick={() => {
-                  setSelectedOption(null);
-                  setQuizSubmitted(false);
-                  setShowQuizModal(true);
-                }}
-                className="w-8 h-8 rounded-xl bg-gold/15 text-gold border border-gold/30 flex items-center justify-center font-bold hover:bg-gold/25"
+                title="Quiz (+5 Coins)"
+                onClick={() => { setSelectedOption(null); setQuizSubmitted(false); setShowQuizModal(true); }}
+                className="w-8 h-8 rounded-xl bg-gold/15 text-gold border border-gold/30 flex items-center justify-center"
               >
                 <SparklesIcon className="w-4 h-4 text-gold" />
               </button>
             )}
 
-            {/* ICON-ONLY MODE TOGGLE BUTTONS (Feuilleter vs Défilement) */}
-            <div className={`p-1 rounded-xl border flex gap-1 ${
-              isLight ? 'bg-black/5 border-black/10' : 'bg-white/5 border-white/10'
-            }`}>
-              <button
-                type="button"
-                title="Mode Feuilleter (Page Flip)"
-                onClick={() => setReadingPrefs((prev) => ({ ...prev, mode: 'flip' }))}
-                className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${
-                  readingPrefs.mode === 'flip' ? 'bg-gold text-paper shadow-sm' : 'opacity-60'
-                }`}
-              >
+            <div className={`p-1 rounded-xl border flex gap-1 ${isLight ? 'bg-black/5 border-black/10' : 'bg-white/5 border-white/10'}`}>
+              <button type="button" title="Mode Feuilleter" onClick={() => setReadingPrefs((p) => ({ ...p, mode: 'flip' }))}
+                className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${readingPrefs.mode === 'flip' ? 'bg-gold text-paper' : 'opacity-60'}`}>
                 <BookOpenIcon className="w-3.5 h-3.5" />
               </button>
-
-              <button
-                type="button"
-                title="Mode Défilement Continu"
-                onClick={() => setReadingPrefs((prev) => ({ ...prev, mode: 'scroll' }))}
-                className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${
-                  readingPrefs.mode !== 'flip' ? 'bg-gold text-paper shadow-sm' : 'opacity-60'
-                }`}
-              >
+              <button type="button" title="Mode Défilement" onClick={() => setReadingPrefs((p) => ({ ...p, mode: 'scroll' }))}
+                className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${readingPrefs.mode !== 'flip' ? 'bg-gold text-paper' : 'opacity-60'}`}>
                 <span className="font-mono text-[11px] font-bold">☰</span>
               </button>
             </div>
 
-            {/* ICON-ONLY COMMENTS BUTTON */}
-            <ChapterComments chapterId={id} isLight={isLight} iconOnly={true} />
-
-            {/* FULLSCREEN IMMERSION TOGGLE */}
-            <IconButton
-              className={isImmersive ? 'bg-gold text-deep-2' : isLight ? 'bg-black/8 text-[#1A1816]' : 'bg-white/10 text-[#F3F7F5]'}
-              onClick={() => {
-                setIsImmersive(!isImmersive);
-                setShowHudControls(false);
-              }}
-              aria-label="Toggle Fullscreen Immersive Mode"
-            >
-              {isImmersive ? <MinimizeIcon className="w-4 h-4 text-deep-2" /> : <FullscreenIcon className="w-4 h-4" />}
-            </IconButton>
-
             <IconButton
               className={isLight ? 'bg-black/8 text-[#1A1816]' : 'bg-white/10 text-[#F3F7F5]'}
               onClick={() => setShowPreferences(true)}
-              aria-label="Reading preferences"
             >
               <SettingsIcon className="w-4 h-4" />
             </IconButton>
@@ -467,38 +524,177 @@ export default function Reader() {
           </div>
         </div>
       ) : (
-        /* DÉFILEMENT CONTINU MODE */
+        /* DÉFILEMENT CONTINU UNIFIÉ STYLE WEBTOON (SCROLL INFINI SANS RECHARGEMENT) */
         <div
-          className="flex-1 overflow-y-auto space-y-4 max-w-xl mx-auto w-full text-justify px-1"
+          key={`book-feed-${id}`}
+          ref={scrollContainerRef}
+          className="flex-1 overflow-y-auto max-w-xl mx-auto w-full text-justify px-2 relative pb-12 cursor-pointer transition-all duration-300"
           style={{
             fontFamily: readingPrefs.font,
             fontSize: `${readingPrefs.fontSize}px`,
             lineHeight: readingPrefs.lineHeight,
           }}
         >
-          <div className="text-center pt-1 pb-3">
-            <h3 className="font-display font-bold text-[18px] tracking-wide text-ink">
-              {chapterData.title || `Chapter ${chapterNum}`}
-            </h3>
-            <div className="w-8 h-[2px] bg-ink/70 mx-auto mt-1.5 rounded-full" />
+          {allChapters.map((chap, cIdx) => {
+            const cNum = cIdx + 1;
+            const sentences = chap.sentences || [];
+            return (
+              <div
+                key={`chap-block-${cNum}`}
+                id={`chap-block-${cNum}`}
+                data-chapter-num={cNum}
+                className="py-6 space-y-4 border-b border-surface-line/20 last:border-b-0"
+              >
+                {/* Chapter Header */}
+                <div className="text-center pt-3 pb-4 border-b border-surface-line/20 mb-6">
+                  <span className="text-[10.5px] font-mono font-bold uppercase tracking-widest text-gold block opacity-80 mb-1">
+                    Chapitre {cNum}
+                  </span>
+                  <h3 className="font-display font-bold text-[19px] tracking-wide text-ink">
+                    {chap.title || `Chapitre ${cNum}`}
+                  </h3>
+                  <div className="w-10 h-[2px] bg-gold mx-auto mt-2 rounded-full opacity-60" />
+                </div>
+
+                {/* Sentences */}
+                {sentences.map((s, sIdx) => (
+                  <div key={sIdx} onClick={(e) => {
+                    const clickedText = e.target.innerText;
+                    if (clickedText && clickedText.trim().length > 1) {
+                      setSelectedWord(clickedText.trim());
+                    }
+                  }}>
+                    <BilingualSentence
+                      en={s.en}
+                      fr={s.fr}
+                      vocabWord={s.vocabWord}
+                      vocabFr={s.vocabFr}
+                      isLight={isLight}
+                    />
+                  </div>
+                ))}
+
+                {/* End of Chapter Separator */}
+                <div className="pt-8 pb-4 text-center border-t border-surface-line/30 mt-8">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-taupe block opacity-50">
+                    — Fin du Chapitre {cNum} —
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* WEBTOON-STYLE FIXED BOTTOM NAV BAR — hidden by default, reveals on tap */}
+      {showHudControls && (
+        <div
+          className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-between px-6 py-3 border-t animate-fadeIn"
+          style={{
+            backgroundColor: isLight ? 'rgba(250,248,245,0.96)' : 'rgba(18,18,24,0.96)',
+            borderColor: isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.08)',
+            backdropFilter: 'blur(16px)',
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* LEFT — Like + Bookmark */}
+          <div className="flex items-center gap-5">
+            <button
+              type="button"
+              onClick={() => toggleBookReaction(id, 'like')}
+              className="flex flex-col items-center gap-0.5 active:scale-90 transition-all"
+            >
+              <HeartIcon className={`w-6 h-6 transition-all ${
+                bookReactions?.[id]?.userReaction === 'like'
+                  ? 'fill-red-500 text-red-500 drop-shadow-[0_0_6px_rgba(239,68,68,0.7)]'
+                  : isLight ? 'text-ink/50' : 'text-white/50'
+              }`} />
+              <span className={`text-[10px] font-bold ${isLight ? 'text-ink/60' : 'text-white/60'}`}>
+                {bookReactions?.[id]?.like || 0}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => toggleBookmark(id)}
+              className="flex flex-col items-center gap-0.5 active:scale-90 transition-all"
+            >
+              <BookmarkIcon className={`w-6 h-6 transition-all ${
+                bookmarked ? 'fill-gold text-gold' : isLight ? 'text-ink/50' : 'text-white/50'
+              }`} />
+              <span className={`text-[10px] font-bold ${isLight ? 'text-ink/60' : 'text-white/60'}`}>
+                {bookmarked ? 'Sauvé' : 'Sauver'}
+              </span>
+            </button>
           </div>
 
-          {sentencesList.map((s, i) => (
-            <div key={i} onClick={(e) => {
-              const clickedText = e.target.innerText;
-              if (clickedText && clickedText.trim().length > 1) {
-                setSelectedWord(clickedText.trim());
-              }
-            }}>
-              <BilingualSentence
-                en={s.en}
-                fr={s.fr}
-                vocabWord={s.vocabWord}
-                vocabFr={s.vocabFr}
-                isLight={isLight}
-              />
-            </div>
-          ))}
+          {/* CENTER — chapter switcher (Prev ‹ | Ch. X / N | › Next) */}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              disabled={activeChapterNum <= 1}
+              onClick={() => {
+                if (activeChapterNum > 1) {
+                  const targetEl = document.getElementById(`chap-block-${activeChapterNum - 1}`);
+                  if (targetEl) targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+              }}
+              className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-sm transition-all ${
+                activeChapterNum <= 1 ? 'opacity-20 cursor-not-allowed' : 'bg-black/10 dark:bg-white/10 hover:bg-gold hover:text-deep active:scale-95'
+              }`}
+              title="Chapitre précédent"
+            >
+              ‹
+            </button>
+
+            <span className={`text-[11.5px] font-bold tracking-tight px-1 ${isLight ? 'text-ink/70' : 'text-white/70'}`}>
+              Ch. {activeChapterNum} / {allChapters.length}
+            </span>
+
+            <button
+              type="button"
+              disabled={activeChapterNum >= allChapters.length}
+              onClick={() => {
+                if (activeChapterNum < allChapters.length) {
+                  const targetEl = document.getElementById(`chap-block-${activeChapterNum + 1}`);
+                  if (targetEl) targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+              }}
+              className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-sm transition-all ${
+                activeChapterNum >= allChapters.length ? 'opacity-20 cursor-not-allowed' : 'bg-black/10 dark:bg-white/10 hover:bg-gold hover:text-deep active:scale-95'
+              }`}
+              title="Chapitre suivant"
+            >
+              ›
+            </button>
+          </div>
+
+          {/* RIGHT — Comment + Quiz */}
+          <div className="flex items-center gap-5">
+            {quiz && (
+              <button
+                type="button"
+                onClick={() => { setSelectedOption(null); setQuizSubmitted(false); setShowQuizModal(true); }}
+                className="flex flex-col items-center gap-0.5 active:scale-90 transition-all"
+              >
+                <SparklesIcon className={`w-6 h-6 text-gold`} />
+                <span className={`text-[10px] font-bold ${isLight ? 'text-ink/60' : 'text-white/60'}`}>Quiz</span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() => setShowCommentsModal(true)}
+              className="flex flex-col items-center gap-0.5 active:scale-90 transition-all"
+            >
+              <MessageSquareIcon className={`w-6 h-6 transition-all ${
+                isLight ? 'text-ink/50' : 'text-white/50'
+              }`} />
+              <span className={`text-[10px] font-bold ${isLight ? 'text-ink/60' : 'text-white/60'}`}>
+                {bookReviews?.[id]?.length || 0}
+              </span>
+            </button>
+          </div>
         </div>
       )}
 
@@ -577,6 +773,15 @@ export default function Reader() {
             </button>
           </div>
         </div>
+      )}
+
+      {/* Chapter Comments & Reviews Drawer */}
+      {showCommentsModal && (
+        <ChapterComments
+          bookId={id}
+          chapterId={chapterNum}
+          onClose={() => setShowCommentsModal(false)}
+        />
       )}
 
       {/* Preferences Modal */}

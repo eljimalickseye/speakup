@@ -119,10 +119,16 @@ body {
   color: var(--text-primary);
 }
 
-.nav-item.active, .ni.active {
-  background: #EEF2FF;
-  color: #4F46E5;
-  font-weight: 600;
+.nav-item.active, .ni.active, .sidebar-item.active {
+  background: #000000 !important;
+  color: #FFFFFF !important;
+  font-weight: 700 !important;
+}
+
+.nav-item.active i, .ni.active i, .sidebar-item.active i,
+.nav-item.active span, .ni.active span, .sidebar-item.active span,
+.nav-item.active svg, .ni.active svg, .sidebar-item.active svg {
+  color: #FFFFFF !important;
 }
 
 .nav-item i, .ni i {
@@ -2477,12 +2483,20 @@ body.theme-manga .sidebar .nav-item, body.theme-manga .sidebar .ni {
   font-weight: 700 !important;
   border: 1px solid transparent !important;
 }
-body.theme-manga .sidebar .nav-item:hover, body.theme-manga .sidebar .nav-item.active {
-  background-color: #E11D48 !important;
-  color: white !important;
+body.theme-manga .sidebar .sidebar-item.active,
+body.theme-manga .sidebar .nav-item.active, 
+body.theme-manga .sidebar .ni.active {
+  background-color: #000000 !important;
+  color: #FFFFFF !important;
   border: 2px solid #000000 !important;
-  box-shadow: 3px 3px 0px #000000 !important;
+  box-shadow: 3px 3px 0px #E11D48 !important;
   transform: translate(-1px, -1px);
+}
+body.theme-manga .sidebar .sidebar-item.active i,
+body.theme-manga .sidebar .sidebar-item.active span,
+body.theme-manga .sidebar .nav-item.active i,
+body.theme-manga .sidebar .nav-item.active span {
+  color: #FFFFFF !important;
 }
 
 /* Cards & Panels: Solid black outlines and offsets */
@@ -2582,11 +2596,19 @@ body.theme-rose .sidebar .nav-item, body.theme-rose .sidebar .ni {
   color: #9F1239 !important;
   font-weight: 700 !important;
 }
-body.theme-rose .sidebar .nav-item:hover, body.theme-rose .sidebar .nav-item.active {
-  background-color: #FFD1DC !important;
-  color: #BE185D !important;
-  border: 1.5px solid #FBCFE8 !important;
-  box-shadow: 2px 2px 0px rgba(219, 39, 119, 0.1) !important;
+body.theme-rose .sidebar .sidebar-item.active,
+body.theme-rose .sidebar .nav-item.active, 
+body.theme-rose .sidebar .ni.active {
+  background-color: #000000 !important;
+  color: #FFFFFF !important;
+  border: 1.5px solid #000000 !important;
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.2) !important;
+}
+body.theme-rose .sidebar .sidebar-item.active i,
+body.theme-rose .sidebar .sidebar-item.active span,
+body.theme-rose .sidebar .nav-item.active i,
+body.theme-rose .sidebar .nav-item.active span {
+  color: #FFFFFF !important;
 }
 
 /* Cards & buttons */

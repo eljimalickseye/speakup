@@ -9,7 +9,7 @@ const catalogSyncChannel = typeof BroadcastChannel !== 'undefined' ? new Broadca
 // Sanitizer function to purge expired blob: URLs from memory & storage
 function sanitizeBooksList(books = []) {
   return books.map((b) => {
-    let cleanBook = { ...b, status: b.status || 'PUBLISHED' };
+    let cleanBook = { ...b, status: b.status || 'PUBLISHED', rating: b.rating && Number(b.rating) > 0 && b.id !== 'koko-goree-secret' ? Number(b.rating) : 0 };
     if (cleanBook.customCoverUrl && cleanBook.customCoverUrl.startsWith('blob:')) {
       cleanBook.customCoverUrl = ''; // Clear expired blob: URL
     }
@@ -423,10 +423,12 @@ export function AppProvider({ children }) {
     logActivity(userProfile.name, `A réagi [${reactionType}] sur "${bookId}"`, 'REACTION');
   };
 
-  // Audio Engine Controls
+  // Audio Engine Controls (HTML5 Audio for Teacher Recorded Vocals + SpeechSynthesis Fallback)
+  const [audioElement, setAudioElement] = useState(null);
+
   useEffect(() => {
     let interval;
-    if (isAudioPlaying) {
+    if (isAudioPlaying && !activeAudio?.audioUrl) {
       interval = setInterval(() => {
         setAudioProgress((prev) => {
           if (prev >= 100) {
@@ -441,13 +443,50 @@ export function AppProvider({ children }) {
       clearInterval(interval);
     }
     return () => clearInterval(interval);
-  }, [isAudioPlaying, playbackSpeed]);
+  }, [isAudioPlaying, playbackSpeed, activeAudio]);
 
   const startAudioTrack = (trackData) => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
+    // Stop any existing SpeechSynthesis or HTML5 Audio
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    if (audioElement) {
+      audioElement.pause();
+      audioElement.src = '';
+    }
+
+    setActiveAudio(trackData);
+    setIsAudioPlaying(true);
+    setAudioProgress(0);
+
+    // PRIORITY 1: Real Teacher / Author Recorded Audio URL
+    if (trackData.audioUrl) {
+      try {
+        const audio = new Audio(trackData.audioUrl);
+        audio.playbackRate = playbackSpeed;
+
+        audio.addEventListener('timeupdate', () => {
+          if (audio.duration) {
+            setAudioProgress((audio.currentTime / audio.duration) * 100);
+          }
+        });
+
+        audio.addEventListener('ended', () => {
+          setIsAudioPlaying(false);
+          setAudioProgress(100);
+        });
+
+        audio.play().catch(() => {
+          console.warn('Teacher recorded audio play request handled');
+        });
+
+        setAudioElement(audio);
+      } catch (err) {
+        console.error('Audio load error:', err);
+      }
+    } else if ('speechSynthesis' in window) {
+      // PRIORITY 2: Immersive Web Speech Synthesis Fallback
+      setAudioElement(null);
       if (trackData.sentences && trackData.sentences.length > 0) {
-        const textToRead = trackData.sentences.map((s) => s.en).join('. ');
+        const textToRead = trackData.sentences.map((s) => s.en || s).join('. ');
         const utterance = new SpeechSynthesisUtterance(textToRead);
         utterance.rate = playbackSpeed;
         utterance.lang = 'en-US';
@@ -458,21 +497,24 @@ export function AppProvider({ children }) {
         window.speechSynthesis.speak(utterance);
       }
     }
-    setActiveAudio(trackData);
-    setIsAudioPlaying(true);
-    setAudioProgress(0);
   };
 
   const toggleAudioPlayPause = () => {
     if (isAudioPlaying) {
-      if ('speechSynthesis' in window) window.speechSynthesis.pause();
+      if (audioElement) {
+        audioElement.pause();
+      } else if ('speechSynthesis' in window) {
+        window.speechSynthesis.pause();
+      }
       setIsAudioPlaying(false);
     } else {
-      if ('speechSynthesis' in window) {
+      if (audioElement) {
+        audioElement.play().catch(() => {});
+      } else if ('speechSynthesis' in window) {
         if (window.speechSynthesis.paused) {
           window.speechSynthesis.resume();
         } else if (activeAudio && activeAudio.sentences) {
-          const textToRead = activeAudio.sentences.map((s) => s.en).join('. ');
+          const textToRead = activeAudio.sentences.map((s) => s.en || s).join('. ');
           const utterance = new SpeechSynthesisUtterance(textToRead);
           utterance.rate = playbackSpeed;
           utterance.lang = 'en-US';
@@ -484,6 +526,11 @@ export function AppProvider({ children }) {
   };
 
   const stopAudioTrack = () => {
+    if (audioElement) {
+      audioElement.pause();
+      audioElement.src = '';
+      setAudioElement(null);
+    }
     if ('speechSynthesis' in window) window.speechSynthesis.cancel();
     setIsAudioPlaying(false);
     setActiveAudio(null);
@@ -491,15 +538,27 @@ export function AppProvider({ children }) {
   };
 
   const cyclePlaybackSpeed = () => {
-    const nextSpeed = playbackSpeed === 1.0 ? 1.25 : playbackSpeed === 1.25 ? 0.75 : 1.0;
+    const speeds = [1.0, 1.25, 1.5, 2.0];
+    const nextIdx = (speeds.indexOf(playbackSpeed) + 1) % speeds.length;
+    const nextSpeed = speeds[nextIdx];
     setPlaybackSpeed(nextSpeed);
-    if (isAudioPlaying && 'speechSynthesis' in window && activeAudio) {
+
+    if (audioElement) {
+      audioElement.playbackRate = nextSpeed;
+    } else if (isAudioPlaying && 'speechSynthesis' in window && activeAudio) {
       window.speechSynthesis.cancel();
-      const textToRead = activeAudio.sentences.map((s) => s.en).join('. ');
+      const textToRead = activeAudio.sentences.map((s) => s.en || s).join('. ');
       const utterance = new SpeechSynthesisUtterance(textToRead);
       utterance.rate = nextSpeed;
       utterance.lang = 'en-US';
       window.speechSynthesis.speak(utterance);
+    }
+  };
+
+  const seekAudio = (percent) => {
+    setAudioProgress(percent);
+    if (audioElement && audioElement.duration) {
+      audioElement.currentTime = (percent / 100) * audioElement.duration;
     }
   };
 
@@ -602,6 +661,7 @@ export function AppProvider({ children }) {
         toggleAudioPlayPause,
         stopAudioTrack,
         cyclePlaybackSpeed,
+        seekAudio,
         toggleBookmark,
         isBookmarked,
         addCoins,
