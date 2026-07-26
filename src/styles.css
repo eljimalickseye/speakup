@@ -120,7 +120,7 @@ body {
 }
 
 .nav-item.active, .ni.active, .sidebar-item.active {
-  background: #000000 !important;
+  background: #4F46E5 !important;
   color: #FFFFFF !important;
   font-weight: 700 !important;
 }

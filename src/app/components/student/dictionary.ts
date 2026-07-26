@@ -49,11 +49,13 @@ interface ApiDictResult {
         
         <!-- Language Toggle -->
         <div style="display:flex; gap:8px; margin-bottom:12px">
-          <button class="tab" [class.active]="searchLanguage() === 'en'" (click)="searchLanguage.set('en')" style="font-size:11px; padding:4px 12px">
-            🇬🇧 English
+          <button class="tab" [class.active]="searchLanguage() === 'en'" (click)="searchLanguage.set('en')" style="font-size:11px; padding:5px 12px; display:inline-flex; align-items:center; gap:6px">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="12" viewBox="0 0 640 480" style="border-radius:2px; flex-shrink:0"><path fill="#012169" d="M0 0h640v480H0z"/><path fill="#FFF" d="m75 0 245 184L565 0h75v56L395 240l245 184v56h-75L320 296 75 480H0v-56l245-184L0 56V0h75z"/><path fill="#C8102E" d="m424 288 216 162v30h-40L384 318v-30h40zM640 0v30L424 192h-40L600 0h40zM0 480v-30l216-162h40L40 480H0zM0 0h40l216 162h-40L0 12V0z"/><path fill="#FFF" d="M240 0h160v480H240zM0 160h640v160H0z"/><path fill="#C8102E" d="M272 0h96v480h-96zM0 192h640v96H0z"/></svg>
+            English
           </button>
-          <button class="tab" [class.active]="searchLanguage() === 'fr'" (click)="searchLanguage.set('fr')" style="font-size:11px; padding:4px 12px">
-            🇫🇷 Français
+          <button class="tab" [class.active]="searchLanguage() === 'fr'" (click)="searchLanguage.set('fr')" style="font-size:11px; padding:5px 12px; display:inline-flex; align-items:center; gap:6px">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="12" viewBox="0 0 640 480" style="border-radius:2px; flex-shrink:0"><path fill="#002654" d="M0 0h213.3v480H0z"/><path fill="#fff" d="M213.3 0h213.4v480H213.3z"/><path fill="#ce1126" d="M426.7 0H640v480H426.7z"/></svg>
+            Français
           </button>
         </div>
         
@@ -124,8 +126,9 @@ interface ApiDictResult {
 
           <!-- French Translation Input -->
           <div style="background:var(--surface-2); padding:10px 12px; border-radius:8px; border:1px solid var(--border-weak); margin-bottom:12px">
-            <label style="font-size:11px; font-weight:700; color:var(--text-primary); display:block; margin-bottom:4px">
-              🇫🇷 Traduction en français :
+            <label style="font-size:11px; font-weight:700; color:var(--text-primary); display:flex; align-items:center; gap:6px; margin-bottom:4px">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="10" viewBox="0 0 640 480" style="border-radius:2px"><path fill="#002654" d="M0 0h213.3v480H0z"/><path fill="#fff" d="M213.3 0h213.4v480H213.3z"/><path fill="#ce1126" d="M426.7 0H640v480H426.7z"/></svg>
+              Traduction en français :
             </label>
             <input 
               type="text" 
@@ -180,13 +183,13 @@ interface ApiDictResult {
       <!-- Tab Selector -->
       <div class="tab-row">
         <button class="tab" [class.active]="viewTab() === 'base'" (click)="viewTab.set('base')">
-          📖 Dictionnaire de base ({{ baseDictionaryWords.length }})
+          <i class="ti ti-book"></i> Dictionnaire de base ({{ baseDictionaryWords.length }})
         </button>
         <button class="tab" [class.active]="viewTab() === 'saved'" (click)="viewTab.set('saved')">
           <i class="ti ti-bookmark"></i> My Saved Words ({{ myWordsCount() }})
         </button>
         <button class="tab" [class.active]="viewTab() === 'irregular'" (click)="viewTab.set('irregular')">
-          📋 Irregular Verbs
+          <i class="ti ti-list-check"></i> Irregular Verbs
         </button>
       </div>
 
@@ -214,7 +217,9 @@ interface ApiDictResult {
                 <div style="font-size:11px; font-weight:600; color:var(--text-muted); margin-top:2px; text-transform:uppercase">{{ word.partOfSpeech }}</div>
                 <p style="font-size:12px; color:var(--text-secondary); margin:4px 0 0; line-height:1.4">{{ word.definition }}</p>
                 @if (word.translation) {
-                  <p style="font-size:11px; color:#047857; margin:3px 0 0; font-style:italic">🇫🇷 {{ word.translation }}</p>
+                  <p style="font-size:11px; color:#047857; margin:3px 0 0; font-style:italic; display:flex; align-items:center; gap:4px">
+                    <span style="font-size:9.5px; font-weight:800; background:#ECFDF5; color:#047857; padding:1px 5px; border-radius:4px">FR</span> {{ word.translation }}
+                  </p>
                 }
               </div>
               <button (click)="deleteWord(word.id)" style="background:none; border:none; cursor:pointer; color:var(--text-muted); font-size:16px; flex-shrink:0; padding:4px" title="Supprimer">
@@ -242,7 +247,9 @@ interface ApiDictResult {
                 </div>
                 <div style="font-size:11px; font-weight:600; color:var(--text-muted); margin-top:2px; text-transform:uppercase">{{ word.partOfSpeech }}</div>
                 <p style="font-size:12px; color:var(--text-secondary); margin:4px 0 0; line-height:1.4">{{ word.definition }}</p>
-                <p style="font-size:11px; color:#047857; margin:3px 0 0; font-style:italic">🇫🇷 {{ word.translation }}</p>
+                <p style="font-size:11px; color:#047857; margin:3px 0 0; font-style:italic; display:flex; align-items:center; gap:4px">
+                  <span style="font-size:9.5px; font-weight:800; background:#ECFDF5; color:#047857; padding:1px 5px; border-radius:4px">FR</span> {{ word.translation }}
+                </p>
                 @if (word.contexts && word.contexts.length > 0) {
                   <p style="font-size:11px; color:var(--text-muted); font-style:italic; margin-top:4px; padding-left:6px; border-left:2px solid var(--border)">
                     Ex. {{ word.contexts[0] }}
@@ -377,9 +384,8 @@ export class StudentDictionaryComponent {
     // 1. Search locally in our preloaded words first (both languages)
     const localMatch = this.baseDictionaryWords.find(w => {
       if (this.searchLanguage() === 'fr') {
-        return w.translation.toLowerCase() === query || 
-               w.translation.toLowerCase().includes(query) || 
-               query.includes(w.translation.toLowerCase());
+        const trans = w.translation.toLowerCase();
+        return trans === query || trans.split(/[\s\/,]+/).includes(query) || trans.includes(query);
       } else {
         return w.word.toLowerCase() === query;
       }
@@ -405,7 +411,6 @@ export class StudentDictionaryComponent {
       this.currentTranslation = localMatch.translation;
       this.isSearching.set(false);
 
-      // Add to search history
       const hist = this.searchHistory();
       if (!hist.includes(this.searchQuery)) {
         this.searchHistory.set([this.searchQuery, ...hist].slice(0, 20));
@@ -413,38 +418,92 @@ export class StudentDictionaryComponent {
       return;
     }
 
-    // 2. If searching French and not found in local list
-    if (this.searchLanguage() === 'fr') {
-      this.searchError.set(`Le mot français "${this.searchQuery}" n'a pas été trouvé dans notre dictionnaire de base. Essayez des mots comme: école, parler, enseignant, livre, devoir, etc.`);
-      this.isSearching.set(false);
-      return;
-    }
-
-    // 3. Fallback online search for English words
+    // 2. Search online translation & dictionary
     try {
-      const url = `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(query)}`;
-      const res = await fetch(url);
+      if (this.searchLanguage() === 'fr') {
+        // French to English translation lookup via MyMemory API
+        const trUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(query)}&langpair=fr|en`;
+        const trRes = await fetch(trUrl);
+        const trData = await trRes.json();
 
-      if (!res.ok) {
-        this.searchError.set(`"${this.searchQuery}" n'a pas été trouvé dans le dictionnaire. Vérifiez l'orthographe.`);
-        return;
+        let englishTranslation = trData?.responseData?.translatedText?.trim();
+
+        if (!englishTranslation || englishTranslation.toLowerCase() === query) {
+          this.searchError.set(`Le mot français "${this.searchQuery}" n'a pas été trouvé. Vérifiez l'orthographe.`);
+          return;
+        }
+
+        // Clean any trailing punctuation or HTML tags
+        englishTranslation = englishTranslation.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, '').trim();
+
+        // Now lookup English definition for the translated word
+        const dictUrl = `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(englishTranslation.toLowerCase())}`;
+        const dictRes = await fetch(dictUrl);
+
+        if (dictRes.ok) {
+          const dictData: ApiDictResult[] = await dictRes.json();
+          if (dictData && dictData.length > 0) {
+            this.apiResult.set(dictData[0]);
+            this.currentTranslation = this.searchQuery; // Pre-fill French word
+          }
+        } else {
+          // Fallback if dictionaryapi doesn't have the entry: create a clean result card
+          const fallbackResult: ApiDictResult = {
+            word: englishTranslation.charAt(0).toUpperCase() + englishTranslation.slice(1),
+            meanings: [
+              {
+                partOfSpeech: 'nom / verbe / mot',
+                definitions: [
+                  {
+                    definition: `Traduction anglaise directe du mot français "${this.searchQuery}".`,
+                    example: `En français : "${this.searchQuery}" ➔ In English : "${englishTranslation}"`
+                  }
+                ]
+              }
+            ]
+          };
+          this.apiResult.set(fallbackResult);
+          this.currentTranslation = this.searchQuery;
+        }
+
+      } else {
+        // English word lookup
+        const dictUrl = `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(query)}`;
+        const dictRes = await fetch(dictUrl);
+
+        if (!dictRes.ok) {
+          this.searchError.set(`"${this.searchQuery}" n'a pas été trouvé dans le dictionnaire. Vérifiez l'orthographe.`);
+          return;
+        }
+
+        const dictData: ApiDictResult[] = await dictRes.json();
+        if (dictData && dictData.length > 0) {
+          this.apiResult.set(dictData[0]);
+
+          // Fetch French translation automatically
+          try {
+            const trUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(query)}&langpair=en|fr`;
+            const trRes = await fetch(trUrl);
+            const trData = await trRes.json();
+            const frText = trData?.responseData?.translatedText;
+            if (frText) {
+              this.currentTranslation = frText.charAt(0).toUpperCase() + frText.slice(1);
+            }
+          } catch (_) {
+            this.currentTranslation = '';
+          }
+        } else {
+          this.searchError.set(`Aucune définition trouvée pour "${this.searchQuery}".`);
+        }
       }
 
-      const data: ApiDictResult[] = await res.json();
-      if (data && data.length > 0) {
-        this.apiResult.set(data[0]);
-        this.currentTranslation = ''; // reset translation input
-        
-        // Add to search history
-        const hist = this.searchHistory();
-        if (!hist.includes(this.searchQuery)) {
-          this.searchHistory.set([this.searchQuery, ...hist].slice(0, 20));
-        }
-      } else {
-        this.searchError.set(`Aucune définition trouvée pour "${this.searchQuery}".`);
+      // Add to search history
+      const hist = this.searchHistory();
+      if (!hist.includes(this.searchQuery)) {
+        this.searchHistory.set([this.searchQuery, ...hist].slice(0, 20));
       }
     } catch (e) {
-      this.searchError.set('Erreur réseau. Vérifiez votre connexion internet et réessayez.');
+      this.searchError.set('Erreur réseau lors de la recherche. Vérifiez votre connexion internet.');
     } finally {
       this.isSearching.set(false);
     }
