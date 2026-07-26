@@ -101,131 +101,93 @@ const defaultWordsBank = [
 
         <!-- ===== SECTION 1: QUIZ ===== -->
         @if (activeSubTab() === 'quizzes') {
-          <div style="margin-bottom: 28px;">
+          <div style="margin-bottom: 24px;">
 
-
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding: 12px 16px; background: linear-gradient(135deg, #4F46E5 0%, #6366F1 100%); border-radius: 10px; color: white;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-              <div style="flex: 1;">
-                <div style="font-size: 14px; font-weight: 800;">Quiz de cours</div>
-                <div style="font-size: 10px; opacity: 0.85;">⏱ Évaluations chronométrées • Score immédiat</div>
+            <!-- Minimal Header & Filter Bar -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; gap: 12px; flex-wrap: wrap;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="width: 32px; height: 32px; border-radius: 8px; background: #EEF2FF; color: #4F46E5; display: flex; align-items: center; justify-content: center;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                </span>
+                <div>
+                  <h3 style="font-size: 14px; font-weight: 800; color: var(--text-primary); margin: 0;">Quiz & Évaluations</h3>
+                  <span style="font-size: 11px; color: var(--text-muted);">{{ filteredQuizzes().length }} disponibles</span>
+                </div>
               </div>
-              <span style="background: rgba(255,255,255,0.2); border-radius: 12px; padding: 2px 10px; font-size: 12px; font-weight: 700;">{{ filteredQuizzes().length }}</span>
-            </div>
 
-            <!-- Filter Dropdown Row -->
-            <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 16px; gap: 8px;">
-              <span style="font-size: 12.5px; font-weight: 700; color: var(--text-secondary);">Statut :</span>
+              <!-- Filter Selector -->
               <div style="position: relative; display: inline-block;">
                 <select [ngModel]="quizFilter()" (ngModelChange)="quizFilter.set($event)" 
-                        style="appearance: none; -webkit-appearance: none; background-color: var(--surface-1); border: 1.5px solid var(--border); border-radius: 8px; padding: 6px 32px 6px 12px; font-size: 12px; font-weight: 700; color: var(--text-primary); cursor: pointer; outline: none; transition: border-color 0.2s, box-shadow 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.05); min-width: 140px;">
+                        style="appearance: none; -webkit-appearance: none; background-color: var(--surface-1); border: 1.5px solid var(--border-weak); border-radius: 8px; padding: 5px 28px 5px 10px; font-size: 11.5px; font-weight: 700; color: var(--text-primary); cursor: pointer; outline: none; transition: all 0.2s;">
                   <option value="todo">⏳ À Faire (To Do)</option>
                   <option value="completed">✅ Terminé (Completed)</option>
                   <option value="all">🌐 Tous (All)</option>
                 </select>
-                <!-- Custom Arrow Icon -->
-                <div style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); pointer-events: none; display: flex; align-items: center; color: var(--text-secondary);">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                <div style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--text-secondary);">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                 </div>
               </div>
             </div>
 
-            <div style="display:flex; flex-direction:column; gap:12px">
+            <!-- Compact Minimalist List -->
+            <div style="display:flex; flex-direction:column; gap:8px">
               @for (quiz of filteredQuizzes(); track quiz.id) {
                 <div class="card exercise-card" 
                      (click)="isQuizDisabled(quiz) ? null : startQuiz(quiz)"
-                     [style.border-left]="'5px solid ' + (isQuizDisabled(quiz) ? '#DC2626' : getTheme(quiz.colorTheme).border)"
+                     [style.border-left]="'4px solid ' + (isQuizDisabled(quiz) ? '#DC2626' : getTheme(quiz.colorTheme).border)"
                      [style.opacity]="isQuizDisabled(quiz) ? '0.55' : '1'"
                      [style.cursor]="isQuizDisabled(quiz) ? 'not-allowed' : 'pointer'"
-                     [style.pointer-events]="isQuizDisabled(quiz) ? 'none' : 'auto'"
-                     style="padding: 12px 18px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; gap: 16px; transition: transform 0.2s, box-shadow 0.2s;">
+                     style="padding: 10px 14px; border-radius: 10px; display: flex; align-items: center; justify-content: space-between; gap: 12px; background: var(--surface-1); border: 1px solid var(--border-weak); transition: all 0.2s ease;">
                   
-                  <div style="display: flex; align-items: center; gap: 16px; flex: 1;">
-                    <!-- Compact cover thumbnail -->
+                  <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
+                    <!-- Compact Thumbnail / Icon -->
                     <div [style.background]="quiz.coverImage ? 'none' : getGradient(quiz.colorTheme)"
-                         style="width: 52px; height: 52px; border-radius: 8px; overflow: hidden; flex-shrink: 0; display: flex; align-items: center; justify-content: center; position: relative">
+                         style="width: 36px; height: 36px; border-radius: 8px; overflow: hidden; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
                       @if (quiz.coverImage) {
                         <img [src]="quiz.coverImage" style="width: 100%; height: 100%; object-fit: cover" />
                       } @else {
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
                       }
                     </div>
 
-                    <div>
-                      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 3px; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 0;">
+                      <div style="display: flex; align-items: center; gap: 8px; line-height: 1.2;">
+                        <h4 style="font-size: 13.5px; font-weight: 700; color: var(--text-primary); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ quiz.title }}</h4>
                         @if (isItemNew(quiz.id)) {
-                          <span style="background:linear-gradient(135deg, #F59E0B 0%, #D97706 100%); color:white; font-size: 9px; font-weight: 800; padding: 1px 6px; border-radius: 10px; text-transform: uppercase; animation: pulse-live 1.5s infinite">
-                            ✨ New
-                          </span>
-                        }
-                        <span [style.background]="quiz.type === 'Oral Practice' ? '#E6F4F1' : '#EEF2FF'"
-                              [style.color]="quiz.type === 'Oral Practice' ? '#0D9488' : '#4F46E5'"
-                              style="font-size: 9px; font-weight: 800; padding: 1px 6px; border-radius: 10px; text-transform: uppercase;">
-                          {{ quiz.type === 'Oral Practice' ? 'Oral Practice' : 'Grammar Quiz' }}
-                        </span>
-                        <span style="font-size: 10px; color: var(--text-muted)">{{ quiz.level || 'B1' }}</span>
-                        
-                        <span style="background:#F1F5F9; color:#475569; font-size: 9px; font-weight: 800; padding: 1px 6px; border-radius: 10px; text-transform: uppercase;">
-                          {{ t('Essais : ', 'Attempts: ') }}{{ getQuizSubmissionsCount(quiz.id) }} / 4
-                        </span>
-
-                        @if (isQuizAttemptsReached(quiz.id)) {
-                          <span style="background:#FEF2F2; color:#DC2626; font-size: 9px; font-weight: 800; padding: 1px 6px; border-radius: 10px; text-transform: uppercase; border: 1px solid #FCA5A5">
-                            {{ t('Limite atteinte', 'Limit reached') }}
-                          </span>
-                        } @else if (isQuizDeadlinePassed(quiz)) {
-                          <span style="background:#FEF2F2; color:#DC2626; font-size: 9px; font-weight: 800; padding: 1px 6px; border-radius: 10px; text-transform: uppercase; border: 1px solid #FCA5A5">
-                            {{ t('Date limite dépassée', 'Deadline passed') }}
-                          </span>
-                        } @else if (isQuizCompleted(quiz.id)) {
-                          <span style="background:#ECFDF5; color:#047857; font-size: 9px; font-weight: 800; padding: 1px 6px; border-radius: 10px; text-transform: uppercase;">
-                            {{ t('Complété', 'Completed') }}
-                          </span>
-                        } @else {
-                          <span style="background:#FEF3C7; color:#D97706; font-size: 9px; font-weight: 800; padding: 1px 6px; border-radius: 10px; text-transform: uppercase;">
-                            {{ t('À Faire', 'To Do') }}
-                          </span>
+                          <span style="background:#F59E0B; color:white; font-size: 8px; font-weight: 800; padding: 1px 5px; border-radius: 6px; text-transform: uppercase;">New</span>
                         }
                       </div>
                       
-                      <h4 style="font-size:14px; font-weight:800; color:var(--text-primary); margin:0 0 2px 0; line-height: 1.3">{{ quiz.title }}</h4>
-                      
-                      <div style="display:flex; align-items:center; gap:8px; font-size:11px; color:var(--text-secondary); flex-wrap:wrap">
-                        <span style="display:flex; align-items:center; gap:3px">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                          {{ quiz.timeLimit || 'No limit' }}
-                        </span>
+                      <div style="display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--text-muted); margin-top: 3px; flex-wrap: wrap;">
+                        <span style="font-weight: 700; color: #4F46E5;">{{ quiz.level || 'B1' }}</span>
                         <span>•</span>
-                        <span>{{ quiz.questions.length }} {{ t('questions', 'questions') }}</span>
-                        @if (quiz.deadline) {
+                        <span>{{ quiz.questions.length }} Q</span>
+                        <span>•</span>
+                        <span>⏱ {{ quiz.timeLimit || 'Pas de limite' }}</span>
+                        @if (quiz.points) {
                           <span>•</span>
-                          <span style="display:flex; align-items:center; gap:3px" [style.color]="isQuizDeadlinePassed(quiz) ? '#DC2626' : 'var(--text-secondary)'">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                            {{ t('Limite : ', 'Deadline: ') }}{{ quiz.deadline | date:'short' }}
-                          </span>
+                          <span style="color: #059669; font-weight: 700;">+{{ quiz.points }} XP</span>
                         }
                       </div>
                     </div>
                   </div>
 
-                  <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+                  <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
                     @if (isQuizAttemptsReached(quiz.id)) {
-                      <span style="font-size: 11px; color: #DC2626; font-weight: 700; background: #FEF2F2; padding: 4px 8px; border-radius: 6px;">
-                        🔒 Essais épuisés
-                      </span>
+                      <span style="font-size: 10.5px; color: #DC2626; font-weight: 700; background: #FEF2F2; padding: 3px 8px; border-radius: 6px;">🔒 Limite</span>
                     } @else if (isQuizDeadlinePassed(quiz)) {
-                      <span style="font-size: 11px; color: #DC2626; font-weight: 700; background: #FEF2F2; padding: 4px 8px; border-radius: 6px;">
-                        ⏳ Expiré
-                      </span>
+                      <span style="font-size: 10.5px; color: #DC2626; font-weight: 700; background: #FEF2F2; padding: 3px 8px; border-radius: 6px;">⏳ Expiré</span>
+                    } @else if (isQuizCompleted(quiz.id)) {
+                      <span style="font-size: 10.5px; color: #047857; font-weight: 700; background: #ECFDF5; padding: 3px 8px; border-radius: 6px;">✓ Terminé</span>
                     } @else {
-                      <span style="font-size:11px; color:#4F46E5; font-weight:700; display:flex; align-items:center; gap:2px">
-                        {{ t('Commencer', 'Start') }} <i class="ti ti-arrow-right"></i>
+                      <span style="font-size: 11px; color: white; background: #4F46E5; font-weight: 700; padding: 4px 10px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                        {{ t('Démarrer', 'Start') }} <i class="ti ti-arrow-right"></i>
                       </span>
                     }
                   </div>
                 </div>
               } @empty {
-                <div style="grid-column: 1 / -1; padding: 24px; background: var(--surface-2); border-radius: 8px; border: 1px dashed var(--border); text-align: center; font-size: 12.5px; color: var(--text-secondary);">
+                <div style="padding: 20px; background: var(--surface-2); border-radius: 8px; border: 1px dashed var(--border); text-align: center; font-size: 12.5px; color: var(--text-secondary);">
                   {{ t('Aucun quiz ne correspond à ce filtre.', 'No quiz matches this filter.') }}
                 </div>
               }
@@ -235,91 +197,92 @@ const defaultWordsBank = [
 
         <!-- ===== SECTION 2: EXERCISES ===== -->
         @if (activeSubTab() === 'exercises') {
-          <div style="margin-bottom: 28px;">
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding: 12px 16px; background: linear-gradient(135deg, #059669 0%, #10B981 100%); border-radius: 10px; color: white;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34"/><path d="M12 2a5 5 0 0 0-5 5v3.42c0 .35.1.69.28 1l1.44 2.48a1 1 0 0 0 .86.48h8.84a1 1 0 0 0 .86-.48l1.44-2.48c.18-.31.28-.65.28-1V7a5 5 0 0 0-5-5z"/></svg>
-              <div style="flex: 1;">
-                <div style="font-size: 14px; font-weight: 800;">Entraînements autonomes</div>
-                <div style="font-size: 10px; opacity: 0.85;">🏋️ Exercices d'application • À faire à votre rythme</div>
+          <div style="margin-bottom: 24px;">
+
+            <!-- Minimal Header -->
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border-weak);">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="width: 32px; height: 32px; border-radius: 8px; background: #ECFDF5; color: #059669; display: flex; align-items: center; justify-content: center;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34"/><path d="M12 2a5 5 0 0 0-5 5v3.42c0 .35.1.69.28 1l1.44 2.48a1 1 0 0 0 .86.48h8.84a1 1 0 0 0 .86-.48l1.44-2.48c.18-.31.28-.65.28-1V7a5 5 0 0 0-5-5z"/></svg>
+                </span>
+                <div>
+                  <h3 style="font-size: 14px; font-weight: 800; color: var(--text-primary); margin: 0;">Entraînements autonomes</h3>
+                  <span style="font-size: 11px; color: var(--text-muted);">{{ exercises().length }} exercices à votre rythme</span>
+                </div>
               </div>
-              <span style="background: rgba(255,255,255,0.2); border-radius: 12px; padding: 2px 10px; font-size: 12px; font-weight: 700;">{{ exercises().length }}</span>
             </div>
 
             @if (sortedExercises().length > 0) {
-              <div class="grid2">
-              @for (ex of sortedExercises(); track ex.id) {
+              <div style="display:flex; flex-direction:column; gap:8px">
+                @for (ex of sortedExercises(); track ex.id) {
                   @let exDone = getExerciseStatus(ex.id) === 'Completed';
                   <div class="card exercise-card" (click)="openExercise(ex)"
-                       [style.border-left]="exDone ? '3px solid #94A3B8' : '3px solid ' + getExerciseColor(ex.type)"
+                       [style.border-left]="exDone ? '4px solid #94A3B8' : '4px solid ' + getExerciseColor(ex.type)"
                        [style.background]="exDone ? 'var(--surface-2)' : 'var(--surface-1)'"
-                       [style.opacity]="exDone ? '0.72' : '1'"
-                       style="cursor: pointer; transition: opacity 0.2s, background 0.2s;">
-                    <div>
-                      <div style="margin-bottom:12px; width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center;"
-                           [style.background]="exDone ? '#E2E8F0' : getExerciseColor(ex.type) + '15'"
-                           [style.border]="'1px solid ' + (exDone ? '#CBD5E1' : getExerciseColor(ex.type) + '40')">
-                        <span style="display:flex; align-items:center">
-                          @if (exDone) {
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                          } @else {
-                            @switch (ex.type) {
-                              @case ('writing') {
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                              }
-                              @case ('speaking') {
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
-                              }
-                              @case ('listening') {
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0284C7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
-                              }
-                              @case ('translation') {
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
-                              }
-                              @case ('pronunciation') {
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
-                              }
-                              @case ('vocabulary') {
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5v-15z"/></svg>
-                              }
+                       [style.opacity]="exDone ? '0.75' : '1'"
+                       style="padding: 10px 14px; border-radius: 10px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border: 1px solid var(--border-weak); cursor: pointer; transition: all 0.2s ease;">
+                    
+                    <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
+                      <!-- Icon box -->
+                      <div style="width: 36px; height: 36px; border-radius: 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;"
+                           [style.background]="exDone ? '#E2E8F0' : getExerciseColor(ex.type) + '15'">
+                        @if (exDone) {
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        } @else {
+                          @switch (ex.type) {
+                            @case ('writing') {
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                            }
+                            @case ('speaking') {
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+                            }
+                            @case ('listening') {
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0284C7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+                            }
+                            @case ('translation') {
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
+                            }
+                            @case ('pronunciation') {
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+                            }
+                            @default {
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5v-15z"/></svg>
                             }
                           }
-                        </span>
-                      </div>
-                      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px">
-                        <div class="card-label" [style.color]="exDone ? '#94A3B8' : getExerciseColor(ex.type)" style="font-weight: 700; margin:0">{{ getExerciseLabel(ex.type) }}</div>
-                        @if (isItemNew(ex.id) && !exDone) {
-                          <span style="background:linear-gradient(135deg, #F59E0B 0%, #D97706 100%); color:white; font-size: 8.5px; font-weight: 800; padding: 1px 6px; border-radius: 10px; text-transform: uppercase; animation: pulse-live 1.5s infinite">
-                            ✨ New
-                          </span>
                         }
                       </div>
-                      <div class="card-value" [style.color]="exDone ? '#94A3B8' : 'var(--text-primary)'" style="font-size:15px; font-weight:700; margin-top:4px;">{{ ex.title }}</div>
-                      <div style="display:flex; align-items:center; gap:8px; margin-top:6px; flex-wrap:wrap">
-                        <span style="font-size: 11px; color: var(--text-secondary)">Level {{ ex.level }} · {{ ex.points }} XP</span>
-                        @if (exDone) {
-                          <span style="background:#F1F5F9; color:#64748B; font-size: 9px; font-weight: 800; padding: 2px 8px; border-radius: 10px; text-transform: uppercase; display:inline-flex; align-items:center; gap:4px; border:1px solid #E2E8F0">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                            {{ t('Fait', 'Done') }}
-                          </span>
-                        } @else if (getExerciseStatus(ex.id) === 'Redo') {
-                          <span style="background:#FEF3C7; color:#D97706; font-size: 9px; font-weight: 800; padding: 1px 6px; border-radius: 10px; text-transform: uppercase;">🔄 {{ t('À refaire', 'Redo') }}</span>
-                        } @else if (getExerciseStatus(ex.id) === 'Pending') {
-                          <span style="background:#EFF6FF; color:#1D4ED8; font-size: 9px; font-weight: 800; padding: 1px 6px; border-radius: 10px; text-transform: uppercase;">{{ t('En attente', 'Pending') }}</span>
-                        } @else {
-                          <span style="background:#F1F5F9; color:#475569; font-size: 9px; font-weight: 800; padding: 1px 6px; border-radius: 10px; text-transform: uppercase;">{{ t('À Faire', 'To Do') }}</span>
-                        }
+
+                      <div style="flex: 1; min-width: 0;">
+                        <div style="display: flex; align-items: center; gap: 8px; line-height: 1.2;">
+                          <h4 style="font-size: 13.5px; font-weight: 700; color: var(--text-primary); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ ex.title }}</h4>
+                          @if (isItemNew(ex.id) && !exDone) {
+                            <span style="background:#F59E0B; color:white; font-size: 8px; font-weight: 800; padding: 1px 5px; border-radius: 6px; text-transform: uppercase;">New</span>
+                          }
+                        </div>
+
+                        <div style="display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--text-muted); margin-top: 3px; flex-wrap: wrap;">
+                          <span [style.color]="exDone ? '#94A3B8' : getExerciseColor(ex.type)" style="font-weight: 700;">{{ getExerciseLabel(ex.type) }}</span>
+                          <span>•</span>
+                          <span>Level {{ ex.level }}</span>
+                          <span>•</span>
+                          <span style="color: #059669; font-weight: 700;">+{{ ex.points }} XP</span>
+                        </div>
                       </div>
                     </div>
-                    @if (!exDone) {
-                      <div [style.color]="getExerciseColor(ex.type)" style="font-size:11px; font-weight:600; margin-top:12px; display:flex; align-items:center; gap:4px">
-                        {{ getExerciseStatus(ex.id) === 'Redo' ? t('Refaire', 'Redo') : t('Démarrer', 'Start') }} <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle; margin-left:4px"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
-                      </div>
-                    } @else {
-                      <div style="font-size:11px; font-weight:700; margin-top:12px; color:#94A3B8; display:flex; align-items:center; gap:4px">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                        {{ t('Complété', 'Completed') }}
-                      </div>
-                    }
+
+                    <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                      @if (exDone) {
+                        <span style="font-size: 10.5px; color: #64748B; font-weight: 700; background: #F1F5F9; padding: 3px 8px; border-radius: 6px;">✓ Fait</span>
+                      } @else if (getExerciseStatus(ex.id) === 'Redo') {
+                        <span style="font-size: 10.5px; color: #D97706; font-weight: 700; background: #FEF3C7; padding: 3px 8px; border-radius: 6px;">🔄 Refaire</span>
+                      } @else if (getExerciseStatus(ex.id) === 'Pending') {
+                        <span style="font-size: 10.5px; color: #1D4ED8; font-weight: 700; background: #EFF6FF; padding: 3px 8px; border-radius: 6px;">⏳ En attente</span>
+                      } @else {
+                        <span style="font-size: 11px; color: white; background: #059669; font-weight: 700; padding: 4px 10px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                          {{ t('Démarrer', 'Start') }} <i class="ti ti-arrow-right"></i>
+                        </span>
+                      }
+                    </div>
                   </div>
                 }
               </div>
