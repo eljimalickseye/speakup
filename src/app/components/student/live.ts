@@ -201,12 +201,24 @@ import { DatabaseService, LiveClass, UserProfile } from '../../services/database
                 </button>
 
                 <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px">
-                  <span style="font-size:10px; font-weight:800; padding:3px 10px; border-radius:20px; text-transform:uppercase; letter-spacing:0.5px"
+                  <span style="font-size:10px; font-weight:800; padding:3px 10px; border-radius:20px; text-transform:uppercase; letter-spacing:0.5px; display:inline-flex; align-items:center; gap:4px"
                         [style.background]="c.status === 'active' ? '#EF4444' : (c.status === 'completed' ? '#6B7280' : '#4F46E5')"
                         style="color:white">
-                    {{ c.status === 'active' ? '🔴 LIVE NOW' : (c.status === 'completed' ? '✓ Terminé' : '📅 PROGRAMMÉ') }}
+                    @if (c.status === 'active') {
+                      <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="#EF4444" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>
+                      LIVE NOW
+                    } @else if (c.status === 'completed') {
+                      <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                      Terminé
+                    } @else {
+                      <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                      PROGRAMMÉ
+                    }
                   </span>
-                  <span style="font-size:11px; color:#A5B4FC; font-weight:700">👥 {{ c.group }}</span>
+                  <span style="font-size:11px; color:#A5B4FC; font-weight:700; display:inline-flex; align-items:center; gap:4px">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    {{ c.group }}
+                  </span>
                 </div>
 
                 <h3 style="font-size:18px; font-weight:900; margin:0 0 6px 0; color:white; line-height:1.3">
@@ -223,12 +235,18 @@ import { DatabaseService, LiveClass, UserProfile } from '../../services/database
                 <!-- DATE & TIME STATS GRID -->
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; background:var(--surface-2); border:1px solid var(--border-weak); padding:14px; border-radius:12px">
                   <div>
-                    <span style="font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase; display:block">📅 Date & Jour</span>
-                    <span style="font-size:13px; font-weight:800; color:var(--text-primary)">{{ c.date }}</span>
+                    <span style="font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase; display:flex; align-items:center; gap:4px">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                      Date & Jour
+                    </span>
+                    <span style="font-size:13px; font-weight:800; color:var(--text-primary); margin-top:2px; display:block">{{ c.date }}</span>
                   </div>
                   <div>
-                    <span style="font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase; display:block">⏰ Heure & Durée</span>
-                    <span style="font-size:13px; font-weight:800; color:var(--text-primary)">{{ c.time }} ({{ c.duration }})</span>
+                    <span style="font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase; display:flex; align-items:center; gap:4px">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                      Heure & Durée
+                    </span>
+                    <span style="font-size:13px; font-weight:800; color:var(--text-primary); margin-top:2px; display:block">{{ c.time }} ({{ c.duration }})</span>
                   </div>
                 </div>
 
@@ -243,8 +261,9 @@ import { DatabaseService, LiveClass, UserProfile } from '../../services/database
                     <span style="font-size:12px; font-family:monospace; font-weight:700; color:#4F46E5; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">
                       {{ c.googleMeetUrl ? c.googleMeetUrl : ('https://meet.google.com/spk-' + c.jitsiRoom.toLowerCase().slice(-10)) }}
                     </span>
-                    <button (click)="copyLink(c.googleMeetUrl || ('https://meet.google.com/spk-' + c.jitsiRoom.toLowerCase().slice(-10)))" class="btn-s" style="padding:4px 10px; font-size:11px; font-weight:700; border-color:#818CF8; color:#4338CA; cursor:pointer">
-                      📋 Copier
+                    <button (click)="copyLink(c.googleMeetUrl || ('https://meet.google.com/spk-' + c.jitsiRoom.toLowerCase().slice(-10)))" class="btn-s" style="padding:4px 10px; font-size:11px; font-weight:700; border-color:#818CF8; color:#4338CA; cursor:pointer; display:inline-flex; align-items:center; gap:4px">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      Copier
                     </button>
                   </div>
                 </div>
@@ -253,15 +272,18 @@ import { DatabaseService, LiveClass, UserProfile } from '../../services/database
                 <div style="display:flex; gap:12px; margin-top:8px">
                   @if (c.status === 'active' || canJoinClass(c)) {
                     <button class="btn-p" (click)="joinClass(c)" style="flex:1; height:46px; font-size:14px; font-weight:900; background:#4F46E5; border-color:#4F46E5; display:flex; align-items:center; justify-content:center; gap:8px; border-radius:12px; box-shadow:0 8px 20px rgba(79,70,229,0.3); color:white; cursor:pointer">
-                      🎥 {{ t('Rejoindre la Session', 'Join Live Session') }}
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                      {{ t('Rejoindre la Session', 'Join Live Session') }}
                     </button>
                   } @else if (c.status === 'completed') {
-                    <div style="flex:1; background:var(--surface-2); text-align:center; padding:12px; border-radius:10px; color:var(--text-muted); font-weight:700; font-size:13px">
-                      ✓ {{ t('Session Terminée', 'Session Completed') }}
+                    <div style="flex:1; background:var(--surface-2); text-align:center; padding:12px; border-radius:10px; color:var(--text-muted); font-weight:700; font-size:13px; display:inline-flex; align-items:center; justify-content:center; gap:6px">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                      {{ t('Session Terminée', 'Session Completed') }}
                     </div>
                   } @else {
                     <button class="btn-p" (click)="joinClass(c)" style="flex:1; height:46px; font-size:14px; font-weight:900; background:#4F46E5; border-color:#4F46E5; display:flex; align-items:center; justify-content:center; gap:8px; border-radius:12px; color:white; cursor:pointer">
-                      🎥 {{ t('Rejoindre la Salle de Classe', 'Enter Classroom') }}
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                      {{ t('Rejoindre la Salle de Classe', 'Enter Classroom') }}
                     </button>
                   }
 

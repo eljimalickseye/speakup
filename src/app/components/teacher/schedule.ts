@@ -145,12 +145,24 @@ import { DialogService } from '../../services/dialog.service';
                 </button>
 
                 <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px">
-                  <span style="font-size:10px; font-weight:800; padding:3px 10px; border-radius:20px; text-transform:uppercase; letter-spacing:0.5px"
+                  <span style="font-size:10px; font-weight:800; padding:3px 10px; border-radius:20px; text-transform:uppercase; letter-spacing:0.5px; display:inline-flex; align-items:center; gap:4px"
                         [style.background]="c.status === 'active' ? '#EF4444' : (c.status === 'completed' ? '#6B7280' : '#10B981')"
                         style="color:white">
-                    {{ c.status === 'active' ? '🔴 LIVE NOW' : (c.status === 'completed' ? '✓ Terminé' : '📅 PROGRAMMÉ') }}
+                    @if (c.status === 'active') {
+                      <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="#EF4444" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>
+                      LIVE NOW
+                    } @else if (c.status === 'completed') {
+                      <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                      Terminé
+                    } @else {
+                      <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                      PROGRAMMÉ
+                    }
                   </span>
-                  <span style="font-size:11px; color:#C7D2FE; font-weight:700">👥 {{ c.group }}</span>
+                  <span style="font-size:11px; color:#C7D2FE; font-weight:700; display:inline-flex; align-items:center; gap:4px">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    {{ c.group }}
+                  </span>
                 </div>
 
                 <h3 style="font-size:18px; font-weight:900; margin:0 0 6px 0; color:white; line-height:1.3">
@@ -167,21 +179,31 @@ import { DialogService } from '../../services/dialog.service';
                 <!-- DATE & TIME GRID -->
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; background:var(--surface-2); border:1px solid var(--border-weak); padding:14px; border-radius:12px">
                   <div>
-                    <span style="font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase; display:block">📅 Date Planifiée</span>
-                    <span style="font-size:13.5px; font-weight:800; color:var(--text-primary)">{{ c.date }}</span>
+                    <span style="font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase; display:flex; align-items:center; gap:4px">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                      Date Planifiée
+                    </span>
+                    <span style="font-size:13.5px; font-weight:800; color:var(--text-primary); margin-top:2px; display:block">{{ c.date }}</span>
                   </div>
                   <div>
-                    <span style="font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase; display:block">⏰ Horaires & Durée</span>
-                    <span style="font-size:13.5px; font-weight:800; color:var(--text-primary)">{{ c.time }} ({{ c.duration }})</span>
+                    <span style="font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase; display:flex; align-items:center; gap:4px">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                      Horaires & Durée
+                    </span>
+                    <span style="font-size:13.5px; font-weight:800; color:var(--text-primary); margin-top:2px; display:block">{{ c.time }} ({{ c.duration }})</span>
                   </div>
                 </div>
 
                 <!-- MEETING LINK EDITOR & COPY -->
                 <div style="background:#FAF5FF; border:1.5px dashed #C084FC; border-radius:12px; padding:14px; display:flex; flex-direction:column; gap:8px">
                   <div style="font-size:11px; font-weight:800; color:#7E22CE; text-transform:uppercase; display:flex; align-items:center; justify-content:space-between">
-                    <span>Lien Visioconférence (Google Meet)</span>
-                    <button (click)="copyLink(c.googleMeetUrl || ('https://meet.google.com/spk-' + c.jitsiRoom.toLowerCase().slice(-10)))" class="btn-s" style="padding:2px 8px; font-size:10px; font-weight:800; border-color:#C084FC; color:#7E22CE; cursor:pointer">
-                      📋 Copier
+                    <span style="display:flex; align-items:center; gap:4px">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                      Lien Visioconférence (Google Meet)
+                    </span>
+                    <button (click)="copyLink(c.googleMeetUrl || ('https://meet.google.com/spk-' + c.jitsiRoom.toLowerCase().slice(-10)))" class="btn-s" style="padding:2px 8px; font-size:10px; font-weight:800; border-color:#C084FC; color:#7E22CE; cursor:pointer; display:inline-flex; align-items:center; gap:4px">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                      Copier
                     </button>
                   </div>
                   <div style="display:flex; gap:8px">
@@ -195,10 +217,12 @@ import { DialogService } from '../../services/dialog.service';
                 <!-- FLUIDITY ACTIONS: DUPLICATE & MOVE -->
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; background:#F8FAFC; border:1px solid #E2E8F0; padding:12px; border-radius:12px">
                   <button (click)="duplicateClass(c)" class="btn-s" style="background:white; border:1.5px solid #6366F1; color:#4F46E5; font-weight:800; font-size:12px; padding:8px 12px; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer">
-                    📋 Dupliquer sur une autre date
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    Dupliquer la date
                   </button>
                   <button (click)="moveClassDate(c)" class="btn-s" style="background:white; border:1.5px solid #F59E0B; color:#D97706; font-weight:800; font-size:12px; padding:8px 12px; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer">
-                    📅 Déplacer la date
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    Déplacer la date
                   </button>
                 </div>
 
@@ -206,23 +230,28 @@ import { DialogService } from '../../services/dialog.service';
                 <div style="display:flex; gap:10px; margin-top:4px">
                   @if (c.status === 'waiting') {
                     <button class="btn-p" style="background:#EF4444; border-color:#EF4444; flex:1.5; height:44px; font-size:13px; font-weight:900; display:flex; align-items:center; justify-content:center; gap:6px; border-radius:10px; cursor:pointer" (click)="startLiveNow(c)">
-                      🔴 Démarrer le Live Maintenant
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#EF4444" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>
+                      Démarrer le Live Maintenant
                     </button>
                   } @else if (c.status === 'active') {
                     <button class="btn-p" style="background:#3730A3; border-color:#3730A3; flex:1; height:44px; font-size:13px; font-weight:900; display:flex; align-items:center; justify-content:center; gap:6px; border-radius:10px; cursor:pointer" (click)="joinActiveLive(c)">
-                      🎥 Rejoindre l'Appel
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                      Rejoindre l'Appel
                     </button>
-                    <button class="btn-s" style="color:#EF4444; border-color:#EF4444; height:44px; font-weight:800; border-radius:10px; cursor:pointer" (click)="endLiveClass(c)">
-                      ⏹️ Terminer la Session
+                    <button class="btn-s" style="color:#EF4444; border-color:#EF4444; height:44px; font-weight:800; border-radius:10px; cursor:pointer; display:inline-flex; align-items:center; gap:4px" (click)="endLiveClass(c)">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+                      Terminer la Session
                     </button>
                   } @else {
-                    <div style="flex:1; background:var(--surface-2); text-align:center; padding:10px; border-radius:10px; color:var(--text-muted); font-weight:800">
-                      ✓ Session Terminée
+                    <div style="flex:1; background:var(--surface-2); text-align:center; padding:10px; border-radius:10px; color:var(--text-muted); font-weight:800; display:inline-flex; align-items:center; justify-content:center; gap:6px">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                      Session Terminée
                     </div>
                   }
 
-                  <button class="btn-s" style="border-color:#EF4444; color:#EF4444; height:44px; font-weight:800; border-radius:10px; padding:0 14px; cursor:pointer" (click)="cancelClass(c)">
-                    🗑️ Supprimer
+                  <button class="btn-s" style="border-color:#EF4444; color:#EF4444; height:44px; font-weight:800; border-radius:10px; padding:0 14px; cursor:pointer; display:inline-flex; align-items:center; gap:4px" (click)="cancelClass(c)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    Supprimer
                   </button>
                 </div>
 
