@@ -199,16 +199,17 @@ import { DialogService } from '../../services/dialog.service';
                   </iframe>
                 </div>
                 @if (selectedLesson()?.youtubeDescription) {
-                  <p style="font-size: 12.5px; color: #94A3B8; margin-top: 10px; font-style: italic; line-height: 1.4; margin-bottom: 0">
-                    💡 {{ selectedLesson()?.youtubeDescription }}
+                  <p style="font-size: 12.5px; color: #94A3B8; margin-top: 10px; font-style: italic; line-height: 1.4; margin-bottom: 0; display:flex; align-items:flex-start; gap:6px">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2.5" style="flex-shrink:0; margin-top:2px"><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/><path d="M9 16a5 5 0 1 1 6 0 2 2 0 0 1-1 1.73V19a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-1.27A2 2 0 0 1 9 16z"/></svg>
+                    <span>{{ selectedLesson()?.youtubeDescription }}</span>
                   </p>
                 }
               </div>
             }
 
             <div class="card" style="background:#FFF; border:1px solid var(--border-weak); border-radius:8px; padding:18px; position:relative">
-              <button (click)="copyText(selectedLesson()?.content || '')" style="position:absolute; top:12px; right:12px; background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:14px" [title]="t('Copier les notes', 'Copy Notes')">
-                <i class="ti ti-copy"></i>
+              <button (click)="copyText(selectedLesson()?.content || '')" style="position:absolute; top:12px; right:12px; background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:14px; display:flex; align-items:center" [title]="t('Copier les notes', 'Copy Notes')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
               </button>
               <div style="line-height:1.6; font-size:13.5px; color:var(--text-secondary)" [innerHTML]="selectedLesson()?.content">
               </div>
@@ -216,7 +217,10 @@ import { DialogService } from '../../services/dialog.service';
 
             @if (selectedLesson()?.attachments && selectedLesson()!.attachments!.length > 0) {
               <div style="margin-top:16px">
-                <h4 style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:8px">📂 {{ t('Documents de cours attachés', 'Attached Course Documents') }} ({{ selectedLesson()!.attachments!.length }})</h4>
+                <h4 style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:8px; display:flex; align-items:center; gap:6px">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                  <span>{{ t('Documents de cours attachés', 'Attached Course Documents') }} ({{ selectedLesson()!.attachments!.length }})</span>
+                </h4>
                 <div style="display:flex; flex-direction:column; gap:8px">
                   @for (att of selectedLesson()!.attachments; track att.name) {
                     <div style="display:flex; align-items:center; justify-content:space-between; background:var(--surface-2); border:1.5px solid var(--border-weak); padding:10px 14px; border-radius:8px">
@@ -242,18 +246,18 @@ import { DialogService } from '../../services/dialog.service';
               @for (v of selectedLesson()?.vocabulary; track v) {
                 <div class="row" style="margin-bottom:0; background:var(--surface-2); border-radius:8px; padding:12px; display:flex; justify-content:space-between; align-items:center; border:1px solid var(--border-weak)">
                   <div style="display:flex; align-items:center; gap:8px">
-                    <i class="ti ti-bookmarks" style="color:#4F46E5; font-size:16px"></i>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.5"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>
                     <span style="font-size:13px; font-weight:600; color:var(--text-primary)">{{ v }}</span>
                   </div>
                   
                   <div style="display:flex; gap:6px">
                     <!-- Text-to-speech speak button -->
                     <button (click)="speakWord(v)" style="background:none; border:none; color:#4F46E5; cursor:pointer; font-size:14px; padding:4px; display:flex; align-items:center" [title]="t('Écouter la prononciation', 'Listen Pronunciation')">
-                      <i class="ti ti-volume"></i>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
                     </button>
                     <!-- Copy button -->
                     <button (click)="copyText(v)" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:14px; padding:4px; display:flex; align-items:center" [title]="t('Copier le mot', 'Copy Word')">
-                      <i class="ti ti-copy"></i>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                     </button>
                   </div>
                 </div>
@@ -267,7 +271,8 @@ import { DialogService } from '../../services/dialog.service';
             <div style="display:flex; flex-direction:column; gap:16px">
               <div style="background:#EEF2FF; border-left:4px solid #4F46E5; padding:14px; border-radius:8px">
                 <h4 style="font-size:12.5px; font-weight:700; color:#3730A3; margin:0 0 6px 0; display:flex; align-items:center; gap:6px">
-                  <i class="ti ti-info-circle"></i> {{ t('Consignes du Devoir :', 'Homework Instructions:') }}
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                  <span>{{ t('Consignes du Devoir :', 'Homework Instructions:') }}</span>
                 </h4>
                 <div style="font-size:13px; color:#4B5563; line-height:1.5; margin:0; white-space: pre-wrap;" [innerHTML]="selectedLesson()?.homeworkInstruction || ''"></div>
               </div>
@@ -297,8 +302,9 @@ import { DialogService } from '../../services/dialog.service';
                       <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px">
                         @for (aud of parsed.audios; track aud.id) {
                           <div style="background:#FFF; padding:10px; border-radius:8px; border:1px solid var(--border-weak); display:flex; flex-direction:column; gap:6px">
-                            <div style="font-size:11.5px; font-weight:600; color:var(--text-primary)">
-                              🎙️ {{ aud.name || 'Partie' }}
+                            <div style="font-size:11.5px; font-weight:600; color:var(--text-primary); display:flex; align-items:center; gap:6px">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+                              <span>{{ aud.name || 'Partie' }}</span>
                             </div>
                             <audio [src]="aud.data" controls style="width:100%; height:32px; border-radius:30px"></audio>
                           </div>
@@ -309,7 +315,10 @@ import { DialogService } from '../../services/dialog.service';
                     @if (parsed.video) {
                       <div style="display:flex; flex-direction:column; gap:8px; background:#000; padding:10px; border-radius:8px; margin-bottom:12px">
                         <video controls style="width:100%; max-height:180px; border-radius:6px" [src]="parsed.video"></video>
-                        <div style="font-size:11px; color:#94A3B8; text-align:center"><i class="ti ti-video"></i> {{ t('Devoir Vidéo Soumis', 'Video Homework Submitted') }}</div>
+                        <div style="font-size:11px; color:#94A3B8; text-align:center; display:flex; align-items:center; justify-content:center; gap:6px">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                          <span>{{ t('Devoir Vidéo Soumis', 'Video Homework Submitted') }}</span>
+                        </div>
                       </div>
                     }
                   }
@@ -317,7 +326,8 @@ import { DialogService } from '../../services/dialog.service';
                   <!-- Dynamic Real Audio Submission Player -->
                   <div style="background:#FFF; padding:10px; border-radius:8px; border:1px solid var(--border-weak); margin-bottom:12px; display:flex; flex-direction:column; gap:6px">
                     <div style="font-size:11.5px; font-weight:600; color:var(--text-primary); display:flex; align-items:center; gap:6px">
-                      🗣️ {{ t('Votre enregistrement vocal', 'Your Voice Recording') }}
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+                      <span>{{ t('Votre enregistrement vocal', 'Your Voice Recording') }}</span>
                     </div>
                     <audio [src]="sub.content" controls style="width:100%; height:32px; border-radius:30px"></audio>
                   </div>
@@ -325,7 +335,10 @@ import { DialogService } from '../../services/dialog.service';
                   <!-- Dynamic Real Video Submission Player -->
                   <div style="display:flex; flex-direction:column; gap:8px; background:#000; padding:10px; border-radius:8px; margin-bottom:12px">
                     <video controls style="width:100%; max-height:180px; border-radius:6px" [src]="sub.content"></video>
-                    <div style="font-size:11px; color:#94A3B8; text-align:center"><i class="ti ti-video"></i> {{ t('Devoir Vidéo Soumis', 'Video Homework Submitted') }}</div>
+                    <div style="font-size:11px; color:#94A3B8; text-align:center; display:flex; align-items:center; justify-content:center; gap:6px">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                      <span>{{ t('Devoir Vidéo Soumis', 'Video Homework Submitted') }}</span>
+                    </div>
                   </div>
                 } @else {
                   <p style="font-size:13px; color:var(--text-secondary); margin:0 0 12px 0; font-style:italic; white-space:pre-line">"{{ sub.content }}"</p>
@@ -338,7 +351,7 @@ import { DialogService } from '../../services/dialog.service';
                          [style.border-radius]="sub.score === 'A refaire' ? '6px' : '0'">
                       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
                         <span style="font-size:13px; font-weight:700" [style.color]="sub.score === 'A refaire' ? '#D97706' : '#065F46'">
-                          {{ t('Note obtenue :', 'Grade Score:') }} {{ sub.score === 'A refaire' ? t('🔄 À refaire', '🔄 Redo requested') : sub.score }}
+                          {{ t('Note obtenue :', 'Grade Score:') }} {{ sub.score === 'A refaire' ? t('À refaire', 'Redo requested') : sub.score }}
                         </span>
                         @if (sub.score !== 'A refaire') {
                           <span style="font-size:11.5px; font-weight:700; color:#4F46E5">+{{ sub.xpReward }} XP Awarded</span>
@@ -349,13 +362,15 @@ import { DialogService } from '../../services/dialog.service';
                     </div>
                   } @else {
                     <div style="border-top:1px solid var(--border); padding-top:10px; font-size:12px; color:var(--text-muted); display:flex; justify-content:space-between; align-items:center; gap:4px; flex-wrap:wrap">
-                      <div>
-                        <i class="ti ti-clock"></i> {{ t("En attente de correction par l'enseignant.", 'Waiting for teacher grading review.') }}
+                      <div style="display:flex; align-items:center; gap:6px">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        <span>{{ t("En attente de correction par l'enseignant.", 'Waiting for teacher grading review.') }}</span>
                       </div>
                       @if (canDeleteSubmission(sub)) {
                         <button (click)="deleteMySubmission(sub.id)" 
                                 style="background:#FEF2F2; color:#DC2626; border:1px solid #FCA5A5; padding:4px 10px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:4px; transition: all 0.2s">
-                          🗑️ {{ t('Supprimer (20 min)', 'Delete & Redo') }}
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                          <span>{{ t('Supprimer (20 min)', 'Delete & Redo') }}</span>
                         </button>
                       }
                     </div>
@@ -366,7 +381,7 @@ import { DialogService } from '../../services/dialog.service';
               @if (!getLessonSubmission(selectedLesson()!.id) || getLessonSubmission(selectedLesson()!.id)?.score === 'A refaire') {
                 @if (getLessonSubmission(selectedLesson()!.id)?.score === 'A refaire') {
                   <div style="background:#FFFBEB; border:1px solid #FCD34D; border-radius:8px; padding:12px; margin-top:16px; margin-bottom:16px; color:#D97706; font-size:12.5px; font-weight:600; display:flex; align-items:center; gap:8px">
-                    <span>🔄</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.5 2v6h-6"/><path d="M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
                     <span>{{ t('Veuillez soumettre à nouveau votre travail en prenant en compte le feedback ci-dessus.', 'Please submit your homework again considering the feedback above.') }}</span>
                   </div>
                 }
@@ -464,7 +479,8 @@ import { DialogService } from '../../services/dialog.service';
                         <div style="display:flex; flex-direction:column; align-items:center; gap:8px; width:100%">
                           @if (videoRecordingState() === 'idle') {
                             <button (click)="startVideoRecording()" class="btn-s" style="background:#8B5CF6; color:white; border:none; display:flex; align-items:center; gap:6px; cursor:pointer; padding:8px 16px; border-radius:8px">
-                              <i class="ti ti-video"></i> {{ t('Ouvrir la caméra', 'Open Camera') }}
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                              {{ t('Ouvrir la caméra', 'Open Camera') }}
                             </button>
                           } @else if (videoRecordingState() === 'recording') {
                             <video id="webcam-preview" style="width:100%; max-height:160px; border-radius:10px; background:#000" autoplay muted></video>
@@ -483,10 +499,10 @@ import { DialogService } from '../../services/dialog.service';
                        [style.border]="isUnifiedHomeworkReady() ? '1px solid #A7F3D0' : '1px solid #FCD34D'"
                        [style.color]="isUnifiedHomeworkReady() ? '#065F46' : '#B45309'">
                     @if (isUnifiedHomeworkReady()) {
-                      <span>✅</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
                       <span>{{ t('Votre devoir est prêt ! Cliquez sur le bouton ci-dessous pour soumettre.', 'Your homework is ready! Click the button below to submit.') }}</span>
                     } @else {
-                      <span>💡</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2.5"><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/><path d="M9 16a5 5 0 1 1 6 0 2 2 0 0 1-1 1.73V19a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-1.27A2 2 0 0 1 9 16z"/></svg>
                       <span>{{ t('Pour débloquer la soumission, saisissez une réponse écrite ou enregistrez un vocal ci-dessus.', 'To unlock submission, enter a written response or record a voice note above.') }}</span>
                     }
                   </div>
