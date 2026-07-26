@@ -2841,6 +2841,25 @@ export class DatabaseService {
     }
   }
 
+  async updateClass(classId: string, updates: Partial<LiveClass>) {
+    const list = [...this.schedules$.value];
+    const idx = list.findIndex(c => c.id === classId);
+    if (idx !== -1) {
+      const updated = { ...list[idx], ...updates };
+      list[idx] = updated;
+      this.schedules$.next(list);
+      this.saveLocal('speak_schedules', list);
+
+      if (this.useFirebase && this.firestore) {
+        try {
+          await updateDoc(doc(this.firestore, 'schedules', classId), this.cleanDocData(updates));
+        } catch (e) {
+          console.warn(e);
+        }
+      }
+    }
+  }
+
   // --- LIVE HAND RAISE OPERATIONS ---
   observeHandRaises(classId: string): Observable<string[]> {
     const localKey = 'speak_handraises_' + classId;

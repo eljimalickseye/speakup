@@ -132,66 +132,105 @@ import { DialogService } from '../../services/dialog.service';
             </div>
           </div>
 
-          <!-- Class Details Preview Card below the calendar -->
-          @if (selectedClass(); as c) {
-            <div class="card" style="border-left:4px solid #4F46E5; display:flex; flex-direction:column; gap:12px; animation: fadeIn 0.2s">
-              <div style="display:flex; justify-content:space-between; align-items:flex-start">
-                <div>
-                  <h4 style="font-size:14px; font-weight:700; color:var(--text-primary)">{{ c.title }}</h4>
-                  <div style="font-size:11px; color:var(--text-secondary); margin-top:2px">
-                    Date: {{ c.date }} · Time: {{ c.time }} ({{ c.duration }}) · Target: {{ c.group }}
+        <!-- TEACHER MODAL OVERLAY POPUP FOR SCHEDULED CLASS -->
+        @if (selectedClass(); as c) {
+          <div class="modal-backdrop" (click)="selectedClass.set(null)" style="position:fixed; inset:0; background:rgba(15,23,42,0.65); backdrop-filter:blur(6px); z-index:99999; display:flex; align-items:center; justify-content:center; padding:16px; animation:fadeIn 0.2s ease-out">
+            
+            <div class="modal-card" (click)="$event.stopPropagation()" style="background:var(--surface-1); border-radius:20px; width:100%; max-width:560px; box-shadow:0 20px 50px rgba(0,0,0,0.3); border:1px solid var(--border-weak); overflow:hidden; animation:scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)">
+              
+              <!-- MODAL HEADER -->
+              <div style="background:linear-gradient(135deg, #4F46E5 0%, #312E81 100%); color:white; padding:24px; position:relative">
+                <button (click)="selectedClass.set(null)" style="position:absolute; top:16px; right:16px; background:rgba(255,255,255,0.15); border:none; color:white; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:16px; font-weight:800">
+                  ✕
+                </button>
+
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px">
+                  <span style="font-size:10px; font-weight:800; padding:3px 10px; border-radius:20px; text-transform:uppercase; letter-spacing:0.5px"
+                        [style.background]="c.status === 'active' ? '#EF4444' : (c.status === 'completed' ? '#6B7280' : '#10B981')"
+                        style="color:white">
+                    {{ c.status === 'active' ? '🔴 LIVE NOW' : (c.status === 'completed' ? '✓ Terminé' : '📅 PROGRAMMÉ') }}
+                  </span>
+                  <span style="font-size:11px; color:#C7D2FE; font-weight:700">👥 {{ c.group }}</span>
+                </div>
+
+                <h3 style="font-size:18px; font-weight:900; margin:0 0 6px 0; color:white; line-height:1.3">
+                  {{ c.title }}
+                </h3>
+                <p style="font-size:12.5px; color:#E0E7FF; margin:0; line-height:1.5; opacity:0.9">
+                  {{ c.description }}
+                </p>
+              </div>
+
+              <!-- MODAL BODY -->
+              <div style="padding:24px; display:flex; flex-direction:column; gap:16px">
+                
+                <!-- DATE & TIME GRID -->
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; background:var(--surface-2); border:1px solid var(--border-weak); padding:14px; border-radius:12px">
+                  <div>
+                    <span style="font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase; display:block">📅 Date Planifiée</span>
+                    <span style="font-size:13.5px; font-weight:800; color:var(--text-primary)">{{ c.date }}</span>
+                  </div>
+                  <div>
+                    <span style="font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase; display:block">⏰ Horaires & Durée</span>
+                    <span style="font-size:13.5px; font-weight:800; color:var(--text-primary)">{{ c.time }} ({{ c.duration }})</span>
                   </div>
                 </div>
-                <button class="btn-s" style="padding:2px 8px; font-size:10px" (click)="selectedClass.set(null)">
-                  <i class="ti ti-x" aria-hidden="true"></i> Close
-                </button>
-              </div>
 
-              <p style="font-size:12px; color:var(--text-secondary); line-height:1.5; font-style:italic">
-                "{{ c.description }}"
-              </p>
-
-              <!-- Google Meet Style Link Box -->
-              <div style="background:#FAF5FF; border:1px solid #E9D5FF; border-radius:8px; padding:12px; margin-bottom:12px; margin-top:8px">
-                <div style="font-size:11px; font-weight:700; color:#7E22CE; display:flex; align-items:center; gap:4px">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                  <span>Meeting Link (Google Meet)</span>
+                <!-- MEETING LINK EDITOR & COPY -->
+                <div style="background:#FAF5FF; border:1.5px dashed #C084FC; border-radius:12px; padding:14px; display:flex; flex-direction:column; gap:8px">
+                  <div style="font-size:11px; font-weight:800; color:#7E22CE; text-transform:uppercase; display:flex; align-items:center; justify-content:space-between">
+                    <span>Lien Visioconférence (Google Meet)</span>
+                    <button (click)="copyLink(c.googleMeetUrl || ('https://meet.google.com/spk-' + c.jitsiRoom.toLowerCase().slice(-10)))" class="btn-s" style="padding:2px 8px; font-size:10px; font-weight:800; border-color:#C084FC; color:#7E22CE; cursor:pointer">
+                      📋 Copier
+                    </button>
+                  </div>
+                  <div style="display:flex; gap:8px">
+                    <input type="text" [value]="c.googleMeetUrl || ('https://meet.google.com/spk-' + c.jitsiRoom.toLowerCase().slice(-10))" #meetInput style="flex:1; padding:8px 12px; font-size:12px; font-family:monospace; border:1px solid #E9D5FF; border-radius:8px; background:white; color:#581C87; outline:none"/>
+                    <button (click)="updateClassMeetUrl(c, meetInput.value)" class="btn-s" style="background:#7E22CE; color:white; border:none; padding:0 12px; font-size:11px; font-weight:800; cursor:pointer; border-radius:8px">
+                      Enregistrer
+                    </button>
+                  </div>
                 </div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px; flex-wrap:wrap; gap:8px">
-                  <a [href]="c.googleMeetUrl ? c.googleMeetUrl : 'https://meet.google.com/spk-' + c.jitsiRoom.toLowerCase().slice(-10)"
-                     target="_blank"
-                     (click)="startAndJoinClass(c)"
-                     style="font-size:12px; font-weight:600; color:#4F46E5; text-decoration:underline; cursor:pointer; font-family:monospace">
-                    {{ c.googleMeetUrl ? c.googleMeetUrl : 'https://meet.google.com/spk-' + c.jitsiRoom.toLowerCase().slice(-10) }}
-                  </a>
-                  <span class="badge" [style.background]="c.status === 'active' ? '#EF4444' : '#E5E7EB'" [style.color]="c.status === 'active' ? 'white' : '#4B5563'" style="font-size:9px">
-                    {{ c.status === 'active' ? 'Live Now' : 'Click Link to Start Live' }}
-                  </span>
+
+                <!-- FLUIDITY ACTIONS: DUPLICATE & MOVE -->
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; background:#F8FAFC; border:1px solid #E2E8F0; padding:12px; border-radius:12px">
+                  <button (click)="duplicateClass(c)" class="btn-s" style="background:white; border:1.5px solid #6366F1; color:#4F46E5; font-weight:800; font-size:12px; padding:8px 12px; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer">
+                    📋 Dupliquer sur une autre date
+                  </button>
+                  <button (click)="moveClassDate(c)" class="btn-s" style="background:white; border:1.5px solid #F59E0B; color:#D97706; font-weight:800; font-size:12px; padding:8px 12px; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer">
+                    📅 Déplacer la date
+                  </button>
                 </div>
+
+                <!-- MAIN CONTROL ACTIONS -->
+                <div style="display:flex; gap:10px; margin-top:4px">
+                  @if (c.status === 'waiting') {
+                    <button class="btn-p" style="background:#EF4444; border-color:#EF4444; flex:1.5; height:44px; font-size:13px; font-weight:900; display:flex; align-items:center; justify-content:center; gap:6px; border-radius:10px; cursor:pointer" (click)="startLiveNow(c)">
+                      🔴 Démarrer le Live Maintenant
+                    </button>
+                  } @else if (c.status === 'active') {
+                    <button class="btn-p" style="background:#3730A3; border-color:#3730A3; flex:1; height:44px; font-size:13px; font-weight:900; display:flex; align-items:center; justify-content:center; gap:6px; border-radius:10px; cursor:pointer" (click)="joinActiveLive(c)">
+                      🎥 Rejoindre l'Appel
+                    </button>
+                    <button class="btn-s" style="color:#EF4444; border-color:#EF4444; height:44px; font-weight:800; border-radius:10px; cursor:pointer" (click)="endLiveClass(c)">
+                      ⏹️ Terminer la Session
+                    </button>
+                  } @else {
+                    <div style="flex:1; background:var(--surface-2); text-align:center; padding:10px; border-radius:10px; color:var(--text-muted); font-weight:800">
+                      ✓ Session Terminée
+                    </div>
+                  }
+
+                  <button class="btn-s" style="border-color:#EF4444; color:#EF4444; height:44px; font-weight:800; border-radius:10px; padding:0 14px; cursor:pointer" (click)="cancelClass(c)">
+                    🗑️ Supprimer
+                  </button>
+                </div>
+
               </div>
 
-              <div style="display:flex; gap:10px; border-top:1px solid var(--border-weak); padding-top:12px; margin-top:4px">
-                @if (c.status === 'waiting') {
-                  <button class="btn-p" style="background:#EF4444; border-color:#EF4444" (click)="startLiveNow(c)">
-                    <i class="ti ti-video-plus" aria-hidden="true" style="margin-right:4px"></i> Start Live Now
-                  </button>
-                } @else if (c.status === 'active') {
-                  <button class="btn-p" style="background:#3730A3; border-color:#3730A3" (click)="joinActiveLive(c)">
-                    <i class="ti ti-video" aria-hidden="true" style="margin-right:4px"></i> Join Call
-                  </button>
-                  <button class="btn-s" style="color:#EF4444; border-color:#EF4444" (click)="endLiveClass(c)">
-                    <i class="ti ti-square-rounded-x" aria-hidden="true" style="margin-right:4px"></i> End Session
-                  </button>
-                } @else {
-                  <span class="badge" style="background:#E5E7EB; color:#4B5563">Session Completed</span>
-                }
-                
-                <button class="btn-s" style="margin-left:auto; border-color:#EF4444; color:#EF4444" (click)="cancelClass(c)">
-                  <i class="ti ti-trash" aria-hidden="true"></i> Delete Schedule
-                </button>
-              </div>
             </div>
-          }
+          </div>
+        }
         </div>
       }
 
@@ -607,6 +646,62 @@ export class TeacherScheduleComponent {
     this.date = '';
     this.description = '';
     this.googleMeetUrl = '';
+  }
+
+  duplicateClass(c: LiveClass) {
+    const targetDate = prompt(
+      "Dupliquer la session :\nEntrez la nouvelle date (Format AAAA-MM-JJ) :",
+      c.date
+    );
+    if (!targetDate || !targetDate.trim()) return;
+
+    this.db.scheduleClass({
+      title: c.title,
+      date: targetDate.trim(),
+      time: c.time,
+      duration: c.duration,
+      group: c.group,
+      description: c.description,
+      studentId: c.studentId,
+      googleMeetUrl: c.googleMeetUrl
+    });
+
+    this.dialogService.alert(
+      'Session dupliquée !',
+      `La session "${c.title}" a été dupliquée avec succès pour le ${targetDate.trim()}.`,
+      'success'
+    );
+  }
+
+  moveClassDate(c: LiveClass) {
+    const newDate = prompt(
+      "Déplacer la session :\nEntrez la nouvelle date (Format AAAA-MM-JJ) :",
+      c.date
+    );
+    if (!newDate || !newDate.trim() || newDate.trim() === c.date) return;
+
+    this.db.updateClass(c.id, { date: newDate.trim() });
+    this.dialogService.alert(
+      'Date mise à jour !',
+      `La session "${c.title}" a été déplacée au ${newDate.trim()}.`,
+      'success'
+    );
+  }
+
+  copyLink(url: string) {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(url);
+    }
+    this.dialogService.alert('Lien copié !', 'Le lien de la visioconférence a été copié dans votre presse-papier.', 'success');
+  }
+
+  updateClassMeetUrl(c: LiveClass, url: string) {
+    this.db.updateClass(c.id, { googleMeetUrl: url.trim() || undefined });
+    this.dialogService.alert('Lien enregistré !', 'Le lien du cours a été mis à jour.', 'success');
+  }
+
+  t(fr: string, en: string): string {
+    return this.db.activeLang() === 'en' ? en : fr;
   }
 
   private getLocalDateString(date: Date): string {

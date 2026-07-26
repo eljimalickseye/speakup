@@ -131,55 +131,6 @@ import { DatabaseService, LiveClass, UserProfile } from '../../services/database
                   }
                 </div>
               </div>
-
-              <!-- Class Details Preview Card below the calendar -->
-              @if (selectedClass(); as c) {
-                <div class="card event-details-card" style="animation: slideUp 0.2s ease-out">
-                  <div style="display:flex; justify-content:space-between; align-items:flex-start">
-                    <div>
-                      <h4 class="event-details-title">{{ c.title }}</h4>
-                      <div class="event-details-subtitle">
-                        <i class="ti ti-calendar-event"></i> {{ c.date }} &nbsp;·&nbsp; <i class="ti ti-clock"></i> {{ c.time }} ({{ c.duration }}) &nbsp;·&nbsp; <i class="ti ti-users"></i> {{ c.group }}
-                      </div>
-                    </div>
-                    <button class="btn-s" style="padding:4px 8px; font-size:10px" (click)="selectedClass.set(null)">
-                      <i class="ti ti-x" aria-hidden="true"></i> Close
-                    </button>
-                  </div>
-
-                  <p class="event-details-desc">
-                    "{{ c.description }}"
-                  </p>
-
-                  <!-- Google Meet Link Box for Student -->
-                  @if (c.googleMeetUrl) {
-                    <div style="background:#FAF5FF; border:1px solid #E9D5FF; border-radius:8px; padding:12px; margin-bottom:12px; margin-top:8px">
-                      <div style="font-size:11px; font-weight:700; color:#7E22CE; display:flex; align-items:center; gap:4px">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                        <span>Lien Google Meet</span>
-                      </div>
-                      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px; flex-wrap:wrap; gap:8px">
-                        <a [href]="c.googleMeetUrl" target="_blank" (click)="joinClass(c)" style="font-size:12px; font-weight:600; color:#4F46E5; text-decoration:underline; cursor:pointer; font-family:monospace">
-                          {{ c.googleMeetUrl }}
-                        </a>
-                      </div>
-                    </div>
-                  }
-
-                  <div class="event-details-actions">
-                    @if (canJoinClass(c)) {
-                      <button class="btn-p join-session-accent" (click)="joinClass(c)">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:4px"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-                        Join Live Session
-                      </button>
-                    } @else if (c.status === 'completed') {
-                      <span class="pill-badge completed">Session Completed</span>
-                    } @else {
-                      <span class="pill-badge waiting">Session Scheduled (Waiting)</span>
-                    }
-                  </div>
-                </div>
-              }
             </div>
           }
 
@@ -197,7 +148,7 @@ import { DatabaseService, LiveClass, UserProfile } from '../../services/database
                     <div class="timeline-trail-line"></div>
                   </div>
 
-                  <div class="timeline-card">
+                  <div class="timeline-card" (click)="selectClass(c)" style="cursor:pointer">
                     <div class="timeline-card-header">
                       <div class="timeline-card-title-row">
                         <h4 class="timeline-class-title">{{ c.title }}</h4>
@@ -216,14 +167,12 @@ import { DatabaseService, LiveClass, UserProfile } from '../../services/database
                       {{ c.description }}
                     </p>
 
-                    @if (canJoinClass(c)) {
-                      <div style="border-top:1px solid #E0E7FF; padding-top:12px; margin-top:12px">
-                        <button class="join-now-btn" (click)="joinClass(c)">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:4px"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-                          Connect Now
-                        </button>
-                      </div>
-                    }
+                    <div style="border-top:1px solid #E0E7FF; padding-top:10px; margin-top:10px; display:flex; justify-content:flex-end">
+                      <button class="join-now-btn" (click)="selectClass(c); $event.stopPropagation()">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:4px"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                        Voir les détails & Joindre ➔
+                      </button>
+                    </div>
                   </div>
                 </div>
               } @empty {
@@ -238,6 +187,94 @@ import { DatabaseService, LiveClass, UserProfile } from '../../services/database
             </div>
           }
         </div>
+
+        <!-- MODAL OVERLAY POPUP FOR SCHEDULED CLASS -->
+        @if (selectedClass(); as c) {
+          <div class="modal-backdrop" (click)="selectedClass.set(null)" style="position:fixed; inset:0; background:rgba(15,23,42,0.65); backdrop-filter:blur(6px); z-index:99999; display:flex; align-items:center; justify-content:center; padding:16px; animation:fadeIn 0.2s ease-out">
+            
+            <div class="modal-card" (click)="$event.stopPropagation()" style="background:var(--surface-1); border-radius:20px; width:100%; max-width:520px; box-shadow:0 20px 50px rgba(0,0,0,0.3); border:1px solid var(--border-weak); overflow:hidden; animation:scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)">
+              
+              <!-- MODAL HEADER BANNER -->
+              <div style="background:linear-gradient(135deg, #1E1B4B 0%, #312E81 100%); color:white; padding:24px; position:relative">
+                <button (click)="selectedClass.set(null)" style="position:absolute; top:16px; right:16px; background:rgba(255,255,255,0.15); border:none; color:white; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:16px; font-weight:800; transition:background 0.2s">
+                  ✕
+                </button>
+
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px">
+                  <span style="font-size:10px; font-weight:800; padding:3px 10px; border-radius:20px; text-transform:uppercase; letter-spacing:0.5px"
+                        [style.background]="c.status === 'active' ? '#EF4444' : (c.status === 'completed' ? '#6B7280' : '#4F46E5')"
+                        style="color:white">
+                    {{ c.status === 'active' ? '🔴 LIVE NOW' : (c.status === 'completed' ? '✓ Terminé' : '📅 PROGRAMMÉ') }}
+                  </span>
+                  <span style="font-size:11px; color:#A5B4FC; font-weight:700">👥 {{ c.group }}</span>
+                </div>
+
+                <h3 style="font-size:18px; font-weight:900; margin:0 0 6px 0; color:white; line-height:1.3">
+                  {{ c.title }}
+                </h3>
+                <p style="font-size:12.5px; color:#CBD5E1; margin:0; line-height:1.5; opacity:0.9">
+                  {{ c.description }}
+                </p>
+              </div>
+
+              <!-- MODAL BODY CONTENT -->
+              <div style="padding:24px; display:flex; flex-direction:column; gap:16px">
+                
+                <!-- DATE & TIME STATS GRID -->
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; background:var(--surface-2); border:1px solid var(--border-weak); padding:14px; border-radius:12px">
+                  <div>
+                    <span style="font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase; display:block">📅 Date & Jour</span>
+                    <span style="font-size:13px; font-weight:800; color:var(--text-primary)">{{ c.date }}</span>
+                  </div>
+                  <div>
+                    <span style="font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase; display:block">⏰ Heure & Durée</span>
+                    <span style="font-size:13px; font-weight:800; color:var(--text-primary)">{{ c.time }} ({{ c.duration }})</span>
+                  </div>
+                </div>
+
+                <!-- MEETING LINK CARD (Google Meet / Virtual Room) -->
+                <div style="background:#EEF2FF; border:1.5px dashed #818CF8; border-radius:12px; padding:16px; display:flex; flex-direction:column; gap:8px">
+                  <div style="font-size:11px; font-weight:800; color:#3730A3; text-transform:uppercase; display:flex; align-items:center; gap:6px">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                    Lien Direct de la Visioconférence
+                  </div>
+                  
+                  <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; background:white; border:1px solid #C7D2FE; padding:8px 12px; border-radius:8px">
+                    <span style="font-size:12px; font-family:monospace; font-weight:700; color:#4F46E5; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">
+                      {{ c.googleMeetUrl ? c.googleMeetUrl : ('https://meet.google.com/spk-' + c.jitsiRoom.toLowerCase().slice(-10)) }}
+                    </span>
+                    <button (click)="copyLink(c.googleMeetUrl || ('https://meet.google.com/spk-' + c.jitsiRoom.toLowerCase().slice(-10)))" class="btn-s" style="padding:4px 10px; font-size:11px; font-weight:700; border-color:#818CF8; color:#4338CA; cursor:pointer">
+                      📋 Copier
+                    </button>
+                  </div>
+                </div>
+
+                <!-- DIRECT JOIN ACTIONS -->
+                <div style="display:flex; gap:12px; margin-top:8px">
+                  @if (c.status === 'active' || canJoinClass(c)) {
+                    <button class="btn-p" (click)="joinClass(c)" style="flex:1; height:46px; font-size:14px; font-weight:900; background:#4F46E5; border-color:#4F46E5; display:flex; align-items:center; justify-content:center; gap:8px; border-radius:12px; box-shadow:0 8px 20px rgba(79,70,229,0.3); color:white; cursor:pointer">
+                      🎥 {{ t('Rejoindre la Session', 'Join Live Session') }}
+                    </button>
+                  } @else if (c.status === 'completed') {
+                    <div style="flex:1; background:var(--surface-2); text-align:center; padding:12px; border-radius:10px; color:var(--text-muted); font-weight:700; font-size:13px">
+                      ✓ {{ t('Session Terminée', 'Session Completed') }}
+                    </div>
+                  } @else {
+                    <button class="btn-p" (click)="joinClass(c)" style="flex:1; height:46px; font-size:14px; font-weight:900; background:#4F46E5; border-color:#4F46E5; display:flex; align-items:center; justify-content:center; gap:8px; border-radius:12px; color:white; cursor:pointer">
+                      🎥 {{ t('Rejoindre la Salle de Classe', 'Enter Classroom') }}
+                    </button>
+                  }
+
+                  <button class="btn-s" (click)="selectedClass.set(null)" style="height:46px; padding:0 20px; font-size:13px; font-weight:700; border-radius:12px; cursor:pointer">
+                    {{ t('Fermer', 'Close') }}
+                  </button>
+                </div>
+
+              </div>
+
+            </div>
+          </div>
+        }
       } @else {
         <!-- LIVE SESSION PERSISTENT CALL CARD -->
         <div style="height: 100%; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:16px; padding:40px; text-align:center; background:#111827; color:#FFF">
@@ -823,5 +860,16 @@ export class StudentLiveClassesComponent {
 
   exitMeeting() {
     this.db.setActiveJitsiCall(null);
+  }
+
+  t(fr: string, en: string): string {
+    return this.db.activeLang() === 'en' ? en : fr;
+  }
+
+  copyLink(url: string) {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(url);
+    }
+    alert(this.t('Lien de la visioconférence copié dans le presse-papier !', 'Meeting link copied to clipboard!'));
   }
 }
