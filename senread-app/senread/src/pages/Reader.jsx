@@ -576,33 +576,15 @@ export default function Reader() {
                   </div>
                 ))}
 
-                {/* CHAPTER SEPARATION & TRANSITION CARD */}
-                <div className="my-10 py-6 px-5 rounded-2xl bg-black/5 dark:bg-white/5 border border-surface-line/30 text-center space-y-2.5 shadow-inner">
+                {/* Minimalist Chapter End Separator */}
+                <div className="my-12 py-4 text-center">
                   <div className="flex items-center justify-center gap-3">
-                    <div className="h-[1px] flex-1 bg-surface-line/40" />
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-taupe block opacity-60">
+                    <div className="h-[1px] flex-1 bg-surface-line/30" />
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-taupe block opacity-40">
                       — Fin du Chapitre {cNum} —
                     </span>
-                    <div className="h-[1px] flex-1 bg-surface-line/40" />
+                    <div className="h-[1px] flex-1 bg-surface-line/30" />
                   </div>
-
-                  {nextChap ? (
-                    <div className="pt-1.5 space-y-1">
-                      <span className="text-[10.5px] font-mono text-gold font-bold uppercase tracking-wider block">
-                        Chapitre Suivant ({cNum + 1})
-                      </span>
-                      <h4 className="font-display font-bold text-[15px] text-ink">
-                        {nextChap.title || `Chapitre ${cNum + 1}`}
-                      </h4>
-                      <p className="text-[11px] text-taupe font-semibold pt-0.5 opacity-80">
-                        ↓ Continuer à scroller pour lire la suite
-                      </p>
-                    </div>
-                  ) : (
-                    <p className="text-[12px] font-bold text-gold pt-1">
-                      🎉 Fin du roman — Tous les chapitres ont été lus !
-                    </p>
-                  )}
                 </div>
               </div>
             );

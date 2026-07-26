@@ -439,7 +439,7 @@ export interface AppNotification {
   id: string;
   recipientId: string;
   recipientRole?: 'student' | 'teacher' | 'admin' | 'all';
-  type: 'homework_submitted' | 'homework_graded' | 'new_student' | 'exam_completed' | 'exercise_assigned' | 'quiz_available' | 'grade_updated' | 'new_comment' | 'announcement' | 'reminder' | 'live_started';
+  type: 'homework_submitted' | 'homework_graded' | 'new_student' | 'exam_completed' | 'exercise_assigned' | 'quiz_available' | 'grade_updated' | 'new_comment' | 'announcement' | 'reminder' | 'live_started' | 'journey_unlocked' | 'journey_mission';
   title: string;
   message: string;
   read: boolean;

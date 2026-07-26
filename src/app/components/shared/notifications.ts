@@ -8,9 +8,12 @@ import { DatabaseService, AppNotification, UserProfile } from '../../services/da
   imports: [CommonModule],
   template: `
     <!-- Notification Bell Icon + Badge -->
-    <div class="notif-bell-wrapper" (click)="togglePanel()" title="Notifications">
+    <div class="notif-bell-wrapper" (click)="togglePanel()" [title]="t('Notifications', 'Notifications')">
       <button class="notif-bell-btn" [class.active]="isPanelOpen()">
-        <i class="ti ti-bell" aria-hidden="true"></i>
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
       </button>
       @if (unreadCount() > 0) {
         <span class="notif-badge">{{ unreadCount() > 99 ? '99+' : unreadCount() }}</span>
@@ -23,15 +26,15 @@ import { DatabaseService, AppNotification, UserProfile } from '../../services/da
       <div class="notif-panel">
         <div class="notif-panel-header">
           <div class="notif-panel-title">
-            <i class="ti ti-bell" style="color:#4F46E5; font-size:16px"></i>
-            <span>Notifications</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span>{{ t('Notifications', 'Notifications') }}</span>
             @if (unreadCount() > 0) {
               <span class="notif-count-badge">{{ unreadCount() }}</span>
             }
           </div>
           @if (unreadCount() > 0) {
             <button class="notif-mark-all-btn" (click)="markAllRead(); $event.stopPropagation()">
-              Tout lire
+              {{ t('Tout lire', 'Mark all read') }}
             </button>
           }
         </div>
@@ -39,8 +42,8 @@ import { DatabaseService, AppNotification, UserProfile } from '../../services/da
         <div class="notif-list">
           @if (userNotifications().length === 0) {
             <div class="notif-empty">
-              <i class="ti ti-bell-off" style="font-size:32px; color:var(--text-muted); display:block; margin-bottom:8px"></i>
-              <p style="font-size:12px; color:var(--text-muted)">Aucune notification pour l'instant</p>
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" style="margin-bottom:8px"><path d="M13.73 21a2 2 0 0 1-3.46 0"/><path d="M18.63 13A17.89 17.89 0 0 1 18 8"/><path d="M6.26 6.26A5.86 5.86 0 0 0 6 8c0 7-3 9-3 9h14"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+              <p style="font-size:12px; color:var(--text-muted)">{{ t('Aucune notification pour l\'instant', 'No notifications for now') }}</p>
             </div>
           } @else {
             @for (notif of userNotifications(); track notif.id) {
@@ -51,11 +54,11 @@ import { DatabaseService, AppNotification, UserProfile } from '../../services/da
                 style="position:relative"
               >
                 <div class="notif-icon" [class]="getNotifIconClass(notif.type)">
-                  <i class="ti" [class]="getNotifIcon(notif.type)"></i>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" [innerHTML]="getNotifSvgPath(notif.type)"></svg>
                 </div>
                 <div class="notif-content">
-                  <div class="notif-title">{{ notif.title }}</div>
-                  <div class="notif-message">{{ notif.message }}</div>
+                  <div class="notif-title">{{ getNotifTitle(notif) }}</div>
+                  <div class="notif-message">{{ getNotifMessage(notif) }}</div>
                   <div class="notif-time">{{ formatTime(notif.createdAt) }}</div>
                 </div>
                 @if (!notif.read) {
@@ -64,8 +67,10 @@ import { DatabaseService, AppNotification, UserProfile } from '../../services/da
                 <button 
                   class="notif-delete-btn"
                   (click)="deleteNotif(notif.id); $event.stopPropagation()"
-                  title="Supprimer"
-                >✕</button>
+                  [title]="t('Supprimer', 'Delete')"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
               </div>
             }
 
@@ -79,13 +84,15 @@ import { DatabaseService, AppNotification, UserProfile } from '../../services/da
       @for (toast of activeToasts(); track toast.id) {
         <div class="toast-item" (click)="navigateToNotification(toast); removeToast(toast.id)">
           <div class="toast-icon-box" [class]="getNotifIconClass(toast.type)">
-            <i class="ti" [class]="getNotifIcon(toast.type)"></i>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" [innerHTML]="getNotifSvgPath(toast.type)"></svg>
           </div>
           <div class="toast-body">
-            <div class="toast-title">{{ toast.title }}</div>
-            <div class="toast-message">{{ toast.message }}</div>
+            <div class="toast-title">{{ getNotifTitle(toast) }}</div>
+            <div class="toast-message">{{ getNotifMessage(toast) }}</div>
           </div>
-          <button class="toast-close" (click)="$event.stopPropagation(); removeToast(toast.id)">❌</button>
+          <button class="toast-close" (click)="$event.stopPropagation(); removeToast(toast.id)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
         </div>
       }
     </div>
@@ -95,18 +102,20 @@ import { DatabaseService, AppNotification, UserProfile } from '../../services/da
       <div class="notif-modal-overlay" (click)="closeModalNotif()">
         <div class="notif-modal-card" (click)="$event.stopPropagation()">
           <div class="notif-modal-header" [class]="getNotifIconClass(modalNotif.type)">
-            <span style="font-size:24px">🔔</span>
-            <h4 style="margin:0; font-size:16px; font-weight:800">{{ modalNotif.title }}</h4>
+            <div style="width:36px; height:36px; border-radius:50%; background:rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; color:white">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" [innerHTML]="getNotifSvgPath(modalNotif.type)"></svg>
+            </div>
+            <h4 style="margin:0; font-size:16px; font-weight:800">{{ getNotifTitle(modalNotif) }}</h4>
           </div>
           
           <div class="notif-modal-body">
-            <p style="margin:0; font-size:13.5px; color:var(--text-secondary); line-height:1.6">{{ modalNotif.message }}</p>
+            <p style="margin:0; font-size:13.5px; color:var(--text-secondary); line-height:1.6">{{ getNotifMessage(modalNotif) }}</p>
           </div>
           
           <div class="notif-modal-actions">
-            <button class="notif-btn-secondary" (click)="closeModalNotif()">{{ t('Fermer', 'Close') }}</button>
+            <button class="notif-btn-secondary" (click)="closeModalNotif()">{{ t("Fermer", "Close") }}</button>
             @if (hasRedirectLink(modalNotif)) {
-              <button class="notif-btn-primary" (click)="navigateToNotification(modalNotif)">{{ t('Accéder', 'Go to') }}</button>
+              <button class="notif-btn-primary" (click)="navigateToNotification(modalNotif)">{{ t("Accéder à l'Aventure ✈️", "Go to Mission ✈️") }}</button>
             }
           </div>
         </div>
@@ -158,24 +167,18 @@ import { DatabaseService, AppNotification, UserProfile } from '../../services/da
       font-weight: 700;
       min-width: 16px;
       height: 16px;
-      border-radius: 99px;
+      border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 0 3px;
-      border: 2px solid white;
-      animation: notifPulse 2s ease-in-out infinite;
-    }
-
-    @keyframes notifPulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.1); }
+      padding: 0 4px;
+      border: 2px solid var(--surface-1);
     }
 
     .notif-backdrop {
       position: fixed;
       inset: 0;
-      z-index: 998;
+      z-index: 99990;
     }
 
     .notif-panel {
@@ -183,19 +186,16 @@ import { DatabaseService, AppNotification, UserProfile } from '../../services/da
       top: calc(100% + 8px);
       right: 0;
       width: 340px;
-      max-height: 480px;
+      max-height: 440px;
       background: var(--surface-1);
-      border: 1px solid var(--border-strong);
-      border-radius: 12px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.12);
-      z-index: 999;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+      z-index: 99991;
+      display: flex;
+      flex-direction: column;
       overflow: hidden;
-      animation: panelSlideIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-
-    @keyframes panelSlideIn {
-      from { opacity: 0; transform: translateY(-8px) scale(0.97); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
+      animation: fadeIn 0.2s ease-out;
     }
 
     .notif-panel-header {
@@ -211,105 +211,76 @@ import { DatabaseService, AppNotification, UserProfile } from '../../services/da
       display: flex;
       align-items: center;
       gap: 8px;
-      font-size: 13px;
-      font-weight: 700;
+      font-size: 13.5px;
+      font-weight: 800;
       color: var(--text-primary);
     }
 
     .notif-count-badge {
-      background: #4F46E5;
-      color: white;
-      font-size: 9px;
+      background: #EEF2FF;
+      color: #4F46E5;
+      font-size: 11px;
       font-weight: 700;
       padding: 1px 6px;
-      border-radius: 99px;
+      border-radius: 10px;
     }
 
     .notif-mark-all-btn {
-      font-size: 11px;
-      color: #4F46E5;
       background: none;
       border: none;
+      color: #4F46E5;
+      font-size: 11.5px;
+      font-weight: 700;
       cursor: pointer;
-      font-weight: 600;
-      padding: 4px 8px;
-      border-radius: 4px;
-      transition: background 0.15s;
+    }
+    .notif-mark-all-btn:hover {
+      text-decoration: underline;
     }
 
-    .notif-mark-all-btn:hover { background: #EEF2FF; }
-
     .notif-list {
-      max-height: 400px;
       overflow-y: auto;
+      flex: 1;
+      max-height: 380px;
     }
 
     .notif-empty {
+      padding: 32px 16px;
       text-align: center;
-      padding: 40px 20px;
     }
 
     .notif-item {
       display: flex;
       align-items: flex-start;
       gap: 12px;
-      padding: 12px 38px 12px 16px;
+      padding: 12px 16px;
       border-bottom: 1px solid var(--border-weak);
       cursor: pointer;
-      transition: background 0.15s;
-      position: relative;
+      transition: background 0.15s ease;
     }
 
-    .notif-item:hover { background: var(--surface-2); }
-    .notif-item:hover .notif-delete-btn { opacity: 1; }
-
-    .notif-item.unread { background: #F8F8FF; }
-    .notif-item.unread:hover { background: #EEF2FF; }
-
-    .notif-delete-btn {
-      position: absolute;
-      top: 50%;
-      right: 12px;
-      transform: translateY(-50%);
-      background: #F3F4F6;
-      border: none;
-      cursor: pointer;
-      color: #9CA3AF;
-      font-size: 11px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      transition: all 0.2s ease;
-      opacity: 0.8;
-      z-index: 10;
+    .notif-item:hover {
+      background: var(--surface-2);
     }
 
-    .notif-delete-btn:hover {
-      background: #FEE2E2;
-      color: #EF4444;
-      opacity: 1;
+    .notif-item.unread {
+      background: rgba(99,102,241,0.05);
     }
-
 
     .notif-icon {
-      width: 34px;
-      height: 34px;
-      border-radius: 8px;
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 15px;
       flex-shrink: 0;
     }
 
-    .notif-icon.success { background: #ECFDF5; color: #059669; }
     .notif-icon.info { background: #EEF2FF; color: #4F46E5; }
-    .notif-icon.warning { background: #FFFBEB; color: #D97706; }
-    .notif-icon.danger { background: #FEF2F2; color: #EF4444; }
-    .notif-icon.purple { background: #FAF5FF; color: #7C3AED; }
+    .notif-icon.success { background: #D1FAE5; color: #059669; }
+    .notif-icon.purple { background: #F3E8FF; color: #7C3AED; }
+    .notif-icon.warning { background: #FEF3C7; color: #D97706; }
+    .notif-icon.danger { background: #FEE2E2; color: #DC2626; }
 
     .notif-content {
       flex: 1;
@@ -317,19 +288,23 @@ import { DatabaseService, AppNotification, UserProfile } from '../../services/da
     }
 
     .notif-title {
-      font-size: 12px;
-      font-weight: 700;
+      font-size: 12.5px;
+      font-weight: 800;
       color: var(--text-primary);
       margin-bottom: 2px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .notif-message {
-      font-size: 11px;
+      font-size: 11.5px;
       color: var(--text-secondary);
       line-height: 1.4;
-      white-space: nowrap;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
       overflow: hidden;
-      text-overflow: ellipsis;
     }
 
     .notif-time {
@@ -339,50 +314,54 @@ import { DatabaseService, AppNotification, UserProfile } from '../../services/da
     }
 
     .notif-dot {
-      width: 8px;
-      height: 8px;
-      background: #4F46E5;
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
-      flex-shrink: 0;
-      margin-top: 4px;
+      background: #4F46E5;
+      margin-top: 6px;
     }
 
-    /* TOAST OVERLAY DESIGN */
+    .notif-delete-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 11px;
+      cursor: pointer;
+      opacity: 0.5;
+      padding: 2px;
+    }
+
+    .notif-delete-btn:hover {
+      opacity: 1;
+      color: #EF4444;
+    }
+
+    /* Toast container */
     .toast-container {
       position: fixed;
-      bottom: 20px;
-      right: 20px;
+      bottom: 24px;
+      right: 24px;
+      z-index: 99999;
       display: flex;
       flex-direction: column;
       gap: 10px;
-      z-index: 10000;
-      pointer-events: auto;
+      pointer-events: none;
     }
 
     .toast-item {
+      pointer-events: auto;
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 16px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
       display: flex;
       align-items: center;
       gap: 12px;
-      background: #FFF;
-      border: 1px solid var(--border-strong);
-      border-left: 4px solid #4F46E5;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-      padding: 12px 16px;
-      border-radius: 12px;
-      width: 320px;
-      animation: toastSlideIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+      min-width: 280px;
+      max-width: 360px;
       cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .toast-item:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.12);
-    }
-
-    @keyframes toastSlideIn {
-      from { opacity: 0; transform: translateX(100px); }
-      to { opacity: 1; transform: translateX(0); }
+      animation: slideIn 0.25s ease-out;
     }
 
     .toast-icon-box {
@@ -392,15 +371,8 @@ import { DatabaseService, AppNotification, UserProfile } from '../../services/da
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 14px;
       flex-shrink: 0;
     }
-
-    .toast-icon-box.success { background: #ECFDF5; color: #059669; }
-    .toast-icon-box.info { background: #EEF2FF; color: #4F46E5; }
-    .toast-icon-box.warning { background: #FFFBEB; color: #D97706; }
-    .toast-icon-box.danger { background: #FEF2F2; color: #EF4444; }
-    .toast-icon-box.purple { background: #FAF5FF; color: #7C3AED; }
 
     .toast-body {
       flex: 1;
@@ -409,117 +381,95 @@ import { DatabaseService, AppNotification, UserProfile } from '../../services/da
 
     .toast-title {
       font-size: 12.5px;
-      font-weight: 700;
+      font-weight: 800;
       color: var(--text-primary);
-      margin-bottom: 2px;
     }
 
     .toast-message {
       font-size: 11px;
       color: var(--text-secondary);
-      white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .toast-close {
       background: none;
       border: none;
       cursor: pointer;
-      font-size: 10px;
-      color: var(--text-muted);
-      padding: 4px;
+      opacity: 0.5;
     }
+    .toast-close:hover { opacity: 1; }
 
+    /* Modal Overlay */
     .notif-modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(15, 23, 42, 0.45);
-      backdrop-filter: blur(4px);
+      background: rgba(15,23,42,0.65);
+      backdrop-filter: blur(6px);
+      z-index: 99999;
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 10001;
-      animation: fadeIn 0.25s ease-out;
+      padding: 16px;
     }
 
     .notif-modal-card {
       background: var(--surface-1);
-      border-radius: 16px;
+      border-radius: 18px;
       width: 100%;
       max-width: 440px;
-      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
-      border: 1px solid var(--border-weak);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.3);
       overflow: hidden;
-      margin: 16px;
-      animation: modalScaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
-    @keyframes modalScaleUp {
-      from { transform: scale(0.9); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
     }
 
     .notif-modal-header {
-      padding: 20px;
+      padding: 18px 20px;
       display: flex;
       align-items: center;
       gap: 12px;
-      color: var(--text-primary);
-      border-bottom: 1px solid var(--border-weak);
+      color: white;
     }
-    .notif-modal-header.success { background: #ECFDF5; border-bottom: 2px solid #34D399; }
-    .notif-modal-header.info { background: #EEF2FF; border-bottom: 2px solid #818CF8; }
-    .notif-modal-header.warning { background: #FFFBEB; border-bottom: 2px solid #FBBF24; }
-    .notif-modal-header.danger { background: #FEF2F2; border-bottom: 2px solid #F87171; }
-    .notif-modal-header.purple { background: #FAF5FF; border-bottom: 2px solid #C084FC; }
+
+    .notif-modal-header.info { background: linear-gradient(135deg, #4F46E5, #6366F1); }
+    .notif-modal-header.success { background: linear-gradient(135deg, #059669, #10B981); }
+    .notif-modal-header.purple { background: linear-gradient(135deg, #7C3AED, #8B5CF6); }
+    .notif-modal-header.warning { background: linear-gradient(135deg, #D97706, #F59E0B); }
+    .notif-modal-header.danger { background: linear-gradient(135deg, #DC2626, #EF4444); }
 
     .notif-modal-body {
-      padding: 24px 20px;
+      padding: 20px;
     }
 
     .notif-modal-actions {
-      padding: 16px 20px;
-      background: var(--surface-2);
+      padding: 14px 20px;
       border-top: 1px solid var(--border-weak);
       display: flex;
       justify-content: flex-end;
       gap: 10px;
+      background: var(--surface-2);
     }
 
     .notif-btn-secondary {
-      background: #FFF;
+      background: none;
       border: 1px solid var(--border);
       color: var(--text-secondary);
       padding: 8px 16px;
       border-radius: 8px;
-      font-size: 13px;
-      font-weight: 600;
+      font-size: 12px;
+      font-weight: 700;
       cursor: pointer;
-      transition: all 0.2s;
-    }
-    .notif-btn-secondary:hover {
-      background: var(--surface-2);
     }
 
     .notif-btn-primary {
       background: #4F46E5;
-      border: 1px solid #4F46E5;
+      border: none;
       color: white;
       padding: 8px 16px;
       border-radius: 8px;
-      font-size: 13px;
-      font-weight: 600;
+      font-size: 12px;
+      font-weight: 800;
       cursor: pointer;
-      transition: all 0.2s;
-    }
-    .notif-btn-primary:hover {
-      background: #4338CA;
     }
   `]
 })
@@ -542,7 +492,6 @@ export class NotificationsComponent {
   constructor() {
     this.db.observeCurrentUser().subscribe(u => this.currentUser.set(u));
 
-    // Listen to notification changes to trigger toast alerts and modals
     this.db.observeNotifications().subscribe(allNotifs => {
       const currentUnread = this.userNotifications().filter(n => !n.read);
       
@@ -554,7 +503,6 @@ export class NotificationsComponent {
         return;
       }
 
-      // If there are more unread notifications than before, trigger notifications popup
       if (currentUnread.length > this.previousUnreadCount) {
         const diffCount = currentUnread.length - this.previousUnreadCount;
         const newNotifs = currentUnread.slice(0, diffCount);
@@ -593,7 +541,6 @@ export class NotificationsComponent {
       const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
       const now = audioCtx.currentTime;
       
-      // Pleasant chime tone 1 (C5)
       const osc1 = audioCtx.createOscillator();
       const gain1 = audioCtx.createGain();
       osc1.connect(gain1);
@@ -605,7 +552,6 @@ export class NotificationsComponent {
       osc1.start(now);
       osc1.stop(now + 0.35);
       
-      // Pleasant chime tone 2 (E5)
       const osc2 = audioCtx.createOscillator();
       const gain2 = audioCtx.createGain();
       osc2.connect(gain2);
@@ -630,17 +576,23 @@ export class NotificationsComponent {
   }
 
   hasRedirectLink(n: AppNotification): boolean {
-    return !!(n.link || this.getTargetTab(n.type));
+    return !!(n.link || this.getTargetTab(n.type, n));
   }
 
-  getTargetTab(type: AppNotification['type']): string | null {
+  getTargetTab(type: AppNotification['type'], n?: AppNotification): string | null {
+    if (type === 'journey_unlocked' || type === 'journey_mission' || n?.link?.includes('journey')) {
+      return 'journey';
+    }
+    if (type === 'live_started' || n?.link?.includes('live')) {
+      return 'live-classes';
+    }
+
     const role = this.currentUser()?.role;
     if (role === 'student') {
       if (type === 'exercise_assigned') return 'exercises';
       if (type === 'quiz_available') return 'exercises';
       if (type === 'homework_graded' || type === 'grade_updated') return 'lessons';
       if (type === 'announcement') return 'announcements';
-      if (type === 'live_started') return 'live-classes';
       if (type === 'new_comment') return 'chat';
     } else if (role === 'teacher') {
       if (type === 'homework_submitted') return 'grade-homework';
@@ -652,23 +604,28 @@ export class NotificationsComponent {
   navigateToNotification(n: AppNotification) {
     this.markRead(n);
     this.activeModalNotif.set(null);
-    const link = n.link || this.getTargetTab(n.type);
+    const link = n.link || this.getTargetTab(n.type, n);
     if (link) {
       if (link.includes(':')) {
         const parts = link.split(':');
         const tab = parts[0];
         const targetId = parts[1];
         
-        if (tab === 'exercises') {
+        if (tab === 'journey') {
+          this.db.requestedTabRedirect.set('journey');
+        } else if (tab === 'exercises') {
           if (targetId.startsWith('quiz-') || targetId.startsWith('placement-test')) {
             this.db.requestedQuizIdRedirect.set(targetId);
           } else {
             this.db.requestedExerciseIdRedirect.set(targetId);
           }
+          this.db.requestedTabRedirect.set('exercises');
         } else if (tab === 'exam') {
           this.db.requestedExamIdRedirect.set(targetId);
+          this.db.requestedTabRedirect.set('exam');
+        } else {
+          this.db.requestedTabRedirect.set(tab);
         }
-        this.db.requestedTabRedirect.set(tab);
       } else {
         this.db.requestedTabRedirect.set(link);
       }
@@ -676,7 +633,6 @@ export class NotificationsComponent {
   }
 
   showToast(n: AppNotification) {
-    // Avoid duplicates
     if (this.activeToasts().some(t => t.id === n.id)) return;
     this.activeToasts.update(list => [...list, n]);
     setTimeout(() => {
@@ -703,25 +659,63 @@ export class NotificationsComponent {
     this.db.deleteNotification(notifId);
   }
 
-  getNotifIcon(type: AppNotification['type']): string {
-    const icons: Record<string, string> = {
-      homework_submitted: 'ti-file-upload',
-      homework_graded: 'ti-file-check',
-      new_student: 'ti-user-plus',
-      exam_completed: 'ti-certificate',
-      exercise_assigned: 'ti-pencil',
-      quiz_available: 'ti-list-check',
-      grade_updated: 'ti-star',
-      new_comment: 'ti-message',
-      announcement: 'ti-speakerphone',
-      reminder: 'ti-bell',
-      live_started: 'ti-video'
-    };
-    return icons[type] || 'ti-bell';
+  getNotifTitle(n: AppNotification): string {
+    const isFr = this.activeLang() === 'fr';
+    if (n.type === 'journey_unlocked' || n.type === 'journey_mission' || n.link?.includes('journey')) {
+      return isFr ? "Nouvelle Aventure de Voyage !" : "New Travel Adventure!";
+    }
+    if (n.type === 'live_started') {
+      return isFr ? "Cours en Direct Démarré !" : "Live Class Started!";
+    }
+    if (n.type === 'homework_graded') {
+      return isFr ? "Devoir Corrigé" : "Assignment Graded";
+    }
+    if (n.type === 'exercise_assigned') {
+      return isFr ? "Nouvel Exercice Assigné" : "New Exercise Assigned";
+    }
+    if (n.type === 'quiz_available') {
+      return isFr ? "Nouveau Quiz Disponible" : "New Quiz Available";
+    }
+    return n.title;
+  }
+
+  getNotifMessage(n: AppNotification): string {
+    const isFr = this.activeLang() === 'fr';
+    if (n.type === 'journey_unlocked' || n.type === 'journey_mission' || n.link?.includes('journey')) {
+      return isFr ? "Un nouveau chapitre de voyage est disponible ! Cliquez pour commencer l'aventure." : "A new travel chapter is unlocked! Click to start the adventure.";
+    }
+    if (n.type === 'live_started') {
+      return isFr ? "La session vidéo en direct a commencé. Rejoignez votre professeur !" : "The live video session has started. Join your teacher!";
+    }
+    return n.message;
+  }
+
+  getNotifSvgPath(type: AppNotification['type']): string {
+    if (type === 'journey_unlocked' || type === 'journey_mission') {
+      return '<path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.2c.3.4.8.5 1.3.3l.5-.3c.4-.2.6-.6.5-1.1z"/>';
+    }
+    if (type === 'live_started') {
+      return '<polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>';
+    }
+    if (type === 'homework_graded' || type === 'homework_submitted') {
+      return '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="9 15 11 17 15 13"/>';
+    }
+    if (type === 'exercise_assigned') {
+      return '<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>';
+    }
+    if (type === 'quiz_available') {
+      return '<polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>';
+    }
+    if (type === 'announcement') {
+      return '<path d="m3 11 18-5v12L3 13v-2z"/><path d="M11.6 16.8 a3 3 0 1 1 -5.8-1.6"/>';
+    }
+    return '<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>';
   }
 
   getNotifIconClass(type: AppNotification['type']): string {
     const classes: Record<string, string> = {
+      journey_unlocked: 'purple',
+      journey_mission: 'purple',
       homework_submitted: 'info',
       homework_graded: 'success',
       new_student: 'purple',
@@ -741,13 +735,15 @@ export class NotificationsComponent {
     try {
       const date = new Date(dateStr);
       const diffSeconds = Math.floor((Date.now() - date.getTime()) / 1000);
-      if (diffSeconds < 60) return "À l'instant";
+      const isFr = this.activeLang() === 'fr';
+
+      if (diffSeconds < 60) return isFr ? "À l'instant" : "Just now";
       const diffMin = Math.floor(diffSeconds / 60);
-      if (diffMin < 60) return `Il y a ${diffMin} min`;
+      if (diffMin < 60) return isFr ? `Il y a ${diffMin} min` : `${diffMin}m ago`;
       const diffH = Math.floor(diffMin / 60);
-      if (diffH < 24) return `Il y a ${diffH}h`;
+      if (diffH < 24) return isFr ? `Il y a ${diffH}h` : `${diffH}h ago`;
       const diffD = Math.floor(diffH / 24);
-      return `Il y a ${diffD}j`;
+      return isFr ? `Il y a ${diffD}j` : `${diffD}d ago`;
     } catch { return ''; }
   }
 }
