@@ -218,31 +218,16 @@ import { SidebarComponent } from './sidebar';
               
               <!-- Dropdown Panel -->
               @if (isThemeMenuOpen()) {
-                <div style="position:absolute; top:36px; right:0; background:var(--surface-1); border:1px solid var(--border-strong); border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.1); padding:8px; display:flex; flex-direction:column; gap:4px; z-index:999; min-width:180px">
+                <div style="position:absolute; top:36px; right:0; background:var(--surface-1); border:1px solid var(--border-strong); border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.1); padding:8px; display:flex; flex-direction:column; gap:4px; z-index:999; min-width:160px">
                   
                   <button (click)="selectTheme('default')" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:none; padding:8px 12px; font-size:12px; font-weight:700; text-align:left; cursor:pointer; border-radius:6px; color:var(--text-primary)" onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background='none'">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                    <span>{{ t('Défaut', 'Default') }}</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                    <span>{{ t('Thème Clair', 'Light Mode') }}</span>
                   </button>
 
                   <button (click)="selectTheme('dark')" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:none; padding:8px 12px; font-size:12px; font-weight:700; text-align:left; cursor:pointer; border-radius:6px; color:var(--text-primary)" onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background='none'">
                     <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
                     <span>{{ t('Mode Sombre', 'Dark Mode') }}</span>
-                  </button>
-
-                  <button (click)="selectTheme('manga')" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:none; padding:8px 12px; font-size:12px; font-weight:700; text-align:left; cursor:pointer; border-radius:6px; color:var(--text-primary)" onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background='none'">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                    <span>{{ t('Manga / Anime', 'Manga / Anime') }}</span>
-                  </button>
-
-                  <button (click)="selectTheme('rose')" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:none; padding:8px 12px; font-size:12px; font-weight:700; text-align:left; cursor:pointer; border-radius:6px; color:var(--text-primary)" onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background='none'">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#DB2777" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/></svg>
-                    <span>{{ t('Pétales de Rose', 'Rose Petals') }}</span>
-                  </button>
-
-                  <button (click)="selectTheme('faith')" style="display:flex; align-items:center; gap:8px; width:100%; border:none; background:none; padding:8px 12px; font-size:12px; font-weight:700; text-align:left; cursor:pointer; border-radius:6px; color:var(--text-primary)" onmouseover="this.style.background='var(--surface-2)'" onmouseout="this.style.background='none'">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/><path d="M19 3v4M21 5h-4"/></svg>
-                    <span>{{ t('Emerald Faith', 'Emerald Faith') }}</span>
                   </button>
                   
                 </div>
@@ -253,17 +238,17 @@ import { SidebarComponent } from './sidebar';
           <!-- Language Switcher Toggle -->
           <div style="display:flex; align-items:center; gap:4px; margin-right:12px; background:var(--surface-2); padding:3px; border-radius:12px; border:1px solid var(--border-weak)" [style.marginLeft]="currentUser()?.role === 'student' ? '0' : 'auto'">
             <button (click)="db.setLanguage('fr')" 
-                    style="border:none; background:transparent; padding:4px 8px; border-radius:8px; font-size:11px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s"
+                    style="border:none; background:transparent; padding:4px 8px; border-radius:8px; font-size:11px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:5px; transition:all 0.2s"
                     [style.background]="db.activeLang() === 'fr' ? '#4F46E5' : 'transparent'"
                     [style.color]="db.activeLang() === 'fr' ? 'white' : 'var(--text-secondary)'">
-              <span>🇫🇷</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="10" viewBox="0 0 640 480" style="border-radius:2px"><path fill="#002654" d="M0 0h213.3v480H0z"/><path fill="#fff" d="M213.3 0h213.4v480H213.3z"/><path fill="#ce1126" d="M426.7 0H640v480H426.7z"/></svg>
               <span class="hide-mobile">FR</span>
             </button>
             <button (click)="db.setLanguage('en')" 
-                    style="border:none; background:transparent; padding:4px 8px; border-radius:8px; font-size:11px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s"
+                    style="border:none; background:transparent; padding:4px 8px; border-radius:8px; font-size:11px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:5px; transition:all 0.2s"
                     [style.background]="db.activeLang() === 'en' ? '#4F46E5' : 'transparent'"
                     [style.color]="db.activeLang() === 'en' ? 'white' : 'var(--text-secondary)'">
-              <span>🇬🇧</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="10" viewBox="0 0 640 480" style="border-radius:2px"><path fill="#012169" d="M0 0h640v480H0z"/><path fill="#FFF" d="m75 0 245 184L565 0h75v56L395 240l245 184v56h-75L320 296 75 480H0v-56l245-184L0 56V0h75z"/><path fill="#C8102E" d="m424 288 216 162v30h-40L384 318v-30h40zM640 0v30L424 192h-40L600 0h40zM0 480v-30l216-162h40L40 480H0zM0 0h40l216 162h-40L0 12V0z"/><path fill="#FFF" d="M240 0h160v480H240zM0 160h640v160H0z"/><path fill="#C8102E" d="M272 0h96v480h-96zM0 192h640v96H0z"/></svg>
               <span class="hide-mobile">EN</span>
             </button>
           </div>

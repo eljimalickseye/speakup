@@ -173,8 +173,9 @@ const defaultWordsBank = [
                         {{ quiz.level || 'B1' }}
                       </span>
                       @if (isItemNew(quiz.id)) {
-                        <span style="background: #F59E0B; color: white; font-size: 8.5px; font-weight: 800; padding: 2px 6px; border-radius: 10px; text-transform: uppercase;">
-                          ✨ New
+                        <span style="background: #F59E0B; color: white; font-size: 8.5px; font-weight: 800; padding: 2px 6px; border-radius: 10px; text-transform: uppercase; display: inline-flex; align-items: center; gap: 3px;">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                          New
                         </span>
                       }
                     </div>
@@ -193,7 +194,10 @@ const defaultWordsBank = [
                       </h4>
 
                       <div style="display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--text-muted); flex-wrap: wrap;">
-                        <span>⏱ {{ quiz.timeLimit || 'Sans limite' }}</span>
+                        <span style="display: inline-flex; align-items: center; gap: 3px;">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                          {{ quiz.timeLimit || 'Sans limite' }}
+                        </span>
                         <span>•</span>
                         <span>{{ quiz.questions.length }} Q</span>
                         @if (quiz.points) {
@@ -207,13 +211,25 @@ const defaultWordsBank = [
                   <!-- Card Footer -->
                   <div style="padding: 8px 12px; border-top: 1.5px solid var(--border-weak); background: var(--surface-2); display: flex; align-items: center; justify-content: space-between; gap: 8px;">
                     @if (isQuizAttemptsReached(quiz.id)) {
-                      <span style="font-size: 10.5px; color: #DC2626; font-weight: 700; background: #FEF2F2; padding: 3px 8px; border-radius: 6px;">🔒 Limite</span>
+                      <span style="font-size: 10.5px; color: #DC2626; font-weight: 700; background: #FEF2F2; padding: 3px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        Limite
+                      </span>
                     } @else if (isQuizDeadlinePassed(quiz)) {
-                      <span style="font-size: 10.5px; color: #DC2626; font-weight: 700; background: #FEF2F2; padding: 3px 8px; border-radius: 6px;">⏳ Expiré</span>
+                      <span style="font-size: 10.5px; color: #DC2626; font-weight: 700; background: #FEF2F2; padding: 3px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        Expiré
+                      </span>
                     } @else if (isQuizCompleted(quiz.id)) {
-                      <span style="font-size: 10.5px; color: #047857; font-weight: 700; background: #ECFDF5; padding: 3px 8px; border-radius: 6px;">✓ Terminé</span>
+                      <span style="font-size: 10.5px; color: #047857; font-weight: 700; background: #ECFDF5; padding: 3px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                        Terminé
+                      </span>
                     } @else {
-                      <span style="font-size: 10.5px; color: #D97706; font-weight: 700; background: #FEF3C7; padding: 3px 8px; border-radius: 6px;">⏳ À Faire</span>
+                      <span style="font-size: 10.5px; color: #D97706; font-weight: 700; background: #FEF3C7; padding: 3px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        À Faire
+                      </span>
                     }
 
                     <span style="font-size: 11px; color: #4F46E5; font-weight: 800; display: inline-flex; align-items: center; gap: 3px;">
@@ -238,15 +254,18 @@ const defaultWordsBank = [
             <!-- Header with Title, Count & Scroll Navigation Buttons -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; gap: 12px; flex-wrap: wrap;">
               <div style="display: flex; align-items: center; gap: 10px;">
-                <span style="width: 34px; height: 34px; border-radius: 10px; background: #ECFDF5; color: #059669; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(5, 150, 105, 0.15);">
+                <span style="width: 34px; height: 34px; border-radius: 10px; background: #EEF2FF; color: #4F46E5; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(79, 70, 229, 0.15);">
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34"/><path d="M12 2a5 5 0 0 0-5 5v3.42c0 .35.1.69.28 1l1.44 2.48a1 1 0 0 0 .86.48h8.84a1 1 0 0 0 .86-.48l1.44-2.48c.18-.31.28-.65.28-1V7a5 5 0 0 0-5-5z"/></svg>
                 </span>
                 <div>
                   <h3 style="font-size: 15px; font-weight: 800; color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: 8px;">
                     Entraînements autonomes
-                    <span style="background: #ECFDF5; color: #059669; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 12px;">{{ exercises().length }}</span>
+                    <span style="background: #EEF2FF; color: #4F46E5; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 12px;">{{ exercises().length }}</span>
                   </h3>
-                  <span style="font-size: 11px; color: var(--text-muted);">Glissez horizontalement pour tout explorer ➔</span>
+                  <span style="font-size: 11px; color: var(--text-muted); display: inline-flex; align-items: center; gap: 4px;">
+                    Glissez horizontalement pour tout explorer
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                  </span>
                 </div>
               </div>
 
@@ -337,13 +356,25 @@ const defaultWordsBank = [
                     <!-- Card Footer -->
                     <div style="padding: 8px 12px; border-top: 1.5px solid var(--border-weak); background: var(--surface-2); display: flex; align-items: center; justify-content: space-between; gap: 8px;">
                       @if (exDone) {
-                        <span style="font-size: 10.5px; color: #64748B; font-weight: 700; background: #F1F5F9; padding: 3px 8px; border-radius: 6px;">✓ Fait</span>
+                        <span style="font-size: 10.5px; color: #047857; font-weight: 700; background: #ECFDF5; padding: 3px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                          Fait
+                        </span>
                       } @else if (getExerciseStatus(ex.id) === 'Redo') {
-                        <span style="font-size: 10.5px; color: #D97706; font-weight: 700; background: #FEF3C7; padding: 3px 8px; border-radius: 6px;">🔄 Refaire</span>
+                        <span style="font-size: 10.5px; color: #D97706; font-weight: 700; background: #FEF3C7; padding: 3px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                          Refaire
+                        </span>
                       } @else if (getExerciseStatus(ex.id) === 'Pending') {
-                        <span style="font-size: 10.5px; color: #1D4ED8; font-weight: 700; background: #EFF6FF; padding: 3px 8px; border-radius: 6px;">⏳ En attente</span>
+                        <span style="font-size: 10.5px; color: #1D4ED8; font-weight: 700; background: #EFF6FF; padding: 3px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                          En attente
+                        </span>
                       } @else {
-                        <span style="font-size: 10.5px; color: #475569; font-weight: 700; background: #F1F5F9; padding: 3px 8px; border-radius: 6px;">⏳ À Faire</span>
+                        <span style="font-size: 10.5px; color: #475569; font-weight: 700; background: #F1F5F9; padding: 3px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                          À Faire
+                        </span>
                       }
 
                       <span [style.color]="exDone ? '#94A3B8' : getExerciseColor(ex.type)" style="font-size: 11px; font-weight: 800; display: inline-flex; align-items: center; gap: 3px;">
