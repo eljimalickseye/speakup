@@ -99,71 +99,103 @@ const defaultWordsBank = [
           }
         </div>
 
-        <!-- ===== SECTION 1: QUIZ ===== -->
+        <!-- ===== SECTION 1: QUIZ HORIZONTAL SLIDER ===== -->
         @if (activeSubTab() === 'quizzes') {
-          <div style="margin-bottom: 24px;">
+          <div style="margin-bottom: 32px;">
 
-            <!-- Minimal Header & Filter Bar -->
+            <!-- Header with Title, Count, Filter & Scroll Navigation Buttons -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; gap: 12px; flex-wrap: wrap;">
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="width: 32px; height: 32px; border-radius: 8px; background: #EEF2FF; color: #4F46E5; display: flex; align-items: center; justify-content: center;">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="width: 34px; height: 34px; border-radius: 10px; background: #EEF2FF; color: #4F46E5; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(79, 70, 229, 0.15);">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
                 </span>
                 <div>
-                  <h3 style="font-size: 14px; font-weight: 800; color: var(--text-primary); margin: 0;">Quiz & Évaluations</h3>
-                  <span style="font-size: 11px; color: var(--text-muted);">{{ filteredQuizzes().length }} disponibles</span>
+                  <h3 style="font-size: 15px; font-weight: 800; color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: 8px;">
+                    Quiz & Évaluations
+                    <span style="background: #EEF2FF; color: #4F46E5; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 12px;">{{ filteredQuizzes().length }}</span>
+                  </h3>
+                  <span style="font-size: 11px; color: var(--text-muted);">Glissez horizontalement pour tout explorer ➔</span>
                 </div>
               </div>
 
-              <!-- Filter Selector -->
-              <div style="position: relative; display: inline-block;">
-                <select [ngModel]="quizFilter()" (ngModelChange)="quizFilter.set($event)" 
-                        style="appearance: none; -webkit-appearance: none; background-color: var(--surface-1); border: 1.5px solid var(--border-weak); border-radius: 8px; padding: 5px 28px 5px 10px; font-size: 11.5px; font-weight: 700; color: var(--text-primary); cursor: pointer; outline: none; transition: all 0.2s;">
-                  <option value="todo">⏳ À Faire (To Do)</option>
-                  <option value="completed">✅ Terminé (Completed)</option>
-                  <option value="all">🌐 Tous (All)</option>
-                </select>
-                <div style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--text-secondary);">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <!-- Filter Selector -->
+                <div style="position: relative; display: inline-block;">
+                  <select [ngModel]="quizFilter()" (ngModelChange)="quizFilter.set($event)" 
+                          style="appearance: none; -webkit-appearance: none; background-color: var(--surface-1); border: 1.5px solid var(--border-weak); border-radius: 8px; padding: 5px 28px 5px 10px; font-size: 11.5px; font-weight: 700; color: var(--text-primary); cursor: pointer; outline: none; transition: all 0.2s;">
+                    <option value="todo">⏳ À Faire (To Do)</option>
+                    <option value="completed">✅ Terminé (Completed)</option>
+                    <option value="all">🌐 Tous (All)</option>
+                  </select>
+                  <div style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--text-secondary);">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                  </div>
+                </div>
+
+                <!-- Carousel Navigation Arrows -->
+                <div style="display: flex; align-items: center; gap: 4px;">
+                  <button (click)="scrollRow('quiz-carousel', -270)" 
+                          title="Précédent"
+                          style="width: 30px; height: 30px; border-radius: 8px; border: 1.5px solid var(--border-weak); background: var(--surface-1); color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                  </button>
+                  <button (click)="scrollRow('quiz-carousel', 270)" 
+                          title="Suivant"
+                          style="width: 30px; height: 30px; border-radius: 8px; border: 1.5px solid var(--border-weak); background: var(--surface-1); color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                  </button>
                 </div>
               </div>
             </div>
 
-            <!-- Compact Minimalist List -->
-            <div style="display:flex; flex-direction:column; gap:8px">
+            <!-- Horizontal Scrollable Cards Container -->
+            <div id="quiz-carousel" class="horizontal-scroll-container" 
+                 style="display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 4px 4px 16px 4px; scroll-behavior: smooth; -webkit-overflow-scrolling: touch;">
+              
               @for (quiz of filteredQuizzes(); track quiz.id) {
                 <div class="card exercise-card" 
                      (click)="isQuizDisabled(quiz) ? null : startQuiz(quiz)"
-                     [style.border-left]="'4px solid ' + (isQuizDisabled(quiz) ? '#DC2626' : getTheme(quiz.colorTheme).border)"
                      [style.opacity]="isQuizDisabled(quiz) ? '0.55' : '1'"
                      [style.cursor]="isQuizDisabled(quiz) ? 'not-allowed' : 'pointer'"
-                     style="padding: 10px 14px; border-radius: 10px; display: flex; align-items: center; justify-content: space-between; gap: 12px; background: var(--surface-1); border: 1px solid var(--border-weak); transition: all 0.2s ease;">
+                     style="flex: 0 0 250px; width: 250px; scroll-snap-align: start; border-radius: 14px; border: 1.5px solid var(--border-weak); background: var(--surface-1); overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.25s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.04);">
                   
-                  <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
-                    <!-- Compact Thumbnail / Icon -->
-                    <div [style.background]="quiz.coverImage ? 'none' : getGradient(quiz.colorTheme)"
-                         style="width: 36px; height: 36px; border-radius: 8px; overflow: hidden; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
-                      @if (quiz.coverImage) {
-                        <img [src]="quiz.coverImage" style="width: 100%; height: 100%; object-fit: cover" />
-                      } @else {
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                  <!-- Top Banner / Cover Image -->
+                  <div [style.background]="quiz.coverImage ? 'none' : getGradient(quiz.colorTheme)"
+                       style="height: 84px; width: 100%; position: relative; display: flex; align-items: flex-start; justify-content: space-between; padding: 8px 10px; overflow: hidden; flex-shrink: 0;">
+                    @if (quiz.coverImage) {
+                      <img [src]="quiz.coverImage" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;" />
+                      <div style="position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.7) 100%);"></div>
+                    }
+
+                    <!-- Top Left Badges -->
+                    <div style="position: relative; z-index: 1; display: flex; gap: 4px; flex-wrap: wrap;">
+                      <span style="background: rgba(0,0,0,0.55); backdrop-filter: blur(4px); color: white; font-size: 9px; font-weight: 800; padding: 2px 7px; border-radius: 10px; text-transform: uppercase;">
+                        {{ quiz.level || 'B1' }}
+                      </span>
+                      @if (isItemNew(quiz.id)) {
+                        <span style="background: #F59E0B; color: white; font-size: 8.5px; font-weight: 800; padding: 2px 6px; border-radius: 10px; text-transform: uppercase;">
+                          ✨ New
+                        </span>
                       }
                     </div>
 
-                    <div style="flex: 1; min-width: 0;">
-                      <div style="display: flex; align-items: center; gap: 8px; line-height: 1.2;">
-                        <h4 style="font-size: 13.5px; font-weight: 700; color: var(--text-primary); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ quiz.title }}</h4>
-                        @if (isItemNew(quiz.id)) {
-                          <span style="background:#F59E0B; color:white; font-size: 8px; font-weight: 800; padding: 1px 5px; border-radius: 6px; text-transform: uppercase;">New</span>
-                        }
-                      </div>
-                      
-                      <div style="display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--text-muted); margin-top: 3px; flex-wrap: wrap;">
-                        <span style="font-weight: 700; color: #4F46E5;">{{ quiz.level || 'B1' }}</span>
+                    <!-- Top Right Icon -->
+                    <span style="position: relative; z-index: 1; width: 26px; height: 26px; border-radius: 50%; background: rgba(255,255,255,0.25); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; color: white;">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                    </span>
+                  </div>
+
+                  <!-- Card Body -->
+                  <div style="padding: 12px; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                      <h4 style="font-size: 13.5px; font-weight: 800; color: var(--text-primary); margin: 0 0 6px 0; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 36px;">
+                        {{ quiz.title }}
+                      </h4>
+
+                      <div style="display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--text-muted); flex-wrap: wrap;">
+                        <span>⏱ {{ quiz.timeLimit || 'Sans limite' }}</span>
                         <span>•</span>
                         <span>{{ quiz.questions.length }} Q</span>
-                        <span>•</span>
-                        <span>⏱ {{ quiz.timeLimit || 'Pas de limite' }}</span>
                         @if (quiz.points) {
                           <span>•</span>
                           <span style="color: #059669; font-weight: 700;">+{{ quiz.points }} XP</span>
@@ -172,7 +204,8 @@ const defaultWordsBank = [
                     </div>
                   </div>
 
-                  <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                  <!-- Card Footer -->
+                  <div style="padding: 8px 12px; border-top: 1.5px solid var(--border-weak); background: var(--surface-2); display: flex; align-items: center; justify-content: space-between; gap: 8px;">
                     @if (isQuizAttemptsReached(quiz.id)) {
                       <span style="font-size: 10.5px; color: #DC2626; font-weight: 700; background: #FEF2F2; padding: 3px 8px; border-radius: 6px;">🔒 Limite</span>
                     } @else if (isQuizDeadlinePassed(quiz)) {
@@ -180,14 +213,17 @@ const defaultWordsBank = [
                     } @else if (isQuizCompleted(quiz.id)) {
                       <span style="font-size: 10.5px; color: #047857; font-weight: 700; background: #ECFDF5; padding: 3px 8px; border-radius: 6px;">✓ Terminé</span>
                     } @else {
-                      <span style="font-size: 11px; color: white; background: #4F46E5; font-weight: 700; padding: 4px 10px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
-                        {{ t('Démarrer', 'Start') }} <i class="ti ti-arrow-right"></i>
-                      </span>
+                      <span style="font-size: 10.5px; color: #D97706; font-weight: 700; background: #FEF3C7; padding: 3px 8px; border-radius: 6px;">⏳ À Faire</span>
                     }
+
+                    <span style="font-size: 11px; color: #4F46E5; font-weight: 800; display: inline-flex; align-items: center; gap: 3px;">
+                      {{ t('Démarrer', 'Start') }} <i class="ti ti-arrow-right"></i>
+                    </span>
                   </div>
+
                 </div>
               } @empty {
-                <div style="padding: 20px; background: var(--surface-2); border-radius: 8px; border: 1px dashed var(--border); text-align: center; font-size: 12.5px; color: var(--text-secondary);">
+                <div style="width: 100%; padding: 24px; background: var(--surface-2); border-radius: 12px; border: 1px dashed var(--border); text-align: center; font-size: 12.5px; color: var(--text-secondary);">
                   {{ t('Aucun quiz ne correspond à ce filtre.', 'No quiz matches this filter.') }}
                 </div>
               }
@@ -195,82 +231,111 @@ const defaultWordsBank = [
           </div>
         }
 
-        <!-- ===== SECTION 2: EXERCISES ===== -->
+        <!-- ===== SECTION 2: EXERCISES HORIZONTAL SLIDER ===== -->
         @if (activeSubTab() === 'exercises') {
-          <div style="margin-bottom: 24px;">
+          <div style="margin-bottom: 32px;">
 
-            <!-- Minimal Header -->
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border-weak);">
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="width: 32px; height: 32px; border-radius: 8px; background: #ECFDF5; color: #059669; display: flex; align-items: center; justify-content: center;">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34"/><path d="M12 2a5 5 0 0 0-5 5v3.42c0 .35.1.69.28 1l1.44 2.48a1 1 0 0 0 .86.48h8.84a1 1 0 0 0 .86-.48l1.44-2.48c.18-.31.28-.65.28-1V7a5 5 0 0 0-5-5z"/></svg>
+            <!-- Header with Title, Count & Scroll Navigation Buttons -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; gap: 12px; flex-wrap: wrap;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="width: 34px; height: 34px; border-radius: 10px; background: #ECFDF5; color: #059669; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(5, 150, 105, 0.15);">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34"/><path d="M12 2a5 5 0 0 0-5 5v3.42c0 .35.1.69.28 1l1.44 2.48a1 1 0 0 0 .86.48h8.84a1 1 0 0 0 .86-.48l1.44-2.48c.18-.31.28-.65.28-1V7a5 5 0 0 0-5-5z"/></svg>
                 </span>
                 <div>
-                  <h3 style="font-size: 14px; font-weight: 800; color: var(--text-primary); margin: 0;">Entraînements autonomes</h3>
-                  <span style="font-size: 11px; color: var(--text-muted);">{{ exercises().length }} exercices à votre rythme</span>
+                  <h3 style="font-size: 15px; font-weight: 800; color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: 8px;">
+                    Entraînements autonomes
+                    <span style="background: #ECFDF5; color: #059669; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 12px;">{{ exercises().length }}</span>
+                  </h3>
+                  <span style="font-size: 11px; color: var(--text-muted);">Glissez horizontalement pour tout explorer ➔</span>
                 </div>
+              </div>
+
+              <!-- Carousel Navigation Arrows -->
+              <div style="display: flex; align-items: center; gap: 4px;">
+                <button (click)="scrollRow('ex-carousel', -270)" 
+                        title="Précédent"
+                        style="width: 30px; height: 30px; border-radius: 8px; border: 1.5px solid var(--border-weak); background: var(--surface-1); color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+                <button (click)="scrollRow('ex-carousel', 270)" 
+                        title="Suivant"
+                        style="width: 30px; height: 30px; border-radius: 8px; border: 1.5px solid var(--border-weak); background: var(--surface-1); color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
               </div>
             </div>
 
             @if (sortedExercises().length > 0) {
-              <div style="display:flex; flex-direction:column; gap:8px">
+              <!-- Horizontal Scrollable Cards Container -->
+              <div id="ex-carousel" class="horizontal-scroll-container" 
+                   style="display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; padding: 4px 4px 16px 4px; scroll-behavior: smooth; -webkit-overflow-scrolling: touch;">
+                
                 @for (ex of sortedExercises(); track ex.id) {
                   @let exDone = getExerciseStatus(ex.id) === 'Completed';
                   <div class="card exercise-card" (click)="openExercise(ex)"
-                       [style.border-left]="exDone ? '4px solid #94A3B8' : '4px solid ' + getExerciseColor(ex.type)"
-                       [style.background]="exDone ? 'var(--surface-2)' : 'var(--surface-1)'"
                        [style.opacity]="exDone ? '0.75' : '1'"
-                       style="padding: 10px 14px; border-radius: 10px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border: 1px solid var(--border-weak); cursor: pointer; transition: all 0.2s ease;">
+                       style="flex: 0 0 250px; width: 250px; scroll-snap-align: start; border-radius: 14px; border: 1.5px solid var(--border-weak); background: var(--surface-1); overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; transition: all 0.25s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.04);">
                     
-                    <div style="display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;">
-                      <!-- Icon box -->
-                      <div style="width: 36px; height: 36px; border-radius: 8px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;"
-                           [style.background]="exDone ? '#E2E8F0' : getExerciseColor(ex.type) + '15'">
+                    <!-- Top Header Box with Category Color -->
+                    <div [style.background]="exDone ? 'linear-gradient(135deg, #64748B, #94A3B8)' : 'linear-gradient(135deg, ' + getExerciseColor(ex.type) + 'DD, ' + getExerciseColor(ex.type) + ')'"
+                         style="height: 76px; width: 100%; position: relative; display: flex; align-items: flex-start; justify-content: space-between; padding: 8px 10px; overflow: hidden; flex-shrink: 0; color: white;">
+                      
+                      <!-- Type Label Badge -->
+                      <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                        <span style="background: rgba(0,0,0,0.35); backdrop-filter: blur(4px); color: white; font-size: 9px; font-weight: 800; padding: 2px 7px; border-radius: 10px; text-transform: uppercase;">
+                          {{ getExerciseLabel(ex.type) }}
+                        </span>
+                        <span style="background: rgba(255,255,255,0.25); backdrop-filter: blur(4px); color: white; font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 10px;">
+                          {{ ex.level }}
+                        </span>
+                      </div>
+
+                      <!-- Icon Box -->
+                      <span style="width: 28px; height: 28px; border-radius: 8px; background: rgba(255,255,255,0.25); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center;">
                         @if (exDone) {
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                         } @else {
                           @switch (ex.type) {
                             @case ('writing') {
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                             }
                             @case ('speaking') {
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
                             }
                             @case ('listening') {
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0284C7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
                             }
                             @case ('translation') {
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
                             }
                             @case ('pronunciation') {
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
                             }
                             @default {
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5v-15z"/></svg>
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5v-15z"/></svg>
                             }
                           }
                         }
-                      </div>
+                      </span>
+                    </div>
 
-                      <div style="flex: 1; min-width: 0;">
-                        <div style="display: flex; align-items: center; gap: 8px; line-height: 1.2;">
-                          <h4 style="font-size: 13.5px; font-weight: 700; color: var(--text-primary); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ ex.title }}</h4>
-                          @if (isItemNew(ex.id) && !exDone) {
-                            <span style="background:#F59E0B; color:white; font-size: 8px; font-weight: 800; padding: 1px 5px; border-radius: 6px; text-transform: uppercase;">New</span>
-                          }
-                        </div>
+                    <!-- Card Body -->
+                    <div style="padding: 12px; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+                      <div>
+                        <h4 style="font-size: 13.5px; font-weight: 800; color: var(--text-primary); margin: 0 0 6px 0; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 36px;">
+                          {{ ex.title }}
+                        </h4>
 
-                        <div style="display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--text-muted); margin-top: 3px; flex-wrap: wrap;">
-                          <span [style.color]="exDone ? '#94A3B8' : getExerciseColor(ex.type)" style="font-weight: 700;">{{ getExerciseLabel(ex.type) }}</span>
-                          <span>•</span>
-                          <span>Level {{ ex.level }}</span>
+                        <div style="display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--text-muted);">
+                          <span>Niveau {{ ex.level }}</span>
                           <span>•</span>
                           <span style="color: #059669; font-weight: 700;">+{{ ex.points }} XP</span>
                         </div>
                       </div>
                     </div>
 
-                    <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                    <!-- Card Footer -->
+                    <div style="padding: 8px 12px; border-top: 1.5px solid var(--border-weak); background: var(--surface-2); display: flex; align-items: center; justify-content: space-between; gap: 8px;">
                       @if (exDone) {
                         <span style="font-size: 10.5px; color: #64748B; font-weight: 700; background: #F1F5F9; padding: 3px 8px; border-radius: 6px;">✓ Fait</span>
                       } @else if (getExerciseStatus(ex.id) === 'Redo') {
@@ -278,16 +343,19 @@ const defaultWordsBank = [
                       } @else if (getExerciseStatus(ex.id) === 'Pending') {
                         <span style="font-size: 10.5px; color: #1D4ED8; font-weight: 700; background: #EFF6FF; padding: 3px 8px; border-radius: 6px;">⏳ En attente</span>
                       } @else {
-                        <span style="font-size: 11px; color: white; background: #059669; font-weight: 700; padding: 4px 10px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
-                          {{ t('Démarrer', 'Start') }} <i class="ti ti-arrow-right"></i>
-                        </span>
+                        <span style="font-size: 10.5px; color: #475569; font-weight: 700; background: #F1F5F9; padding: 3px 8px; border-radius: 6px;">⏳ À Faire</span>
                       }
+
+                      <span [style.color]="exDone ? '#94A3B8' : getExerciseColor(ex.type)" style="font-size: 11px; font-weight: 800; display: inline-flex; align-items: center; gap: 3px;">
+                        {{ exDone ? t('Voir', 'View') : (getExerciseStatus(ex.id) === 'Redo' ? t('Refaire', 'Redo') : t('Démarrer', 'Start')) }} <i class="ti ti-arrow-right"></i>
+                      </span>
                     </div>
+
                   </div>
                 }
               </div>
             } @else {
-              <div style="padding: 20px; background: var(--surface-2); border-radius: 8px; border: 1px dashed var(--border); text-align: center; font-size: 12.5px; color: var(--text-secondary); margin-bottom: 16px">
+              <div style="width: 100%; padding: 24px; background: var(--surface-2); border-radius: 12px; border: 1px dashed var(--border); text-align: center; font-size: 12.5px; color: var(--text-secondary);">
                 No training exercises published by your teacher yet.
               </div>
             }
@@ -1952,6 +2020,11 @@ export class StudentExercisesComponent {
 
   t(fr: string, en: string): string {
     return this.activeLang() === 'fr' ? fr : en;
+  }
+
+  scrollRow(containerId: string, amount: number) {
+    const el = document.getElementById(containerId);
+    if (el) el.scrollBy({ left: amount, behavior: 'smooth' });
   }
 
   gameLabels = computed(() => ({

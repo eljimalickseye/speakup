@@ -2667,7 +2667,26 @@ body.theme-faith .btn-p {
   color: white !important;
 }
 body.theme-faith .logo-mark {
-  background: #047857 !important;
+  background: linear-gradient(135deg, #047857 0%, #D97706 100%) !important;
+}
+
+/* Horizontal Scrollable Container for Games & Exercises Carousel */
+.horizontal-scroll-container {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+.horizontal-scroll-container::-webkit-scrollbar {
+  height: 6px;
+}
+.horizontal-scroll-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+.horizontal-scroll-container::-webkit-scrollbar-thumb {
+  background: var(--border-strong, #CBD5E1);
+  border-radius: 10px;
+}
+.horizontal-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted, #94A3B8);
 }
 body.theme-faith::after {
   content: "🌙";
