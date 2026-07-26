@@ -528,7 +528,7 @@ export default function Reader() {
         <div
           key={`book-feed-${id}`}
           ref={scrollContainerRef}
-          className="flex-1 overflow-y-auto max-w-xl mx-auto w-full text-justify px-2 relative pb-12 cursor-pointer transition-all duration-300"
+          className="flex-1 overflow-y-auto max-w-xl mx-auto w-full text-justify px-2 relative pb-16 cursor-pointer transition-all duration-300 scroll-smooth"
           style={{
             fontFamily: readingPrefs.font,
             fontSize: `${readingPrefs.fontSize}px`,
@@ -538,22 +538,24 @@ export default function Reader() {
           {allChapters.map((chap, cIdx) => {
             const cNum = cIdx + 1;
             const sentences = chap.sentences || [];
+            const nextChap = allChapters[cIdx + 1];
+
             return (
               <div
                 key={`chap-block-${cNum}`}
                 id={`chap-block-${cNum}`}
                 data-chapter-num={cNum}
-                className="py-6 space-y-4 border-b border-surface-line/20 last:border-b-0"
+                className="py-6 space-y-4"
               >
-                {/* Chapter Header */}
-                <div className="text-center pt-3 pb-4 border-b border-surface-line/20 mb-6">
-                  <span className="text-[10.5px] font-mono font-bold uppercase tracking-widest text-gold block opacity-80 mb-1">
-                    Chapitre {cNum}
+                {/* Chapter Header Card */}
+                <div className="text-center pt-4 pb-5 border-b border-surface-line/25 mb-6 space-y-1">
+                  <span className="text-[10.5px] font-mono font-bold uppercase tracking-widest text-gold block opacity-90">
+                    Chapitre {cNum} / {allChapters.length}
                   </span>
-                  <h3 className="font-display font-bold text-[19px] tracking-wide text-ink">
+                  <h3 className="font-display font-bold text-[20px] tracking-wide text-ink">
                     {chap.title || `Chapitre ${cNum}`}
                   </h3>
-                  <div className="w-10 h-[2px] bg-gold mx-auto mt-2 rounded-full opacity-60" />
+                  <div className="w-12 h-[2.5px] bg-gold mx-auto mt-2 rounded-full opacity-70" />
                 </div>
 
                 {/* Sentences */}
@@ -574,11 +576,33 @@ export default function Reader() {
                   </div>
                 ))}
 
-                {/* End of Chapter Separator */}
-                <div className="pt-8 pb-4 text-center border-t border-surface-line/30 mt-8">
-                  <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-taupe block opacity-50">
-                    — Fin du Chapitre {cNum} —
-                  </span>
+                {/* CHAPTER SEPARATION & TRANSITION CARD */}
+                <div className="my-10 py-6 px-5 rounded-2xl bg-black/5 dark:bg-white/5 border border-surface-line/30 text-center space-y-2.5 shadow-inner">
+                  <div className="flex items-center justify-center gap-3">
+                    <div className="h-[1px] flex-1 bg-surface-line/40" />
+                    <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-taupe block opacity-60">
+                      — Fin du Chapitre {cNum} —
+                    </span>
+                    <div className="h-[1px] flex-1 bg-surface-line/40" />
+                  </div>
+
+                  {nextChap ? (
+                    <div className="pt-1.5 space-y-1">
+                      <span className="text-[10.5px] font-mono text-gold font-bold uppercase tracking-wider block">
+                        Chapitre Suivant ({cNum + 1})
+                      </span>
+                      <h4 className="font-display font-bold text-[15px] text-ink">
+                        {nextChap.title || `Chapitre ${cNum + 1}`}
+                      </h4>
+                      <p className="text-[11px] text-taupe font-semibold pt-0.5 opacity-80">
+                        ↓ Continuer à scroller pour lire la suite
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-[12px] font-bold text-gold pt-1">
+                      🎉 Fin du roman — Tous les chapitres ont été lus !
+                    </p>
+                  )}
                 </div>
               </div>
             );

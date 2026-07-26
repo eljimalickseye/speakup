@@ -31,93 +31,46 @@ export interface TravelStage {
     <div class="page" style="animation: fadeIn 0.28s ease; padding: 20px">
       
       <!-- HERO BANNER -->
-      <div class="card" style="margin-top:0; background:linear-gradient(135deg, #1E1B4B 0%, #4338CA 100%); color:white; border:none; padding:24px; border-radius:16px; box-shadow:0 10px 30px rgba(67,56,202,0.25); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px">
+      <div class="card" style="margin-top:0; background:linear-gradient(135deg, #1E1B4B 0%, #4338CA 100%); color:white; border:none; padding:26px; border-radius:16px; box-shadow:0 10px 30px rgba(67,56,202,0.25); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px">
         <div>
-          <span style="font-size:10px; background:rgba(255,255,255,0.2); color:white; font-weight:900; padding:3px 10px; border-radius:20px; text-transform:uppercase; letter-spacing:0.5px">
-            SPEAKUP INTERACTIVE TRAVEL ADVENTURE
+          <span style="font-size:10px; background:rgba(255,255,255,0.2); color:white; font-weight:900; padding:4px 12px; border-radius:20px; text-transform:uppercase; letter-spacing:0.5px">
+            SPEAKUP TRAVEL ADVENTURE SIMULATOR
           </span>
-          <h2 style="font-size:22px; font-weight:900; margin:8px 0 4px 0; color:#FFF; display:flex; align-items:center; gap:8px">
+          <h2 style="font-size:22px; font-weight:900; margin:10px 0 4px 0; color:#FFF; display:flex; align-items:center; gap:8px">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#A5B4FC" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.2c.3.4.8.5 1.3.3l.5-.3c.4-.2.6-.6.5-1.1z"/></svg>
-            {{ t('Aventure de Voyage : Londres & New York', 'Travel Adventure: London & New York') }}
+            {{ t('Missions & Aventures de Voyage', 'Travel Missions & Adventures') }}
           </h2>
           <p style="font-size:13px; color:#E0E7FF; margin:0; max-width:620px; line-height:1.5">
-            {{ t('Voyagez à travers la plateforme, jouez des scènes réelles avec les habitants locaux, et validez vos compétences pour débloquer de nouveaux chapitres !', 'Travel through the platform, roleplay real-life situations with locals, and validate your skills to unlock new chapters!') }}
+            {{ t('Sélectionnez un chapitre ci-dessous pour ouvrir la carte interactive, voyager à travers la ville et réaliser vos missions en situation réelle !', 'Select a chapter below to launch the interactive map, travel through the city and perform real-life missions!') }}
           </p>
         </div>
       </div>
 
-      <!-- ACTIVE MISSION MAIN CONTAINER -->
+      <!-- SECTION 1: OBJECTIVES SUMMARY & ACTIVE MISSION OVERVIEW -->
       @if (activeMission(); as mission) {
         <div class="card" style="margin-top:24px; border:2px solid #6366F1; border-radius:16px; padding:24px; box-shadow:0 8px 24px rgba(99,102,241,0.08)">
           
-          <!-- Mission Header -->
-          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; margin-bottom:24px">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; margin-bottom:20px">
             <div>
               <span class="badge" style="background:#6366F1; color:white; font-size:10px; font-weight:800; border-radius:6px; padding:4px 10px; text-transform:uppercase; letter-spacing:0.5px; display:inline-flex; align-items:center; gap:4px">
                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
-                {{ t('MISSION ACTIVES EN COURS', 'CURRENT ACTIVE MISSION') }}
+                {{ t('OBJECTIF DU CHAPITRE ACTIF', 'ACTIVE CHAPTER OBJECTIVE') }}
               </span>
               <h3 style="font-size:18px; font-weight:900; color:var(--text-primary); margin:8px 0 4px 0">{{ getMissionTitle(mission) }}</h3>
               <p style="font-size:13px; color:var(--text-secondary); line-height:1.5; margin:0">{{ getMissionDescription(mission) }}</p>
             </div>
 
-            <button (click)="openTravelGame(1)" class="btn-p" style="background:linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%); border:none; padding:12px 24px; border-radius:12px; font-weight:900; font-size:13.5px; display:flex; align-items:center; gap:8px; box-shadow:0 8px 20px rgba(79,70,229,0.3); color:white; cursor:pointer">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-              {{ t('Lancer l\'Aventure Interactive ✈️', 'Launch Interactive Travel Game ✈️') }}
-            </button>
-          </div>
-
-          <!-- INTERACTIVE TRAVEL ROADMAP / STAGES MAP -->
-          <div style="margin-bottom:24px; background:var(--surface-2); border:1px solid var(--border-weak); border-radius:14px; padding:20px">
-            <h4 style="font-size:12px; font-weight:900; text-transform:uppercase; color:var(--text-muted); letter-spacing:0.5px; margin:0 0 16px 0; display:flex; align-items:center; gap:6px">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2.5"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>
-              {{ t('Itinéraire du Voyage — Londres', 'London Travel Map — Stages') }}
-            </h4>
-
-            <!-- Grid of 4 Interactive Travel Stages -->
-            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:14px">
-              @for (st of travelStages; track st.id) {
-                <div (click)="openTravelGame(st.id)"
-                     style="background:white; border:2px solid; border-radius:12px; padding:14px; cursor:pointer; transition:all 0.2s ease; position:relative; overflow:hidden"
-                     [style.borderColor]="st.completed ? '#10B981' : (activeStageId() === st.id ? '#6366F1' : 'var(--border)')"
-                     [style.boxShadow]="activeStageId() === st.id ? '0 6px 16px rgba(99,102,241,0.2)' : 'none'">
-                  
-                  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px">
-                    <span style="font-size:10px; font-weight:900; color:#6366F1; text-transform:uppercase">Étape {{ st.id }}</span>
-                    @if (st.completed) {
-                      <span style="background:#D1FAE5; color:#059669; font-size:9.5px; font-weight:800; padding:2px 6px; border-radius:10px; display:inline-flex; align-items:center; gap:3px">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-                        Validé
-                      </span>
-                    } @else {
-                      <span style="background:#EEF2FF; color:#4F46E5; font-size:9.5px; font-weight:800; padding:2px 6px; border-radius:10px">Jouer ➔</span>
-                    }
-                  </div>
-
-                  <div style="display:flex; align-items:center; gap:10px">
-                    <div style="width:36px; height:36px; background:#EEF2FF; border-radius:10px; display:flex; align-items:center; justify-content:center; color:#4F46E5; flex-shrink:0">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                        <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 14.93V17a1 1 0 0 1-2 0v-.07A7 7 0 0 1 5.07 11H5a1 1 0 0 1 0-2h.07A7 7 0 0 1 11 3.07V3a1 1 0 0 1 2 0v.07A7 7 0 0 1 18.93 9H19a1 1 0 0 1 0 2h-.07A7 7 0 0 1 13 16.93z"/>
-                      </svg>
-                    </div>
-                    <div>
-                      <div style="font-size:13px; font-weight:900; color:var(--text-primary); line-height:1.2">
-                        {{ t(st.titleFr, st.titleEn) }}
-                      </div>
-                      <div style="font-size:10.5px; color:var(--text-muted); margin-top:2px">
-                        📍 {{ t(st.locationFr, st.locationEn) }}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              }
+            <!-- Global Mission Progress Bar -->
+            <div style="background:var(--surface-2); border:1px solid var(--border-weak); padding:12px 20px; border-radius:12px; text-align:center">
+              <div style="font-size:24px; font-weight:900; color:#6366F1">{{ getMissionProgress(mission) }}%</div>
+              <div style="font-size:10.5px; color:var(--text-muted); font-weight:700; text-transform:uppercase">{{ t('Progression', 'Progress') }}</div>
             </div>
           </div>
 
-          <!-- Tasks Checklist -->
+          <!-- Required Tasks Checklist -->
           <div style="display:flex; flex-direction:column; gap:12px; border-top:1px solid var(--border-weak); padding-top:20px">
             <h4 style="font-size:12px; font-weight:900; text-transform:uppercase; color:var(--text-muted); letter-spacing:0.5px; margin:0 0 4px 0">
-              {{ t('Objectifs & Tâches à Débloquer', 'Objectives & Tasks to Complete') }}
+              {{ t('Checklist des Compétences à Valider', 'Skills Validation Checklist') }}
             </h4>
 
             @for (task of mission.requiredTasks; track task.title) {
@@ -138,7 +91,7 @@ export interface TravelStage {
                   <div>
                     <div style="font-size:13px; font-weight:800; color:var(--text-primary)">{{ getTaskTitle(task) }}</div>
                     <div style="font-size:11px; color:var(--text-muted); margin-top:2px">
-                      {{ t('Type de tâche :', 'Task type:') }} <span style="font-weight:800; color:#6B7280">{{ task.type | uppercase }}</span>
+                      {{ t('Type :', 'Type:') }} <span style="font-weight:800; color:#6B7280">{{ task.type | uppercase }}</span>
                     </div>
                   </div>
                 </div>
@@ -154,9 +107,6 @@ export interface TravelStage {
                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                         {{ t('Pratiquer', 'Practice') }}
                       </button>
-                      <button (click)="simulateProgress(task.type)" style="background:none; border:none; color:var(--text-muted); font-size:9.5px; font-weight:700; text-decoration:underline; cursor:pointer">
-                        {{ t('Simuler +1', 'Simulate +1') }}
-                      </button>
                     </div>
                   }
                 </div>
@@ -165,7 +115,7 @@ export interface TravelStage {
             }
           </div>
 
-          <!-- Completed Rewards Claim -->
+          <!-- Completed Claim Rewards Button -->
           @if (isMissionComplete(mission)) {
             <div style="margin-top:24px; background:#EFF6FF; border:1.5px solid #93C5FD; padding:16px; border-radius:12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px">
               <div style="display:flex; align-items:center; gap:12px">
@@ -187,140 +137,225 @@ export interface TravelStage {
         </div>
       }
 
-      <!-- UPCOMING MISSIONS CHAPTERS -->
-      <div style="margin-top:28px">
-        <h3 style="font-size:15px; font-weight:900; color:var(--text-primary); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:16px">
-          {{ t("Chapitres & Destinations de l'Aventure", "Adventure Chapters & Destinations") }}
-        </h3>
+      <!-- SECTION 2: INTERACTIVE CHAPTER CARDS GRID (CLICKABLE TO OPEN TRAVEL MODAL MAP) -->
+      <div style="margin-top:32px">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px">
+          <div>
+            <h3 style="font-size:16px; font-weight:900; color:var(--text-primary); text-transform:uppercase; letter-spacing:0.5px; margin:0">
+              {{ t("Chapitres & Destinations de l'Aventure", "Adventure Chapters & Destinations") }}
+            </h3>
+            <p style="font-size:12px; color:var(--text-muted); margin:4px 0 0 0">
+              {{ t("Cliquez sur un chapitre pour lancer la carte interactive et vous déplacer !", "Click on any chapter to launch the interactive map and start traveling!") }}
+            </p>
+          </div>
+        </div>
         
-        <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:16px">
+        <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:20px">
           @for (mission of missions(); track mission.id) {
-            <div class="card" style="margin:0; border: 1.5px solid var(--border-weak); opacity: mission.unlocked ? 1 : 0.65; display:flex; flex-direction:column; justify-content:space-between">
-              <div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
-                  <span class="badge" 
-                        [style.background]="mission.completed ? '#D1FAE5' : (mission.unlocked ? '#F3E8FF' : '#E2E8F0')"
-                        [style.color]="mission.completed ? '#065F46' : (mission.unlocked ? '#7C3AED' : '#64748B')"
-                        style="font-size:10px; font-weight:800; border-radius:6px; padding:3px 8px; display:inline-flex; align-items:center; gap:4px">
-                    @if (mission.completed) {
-                      <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-                      {{ t('COMPLÉTÉ', 'COMPLETED') }}
-                    } @else if (mission.unlocked) {
-                      <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                      {{ t('ACTIF', 'ACTIVE') }}
-                    } @else {
-                      <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                      {{ t('VERROUILLÉ', 'LOCKED') }}
-                    }
-                  </span>
-                </div>
-                <h4 style="font-size:15px; font-weight:900; color:var(--text-primary); margin:0 0 6px 0">{{ getMissionTitle(mission) }}</h4>
-                <p style="font-size:12.5px; color:var(--text-secondary); line-height:1.5; margin:0">{{ getMissionDescription(mission) }}</p>
+            <div (click)="openMissionTravelModal(mission)"
+                 class="card" 
+                 style="margin:0; border:2px solid; border-radius:16px; cursor:pointer; transition:all 0.25s cubic-bezier(0.16, 1, 0.3, 1); display:flex; flex-direction:column; justify-content:space-between; position:relative; overflow:hidden; padding:20px"
+                 [style.borderColor]="mission.completed ? '#10B981' : (mission.unlocked ? '#6366F1' : 'var(--border-weak)')"
+                 [style.opacity]="mission.unlocked ? '1' : '0.7'"
+                 [style.boxShadow]="mission.unlocked ? '0 10px 25px rgba(99,102,241,0.1)' : 'none'">
+              
+              <!-- Background Flag Overlay Badge -->
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px">
+                <span class="badge" 
+                      [style.background]="mission.completed ? '#D1FAE5' : (mission.unlocked ? '#EEF2FF' : '#E2E8F0')"
+                      [style.color]="mission.completed ? '#065F46' : (mission.unlocked ? '#4F46E5' : '#64748B')"
+                      style="font-size:10.5px; font-weight:900; border-radius:8px; padding:4px 10px; display:inline-flex; align-items:center; gap:5px">
+                  @if (mission.completed) {
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                    {{ t('COMPLÉTÉ 🎓', 'COMPLETED 🎓') }}
+                  } @else if (mission.unlocked) {
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    {{ t('JOUER L\'AVENTURE ✈️', 'PLAY ADVENTURE ✈️') }}
+                  } @else {
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    {{ t('VERROUILLÉ', 'LOCKED') }}
+                  }
+                </span>
+
+                <span style="font-size:18px">
+                  {{ mission.id === 'mission-london' ? '🇬🇧' : '🇺🇸' }}
+                </span>
               </div>
+
+              <div>
+                <h4 style="font-size:16px; font-weight:900; color:var(--text-primary); margin:0 0 6px 0">{{ getMissionTitle(mission) }}</h4>
+                <p style="font-size:12.5px; color:var(--text-secondary); line-height:1.5; margin:0 0 16px 0">{{ getMissionDescription(mission) }}</p>
+              </div>
+
+              <!-- Card Action CTA -->
+              <div style="background:var(--surface-2); border-radius:10px; padding:10px 14px; display:flex; align-items:center; justify-content:space-between">
+                <span style="font-size:11px; font-weight:800; color:#6366F1; text-transform:uppercase; letter-spacing:0.5px">
+                  {{ t('Carte & Déplacements', 'Interactive Map & Stages') }}
+                </span>
+                <div style="width:28px; height:28px; background:#6366F1; color:white; border-radius:50%; display:flex; align-items:center; justify-content:center">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 18 15 12 9 6"/></svg>
+                </div>
+              </div>
+
             </div>
           }
         </div>
       </div>
 
-      <!-- MODAL POPUP FOR THE INTERACTIVE TRAVEL GAME -->
-      @if (selectedStage(); as st) {
-        <div class="modal-backdrop" (click)="closeTravelGame()" style="position:fixed; inset:0; background:rgba(15,23,42,0.7); backdrop-filter:blur(6px); z-index:99999; display:flex; align-items:center; justify-content:center; padding:16px; animation:fadeIn 0.2s ease-out">
+      <!-- FULL-SCREEN INTERACTIVE TRAVEL GAME MODAL WITH ANIMATED MAP STEPPER -->
+      @if (activeModalMission(); as activeM) {
+        <div class="modal-backdrop" (click)="closeMissionModal()" style="position:fixed; inset:0; background:rgba(15,23,42,0.8); backdrop-filter:blur(8px); z-index:99999; display:flex; align-items:center; justify-content:center; padding:16px; animation:fadeIn 0.25s ease-out">
           
-          <div class="modal-card" (click)="$event.stopPropagation()" style="background:var(--surface-1); border-radius:20px; width:100%; max-width:580px; box-shadow:0 20px 50px rgba(0,0,0,0.35); border:1px solid var(--border-weak); overflow:hidden; animation:scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)">
+          <div class="modal-card" (click)="$event.stopPropagation()" style="background:var(--surface-1); border-radius:24px; width:100%; max-width:760px; box-shadow:0 25px 60px rgba(0,0,0,0.4); border:1px solid var(--border-weak); overflow:hidden; display:flex; flex-direction:column; max-height:90vh; animation:scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)">
             
-            <!-- MODAL TRAVEL HEADER -->
-            <div style="background:linear-gradient(135deg, #1E1B4B 0%, #312E81 100%); color:white; padding:24px; position:relative">
-              <button (click)="closeTravelGame()" style="position:absolute; top:16px; right:16px; background:rgba(255,255,255,0.15); border:none; color:white; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:16px; font-weight:800">
+            <!-- MODAL DESTINATION HEADER -->
+            <div style="background:linear-gradient(135deg, #0F172A 0%, #1E1B4B 60%, #312E81 100%); color:white; padding:24px 28px; position:relative; flex-shrink:0">
+              <button (click)="closeMissionModal()" style="position:absolute; top:20px; right:20px; background:rgba(255,255,255,0.15); border:none; color:white; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:18px; font-weight:800">
                 ✕
               </button>
 
-              <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px">
-                <span style="font-size:10px; font-weight:900; background:#6366F1; color:white; padding:3px 10px; border-radius:20px; text-transform:uppercase; letter-spacing:0.5px">
-                  Étape {{ st.id }} / 4
+              <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px">
+                <span style="font-size:22px">{{ activeM.id === 'mission-london' ? '🇬🇧' : '🇺🇸' }}</span>
+                <span style="font-size:11px; font-weight:900; background:#6366F1; color:white; padding:3px 12px; border-radius:20px; text-transform:uppercase; letter-spacing:0.5px">
+                  {{ activeM.id === 'mission-london' ? 'LONDRES, UK' : 'NEW YORK, USA' }}
                 </span>
-                <span style="font-size:11px; color:#A5B4FC; font-weight:700">📍 {{ t(st.locationFr, st.locationEn) }}</span>
               </div>
 
-              <h3 style="font-size:18px; font-weight:900; margin:0; color:white">
-                {{ t(st.titleFr, st.titleEn) }}
-              </h3>
+              <h2 style="font-size:20px; font-weight:900; margin:0; color:white">
+                {{ getMissionTitle(activeM) }}
+              </h2>
             </div>
 
-            <!-- MODAL TRAVEL GAME BODY -->
-            <div style="padding:24px; display:flex; flex-direction:column; gap:20px">
-              
-              <!-- Character Dialogue Box with Native Speech Audio Button -->
-              <div style="background:#F8FAFC; border:1.5px solid #E2E8F0; border-radius:14px; padding:16px; position:relative">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
-                  <div style="font-size:12px; font-weight:900; color:#4338CA; display:flex; align-items:center; gap:6px">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                    {{ st.speaker }}
-                  </div>
-                  <button (click)="speak(st.dialogueEn)" class="btn-s" style="background:#EEF2FF; color:#4F46E5; border:1px solid #C7D2FE; padding:4px 10px; font-size:11px; font-weight:800; border-radius:20px; cursor:pointer; display:flex; align-items:center; gap:4px">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-                    {{ t('Écouter l\'Audio 🔊', 'Listen Audio 🔊') }}
-                  </button>
-                </div>
-
-                <div style="font-size:14px; font-weight:800; color:var(--text-primary); line-height:1.4">
-                  " {{ st.dialogueEn }} "
-                </div>
-                <div style="font-size:11.5px; color:var(--text-muted); font-style:italic; margin-top:4px">
-                  ({{ st.dialogueFr }})
-                </div>
+            <!-- ANIMATED MAP STEPPER BOARD (REAL-TIME TRAVEL MOVEMENT) -->
+            <div style="background:#F1F5F9; border-bottom:1px solid #E2E8F0; padding:20px 24px; position:relative; flex-shrink:0">
+              <div style="font-size:11px; font-weight:900; text-transform:uppercase; color:#64748B; letter-spacing:0.5px; margin-bottom:14px; display:flex; align-items:center; gap:6px">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2.5"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>
+                {{ t('Carte des Déplacements en Direct', 'Live Travel Progression Board') }}
               </div>
 
-              <!-- Interactive Challenge Question -->
-              <div>
-                <label style="font-size:13px; font-weight:900; color:var(--text-primary); display:block; margin-bottom:12px">
-                  {{ t(st.questionFr, st.questionEn) }}
-                </label>
+              <!-- Stepper Path Line -->
+              <div style="display:flex; align-items:center; justify-content:space-between; position:relative">
+                <div style="position:absolute; top:20px; left:30px; right:30px; height:4px; background:#CBD5E1; z-index:1; border-radius:2px"></div>
+                <div style="position:absolute; top:20px; left:30px; height:4px; background:#6366F1; z-index:2; border-radius:2px; transition:width 0.4s ease"
+                     [style.width.%]="((activeStageId() - 1) / (travelStages.length - 1)) * 88"></div>
 
-                <!-- Options grid -->
-                <div style="display:flex; flex-direction:column; gap:10px">
-                  @for (opt of getOptions(st); track opt; let idx = $index) {
-                    <button (click)="selectOption(idx, st)"
-                            [disabled]="answeredStageId() === st.id"
-                            style="text-align:left; padding:12px 16px; border-radius:12px; border:2px solid; font-size:13px; font-weight:800; cursor:pointer; transition:all 0.15s; display:flex; align-items:center; justify-content:space-between"
-                            [style.background]="selectedOptIdx() === idx ? (idx === st.correctIdx ? '#ECFDF5' : '#FEF2F2') : 'white'"
-                            [style.borderColor]="selectedOptIdx() === idx ? (idx === st.correctIdx ? '#10B981' : '#EF4444') : '#E2E8F0'"
-                            [style.color]="selectedOptIdx() === idx ? (idx === st.correctIdx ? '#065F46' : '#991B1B') : 'var(--text-primary)'">
-                      <span>{{ ['A', 'B', 'C'][idx] }}) {{ opt }}</span>
-
-                      @if (selectedOptIdx() === idx) {
-                        @if (idx === st.correctIdx) {
-                          <span style="color:#10B981; font-weight:900">✓ Correct !</span>
-                        } @else {
-                          <span style="color:#EF4444; font-weight:900">✕ Incorrect</span>
-                        }
+                @for (st of travelStages; track st.id) {
+                  <div (click)="selectStage(st.id)"
+                       style="z-index:3; display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer; transition:all 0.2s ease"
+                       [style.transform]="activeStageId() === st.id ? 'scale(1.1)' : 'scale(1)'">
+                    
+                    <div style="width:40px; height:40px; border-radius:50%; border:3px solid; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:13px; transition:all 0.2s"
+                         [style.background]="st.completed ? '#10B981' : (activeStageId() === st.id ? '#6366F1' : 'white')"
+                         [style.borderColor]="st.completed ? '#10B981' : (activeStageId() === st.id ? '#4338CA' : '#94A3B8')"
+                         [style.color]="(st.completed || activeStageId() === st.id) ? 'white' : '#64748B'">
+                      @if (st.completed) {
+                        ✓
+                      } @else {
+                        {{ st.id }}
                       }
-                    </button>
-                  }
-                </div>
+                    </div>
+
+                    <span style="font-size:10.5px; font-weight:800; max-width:80px; text-align:center; line-height:1.2"
+                          [style.color]="activeStageId() === st.id ? '#4338CA' : '#64748B'">
+                      {{ t(st.titleFr, st.titleEn) | slice:0:16 }}...
+                    </span>
+                  </div>
+                }
               </div>
+            </div>
 
-              <!-- Explanation & Next Button -->
-              @if (answeredStageId() === st.id) {
-                <div style="background:#EFF6FF; border:1px solid #BFDBFE; padding:14px; border-radius:12px; animation:fadeIn 0.2s">
-                  <div style="font-size:12px; font-weight:900; color:#1E40AF; margin-bottom:4px">
-                    💡 {{ t('Explication du Conseiller de Voyage :', 'Travel Advisor Tip:') }}
+            <!-- MODAL TRAVEL SCENE BODY (SCROLLABLE) -->
+            <div style="padding:24px 28px; overflow-y:auto; display:flex; flex-direction:column; gap:20px">
+              
+              @if (isFlyingTransition()) {
+                <!-- ANIMATED TRANSITION BOARD -->
+                <div style="text-align:center; padding:40px 20px; animation:fadeIn 0.3s">
+                  <div style="font-size:40px; margin-bottom:12px; animation:bounce 1s infinite">✈️</div>
+                  <h3 style="font-size:18px; font-weight:900; color:#4338CA; margin:0 0 6px 0">
+                    {{ t('Déplacement en cours vers la prochaine destination...', 'Flying to your next London destination...') }}
+                  </h3>
+                  <p style="font-size:12.5px; color:var(--text-muted)">
+                    {{ t('Préparations pour le dialogue suivant...', 'Preparing next dialogue scene...') }}
+                  </p>
+                </div>
+              } @else if (currentStage(); as st) {
+                
+                <!-- Character Dialogue Box with Native Audio Speech -->
+                <div style="background:#F8FAFC; border:2px solid #E2E8F0; border-radius:16px; padding:20px; position:relative">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
+                    <div style="font-size:13px; font-weight:900; color:#4338CA; display:flex; align-items:center; gap:8px">
+                      <div style="width:28px; height:28px; background:#EEF2FF; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#4338CA">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                      </div>
+                      {{ st.speaker }}
+                    </div>
+
+                    <button (click)="speak(st.dialogueEn)" class="btn-s" style="background:#EEF2FF; color:#4F46E5; border:1.5px solid #C7D2FE; padding:6px 14px; font-size:11.5px; font-weight:800; border-radius:20px; cursor:pointer; display:flex; align-items:center; gap:6px">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                      {{ t('Écouter l\'Audio 🔊', 'Listen Audio 🔊') }}
+                    </button>
                   </div>
-                  <div style="font-size:12px; color:#1E3A8A; line-height:1.4">
-                    {{ t(st.explanationFr, st.explanationEn) }}
+
+                  <div style="font-size:15px; font-weight:800; color:var(--text-primary); line-height:1.4">
+                    " {{ st.dialogueEn }} "
+                  </div>
+                  <div style="font-size:12px; color:var(--text-muted); font-style:italic; margin-top:6px">
+                    ({{ st.dialogueFr }})
                   </div>
                 </div>
 
-                <div style="display:flex; justify-content:flex-end; gap:12px">
-                  @if (st.id < travelStages.length) {
-                    <button (click)="openTravelGame(st.id + 1)" class="btn-p" style="background:#4F46E5; border-color:#4F46E5; font-weight:900; padding:10px 20px; border-radius:10px; cursor:pointer">
-                      {{ t('Étape Suivante ➔', 'Next Stage ➔') }}
-                    </button>
-                  } @else {
-                    <button (click)="closeTravelGame()" class="btn-p" style="background:#10B981; border-color:#10B981; font-weight:900; padding:10px 20px; border-radius:10px; cursor:pointer">
-                      🎉 {{ t('Terminer l\'Aventure & Gagner +100 XP !', 'Finish Adventure & Claim +100 XP!') }}
-                    </button>
-                  }
+                <!-- Interactive Challenge Options -->
+                <div>
+                  <label style="font-size:14px; font-weight:900; color:var(--text-primary); display:block; margin-bottom:12px">
+                    {{ t(st.questionFr, st.questionEn) }}
+                  </label>
+
+                  <div style="display:flex; flex-direction:column; gap:10px">
+                    @for (opt of getOptions(st); track opt; let idx = $index) {
+                      <button (click)="selectOption(idx, st)"
+                              [disabled]="answeredStageId() === st.id"
+                              style="text-align:left; padding:14px 18px; border-radius:14px; border:2px solid; font-size:13.5px; font-weight:800; cursor:pointer; transition:all 0.15s; display:flex; align-items:center; justify-content:space-between"
+                              [style.background]="selectedOptIdx() === idx ? (idx === st.correctIdx ? '#ECFDF5' : '#FEF2F2') : 'white'"
+                              [style.borderColor]="selectedOptIdx() === idx ? (idx === st.correctIdx ? '#10B981' : '#EF4444') : '#E2E8F0'"
+                              [style.color]="selectedOptIdx() === idx ? (idx === st.correctIdx ? '#065F46' : '#991B1B') : 'var(--text-primary)'">
+                        <span>{{ ['A', 'B', 'C'][idx] }}) {{ opt }}</span>
+
+                        @if (selectedOptIdx() === idx) {
+                          @if (idx === st.correctIdx) {
+                            <span style="color:#10B981; font-weight:900">✓ Correct !</span>
+                          } @else {
+                            <span style="color:#EF4444; font-weight:900">✕ Incorrect</span>
+                          }
+                        }
+                      </button>
+                    }
+                  </div>
                 </div>
+
+                <!-- Feedback & Next Stage Navigation -->
+                @if (answeredStageId() === st.id) {
+                  <div style="background:#EFF6FF; border:1.5px solid #BFDBFE; padding:16px; border-radius:14px; animation:fadeIn 0.2s">
+                    <div style="font-size:12.5px; font-weight:900; color:#1E40AF; margin-bottom:4px">
+                      💡 {{ t('Conseil du Guide de Voyage :', 'Travel Guide Tip:') }}
+                    </div>
+                    <div style="font-size:12.5px; color:#1E3A8A; line-height:1.4">
+                      {{ t(st.explanationFr, st.explanationEn) }}
+                    </div>
+                  </div>
+
+                  <div style="display:flex; justify-content:flex-end; gap:12px">
+                    @if (st.id < travelStages.length) {
+                      <button (click)="advanceToNextStage(st.id + 1)" class="btn-p" style="background:#4F46E5; border-color:#4F46E5; font-weight:900; padding:12px 24px; border-radius:12px; cursor:pointer; display:flex; align-items:center; gap:8px">
+                        {{ t("S'envoler vers l'Étape Suivante ✈️", "Fly to Next Stage ✈️") }}
+                      </button>
+                    } @else {
+                      <button (click)="finishTravelAdventure()" class="btn-p" style="background:#10B981; border-color:#10B981; font-weight:900; padding:12px 24px; border-radius:12px; cursor:pointer">
+                        🎉 {{ t("Valider l'Aventure & Réclamer les Récompenses !", "Complete Adventure & Claim Rewards!") }}
+                      </button>
+                    }
+                  </div>
+                }
+
               }
 
             </div>
@@ -341,10 +376,12 @@ export class StudentJourneyComponent {
   missions = signal<JourneyMission[]>([]);
 
   activeLang = computed(() => this.db.activeLang());
-  selectedStage = signal<TravelStage | null>(null);
+  
+  activeModalMission = signal<JourneyMission | null>(null);
   activeStageId = signal<number>(1);
   selectedOptIdx = signal<number | null>(null);
   answeredStageId = signal<number | null>(null);
+  isFlyingTransition = signal<boolean>(false);
 
   travelStages: TravelStage[] = [
     {
@@ -461,6 +498,10 @@ export class StudentJourneyComponent {
     return this.missions().find(m => m.unlocked && !m.completed) || null;
   });
 
+  currentStage = computed(() => {
+    return this.travelStages.find(s => s.id === this.activeStageId()) || this.travelStages[0];
+  });
+
   constructor() {
     this.db.observeCurrentUser().subscribe(u => this.currentUser.set(u));
     this.db.observeJourneyMissions().subscribe(list => this.missions.set(list));
@@ -470,16 +511,45 @@ export class StudentJourneyComponent {
     return this.activeLang() === 'fr' ? fr : en;
   }
 
-  openTravelGame(stageId: number) {
-    const stage = this.travelStages.find(s => s.id === stageId) || this.travelStages[0];
-    this.selectedStage.set(stage);
-    this.activeStageId.set(stage.id);
+  openMissionTravelModal(mission: JourneyMission) {
+    if (!mission.unlocked && !mission.completed) {
+      this.dialogService.alert(
+        this.t('Chapitre Verrouillé 🔒', 'Chapter Locked 🔒'),
+        this.t('Complétez la mission précédente pour débloquer cette destination !', 'Complete the previous mission to unlock this destination!'),
+        'info'
+      );
+      return;
+    }
+    this.activeModalMission.set(mission);
+    this.activeStageId.set(1);
     this.selectedOptIdx.set(null);
     this.answeredStageId.set(null);
   }
 
-  closeTravelGame() {
-    this.selectedStage.set(null);
+  closeMissionModal() {
+    this.activeModalMission.set(null);
+  }
+
+  selectStage(stageId: number) {
+    this.activeStageId.set(stageId);
+    this.selectedOptIdx.set(null);
+    this.answeredStageId.set(null);
+  }
+
+  advanceToNextStage(nextId: number) {
+    this.isFlyingTransition.set(true);
+    setTimeout(() => {
+      this.isFlyingTransition.set(false);
+      this.selectStage(nextId);
+    }, 900);
+  }
+
+  finishTravelAdventure() {
+    const activeM = this.activeModalMission();
+    if (activeM) {
+      this.claimMissionRewards(activeM.id);
+      this.closeMissionModal();
+    }
   }
 
   getOptions(st: TravelStage): string[] {
