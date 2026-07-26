@@ -21,6 +21,8 @@ export interface TravelStage {
   explanationEn: string;
   iconSvg: string;
   completed?: boolean;
+  xPercent: number;
+  yPx: number;
 }
 
 @Component({
@@ -34,14 +36,14 @@ export interface TravelStage {
       <div class="card" style="margin-top:0; background:linear-gradient(135deg, #1E1B4B 0%, #4338CA 100%); color:white; border:none; padding:26px; border-radius:16px; box-shadow:0 10px 30px rgba(67,56,202,0.25); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px">
         <div>
           <span style="font-size:10px; background:rgba(255,255,255,0.2); color:white; font-weight:900; padding:4px 12px; border-radius:20px; text-transform:uppercase; letter-spacing:0.5px">
-            SPEAKUP TRAVEL ADVENTURE SIMULATOR
+            SPEAKUP INTERACTIVE FLIGHT & TRAVEL SIMULATOR
           </span>
           <h2 style="font-size:22px; font-weight:900; margin:10px 0 4px 0; color:#FFF; display:flex; align-items:center; gap:8px">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#A5B4FC" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.2c.3.4.8.5 1.3.3l.5-.3c.4-.2.6-.6.5-1.1z"/></svg>
             {{ t("Missions & Aventures de Voyage", "Travel Missions & Adventures") }}
           </h2>
           <p style="font-size:13px; color:#E0E7FF; margin:0; max-width:620px; line-height:1.5">
-            {{ t("Sélectionnez un chapitre ci-dessous pour ouvrir la carte interactive, voyager à travers la ville et réaliser vos missions en situation réelle !", "Select a chapter below to launch the interactive map, travel through the city and perform real-life missions!") }}
+            {{ t("Suivez le tracé de vol sinueux, survolez la ville et atterrissez sur chaque étape pour réaliser vos défis en situation réelle !", "Follow the winding flight curve, fly over the city and land at each checkpoint to perform real-life challenges!") }}
           </p>
         </div>
       </div>
@@ -145,7 +147,7 @@ export interface TravelStage {
               {{ t("Chapitres & Destinations de l'Aventure", "Adventure Chapters & Destinations") }}
             </h3>
             <p style="font-size:12px; color:var(--text-muted); margin:4px 0 0 0">
-              {{ t("Cliquez sur un chapitre pour lancer la carte interactive et vous déplacer !", "Click on any chapter to launch the interactive map and start traveling!") }}
+              {{ t("Cliquez sur un chapitre pour décoller et suivre le plan de vol sinueux !", "Click on any chapter to take off and follow the curved flight plan!") }}
             </p>
           </div>
         </div>
@@ -157,7 +159,7 @@ export interface TravelStage {
                  style="margin:0; border:2px solid; border-radius:16px; cursor:pointer; transition:all 0.25s cubic-bezier(0.16, 1, 0.3, 1); display:flex; flex-direction:column; justify-content:space-between; position:relative; overflow:hidden; padding:20px"
                  [style.borderColor]="mission.completed ? '#10B981' : (mission.unlocked ? '#6366F1' : 'var(--border-weak)')"
                  [style.opacity]="mission.unlocked ? '1' : '0.7'"
-                 [style.boxShadow]="mission.unlocked ? '0 10px 25px rgba(99,102,241,0.1)' : 'none'">
+                 [style.boxShadow]="mission.unlocked ? '0 10px 25px rgba(99,102,241,0.15)' : 'none'">
               
               <!-- Background Flag Overlay Badge -->
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px">
@@ -170,7 +172,7 @@ export interface TravelStage {
                     {{ t("COMPLÉTÉ", "COMPLETED") }}
                   } @else if (mission.unlocked) {
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                    {{ t("JOUER L'AVENTURE", "PLAY ADVENTURE") }}
+                    {{ t("DÉCOLLER & VOYAGER", "TAKE OFF & TRAVEL") }}
                   } @else {
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                     {{ t("VERROUILLÉ", "LOCKED") }}
@@ -178,7 +180,7 @@ export interface TravelStage {
                 </span>
 
                 <!-- SVG FLAG BADGES -->
-                <span style="font-size:11px; font-weight:900; background:var(--surface-2); padding:2px 8px; border-radius:6px; color:var(--text-secondary); display:flex; align-items:center; gap:4px">
+                <span style="font-size:11px; font-weight:900; background:var(--surface-2); padding:3px 10px; border-radius:6px; color:var(--text-secondary); display:flex; align-items:center; gap:4px">
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
                   {{ mission.id === 'mission-london' ? 'UK 🇬🇧' : 'USA 🇺🇸' }}
                 </span>
@@ -192,10 +194,10 @@ export interface TravelStage {
               <!-- Card Action CTA -->
               <div style="background:var(--surface-2); border-radius:10px; padding:10px 14px; display:flex; align-items:center; justify-content:space-between">
                 <span style="font-size:11px; font-weight:800; color:#6366F1; text-transform:uppercase; letter-spacing:0.5px">
-                  {{ t("Carte & Déplacements", "Interactive Map & Stages") }}
+                  {{ t("Plan de Vol & Carte", "Flight Plan & Map") }}
                 </span>
                 <div style="width:28px; height:28px; background:#6366F1; color:white; border-radius:50%; display:flex; align-items:center; justify-content:center">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 18 15 12 9 6"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.2c.3.4.8.5 1.3.3l.5-.3c.4-.2.6-.6.5-1.1z"/></svg>
                 </div>
               </div>
 
@@ -204,21 +206,24 @@ export interface TravelStage {
         </div>
       </div>
 
-      <!-- FULL-SCREEN INTERACTIVE TRAVEL GAME MODAL WITH ANIMATED MAP STEPPER -->
+      <!-- FULL-SCREEN INTERACTIVE TRAVEL GAME MODAL WITH CURVED WINDING FLIGHT PATH & LANDING SPLASH -->
       @if (activeModalMission(); as activeM) {
-        <div class="modal-backdrop" (click)="closeMissionModal()" style="position:fixed; inset:0; background:rgba(15,23,42,0.8); backdrop-filter:blur(8px); z-index:99999; display:flex; align-items:center; justify-content:center; padding:16px; animation:fadeIn 0.25s ease-out">
+        <div class="modal-backdrop" (click)="closeMissionModal()" style="position:fixed; inset:0; background:rgba(15,23,42,0.82); backdrop-filter:blur(8px); z-index:99999; display:flex; align-items:center; justify-content:center; padding:16px; animation:fadeIn 0.25s ease-out">
           
-          <div class="modal-card" (click)="$event.stopPropagation()" style="background:var(--surface-1); border-radius:24px; width:100%; max-width:760px; box-shadow:0 25px 60px rgba(0,0,0,0.4); border:1px solid var(--border-weak); overflow:hidden; display:flex; flex-direction:column; max-height:90vh; animation:scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)">
+          <div class="modal-card" (click)="$event.stopPropagation()" style="background:var(--surface-1); border-radius:24px; width:100%; max-width:820px; box-shadow:0 25px 60px rgba(0,0,0,0.4); border:1px solid var(--border-weak); overflow:hidden; display:flex; flex-direction:column; max-height:92vh; animation:scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)">
             
-            <!-- MODAL DESTINATION HEADER -->
+            <!-- MODAL DESTINATION HEADER BANNER -->
             <div style="background:linear-gradient(135deg, #0F172A 0%, #1E1B4B 60%, #312E81 100%); color:white; padding:24px 28px; position:relative; flex-shrink:0">
               <button (click)="closeMissionModal()" style="position:absolute; top:20px; right:20px; background:rgba(255,255,255,0.15); border:none; color:white; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:18px; font-weight:800">
                 ✕
               </button>
 
               <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px">
-                <span style="font-size:11px; font-weight:900; background:#6366F1; color:white; padding:3px 12px; border-radius:20px; text-transform:uppercase; letter-spacing:0.5px">
+                <span style="font-size:11px; font-weight:900; background:#6366F1; color:white; padding:4px 12px; border-radius:20px; text-transform:uppercase; letter-spacing:0.5px">
                   {{ activeM.id === 'mission-london' ? 'LONDRES, UK 🇬🇧' : 'NEW YORK, USA 🇺🇸' }}
+                </span>
+                <span style="font-size:11px; color:#A5B4FC; font-weight:700">
+                  {{ t("Vol en cours vers la destination...", "Flight in progress to destination...") }}
                 </span>
               </div>
 
@@ -227,28 +232,59 @@ export interface TravelStage {
               </h2>
             </div>
 
-            <!-- ANIMATED MAP STEPPER BOARD (REAL-TIME TRAVEL MOVEMENT) -->
-            <div style="background:#F1F5F9; border-bottom:1px solid #E2E8F0; padding:20px 24px; position:relative; flex-shrink:0">
-              <div style="font-size:11px; font-weight:900; text-transform:uppercase; color:#64748B; letter-spacing:0.5px; margin-bottom:14px; display:flex; align-items:center; gap:6px">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2.5"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>
-                {{ t("Carte des Déplacements en Direct", "Live Travel Progression Board") }}
+            <!-- CURVED WINDING FLIGHT PATH MAP BOARD (TRACÉ PAS DROIT + LANDING SPLASH) -->
+            <div style="background:linear-gradient(180deg, #F8FAFC 0%, #EEF2FF 100%); border-bottom:1.5px solid #E2E8F0; padding:20px 28px; position:relative; flex-shrink:0; min-height:160px; overflow:hidden">
+              
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px">
+                <div style="font-size:11px; font-weight:900; text-transform:uppercase; color:#4338CA; letter-spacing:0.5px; display:flex; align-items:center; gap:6px">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2.5"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>
+                  {{ t("Plan de Vol Sinueux — Déplacement en Direct", "Winding Flight Path — Live Travel") }}
+                </div>
               </div>
 
-              <!-- Stepper Path Line -->
-              <div style="display:flex; align-items:center; justify-content:space-between; position:relative">
-                <div style="position:absolute; top:20px; left:30px; right:30px; height:4px; background:#CBD5E1; z-index:1; border-radius:2px"></div>
-                <div style="position:absolute; top:20px; left:30px; height:4px; background:#6366F1; z-index:2; border-radius:2px; transition:width 0.4s ease"
-                     [style.width.%]="((activeStageId() - 1) / (travelStages.length - 1)) * 88"></div>
+              <!-- SVG WINDING FLIGHT CURVE PATH -->
+              <div style="position:relative; width:100%; height:100px">
+                <svg width="100%" height="100px" viewBox="0 0 700 100" preserveAspectRatio="none" style="position:absolute; inset:0">
+                  <!-- Dashed Winding Flight Path -->
+                  <path d="M 50,55 C 160,10 240,90 350,50 C 460,10 540,90 650,45" 
+                        fill="none" 
+                        stroke="#CBD5E1" 
+                        stroke-width="4" 
+                        stroke-dasharray="6 6"/>
+                  
+                  <!-- Active Traveled Path Highlight -->
+                  <path d="M 50,55 C 160,10 240,90 350,50 C 460,10 540,90 650,45" 
+                        fill="none" 
+                        stroke="#6366F1" 
+                        stroke-width="5" 
+                        stroke-linecap="round"
+                        [attr.stroke-dasharray]="getCurvedDashArray()"/>
+                </svg>
 
+                <!-- ANIMATED FLYING JET PLANE MARKER -->
+                <div style="position:absolute; width:36px; height:36px; background:#4338CA; border:2px solid white; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; z-index:10; box-shadow:0 8px 20px rgba(67,56,202,0.4); transition:all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)"
+                     [style.left.%]="activeStage().xPercent"
+                     [style.top.px]="activeStage().yPx - 18">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="transform:rotate(45deg)"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.2c.3.4.8.5 1.3.3l.5-.3c.4-.2.6-.6.5-1.1z"/></svg>
+                </div>
+
+                <!-- 4 STAGE WAYPOINTS ALONG THE CURVED PATH -->
                 @for (st of travelStages; track st.id) {
                   <div (click)="selectStage(st.id)"
-                       style="z-index:3; display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer; transition:all 0.2s ease"
-                       [style.transform]="activeStageId() === st.id ? 'scale(1.1)' : 'scale(1)'">
+                       style="position:absolute; z-index:5; display:flex; flex-direction:column; align-items:center; cursor:pointer; transform:translate(-50%, -50%); transition:all 0.2s"
+                       [style.left.%]="st.xPercent"
+                       [style.top.px]="st.yPx">
                     
-                    <div style="width:40px; height:40px; border-radius:50%; border:3px solid; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:13px; transition:all 0.2s"
+                    <!-- LANDING TOUCHDOWN SPLASH EFFECT RIPPLE -->
+                    @if (activeStageId() === st.id && showLandingSplash()) {
+                      <div style="position:absolute; width:60px; height:60px; border-radius:50%; border:2px solid #6366F1; animation:pulseRing 1.2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite; z-index:1; pointer-events:none"></div>
+                    }
+
+                    <div style="width:38px; height:38px; border-radius:50%; border:3px solid; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:13px; transition:all 0.3s; position:relative; z-index:2"
                          [style.background]="st.completed ? '#10B981' : (activeStageId() === st.id ? '#6366F1' : 'white')"
                          [style.borderColor]="st.completed ? '#10B981' : (activeStageId() === st.id ? '#4338CA' : '#94A3B8')"
-                         [style.color]="(st.completed || activeStageId() === st.id) ? 'white' : '#64748B'">
+                         [style.color]="(st.completed || activeStageId() === st.id) ? 'white' : '#64748B'"
+                         [style.boxShadow]="activeStageId() === st.id ? '0 0 16px rgba(99,102,241,0.5)' : 'none'">
                       @if (st.completed) {
                         ✓
                       } @else {
@@ -256,9 +292,9 @@ export interface TravelStage {
                       }
                     </div>
 
-                    <span style="font-size:10.5px; font-weight:800; max-width:80px; text-align:center; line-height:1.2"
+                    <span style="font-size:10px; font-weight:800; max-width:85px; text-align:center; line-height:1.2; margin-top:4px"
                           [style.color]="activeStageId() === st.id ? '#4338CA' : '#64748B'">
-                      {{ t(st.titleFr, st.titleEn) | slice:0:16 }}...
+                      {{ t(st.titleFr, st.titleEn) | slice:0:15 }}...
                     </span>
                   </div>
                 }
@@ -268,15 +304,32 @@ export interface TravelStage {
             <!-- MODAL TRAVEL SCENE BODY (SCROLLABLE) -->
             <div style="padding:24px 28px; overflow-y:auto; display:flex; flex-direction:column; gap:20px">
               
+              <!-- TOUCHDOWN LANDING SPLASH BANNER -->
+              @if (showLandingSplash()) {
+                <div style="background:linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%); border:2px solid #818CF8; padding:14px 18px; border-radius:14px; display:flex; align-items:center; gap:12px; animation:scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)">
+                  <div style="width:40px; height:40px; background:#4338CA; color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0">
+                    🛬
+                  </div>
+                  <div>
+                    <strong style="color:#312E81; font-size:13.5px; font-weight:900">
+                      {{ t("Atterrissage Réussi à : ", "Successful Touchdown Landing at: ") }} {{ t(activeStage().locationFr, activeStage().locationEn) }} !
+                    </strong>
+                    <p style="font-size:11.5px; color:#4338CA; margin:2px 0 0 0">
+                      {{ t("Vous êtes arrivé sur le lieu de la mission. Répondez au dialogue ci-dessous pour valider l'étape !", "You arrived at the mission checkpoint. Complete the dialogue below to validate the stage!") }}
+                    </p>
+                  </div>
+                </div>
+              }
+
               @if (isFlyingTransition()) {
-                <!-- ANIMATED TRANSITION BOARD -->
+                <!-- ANIMATED FLIGHT TRANSITION BOARD -->
                 <div style="text-align:center; padding:40px 20px; animation:fadeIn 0.3s">
-                  <div style="font-size:40px; margin-bottom:12px; animation:bounce 1s infinite">✈️</div>
+                  <div style="font-size:48px; margin-bottom:12px; animation:bounce 0.8s infinite">✈️</div>
                   <h3 style="font-size:18px; font-weight:900; color:#4338CA; margin:0 0 6px 0">
-                    {{ t("Déplacement en cours vers la prochaine destination...", "Flying to your next London destination...") }}
+                    {{ t("Vol en cours vers la prochaine destination...", "Flying to your next London destination...") }}
                   </h3>
                   <p style="font-size:12.5px; color:var(--text-muted)">
-                    {{ t("Préparations pour le dialogue suivant...", "Preparing next dialogue scene...") }}
+                    {{ t("Atterrissage dans quelques secondes...", "Landing in a few seconds...") }}
                   </p>
                 </div>
               } @else if (currentStage(); as st) {
@@ -367,7 +420,12 @@ export interface TravelStage {
 
     </div>
   `,
-  styles: []
+  styles: [`
+    @keyframes pulseRing {
+      0% { transform: scale(0.6); opacity: 0.9; }
+      100% { transform: scale(2.4); opacity: 0; }
+    }
+  `]
 })
 export class StudentJourneyComponent {
   private db = inject(DatabaseService);
@@ -383,6 +441,7 @@ export class StudentJourneyComponent {
   selectedOptIdx = signal<number | null>(null);
   answeredStageId = signal<number | null>(null);
   isFlyingTransition = signal<boolean>(false);
+  showLandingSplash = signal<boolean>(true);
 
   travelStages: TravelStage[] = [
     {
@@ -410,7 +469,9 @@ export class StudentJourneyComponent {
       explanationFr: 'Pour passer la douane à l\'aéroport de Londres, précisez clairement la raison de votre visite et la durée de votre séjour en toute confiance.',
       explanationEn: 'When passing customs at London airport, clearly state the reason for your visit and duration of stay confidently.',
       iconSvg: '<path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.2c.3.4.8.5 1.3.3l.5-.3c.4-.2.6-.6.5-1.1z"/>',
-      completed: false
+      completed: false,
+      xPercent: 12,
+      yPx: 55
     },
     {
       id: 2,
@@ -437,7 +498,9 @@ export class StudentJourneyComponent {
       explanationFr: 'En Angleterre, utilisez toujours "Could I please have..." pour commander avec politesse et élégance.',
       explanationEn: 'In England, always use "Could I please have..." to order politely and elegantly.',
       iconSvg: '<path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/>',
-      completed: false
+      completed: false,
+      xPercent: 38,
+      yPx: 25
     },
     {
       id: 3,
@@ -464,7 +527,9 @@ export class StudentJourneyComponent {
       explanationFr: 'Donnez le nom sur la réservation et demandez "Is breakfast included?" pour connaître les modalités du petit-déjeuner.',
       explanationEn: 'Give the name on the reservation and ask "Is breakfast included?" to know breakfast details.',
       iconSvg: '<path d="M19 21V5a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2v16"/><path d="M3 21h18"/><path d="M9 7h1"/><path d="M9 11h1"/><path d="M9 15h1"/><path d="M14 7h1"/><path d="M14 11h1"/><path d="M14 15h1"/>',
-      completed: false
+      completed: false,
+      xPercent: 64,
+      yPx: 75
     },
     {
       id: 4,
@@ -491,7 +556,9 @@ export class StudentJourneyComponent {
       explanationFr: 'À Londres, le métro est appelé "The Tube". Utilisez "which tube line should I take...?" pour trouver la bonne ligne.',
       explanationEn: 'In London, the underground is called "The Tube". Use "which tube line should I take...?" for directions.',
       iconSvg: '<rect x="4" y="3" width="16" height="16" rx="2"/><path d="M4 11h16"/><path d="M12 3v8"/><path d="M8 19l-3 3"/><path d="M16 19l3 3"/><circle cx="8" cy="15" r="1"/><circle cx="16" cy="15" r="1"/>',
-      completed: false
+      completed: false,
+      xPercent: 88,
+      yPx: 45
     }
   ];
 
@@ -499,8 +566,12 @@ export class StudentJourneyComponent {
     return this.missions().find(m => m.unlocked && !m.completed) || null;
   });
 
-  currentStage = computed(() => {
+  activeStage = computed(() => {
     return this.travelStages.find(s => s.id === this.activeStageId()) || this.travelStages[0];
+  });
+
+  currentStage = computed(() => {
+    return this.activeStage();
   });
 
   constructor() {
@@ -510,6 +581,14 @@ export class StudentJourneyComponent {
 
   t(fr: string, en: string): string {
     return this.activeLang() === 'fr' ? fr : en;
+  }
+
+  getCurvedDashArray(): string {
+    const stage = this.activeStageId();
+    if (stage === 1) return '0 1000';
+    if (stage === 2) return '230 1000';
+    if (stage === 3) return '450 1000';
+    return '1000 1000';
   }
 
   openMissionTravelModal(mission: JourneyMission) {
@@ -525,6 +604,7 @@ export class StudentJourneyComponent {
     this.activeStageId.set(1);
     this.selectedOptIdx.set(null);
     this.answeredStageId.set(null);
+    this.showLandingSplash.set(true);
   }
 
   closeMissionModal() {
@@ -535,14 +615,17 @@ export class StudentJourneyComponent {
     this.activeStageId.set(stageId);
     this.selectedOptIdx.set(null);
     this.answeredStageId.set(null);
+    this.showLandingSplash.set(true);
   }
 
   advanceToNextStage(nextId: number) {
     this.isFlyingTransition.set(true);
+    this.showLandingSplash.set(false);
+
     setTimeout(() => {
       this.isFlyingTransition.set(false);
       this.selectStage(nextId);
-    }, 900);
+    }, 1000);
   }
 
   finishTravelAdventure() {
