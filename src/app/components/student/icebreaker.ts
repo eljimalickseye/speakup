@@ -38,7 +38,7 @@ import { DatabaseService, LiveIceBreaker, UserProfile } from '../../services/dat
                 ICE BREAKER & GAME CENTER
               </h2>
               <p [style.color]="isManga() ? '#FCA5A5' : (isRose() ? '#BE185D' : '#94A3B8')" style="font-size:12.5px; margin:0; font-weight:700">
-                Participez aux jeux, défis oraux et quiz en direct lancés par votre professeur !
+                {{ t('Participez aux jeux, défis oraux et quiz en direct lancés par votre professeur !', 'Join live games, speaking challenges, and quizzes launched by your teacher!') }}
               </p>
               @if (isRose()) {
                 <button class="btn-p" style="background:#DB2777; border-color:#DB2777; font-weight:850; font-size:11px; align-self:flex-start; margin-top:10px; padding:6px 16px; border-radius:20px; display:flex; align-items:center; gap:6px; color:white">
@@ -55,14 +55,14 @@ import { DatabaseService, LiveIceBreaker, UserProfile } from '../../services/dat
               @if (game.type === 'wheel') {
                 <div class="card" style="padding:32px; text-align:center; border-top:4px solid #4F46E5">
                   <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 16px auto"><circle cx="12" cy="12" r="10"/><path d="M12 2v20M2 12h20M12 12l7.07-7.07M12 12l-7.07 7.07M12 12l-7.07-7.07M12 12l7.07 7.07"/></svg>
-                  <h3 style="font-size:18px; font-weight:800; color:var(--text-primary); margin:0 0 8px 0">Roue des Noms & Défis</h3>
-                  <p style="font-size:12.5px; color:var(--text-secondary); margin:0 0 24px 0">Le professeur tourne la roue en direct lors du meet.</p>
+                  <h3 style="font-size:18px; font-weight:800; color:var(--text-primary); margin:0 0 8px 0">{{ t('Roue des Noms & Défis', 'Wheel of Names & Challenges') }}</h3>
+                  <p style="font-size:12.5px; color:var(--text-secondary); margin:0 0 24px 0">{{ t('Le professeur tourne la roue en direct lors du meet.', 'The teacher spins the wheel live during the class.') }}</p>
                   
                   @if (game.wheelState?.selectedStudent) {
                     <div style="background:#FAF5FF; border:1px solid #E9D5FF; border-radius:12px; padding:20px; margin-top:16px">
                       <div style="font-size:11px; font-weight:800; color:#6B21A8; text-transform:uppercase; letter-spacing:0.5px; display:flex; align-items:center; justify-content:center; gap:4px">
                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                        Élève Désigné
+                        {{ t('Élève Désigné', 'Selected Student') }}
                       </div>
                       <div style="font-size:22px; font-weight:900; color:#A855F7; margin:6px 0 12px 0">{{ game.wheelState?.selectedStudent }}</div>
                       
@@ -70,7 +70,7 @@ import { DatabaseService, LiveIceBreaker, UserProfile } from '../../services/dat
                         <div style="border-top:1px dashed #D8B4FE; padding-top:12px">
                           <div style="font-size:11px; font-weight:800; color:#B45309; text-transform:uppercase; display:flex; align-items:center; justify-content:center; gap:4px">
                             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-                            Défi Speaking
+                            {{ t('Défi Speaking', 'Speaking Challenge') }}
                           </div>
                           <div style="font-size:15px; font-weight:700; color:#D97706; margin-top:4px">" {{ game.wheelState?.challenge }} "</div>
                         </div>
@@ -78,7 +78,7 @@ import { DatabaseService, LiveIceBreaker, UserProfile } from '../../services/dat
                     </div>
                   } @else {
                     <div style="background:var(--surface-2); border-radius:12px; padding:24px; color:var(--text-muted); font-style:italic; font-size:13px">
-                      Attente du tirage par le professeur...
+                      {{ t('Attente du tirage par le professeur...', 'Waiting for the teacher to spin...') }}
                     </div>
                   }
                 </div>
@@ -92,11 +92,11 @@ import { DatabaseService, LiveIceBreaker, UserProfile } from '../../services/dat
                       <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
                       Live Quiz / Buzz
                     </span>
-                    <span style="font-size:11px; color:var(--text-secondary)">Lancé il y a quelques instants</span>
+                    <span style="font-size:11px; color:var(--text-secondary)">{{ t('Lancé il y a quelques instants', 'Launched moments ago') }}</span>
                   </div>
                   
                   <div style="background:var(--surface-1); border:1px solid var(--border-weak); border-radius:12px; padding:20px; margin-bottom:24px">
-                    <div style="font-size:11px; font-weight:800; color:var(--text-secondary); text-transform:uppercase">Question du Professeur</div>
+                    <div style="font-size:11px; font-weight:800; color:var(--text-secondary); text-transform:uppercase">{{ t('Question du Professeur', 'Teacher Question') }}</div>
                     <div style="font-size:18px; font-weight:900; color:var(--text-primary); margin-top:6px; line-height:1.4">
                       {{ game.buzzState?.question }}
                     </div>
@@ -109,27 +109,27 @@ import { DatabaseService, LiveIceBreaker, UserProfile } from '../../services/dat
                          [style.borderColor]="myBuzz.correct === true ? '#A7F3D0' : myBuzz.correct === false ? '#FCA5A5' : 'var(--border)'">
                       <div style="font-size:11px; font-weight:800; text-transform:uppercase"
                            [style.color]="myBuzz.correct === true ? '#065F46' : myBuzz.correct === false ? '#991B1B' : 'var(--text-secondary)'">
-                        {{ myBuzz.correct === true ? '✅ Validé (Correct !)' : myBuzz.correct === false ? '❌ Refusé (Incorrect)' : '⏳ Réponse Envoyée' }}
+                        {{ myBuzz.correct === true ? t('✅ Validé (Correct !)', '✅ Approved (Correct!)') : myBuzz.correct === false ? t('❌ Refusé (Incorrect)', '❌ Rejected (Incorrect)') : t('⏳ Réponse Envoyée', '⏳ Answer Submitted') }}
                       </div>
                       
                       <div style="font-size:15px; font-weight:700; margin-top:6px; color:var(--text-primary)">
-                        Votre réponse : "{{ myBuzz.answer }}"
+                        {{ t('Votre réponse :', 'Your answer:') }} "{{ myBuzz.answer }}"
                       </div>
                       
                       @if (myBuzz.correct === true) {
-                        <div style="font-size:12px; font-weight:800; color:#10B981; margin-top:8px">🏆 Félicitations ! +10 XP crédités !</div>
+                        <div style="font-size:12px; font-weight:800; color:#10B981; margin-top:8px">🏆 {{ t('Félicitations ! +10 XP crédités !', 'Congratulations! +10 XP earned!') }}</div>
                       } @else if (myBuzz.correct === false) {
-                        <div style="font-size:11px; color:#EF4444; margin-top:4px">Réessayez ou écoutez la correction du professeur !</div>
+                        <div style="font-size:11px; color:#EF4444; margin-top:4px">{{ t('Réessayez ou écoutez la correction du professeur !', 'Try again or listen to the teacher explanation!') }}</div>
                       } @else {
-                        <div style="font-size:11px; color:var(--text-muted); margin-top:4px">En attente de validation par le professeur en direct...</div>
+                        <div style="font-size:11px; color:var(--text-muted); margin-top:4px">{{ t('En attente de validation par le professeur en direct...', 'Waiting for live teacher approval...') }}</div>
                       }
                     </div>
                   } @else {
                     <div>
-                      <label style="font-size:12px; font-weight:700; color:var(--text-secondary); display:block; margin-bottom:6px">Votre Réponse :</label>
-                      <input type="text" [(ngModel)]="myAnswer" placeholder="Écrivez votre réponse ici..." style="width:100%; padding:10px 14px; border:1.5px solid var(--border); border-radius:8px; font-size:14px; background:var(--surface-1); color:var(--text-primary); margin-bottom:16px" (keyup.enter)="submitBuzz()"/>
+                      <label style="font-size:12px; font-weight:700; color:var(--text-secondary); display:block; margin-bottom:6px">{{ t('Votre Réponse :', 'Your Answer:') }}</label>
+                      <input type="text" [(ngModel)]="myAnswer" [placeholder]="t('Écrivez votre réponse ici...', 'Write your answer here...')" style="width:100%; padding:10px 14px; border:1.5px solid var(--border); border-radius:8px; font-size:14px; background:var(--surface-1); color:var(--text-primary); margin-bottom:16px" (keyup.enter)="submitBuzz()"/>
                       <button (click)="submitBuzz()" class="btn-p" style="background:#F59E0B; border-color:#F59E0B; width:100%; height:40px; font-weight:800; display:flex; align-items:center; justify-content:center; gap:6px">
-                        ➔ Envoyer ma Réponse
+                        ➔ {{ t('Envoyer ma Réponse', 'Submit my Answer') }}
                       </button>
                     </div>
                   }
@@ -142,9 +142,9 @@ import { DatabaseService, LiveIceBreaker, UserProfile } from '../../services/dat
                   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px">
                     <span style="font-size:12px; font-weight:800; background:#D1FAE5; color:#065F46; padding:4px 10px; border-radius:20px; display:inline-flex; align-items:center; gap:4px">
                       <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
-                      Mission Spoken / Vocal
+                      {{ t('Mission Spoken / Vocal', 'Speaking Mission / Voice') }}
                     </span>
-                    <span style="font-size:11px; color:var(--text-secondary)">Activité Oral en Direct</span>
+                    <span style="font-size:11px; color:var(--text-secondary)">{{ t('Activité Oral en Direct', 'Live Speaking Activity') }}</span>
                   </div>
 
                   <div style="background:var(--surface-1); border:1px solid var(--border-weak); border-radius:12px; padding:20px; margin-bottom:24px">
@@ -165,7 +165,7 @@ import { DatabaseService, LiveIceBreaker, UserProfile } from '../../services/dat
                       
                       <div style="font-size:11px; font-weight:800; text-transform:uppercase"
                            [style.color]="mySub.correct === true ? '#065F46' : mySub.correct === false ? '#991B1B' : 'var(--text-secondary)'">
-                        {{ mySub.correct === true ? '✅ Mission validée !' : mySub.correct === false ? '❌ Refusée' : '⏳ Mission Envoyée' }}
+                        {{ mySub.correct === true ? t('✅ Mission validée !', '✅ Mission approved!') : mySub.correct === false ? t('❌ Refusée', '❌ Rejected') : t('⏳ Mission Envoyée', '⏳ Mission Submitted') }}
                       </div>
 
                       <div style="margin-top:12px">
@@ -173,37 +173,37 @@ import { DatabaseService, LiveIceBreaker, UserProfile } from '../../services/dat
                       </div>
 
                       @if (mySub.correct === true) {
-                        <div style="font-size:12px; font-weight:800; color:#10B981; margin-top:8px">🏆 Superbe ! +15 XP crédités !</div>
+                        <div style="font-size:12px; font-weight:800; color:#10B981; margin-top:8px">🏆 {{ t('Superbe ! +15 XP crédités !', 'Awesome! +15 XP earned!') }}</div>
                       } @else if (mySub.correct === false) {
-                        <div style="font-size:11px; color:#EF4444; margin-top:4px">Veuillez réenregistrer et renvoyer la mission.</div>
+                        <div style="font-size:11px; color:#EF4444; margin-top:4px">{{ t('Veuillez réenregistrer et renvoyer la mission.', 'Please re-record and re-submit the mission.') }}</div>
                       } @else {
-                        <div style="font-size:11px; color:var(--text-muted); margin-top:4px">Le professeur écoute votre audio en direct...</div>
+                        <div style="font-size:11px; color:var(--text-muted); margin-top:4px">{{ t('Le professeur écoute votre audio en direct...', 'The teacher is listening to your audio live...') }}</div>
                       }
                     </div>
                   } @else {
                     <div style="display:flex; flex-direction:column; align-items:center; gap:16px">
-                      <div style="font-size:13px; font-weight:700; color:var(--text-secondary)">Enregistrez votre réponse orale :</div>
+                      <div style="font-size:13px; font-weight:700; color:var(--text-secondary)">{{ t('Enregistrez votre réponse orale :', 'Record your oral answer:') }}</div>
                       
                       @if (!isRecording && !recordedAudioUrl) {
                         <button (click)="startRecording()" class="btn-p" style="width:64px; height:64px; border-radius:50%; background:#EF4444; border:none; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 20px rgba(239,68,68,0.3); cursor:pointer">
                           <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
                         </button>
-                        <span style="font-size:11px; color:var(--text-muted)">Cliquez pour démarrer l'enregistrement</span>
+                        <span style="font-size:11px; color:var(--text-muted)">{{ t("Cliquez pour démarrer l'enregistrement", 'Click to start recording') }}</span>
                       } @else if (isRecording) {
                         <button (click)="stopRecording()" class="btn-p animate-pulse" style="width:64px; height:64px; border-radius:50%; background:#10B981; border:none; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 20px rgba(16,185,129,0.3); cursor:pointer">
                           <span style="width:18px; height:18px; background:white; border-radius:4px"></span>
                         </button>
-                        <span style="font-size:11px; color:#EF4444; font-weight:700">🔴 Enregistrement en cours...</span>
+                        <span style="font-size:11px; color:#EF4444; font-weight:700">🔴 {{ t('Enregistrement en cours...', 'Recording in progress...') }}</span>
                       } @else if (recordedAudioUrl) {
                         <audio [src]="recordedAudioUrl" controls style="width:100%; max-width:320px"></audio>
                         <div style="display:flex; gap:12px; width:100%; max-width:320px; margin-top:8px">
                           <button (click)="resetRecording()" class="btn-s" style="flex:1; height:36px; font-weight:700; display:flex; align-items:center; justify-content:center; gap:4px">
                             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                            Recommencer
+                            {{ t('Recommencer', 'Start Over') }}
                           </button>
                           <button (click)="submitMission()" class="btn-p" style="flex:1.5; height:36px; font-weight:700; background:#10B981; border-color:#10B981; display:flex; align-items:center; justify-content:center; gap:4px">
                             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                            Soumettre la Mission
+                            {{ t('Soumettre la Mission', 'Submit Mission') }}
                           </button>
                         </div>
                       }
@@ -226,9 +226,9 @@ import { DatabaseService, LiveIceBreaker, UserProfile } from '../../services/dat
                 <div [style.background]="isRose() ? '#FFF0F3' : 'var(--surface-1)'" style="border:2px solid #000; border-radius:50%; width:64px; height:64px; display:flex; align-items:center; justify-content:center; margin-bottom:20px; box-shadow:4px 4px 0 black">
                   <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" [attr.stroke]="isRose() ? '#DB2777' : '#E11D48'" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                 </div>
-                <h3 style="font-size:18px; font-weight:900; color:black; margin:0 0 10px 0; text-transform:uppercase; letter-spacing:0.5px">Aucun défi ou jeu actif</h3>
+                <h3 style="font-size:18px; font-weight:900; color:black; margin:0 0 10px 0; text-transform:uppercase; letter-spacing:0.5px">{{ t('Aucun défi ou jeu actif', 'No active challenge or game') }}</h3>
                 <p style="font-size:12.5px; color:#3F3F46; margin:0; line-height:1.6; font-weight:700">
-                  Le professeur n'a pas encore lancé d'activité en direct pour cette session. Attendez son signal ou le lien du cours pour vous connecter !
+                  {{ t("Le professeur n'a pas encore lancé d'activité en direct pour cette session. Attendez son signal ou le lien du cours pour vous connecter !", "The teacher hasn't started a live activity yet for this session. Wait for their signal or join the class link!") }}
                 </p>
               </div>
 
@@ -317,10 +317,10 @@ import { DatabaseService, LiveIceBreaker, UserProfile } from '../../services/dat
           <div class="card" [style.border]="(isManga() || isRose()) ? '2px solid #000' : '0.5px solid var(--border)'">
             <h4 style="font-size:13px; font-weight:900; color:var(--text-primary); margin:0 0 8px 0; display:flex; align-items:center; gap:6px">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-              Ice Breaker, c'est quoi ?
+              {{ t("Ice Breaker, c'est quoi ?", "What is Ice Breaker?") }}
             </h4>
             <p style="font-size:12px; color:var(--text-secondary); margin:0; line-height:1.5">
-              Des jeux fun, des quiz en direct et des défis oraux pour briser la glace et apprendre l'anglais en s'amusant !
+              {{ t("Des jeux fun, des quiz en direct et des défis oraux pour briser la glace et apprendre l'anglais en s'amusant !", "Fun games, live quizzes, and speaking challenges to break the ice and learn English while having fun!") }}
             </p>
           </div>
 
@@ -328,13 +328,13 @@ import { DatabaseService, LiveIceBreaker, UserProfile } from '../../services/dat
           <div class="card" [style.border]="(isManga() || isRose()) ? '2px solid #000' : '0.5px solid var(--border)'">
             <h4 style="font-size:13px; font-weight:900; color:var(--text-primary); margin:0 0 12px 0; display:flex; align-items:center; gap:6px">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.886H3.885l5.028 3.653L7.001 18.42 12 14.77l4.999 3.653-1.912-5.881 5.028-3.653h-6.203L12 3Z"/></svg>
-              Comment ça marche ?
+              {{ t("Comment ça marche ?", "How does it work?") }}
             </h4>
             <ol style="font-size:11.5px; color:var(--text-secondary); margin:0; padding-left:16px; display:flex; flex-direction:column; gap:8px">
-              <li>Le professeur lance un jeu ou un défi</li>
-              <li>Vous recevez le lien ou le code</li>
-              <li>Rejoignez, participez et gagnez</li>
-              <li>Amusez-vous et progressez !</li>
+              <li>{{ t("Le professeur lance un jeu ou un défi", "The teacher launches a game or challenge") }}</li>
+              <li>{{ t("Vous recevez le lien ou le code", "You receive the link or code") }}</li>
+              <li>{{ t("Rejoignez, participez et gagnez", "Join, participate, and win") }}</li>
+              <li>{{ t("Amusez-vous et progressez !", "Have fun and make progress!") }}</li>
             </ol>
           </div>
 

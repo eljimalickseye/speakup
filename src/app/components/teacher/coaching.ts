@@ -412,6 +412,10 @@ export class TeacherCoachingComponent implements AfterViewChecked {
     return this.allUsers().filter(u => u.role === 'student' && u.isPrivateCoaching === true);
   });
 
+  t(fr: string, en: string): string {
+    return this.db.activeLang() === 'en' ? en : fr;
+  }
+
   pendingRequests = computed(() => {
     return this.allUsers().filter(u => u.role === 'student' && u.privateCoachingRequested === true && u.isPrivateCoaching !== true);
   });
