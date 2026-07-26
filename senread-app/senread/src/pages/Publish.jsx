@@ -121,17 +121,31 @@ export default function Publish() {
     reader.readAsDataURL(file);
   };
 
-  // Persistent Base64 Custom Cover Image Upload Handler
+  // Persistent Base64 Custom Cover Image Upload Handler (resizes to max 800px to stay within localStorage limits)
   const handleCoverFileUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = (event) => {
-      const dataUrl = event.target.result;
-      setCustomCoverUrl(dataUrl);
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 800;
+        const canvas = document.createElement('canvas');
+        const ratio = Math.min(MAX / img.width, MAX / img.height, 1);
+        canvas.width = Math.round(img.width * ratio);
+        canvas.height = Math.round(img.height * ratio);
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const compressed = canvas.toDataURL('image/jpeg', 0.82);
+        setCustomCoverUrl(compressed);
+        setSelectedCover(''); // switch to custom cover mode
+      };
+      img.src = event.target.result;
     };
     reader.readAsDataURL(file);
+    // Reset input so same file can be re-selected
+    e.target.value = '';
   };
 
   // Process Pasted Text

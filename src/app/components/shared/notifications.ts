@@ -115,7 +115,7 @@ import { DatabaseService, AppNotification, UserProfile } from '../../services/da
           <div class="notif-modal-actions">
             <button class="notif-btn-secondary" (click)="closeModalNotif()">{{ t("Fermer", "Close") }}</button>
             @if (hasRedirectLink(modalNotif)) {
-              <button class="notif-btn-primary" (click)="navigateToNotification(modalNotif)">{{ t("Accéder à l'Aventure ✈️", "Go to Mission ✈️") }}</button>
+              <button class="notif-btn-primary" (click)="navigateToNotification(modalNotif)">{{ t("Accéder à la Mission ✈️", "Go to Mission ✈️") }}</button>
             }
           </div>
         </div>
@@ -336,7 +336,6 @@ import { DatabaseService, AppNotification, UserProfile } from '../../services/da
       color: #EF4444;
     }
 
-    /* Toast container */
     .toast-container {
       position: fixed;
       bottom: 24px;
@@ -401,7 +400,6 @@ import { DatabaseService, AppNotification, UserProfile } from '../../services/da
     }
     .toast-close:hover { opacity: 1; }
 
-    /* Modal Overlay */
     .notif-modal-overlay {
       position: fixed;
       inset: 0;
@@ -576,7 +574,7 @@ export class NotificationsComponent {
   }
 
   hasRedirectLink(n: AppNotification): boolean {
-    return !!(n.link || this.getTargetTab(n.type, n));
+    return true;
   }
 
   getTargetTab(type: AppNotification['type'], n?: AppNotification): string | null {
@@ -598,37 +596,45 @@ export class NotificationsComponent {
       if (type === 'homework_submitted') return 'grade-homework';
       if (type === 'exam_completed') return 'results';
     }
-    return null;
+    return 'journey';
   }
 
   navigateToNotification(n: AppNotification) {
     this.markRead(n);
     this.activeModalNotif.set(null);
-    const link = n.link || this.getTargetTab(n.type, n);
-    if (link) {
-      if (link.includes(':')) {
-        const parts = link.split(':');
-        const tab = parts[0];
-        const targetId = parts[1];
-        
-        if (tab === 'journey') {
-          this.db.requestedTabRedirect.set('journey');
-        } else if (tab === 'exercises') {
-          if (targetId.startsWith('quiz-') || targetId.startsWith('placement-test')) {
-            this.db.requestedQuizIdRedirect.set(targetId);
-          } else {
-            this.db.requestedExerciseIdRedirect.set(targetId);
-          }
-          this.db.requestedTabRedirect.set('exercises');
-        } else if (tab === 'exam') {
-          this.db.requestedExamIdRedirect.set(targetId);
-          this.db.requestedTabRedirect.set('exam');
+    this.closePanel();
+    
+    let link = n.link || this.getTargetTab(n.type, n);
+    if (!link) {
+      if (n.type === 'journey_unlocked' || n.type === 'journey_mission') link = 'journey';
+      else if (n.type === 'live_started') link = 'live-classes';
+      else if (n.type === 'exercise_assigned' || n.type === 'quiz_available') link = 'exercises';
+      else if (n.type === 'homework_graded') link = 'lessons';
+      else link = 'journey';
+    }
+
+    if (link.includes(':')) {
+      const parts = link.split(':');
+      const tab = parts[0];
+      const targetId = parts[1];
+      
+      if (tab === 'journey') {
+        this.db.requestedTabRedirect.set('journey');
+      } else if (tab === 'exercises') {
+        if (targetId.startsWith('quiz-') || targetId.startsWith('placement-test')) {
+          this.db.requestedQuizIdRedirect.set(targetId);
         } else {
-          this.db.requestedTabRedirect.set(tab);
+          this.db.requestedExerciseIdRedirect.set(targetId);
         }
+        this.db.requestedTabRedirect.set('exercises');
+      } else if (tab === 'exam') {
+        this.db.requestedExamIdRedirect.set(targetId);
+        this.db.requestedTabRedirect.set('exam');
       } else {
-        this.db.requestedTabRedirect.set(link);
+        this.db.requestedTabRedirect.set(tab);
       }
+    } else {
+      this.db.requestedTabRedirect.set(link);
     }
   }
 
@@ -660,33 +666,73 @@ export class NotificationsComponent {
   }
 
   getNotifTitle(n: AppNotification): string {
-    const isFr = this.activeLang() === 'fr';
+    const isEn = this.activeLang() === 'en';
     if (n.type === 'journey_unlocked' || n.type === 'journey_mission' || n.link?.includes('journey')) {
-      return isFr ? "Nouvelle Aventure de Voyage !" : "New Travel Adventure!";
+      return isEn ? "New Travel Adventure!" : "Nouvelle Aventure de Voyage !";
     }
-    if (n.type === 'live_started') {
-      return isFr ? "Cours en Direct Démarré !" : "Live Class Started!";
+    if (n.type === 'live_started' || n.link?.includes('live')) {
+      return isEn ? "Live Class Started!" : "Cours en Direct Démarré !";
     }
     if (n.type === 'homework_graded') {
-      return isFr ? "Devoir Corrigé" : "Assignment Graded";
+      return isEn ? "Assignment Graded" : "Devoir Corrigé";
     }
     if (n.type === 'exercise_assigned') {
-      return isFr ? "Nouvel Exercice Assigné" : "New Exercise Assigned";
+      return isEn ? "New Exercise Assigned" : "Nouvel Exercice Assigné";
     }
     if (n.type === 'quiz_available') {
-      return isFr ? "Nouveau Quiz Disponible" : "New Quiz Available";
+      return isEn ? "New Quiz Available" : "Nouveau Quiz Disponible";
     }
+    if (n.type === 'announcement') {
+      return isEn ? "Announcement" : "Annonce";
+    }
+    if (n.type === 'reminder') {
+      return isEn ? "Reminder" : "Rappel";
+    }
+
+    const titleMap: Record<string, { fr: string, en: string }> = {
+      'Nouvel exercice': { fr: 'Nouvel exercice disponible', en: 'New exercise available' },
+      'Cours en direct': { fr: 'Nouveau cours en direct', en: 'New live class scheduled' },
+      'Aventure': { fr: 'Aventure de voyage disponible', en: 'Travel adventure available' },
+      'Quiz': { fr: 'Quiz disponible', en: 'Quiz available' },
+      'Devoir': { fr: 'Devoir corrigé', en: 'Homework graded' },
+      'Bienvenue': { fr: 'Bienvenue sur SpeakUp !', en: 'Welcome to SpeakUp!' }
+    };
+
+    if (isEn) {
+      for (const k in titleMap) {
+        if (n.title.toLowerCase().includes(k.toLowerCase())) {
+          return titleMap[k].en;
+        }
+      }
+    }
+
     return n.title;
   }
 
   getNotifMessage(n: AppNotification): string {
-    const isFr = this.activeLang() === 'fr';
+    const isEn = this.activeLang() === 'en';
     if (n.type === 'journey_unlocked' || n.type === 'journey_mission' || n.link?.includes('journey')) {
-      return isFr ? "Un nouveau chapitre de voyage est disponible ! Cliquez pour commencer l'aventure." : "A new travel chapter is unlocked! Click to start the adventure.";
+      return isEn 
+        ? "A new travel chapter is unlocked! Click to start the adventure."
+        : "Un nouveau chapitre de voyage est disponible ! Cliquez pour commencer l'aventure.";
     }
-    if (n.type === 'live_started') {
-      return isFr ? "La session vidéo en direct a commencé. Rejoignez votre professeur !" : "The live video session has started. Join your teacher!";
+    if (n.type === 'live_started' || n.link?.includes('live')) {
+      return isEn
+        ? "The live video session has started. Join your teacher!"
+        : "La session vidéo en direct a commencé. Rejoignez votre professeur !";
     }
+
+    if (isEn) {
+      if (n.message.includes('Nouveau devoir assigné')) return 'New homework assigned by teacher.';
+      if (n.message.includes('Votre devoir a été corrigé')) return 'Your assignment has been graded.';
+      if (n.message.includes('Le cours aura lieu')) return 'Live class will start soon.';
+      if (n.message.includes('Nouveau quiz')) return 'A new quiz has been published.';
+    } else {
+      if (n.message.includes('New homework assigned')) return 'Nouveau devoir assigné par votre professeur.';
+      if (n.message.includes('Your assignment has been graded')) return 'Votre devoir a été corrigé.';
+      if (n.message.includes('Live class will start soon')) return 'Le cours en direct commencera bientôt.';
+    }
+
     return n.message;
   }
 

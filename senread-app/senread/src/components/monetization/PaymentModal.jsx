@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   initiateIntechPayment,
   validatePhone,
@@ -11,6 +11,14 @@ import { CheckIcon, SparklesIcon, CoinIcon, CrownIcon } from '../ui/Icons.jsx';
 export default function PaymentModal({ isOpen, onClose, onPaymentSuccess }) {
   // Coin & Subscription Pack Options
   const packs = [
+    {
+      id: 'pack-1',
+      title: 'Micro-Pack (1 Coin)',
+      coins: 1,
+      amount: 5,
+      badge: null,
+      desc: 'Débloque 1 action payante — idéal pour tester',
+    },
     {
       id: 'pack-20',
       title: 'Pack Découverte (20 Coins)',
@@ -71,6 +79,76 @@ export default function PaymentModal({ isOpen, onClose, onPaymentSuccess }) {
   const MERCHANT_NUMBER = '782569797';
   const MERCHANT_FORMATTED = '78 256 97 97';
 
+  // Refs for auto-verification
+  const autoVerifyIntervalRef = useRef(null);
+  const autoVerifyAttemptsRef = useRef(0);
+  const MAX_AUTO_ATTEMPTS = 12; // Try every 5s for 60s
+
+  const triggerSuccess = (coins, isSub) => {
+    if (autoVerifyIntervalRef.current) {
+      clearInterval(autoVerifyIntervalRef.current);
+      autoVerifyIntervalRef.current = null;
+    }
+    forwardPaymentToOwner({ amount: selectedPack.amount, method, externalTransactionId: txId });
+    setStep('success');
+    if (onPaymentSuccess) onPaymentSuccess(coins, isSub);
+  };
+
+  const doVerify = async (packRef, txIdRef) => {
+    try {
+      const statusRes = await checkIntechTransactionStatus(txIdRef);
+      if (statusRes && statusRes.data) {
+        const s = statusRes.data.status;
+        if (s === 'SUCCESS') {
+          triggerSuccess(packRef.coins, packRef.isSubscription);
+          return true;
+        } else if (s === 'FAILED' || s === 'CANCELED') {
+          if (autoVerifyIntervalRef.current) clearInterval(autoVerifyIntervalRef.current);
+          setStep('failed');
+          setErrorMsg('La transaction a été annulée ou a échoué.');
+          return true;
+        }
+      }
+    } catch (_) {
+      // silent — keep polling
+    }
+    return false;
+  };
+
+  // Auto-verify when user returns from Wave (tab becomes visible again)
+  useEffect(() => {
+    if (step !== 'pending_validation' || !txId) return;
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        doVerify(selectedPack, txId);
+      }
+    };
+    const handleFocus = () => doVerify(selectedPack, txId);
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('focus', handleFocus);
+
+    // Also poll every 5s up to 60s
+    autoVerifyAttemptsRef.current = 0;
+    autoVerifyIntervalRef.current = setInterval(async () => {
+      autoVerifyAttemptsRef.current += 1;
+      if (autoVerifyAttemptsRef.current >= MAX_AUTO_ATTEMPTS) {
+        clearInterval(autoVerifyIntervalRef.current);
+        autoVerifyIntervalRef.current = null;
+        return;
+      }
+      await doVerify(selectedPack, txId);
+    }, 5000);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('focus', handleFocus);
+      if (autoVerifyIntervalRef.current) clearInterval(autoVerifyIntervalRef.current);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, txId]);
+
   if (!isOpen) return null;
 
   const handleStartPayment = async (e) => {
@@ -115,33 +193,16 @@ export default function PaymentModal({ isOpen, onClose, onPaymentSuccess }) {
     if (!txId) return;
     setCheckingStatus(true);
     setErrorMsg('');
-
     try {
-      const statusRes = await checkIntechTransactionStatus(txId);
+      const done = await doVerify(selectedPack, txId);
       setCheckingStatus(false);
-
-      if (statusRes && statusRes.data) {
-        const currentStatus = statusRes.data.status;
-        if (currentStatus === 'SUCCESS') {
-          forwardPaymentToOwner({ amount: selectedPack.amount, method, externalTransactionId: txId });
-          setStep('success');
-          if (onPaymentSuccess) onPaymentSuccess(selectedPack.coins, selectedPack.isSubscription);
-        } else if (currentStatus === 'FAILED' || currentStatus === 'CANCELED') {
-          setStep('failed');
-          setErrorMsg('La transaction a été annulée ou a échoué.');
-        } else {
-          setStatusMessage('Paiement toujours en attente. Assurez-vous d’avoir validé la notification Wave/OM.');
-        }
-      } else {
-        forwardPaymentToOwner({ amount: selectedPack.amount, method, externalTransactionId: txId });
-        setStep('success');
-        if (onPaymentSuccess) onPaymentSuccess(selectedPack.coins, selectedPack.isSubscription);
+      if (!done) {
+        setStatusMessage('Paiement toujours en attente. Assurez-vous d\'avoir validé la notification Wave/OM.');
       }
-    } catch (err) {
+    } catch (_) {
       setCheckingStatus(false);
-      forwardPaymentToOwner({ amount: selectedPack.amount, method, externalTransactionId: txId });
-      setStep('success');
-      if (onPaymentSuccess) onPaymentSuccess(selectedPack.coins, selectedPack.isSubscription);
+      // Fallback: credit coins anyway if verification API is down
+      triggerSuccess(selectedPack.coins, selectedPack.isSubscription);
     }
   };
 
