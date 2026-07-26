@@ -38,10 +38,10 @@ export interface TravelStage {
           </span>
           <h2 style="font-size:22px; font-weight:900; margin:10px 0 4px 0; color:#FFF; display:flex; align-items:center; gap:8px">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#A5B4FC" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.2c.3.4.8.5 1.3.3l.5-.3c.4-.2.6-.6.5-1.1z"/></svg>
-            {{ t('Missions & Aventures de Voyage', 'Travel Missions & Adventures') }}
+            {{ t("Missions & Aventures de Voyage", "Travel Missions & Adventures") }}
           </h2>
           <p style="font-size:13px; color:#E0E7FF; margin:0; max-width:620px; line-height:1.5">
-            {{ t('Sélectionnez un chapitre ci-dessous pour ouvrir la carte interactive, voyager à travers la ville et réaliser vos missions en situation réelle !', 'Select a chapter below to launch the interactive map, travel through the city and perform real-life missions!') }}
+            {{ t("Sélectionnez un chapitre ci-dessous pour ouvrir la carte interactive, voyager à travers la ville et réaliser vos missions en situation réelle !", "Select a chapter below to launch the interactive map, travel through the city and perform real-life missions!") }}
           </p>
         </div>
       </div>
@@ -54,7 +54,7 @@ export interface TravelStage {
             <div>
               <span class="badge" style="background:#6366F1; color:white; font-size:10px; font-weight:800; border-radius:6px; padding:4px 10px; text-transform:uppercase; letter-spacing:0.5px; display:inline-flex; align-items:center; gap:4px">
                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
-                {{ t('OBJECTIF DU CHAPITRE ACTIF', 'ACTIVE CHAPTER OBJECTIVE') }}
+                {{ t("OBJECTIF DU CHAPITRE ACTIF", "ACTIVE CHAPTER OBJECTIVE") }}
               </span>
               <h3 style="font-size:18px; font-weight:900; color:var(--text-primary); margin:8px 0 4px 0">{{ getMissionTitle(mission) }}</h3>
               <p style="font-size:13px; color:var(--text-secondary); line-height:1.5; margin:0">{{ getMissionDescription(mission) }}</p>
@@ -63,14 +63,14 @@ export interface TravelStage {
             <!-- Global Mission Progress Bar -->
             <div style="background:var(--surface-2); border:1px solid var(--border-weak); padding:12px 20px; border-radius:12px; text-align:center">
               <div style="font-size:24px; font-weight:900; color:#6366F1">{{ getMissionProgress(mission) }}%</div>
-              <div style="font-size:10.5px; color:var(--text-muted); font-weight:700; text-transform:uppercase">{{ t('Progression', 'Progress') }}</div>
+              <div style="font-size:10.5px; color:var(--text-muted); font-weight:700; text-transform:uppercase">{{ t("Progression", "Progress") }}</div>
             </div>
           </div>
 
           <!-- Required Tasks Checklist -->
           <div style="display:flex; flex-direction:column; gap:12px; border-top:1px solid var(--border-weak); padding-top:20px">
             <h4 style="font-size:12px; font-weight:900; text-transform:uppercase; color:var(--text-muted); letter-spacing:0.5px; margin:0 0 4px 0">
-              {{ t('Checklist des Compétences à Valider', 'Skills Validation Checklist') }}
+              {{ t("Checklist des Compétences à Valider", "Skills Validation Checklist") }}
             </h4>
 
             @for (task of mission.requiredTasks; track task.title) {
@@ -91,7 +91,7 @@ export interface TravelStage {
                   <div>
                     <div style="font-size:13px; font-weight:800; color:var(--text-primary)">{{ getTaskTitle(task) }}</div>
                     <div style="font-size:11px; color:var(--text-muted); margin-top:2px">
-                      {{ t('Type :', 'Type:') }} <span style="font-weight:800; color:#6B7280">{{ task.type | uppercase }}</span>
+                      {{ t("Type :", "Type:") }} <span style="font-weight:800; color:#6B7280">{{ task.type | uppercase }}</span>
                     </div>
                   </div>
                 </div>
@@ -105,7 +105,7 @@ export interface TravelStage {
                     <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px">
                       <button class="btn-p" style="font-size:11px; padding:6px 14px; height:auto; background:#6366F1; border-color:#6366F1; color:white; font-weight:800; border-radius:8px; display:flex; align-items:center; gap:4px; cursor:pointer" (click)="startActivity(task.type)">
                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                        {{ t('Pratiquer', 'Practice') }}
+                        {{ t("Pratiquer", "Practice") }}
                       </button>
                     </div>
                   }
@@ -123,14 +123,14 @@ export interface TravelStage {
                   <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
                 </div>
                 <div>
-                  <strong style="color:#1E40AF; font-size:14px; font-weight:900">{{ t('Félicitations ! Mission Terminée', 'Congratulations! Mission Completed') }}</strong>
+                  <strong style="color:#1E40AF; font-size:14px; font-weight:900">{{ t("Félicitations ! Mission Terminée", "Congratulations! Mission Completed") }}</strong>
                   <p style="font-size:12px; color:#1E3A8A; margin:2px 0 0 0">
-                    {{ t('Récompense bonus : +100 XP et +200 Pièces 🪙 !', 'Bonus reward: +100 XP and +200 Coins 🪙!') }}
+                    {{ t("Récompense bonus : +100 XP et +200 Pièces !", "Bonus reward: +100 XP and +200 Coins!") }}
                   </p>
                 </div>
               </div>
               <button class="btn-p" style="background:#10B981; border-color:#10B981; font-weight:900; padding:10px 20px; cursor:pointer" (click)="claimMissionRewards(mission.id)">
-                {{ t('Réclamer les Récompenses', 'Claim Rewards') }}
+                {{ t("Réclamer les Récompenses", "Claim Rewards") }}
               </button>
             </div>
           }
@@ -167,18 +167,20 @@ export interface TravelStage {
                       style="font-size:10.5px; font-weight:900; border-radius:8px; padding:4px 10px; display:inline-flex; align-items:center; gap:5px">
                   @if (mission.completed) {
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-                    {{ t('COMPLÉTÉ 🎓', 'COMPLETED 🎓') }}
+                    {{ t("COMPLÉTÉ", "COMPLETED") }}
                   } @else if (mission.unlocked) {
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                    {{ t('JOUER L\'AVENTURE ✈️', 'PLAY ADVENTURE ✈️') }}
+                    {{ t("JOUER L'AVENTURE", "PLAY ADVENTURE") }}
                   } @else {
                     <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                    {{ t('VERROUILLÉ', 'LOCKED') }}
+                    {{ t("VERROUILLÉ", "LOCKED") }}
                   }
                 </span>
 
-                <span style="font-size:18px">
-                  {{ mission.id === 'mission-london' ? '🇬🇧' : '🇺🇸' }}
+                <!-- SVG FLAG BADGES -->
+                <span style="font-size:11px; font-weight:900; background:var(--surface-2); padding:2px 8px; border-radius:6px; color:var(--text-secondary); display:flex; align-items:center; gap:4px">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+                  {{ mission.id === 'mission-london' ? 'UK 🇬🇧' : 'USA 🇺🇸' }}
                 </span>
               </div>
 
@@ -190,7 +192,7 @@ export interface TravelStage {
               <!-- Card Action CTA -->
               <div style="background:var(--surface-2); border-radius:10px; padding:10px 14px; display:flex; align-items:center; justify-content:space-between">
                 <span style="font-size:11px; font-weight:800; color:#6366F1; text-transform:uppercase; letter-spacing:0.5px">
-                  {{ t('Carte & Déplacements', 'Interactive Map & Stages') }}
+                  {{ t("Carte & Déplacements", "Interactive Map & Stages") }}
                 </span>
                 <div style="width:28px; height:28px; background:#6366F1; color:white; border-radius:50%; display:flex; align-items:center; justify-content:center">
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 18 15 12 9 6"/></svg>
@@ -215,9 +217,8 @@ export interface TravelStage {
               </button>
 
               <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px">
-                <span style="font-size:22px">{{ activeM.id === 'mission-london' ? '🇬🇧' : '🇺🇸' }}</span>
                 <span style="font-size:11px; font-weight:900; background:#6366F1; color:white; padding:3px 12px; border-radius:20px; text-transform:uppercase; letter-spacing:0.5px">
-                  {{ activeM.id === 'mission-london' ? 'LONDRES, UK' : 'NEW YORK, USA' }}
+                  {{ activeM.id === 'mission-london' ? 'LONDRES, UK 🇬🇧' : 'NEW YORK, USA 🇺🇸' }}
                 </span>
               </div>
 
@@ -230,7 +231,7 @@ export interface TravelStage {
             <div style="background:#F1F5F9; border-bottom:1px solid #E2E8F0; padding:20px 24px; position:relative; flex-shrink:0">
               <div style="font-size:11px; font-weight:900; text-transform:uppercase; color:#64748B; letter-spacing:0.5px; margin-bottom:14px; display:flex; align-items:center; gap:6px">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2.5"><path d="M12 22s-8-4.5-8-11.8A8 8 0 0 1 12 2a8 8 0 0 1 8 8.2c0 7.3-8 11.8-8 11.8z"/><circle cx="12" cy="10" r="3"/></svg>
-                {{ t('Carte des Déplacements en Direct', 'Live Travel Progression Board') }}
+                {{ t("Carte des Déplacements en Direct", "Live Travel Progression Board") }}
               </div>
 
               <!-- Stepper Path Line -->
@@ -272,10 +273,10 @@ export interface TravelStage {
                 <div style="text-align:center; padding:40px 20px; animation:fadeIn 0.3s">
                   <div style="font-size:40px; margin-bottom:12px; animation:bounce 1s infinite">✈️</div>
                   <h3 style="font-size:18px; font-weight:900; color:#4338CA; margin:0 0 6px 0">
-                    {{ t('Déplacement en cours vers la prochaine destination...', 'Flying to your next London destination...') }}
+                    {{ t("Déplacement en cours vers la prochaine destination...", "Flying to your next London destination...") }}
                   </h3>
                   <p style="font-size:12.5px; color:var(--text-muted)">
-                    {{ t('Préparations pour le dialogue suivant...', 'Preparing next dialogue scene...') }}
+                    {{ t("Préparations pour le dialogue suivant...", "Preparing next dialogue scene...") }}
                   </p>
                 </div>
               } @else if (currentStage(); as st) {
@@ -292,7 +293,7 @@ export interface TravelStage {
 
                     <button (click)="speak(st.dialogueEn)" class="btn-s" style="background:#EEF2FF; color:#4F46E5; border:1.5px solid #C7D2FE; padding:6px 14px; font-size:11.5px; font-weight:800; border-radius:20px; cursor:pointer; display:flex; align-items:center; gap:6px">
                       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-                      {{ t('Écouter l\'Audio 🔊', 'Listen Audio 🔊') }}
+                      {{ t("Écouter l'Audio 🔊", "Listen Audio 🔊") }}
                     </button>
                   </div>
 
@@ -336,7 +337,7 @@ export interface TravelStage {
                 @if (answeredStageId() === st.id) {
                   <div style="background:#EFF6FF; border:1.5px solid #BFDBFE; padding:16px; border-radius:14px; animation:fadeIn 0.2s">
                     <div style="font-size:12.5px; font-weight:900; color:#1E40AF; margin-bottom:4px">
-                      💡 {{ t('Conseil du Guide de Voyage :', 'Travel Guide Tip:') }}
+                      💡 {{ t("Conseil du Guide de Voyage :", "Travel Guide Tip:") }}
                     </div>
                     <div style="font-size:12.5px; color:#1E3A8A; line-height:1.4">
                       {{ t(st.explanationFr, st.explanationEn) }}
@@ -514,8 +515,8 @@ export class StudentJourneyComponent {
   openMissionTravelModal(mission: JourneyMission) {
     if (!mission.unlocked && !mission.completed) {
       this.dialogService.alert(
-        this.t('Chapitre Verrouillé 🔒', 'Chapter Locked 🔒'),
-        this.t('Complétez la mission précédente pour débloquer cette destination !', 'Complete the previous mission to unlock this destination!'),
+        this.t("Chapitre Verrouillé 🔒", "Chapter Locked 🔒"),
+        this.t("Complétez la mission précédente pour débloquer cette destination !", "Complete the previous mission to unlock this destination!"),
         'info'
       );
       return;
@@ -654,8 +655,8 @@ export class StudentJourneyComponent {
         this.db.updateUserXP(user.id, 100, true).then(() => {
           this.db.addCoinsToUser(user.id, 200).then(() => {
             this.dialogService.alert(
-              this.t('Mission Réclamée ! 🏆', 'Mission Claimed! 🏆'),
-              this.t('Félicitations, vous avez débloqué 100 XP et 200 Coins !', 'Congratulations, you unlocked 100 XP and 200 Coins!'),
+              this.t("Mission Réclamée !", "Mission Claimed!"),
+              this.t("Félicitations, vous avez débloqué 100 XP et 200 Coins !", "Congratulations, you unlocked 100 XP and 200 Coins!"),
               'success'
             );
           });
@@ -684,7 +685,7 @@ export class StudentJourneyComponent {
     if (user) {
       this.db.updateJourneyTaskProgress(user.id, taskType, 1).then(() => {
         this.dialogService.alert(
-          this.t('Activité Validée ! 🚀', 'Activity Validated! 🚀'),
+          this.t("Activité Validée !", "Activity Validated!"),
           this.t(`Vous avez progressé de +1 dans votre tâche : ${taskType.toUpperCase()}`, `You progressed +1 in task: ${taskType.toUpperCase()}`),
           'success'
         );
