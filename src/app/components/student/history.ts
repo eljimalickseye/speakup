@@ -12,7 +12,6 @@ import { DatabaseService, Submission, UserProfile, Quiz, ActivityLog } from '../
 
       <!-- ===== PREMIUM HERO HEADER ===== -->
       <div class="hist-hero">
-        <!-- Background decorative blobs -->
         <div class="hist-hero-blob blob1"></div>
         <div class="hist-hero-blob blob2"></div>
         <div style="position:relative; z-index:1">
@@ -76,7 +75,7 @@ import { DatabaseService, Submission, UserProfile, Quiz, ActivityLog } from '../
         </div>
       </div>
 
-      <!-- ===== TAB BAR ===== -->
+      <!-- ===== TAB BAR & LAYOUT SWITCH ===== -->
       <div class="hist-tab-bar">
         <button class="hist-tab" [class.ht-active]="activeSubTab() === 'homework'" (click)="activeSubTab.set('homework')">
           <span class="ht-dot" [style.background]="activeSubTab() === 'homework' ? '#F59E0B' : 'var(--border)'"></span>
@@ -103,8 +102,28 @@ import { DatabaseService, Submission, UserProfile, Quiz, ActivityLog } from '../
           <span class="ht-count" [style.background]="activeSubTab() === 'exams' ? '#F5F3FF' : 'var(--surface-2)'" [style.color]="activeSubTab() === 'exams' ? '#6D28D9' : 'var(--text-muted)'">{{ examHistory().length }}</span>
         </button>
 
-        <!-- Sort dropdown -->
-        <div style="margin-left:auto; position:relative">
+        <div style="margin-left:auto; display:flex; align-items:center; gap:8px">
+          <!-- View mode toggle buttons (Horizontal / Vertical) -->
+          <div style="display:flex; background:var(--surface-2); padding:2px; border-radius:8px; border:1px solid var(--border-weak)">
+            <button (click)="viewMode.set('horizontal')"
+                    title="Affichage Horizontal (Carrousel)"
+                    [style.background]="viewMode() === 'horizontal' ? '#4F46E5' : 'transparent'"
+                    [style.color]="viewMode() === 'horizontal' ? 'white' : 'var(--text-secondary)'"
+                    style="border:none; padding:4px 9px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="6" height="14" rx="1"/><rect x="11" y="5" width="6" height="14" rx="1"/><rect x="19" y="5" width="2" height="14" rx="1"/></svg>
+              <span>Horizontal</span>
+            </button>
+            <button (click)="viewMode.set('vertical')"
+                    title="Affichage Vertical (Liste)"
+                    [style.background]="viewMode() === 'vertical' ? '#4F46E5' : 'transparent'"
+                    [style.color]="viewMode() === 'vertical' ? 'white' : 'var(--text-secondary)'"
+                    style="border:none; padding:4px 9px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.2s">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="6" rx="1"/><rect x="5" y="11" width="14" height="6" rx="1"/><rect x="5" y="19" width="14" height="2" rx="1"/></svg>
+              <span>Vertical</span>
+            </button>
+          </div>
+
+          <!-- Sort dropdown -->
           <select [ngModel]="sortOrder()" (ngModelChange)="sortOrder.set($event)" class="hist-sort-select">
             <option value="newest">⬇ Plus récent</option>
             <option value="oldest">⬆ Plus ancien</option>
@@ -113,13 +132,35 @@ import { DatabaseService, Submission, UserProfile, Quiz, ActivityLog } from '../
         </div>
       </div>
 
-      <!-- ===== LISTS ===== -->
-      <div class="hist-list">
+      <!-- ===== CONTROLS BAR FOR HORIZONTAL CAROUSEL SCROLL ===== -->
+      @if (viewMode() === 'horizontal') {
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:-4px">
+          <span style="font-size:11.5px; color:var(--text-muted); font-weight:600; display:flex; align-items:center; gap:5px">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            Faites défiler horizontalement ou utilisez les flèches
+          </span>
+          <div style="display:flex; align-items:center; gap:6px">
+            <button (click)="scrollHistRow(-300)"
+                    title="Précédent"
+                    style="width:30px; height:30px; border-radius:8px; border:1.5px solid var(--border-weak); background:var(--surface-1); color:var(--text-primary); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <button (click)="scrollHistRow(300)"
+                    title="Suivant"
+                    style="width:30px; height:30px; border-radius:8px; border:1.5px solid var(--border-weak); background:var(--surface-1); color:var(--text-primary); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+        </div>
+      }
+
+      <!-- ===== CONTENT DISPLAY (HORIZONTAL CAROUSEL OR VERTICAL LIST) ===== -->
+      <div id="hist-scroll-container" [class.hist-list]="viewMode() === 'vertical'" [class.hist-row-horizontal]="viewMode() === 'horizontal'">
 
         <!-- 1. HOMEWORK TAB -->
         @if (activeSubTab() === 'homework') {
           @if (homeworkHistory().length === 0) {
-            <div class="hist-empty">
+            <div class="hist-empty" style="width:100%">
               <div class="hist-empty-icon" style="background:#FFFBEB; border-color:#FDE68A">
                 <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
               </div>
@@ -128,62 +169,55 @@ import { DatabaseService, Submission, UserProfile, Quiz, ActivityLog } from '../
             </div>
           }
           @for (sub of homeworkHistory(); track sub.id) {
-            <div class="hist-card" [class.hc-redo]="sub.score === 'A refaire'" [class.hc-graded]="sub.graded && sub.score !== 'A refaire'" [class.hc-pending]="!sub.graded">
-              <!-- Left accent bar -->
-              <div class="hc-accent"
-                   [style.background]="sub.score === 'A refaire' ? '#F59E0B' : (sub.graded ? '#10B981' : '#94A3B8')">
+            <div class="hist-card" [class.hc-horiz]="viewMode() === 'horizontal'" [class.hc-redo]="sub.score === 'A refaire'" [class.hc-graded]="sub.graded && sub.score !== 'A refaire'" [class.hc-pending]="!sub.graded">
+              <!-- Left or Top Accent -->
+              <div class="hc-accent" [style.background]="sub.score === 'A refaire' ? '#F59E0B' : (sub.graded ? '#10B981' : '#94A3B8')"></div>
+
+              <!-- Top Row (Header of Card) -->
+              <div style="display:flex; align-items:center; justify-content:space-between; width:100%; gap:10px">
+                <div class="hc-icon"
+                     [style.background]="sub.score === 'A refaire' ? '#FEF3C7' : (sub.graded ? '#ECFDF5' : '#F1F5F9')"
+                     [style.color]="sub.score === 'A refaire' ? '#D97706' : (sub.graded ? '#059669' : '#64748B')">
+                  @if (sub.type === 'audio') {
+                    <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+                  } @else {
+                    <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                  }
+                </div>
+
+                <div style="display:flex; flex-direction:column; align-items:flex-end">
+                  @if (sub.score === 'A refaire') {
+                    <span class="hc-badge badge-redo">À refaire</span>
+                  } @else if (sub.graded) {
+                    <span class="hc-badge badge-done">Corrigé</span>
+                  } @else {
+                    <span class="hc-badge badge-pending">En attente</span>
+                  }
+                </div>
               </div>
 
-              <!-- Icon -->
-              <div class="hc-icon"
-                   [style.background]="sub.score === 'A refaire' ? '#FEF3C7' : (sub.graded ? '#ECFDF5' : '#F1F5F9')"
-                   [style.color]="sub.score === 'A refaire' ? '#D97706' : (sub.graded ? '#059669' : '#64748B')">
-                @if (sub.type === 'audio') {
-                  <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
-                } @else {
-                  <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-                }
-              </div>
-
-              <!-- Content -->
-              <div class="hc-body">
-                <div class="hc-title">{{ sub.lessonTitle }}</div>
-                <div class="hc-meta">
+              <!-- Content Body -->
+              <div class="hc-body" style="width:100%; margin:10px 0">
+                <div class="hc-title" style="font-size:13.5px; line-height:1.3">{{ sub.lessonTitle }}</div>
+                <div class="hc-meta" style="margin-top:4px">
                   <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                  Rendu le {{ sub.submittedAt | date:'d MMM yyyy, HH:mm' }}
+                  {{ sub.submittedAt | date:'d MMM yyyy' }}
                   @if (sub.xpReward) {
                     <span class="hc-xp">+{{ sub.xpReward }} XP</span>
                   }
                 </div>
                 @if (sub.feedback) {
-                  <div class="hc-feedback">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                  <div class="hc-feedback" style="max-height:54px; overflow:hidden">
                     <span [innerHTML]="'<strong>Feedback :</strong> ' + sub.feedback"></span>
                   </div>
                 }
               </div>
 
-              <!-- Right badges -->
-              <div class="hc-badges">
-                @if (sub.score === 'A refaire') {
-                  <span class="hc-badge badge-redo">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38"/></svg>
-                    À refaire
-                  </span>
-                  <span class="hc-score-tag" style="background:#FFF7ED; color:#C2410C; border-color:#FED7AA">Redo</span>
-                } @else if (sub.graded) {
-                  <span class="hc-badge badge-done">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>
-                    Corrigé
-                  </span>
-                  @if (sub.score) {
-                    <span class="hc-score-tag" style="background:#EEF2FF; color:#3730A3; border-color:#C7D2FE">{{ sub.score }}</span>
-                  }
-                } @else {
-                  <span class="hc-badge badge-pending">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    En attente
-                  </span>
+              <!-- Footer Row -->
+              <div style="display:flex; justify-content:space-between; align-items:center; width:100%; border-top:1px solid var(--border-weak); padding-top:8px; margin-top:auto">
+                <span style="font-size:10px; color:var(--text-muted); font-weight:600">Devoir {{ sub.type === 'audio' ? 'Oral' : 'Écrit' }}</span>
+                @if (sub.graded && sub.score) {
+                  <span class="hc-score-tag" [style.background]="sub.score === 'A refaire' ? '#FFF7ED' : '#EEF2FF'" [style.color]="sub.score === 'A refaire' ? '#C2410C' : '#3730A3'" [style.border-color]="sub.score === 'A refaire' ? '#FED7AA' : '#C7D2FE'">Note: {{ sub.score }}</span>
                 }
               </div>
             </div>
@@ -193,7 +227,7 @@ import { DatabaseService, Submission, UserProfile, Quiz, ActivityLog } from '../
         <!-- 2. QUIZZES TAB -->
         @if (activeSubTab() === 'quizzes') {
           @if (quizHistory().length === 0) {
-            <div class="hist-empty">
+            <div class="hist-empty" style="width:100%">
               <div class="hist-empty-icon" style="background:#EEF2FF; border-color:#C7D2FE">
                 <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="1.5"><path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
               </div>
@@ -202,34 +236,40 @@ import { DatabaseService, Submission, UserProfile, Quiz, ActivityLog } from '../
             </div>
           }
           @for (item of quizHistory(); track item.id) {
-            <div class="hist-card">
+            <div class="hist-card" [class.hc-horiz]="viewMode() === 'horizontal'">
               <div class="hc-accent" style="background:#4F46E5"></div>
-              <div class="hc-icon" style="background:#EEF2FF; color:#4F46E5">
-                <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+              
+              <div style="display:flex; align-items:center; justify-content:space-between; width:100%">
+                <div class="hc-icon" style="background:#EEF2FF; color:#4F46E5">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                </div>
+                <div class="hc-score-ring" [style.border-color]="item.percentage >= 70 ? '#4F46E5' : item.percentage >= 50 ? '#D97706' : '#EF4444'" [style.color]="item.percentage >= 70 ? '#4F46E5' : item.percentage >= 50 ? '#D97706' : '#EF4444'">
+                  <div style="font-size:12px; font-weight:900; line-height:1">{{ item.score }}</div>
+                  <div style="font-size:8.5px; color:var(--text-muted); font-weight:600">/{{ item.maxScore }}</div>
+                </div>
               </div>
-              <div class="hc-body">
-                <div class="hc-title">{{ item.title }}</div>
-                <div class="hc-meta">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                  Complété le {{ item.completedAt | date:'d MMM yyyy, HH:mm' }}
+
+              <div class="hc-body" style="width:100%; margin:10px 0">
+                <div class="hc-title" style="font-size:13.5px; line-height:1.3">{{ item.title }}</div>
+                <div class="hc-meta" style="margin-top:4px">
+                  {{ item.completedAt | date:'d MMM yyyy' }}
                   @if (item.xpGained) {
                     <span class="hc-xp">+{{ item.xpGained }} XP</span>
                   }
                 </div>
                 @if (item.percentage !== undefined) {
-                  <div style="margin-top:8px; display:flex; align-items:center; gap:10px">
-                    <div style="flex:1; max-width:150px; height:5px; background:var(--surface-2); border-radius:99px; overflow:hidden">
-                      <div [style.width.%]="item.percentage" [style.background]="item.percentage >= 70 ? 'linear-gradient(90deg,#4F46E5,#7C3AED)' : item.percentage >= 50 ? 'linear-gradient(90deg,#F59E0B,#D97706)' : 'linear-gradient(90deg,#EF4444,#DC2626)'" style="height:100%; border-radius:99px; transition:width 0.6s ease"></div>
+                  <div style="margin-top:10px; display:flex; align-items:center; gap:8px">
+                    <div style="flex:1; height:5px; background:var(--surface-2); border-radius:99px; overflow:hidden">
+                      <div [style.width.%]="item.percentage" [style.background]="item.percentage >= 70 ? 'linear-gradient(90deg,#4F46E5,#7C3AED)' : item.percentage >= 50 ? 'linear-gradient(90deg,#F59E0B,#D97706)' : 'linear-gradient(90deg,#EF4444,#DC2626)'" style="height:100%; border-radius:99px"></div>
                     </div>
                     <span style="font-size:11px; font-weight:800;" [style.color]="item.percentage >= 70 ? '#4F46E5' : item.percentage >= 50 ? '#D97706' : '#EF4444'">{{ item.percentage }}%</span>
                   </div>
                 }
               </div>
-              <div class="hc-badges">
-                <div class="hc-score-ring" [style.border-color]="item.percentage >= 70 ? '#4F46E5' : item.percentage >= 50 ? '#D97706' : '#EF4444'" [style.color]="item.percentage >= 70 ? '#4F46E5' : item.percentage >= 50 ? '#D97706' : '#EF4444'">
-                  <div style="font-size:13px; font-weight:900; line-height:1">{{ item.score }}</div>
-                  <div style="font-size:9px; color:var(--text-muted); font-weight:600">/{{ item.maxScore }}</div>
-                </div>
+
+              <div style="display:flex; justify-content:space-between; align-items:center; width:100%; border-top:1px solid var(--border-weak); padding-top:8px; margin-top:auto">
+                <span style="font-size:10px; color:var(--text-muted); font-weight:600">Évaluation Quiz</span>
+                <span class="hc-badge badge-done" style="font-size:9.5px">Terminé</span>
               </div>
             </div>
           }
@@ -238,7 +278,7 @@ import { DatabaseService, Submission, UserProfile, Quiz, ActivityLog } from '../
         <!-- 3. VOCABULARY TAB -->
         @if (activeSubTab() === 'vocab') {
           @if (vocabHistory().length === 0) {
-            <div class="hist-empty">
+            <div class="hist-empty" style="width:100%">
               <div class="hist-empty-icon" style="background:#F0FDFA; border-color:#A7F3D0">
                 <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0D9488" stroke-width="1.5"><rect x="2" y="6" width="20" height="12" rx="3"/><path d="M6 12h4"/><path d="M8 10v4"/><line x1="15" y1="11" x2="15" y2="11"/><line x1="18" y1="13" x2="18" y2="13"/></svg>
               </div>
@@ -247,36 +287,41 @@ import { DatabaseService, Submission, UserProfile, Quiz, ActivityLog } from '../
             </div>
           }
           @for (item of vocabHistory(); track item.id) {
-            <div class="hist-card">
+            <div class="hist-card" [class.hc-horiz]="viewMode() === 'horizontal'">
               <div class="hc-accent" style="background:#0D9488"></div>
-              <div class="hc-icon" style="background:#F0FDFA; color:#0D9488">
-                <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="3"/><path d="M6 12h4"/><path d="M8 10v4"/><line x1="15" y1="11" x2="15" y2="11"/><line x1="18" y1="13" x2="18" y2="13"/></svg>
+              
+              <div style="display:flex; align-items:center; justify-content:space-between; width:100%">
+                <div class="hc-icon" style="background:#F0FDFA; color:#0D9488">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="3"/><path d="M6 12h4"/><path d="M8 10v4"/><line x1="15" y1="11" x2="15" y2="11"/><line x1="18" y1="13" x2="18" y2="13"/></svg>
+                </div>
+                <div class="hc-score-tag" style="background:#F0FDFA; color:#0F766E; border-color:#A7F3D0; font-size:11.5px; padding:3px 8px">
+                  {{ item.score }} pts
+                </div>
               </div>
-              <div class="hc-body">
-                <div class="hc-title">{{ item.gameTitle }}</div>
-                <div class="hc-meta">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                  Joué le {{ item.completedAt | date:'d MMM yyyy, HH:mm' }}
+
+              <div class="hc-body" style="width:100%; margin:10px 0">
+                <div class="hc-title" style="font-size:13.5px; line-height:1.3">{{ item.gameTitle }}</div>
+                <div class="hc-meta" style="margin-top:4px">
+                  {{ item.completedAt | date:'d MMM yyyy' }}
                   @if (item.xpGained) {
                     <span class="hc-xp">+{{ item.xpGained }} XP</span>
                   }
                 </div>
-                <div style="margin-top:6px; display:flex; gap:10px; flex-wrap:wrap">
-                  <span style="font-size:10.5px; font-weight:700; color:#0F766E; background:#F0FDFA; padding:2px 8px; border-radius:12px; border:1px solid #CCFBF1">
-                    ✓ {{ item.successRate }}% précision
+                <div style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap">
+                  <span style="font-size:10px; font-weight:700; color:#0F766E; background:#F0FDFA; padding:2px 7px; border-radius:10px; border:1px solid #CCFBF1">
+                    ✓ {{ item.successRate }}% préc.
                   </span>
                   @if (item.mistakes > 0) {
-                    <span style="font-size:10.5px; font-weight:700; color:#DC2626; background:#FEF2F2; padding:2px 8px; border-radius:12px; border:1px solid #FECACA">
-                      ✗ {{ item.mistakes }} faute(s)
+                    <span style="font-size:10px; font-weight:700; color:#DC2626; background:#FEF2F2; padding:2px 7px; border-radius:10px; border:1px solid #FECACA">
+                      {{ item.mistakes }} faute(s)
                     </span>
                   }
                 </div>
               </div>
-              <div class="hc-badges">
-                <div class="hc-score-tag" style="background:#F0FDFA; color:#0F766E; border-color:#A7F3D0; font-size:12px; padding:5px 10px">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
-                  {{ item.score }} pts
-                </div>
+
+              <div style="display:flex; justify-content:space-between; align-items:center; width:100%; border-top:1px solid var(--border-weak); padding-top:8px; margin-top:auto">
+                <span style="font-size:10px; color:var(--text-muted); font-weight:600">Jeu de Vocabulaire</span>
+                <span class="hc-badge badge-done" style="font-size:9.5px">Joué</span>
               </div>
             </div>
           }
@@ -285,7 +330,7 @@ import { DatabaseService, Submission, UserProfile, Quiz, ActivityLog } from '../
         <!-- 4. EXAMS TAB -->
         @if (activeSubTab() === 'exams') {
           @if (examHistory().length === 0) {
-            <div class="hist-empty">
+            <div class="hist-empty" style="width:100%">
               <div class="hist-empty-icon" style="background:#F5F3FF; border-color:#DDD6FE">
                 <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="1.5"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"/></svg>
               </div>
@@ -294,42 +339,39 @@ import { DatabaseService, Submission, UserProfile, Quiz, ActivityLog } from '../
             </div>
           }
           @for (item of examHistory(); track item.id) {
-            <div class="hist-card">
+            <div class="hist-card" [class.hc-horiz]="viewMode() === 'horizontal'">
               <div class="hc-accent" style="background:#7C3AED"></div>
-              <div class="hc-icon" style="background:#F5F3FF; color:#7C3AED">
-                <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"/></svg>
+
+              <div style="display:flex; align-items:center; justify-content:space-between; width:100%">
+                <div class="hc-icon" style="background:#F5F3FF; color:#7C3AED">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"/></svg>
+                </div>
+                <span class="hc-badge" [style.background]="item.percentage >= 60 ? '#D1FAE5' : '#FEE2E2'" [style.color]="item.percentage >= 60 ? '#065F46' : '#991B1B'" [style.border-color]="item.percentage >= 60 ? '#A7F3D0' : '#FECACA'">
+                  {{ item.percentage >= 60 ? 'RÉUSSI' : 'ÉCHOUÉ' }}
+                </span>
               </div>
-              <div class="hc-body">
-                <div class="hc-title">{{ item.examTitle }}</div>
-                <div class="hc-meta">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                  {{ item.completedAt | date:'d MMM yyyy, HH:mm' }}
+
+              <div class="hc-body" style="width:100%; margin:10px 0">
+                <div class="hc-title" style="font-size:13.5px; line-height:1.3">{{ item.examTitle }}</div>
+                <div class="hc-meta" style="margin-top:4px">
+                  {{ item.completedAt | date:'d MMM yyyy' }}
                   @if (item.xpGained) {
                     <span class="hc-xp">+{{ item.xpGained }} XP</span>
                   }
                 </div>
                 @if (item.percentage !== undefined) {
-                  <div style="margin-top:8px; display:flex; align-items:center; gap:10px">
-                    <div style="flex:1; max-width:150px; height:5px; background:var(--surface-2); border-radius:99px; overflow:hidden">
+                  <div style="margin-top:10px; display:flex; align-items:center; gap:8px">
+                    <div style="flex:1; height:5px; background:var(--surface-2); border-radius:99px; overflow:hidden">
                       <div [style.width.%]="item.percentage" [style.background]="item.percentage >= 60 ? 'linear-gradient(90deg,#7C3AED,#6D28D9)' : 'linear-gradient(90deg,#EF4444,#DC2626)'" style="height:100%; border-radius:99px"></div>
                     </div>
                     <span style="font-size:11px; font-weight:800;" [style.color]="item.percentage >= 60 ? '#7C3AED' : '#EF4444'">{{ item.percentage }}%</span>
                   </div>
                 }
               </div>
-              <div class="hc-badges">
-                <span class="hc-badge" [style.background]="item.percentage >= 60 ? '#D1FAE5' : '#FEE2E2'" [style.color]="item.percentage >= 60 ? '#065F46' : '#991B1B'" [style.border-color]="item.percentage >= 60 ? '#A7F3D0' : '#FECACA'">
-                  @if (item.percentage >= 60) {
-                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>
-                    RÉUSSI
-                  } @else {
-                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                    ÉCHOUÉ
-                  }
-                </span>
-                <div class="hc-score-tag" style="background:#F5F3FF; color:#6D28D9; border-color:#DDD6FE">
-                  {{ item.score }}/{{ item.maxScore }}
-                </div>
+
+              <div style="display:flex; justify-content:space-between; align-items:center; width:100%; border-top:1px solid var(--border-weak); padding-top:8px; margin-top:auto">
+                <span style="font-size:10px; color:var(--text-muted); font-weight:600">Examen Officiel</span>
+                <span class="hc-score-tag" style="background:#F5F3FF; color:#6D28D9; border-color:#DDD6FE">{{ item.score }}/{{ item.maxScore }}</span>
               </div>
             </div>
           }
@@ -404,7 +446,7 @@ import { DatabaseService, Submission, UserProfile, Quiz, ActivityLog } from '../
       margin: 0 4px;
     }
 
-    /* ===== TABS ===== */
+    /* ===== TABS & LAYOUT CONTROLS ===== */
     .hist-tab-bar {
       display: flex;
       gap: 4px;
@@ -455,11 +497,11 @@ import { DatabaseService, Submission, UserProfile, Quiz, ActivityLog } from '../
     .hist-sort-select {
       appearance: none;
       -webkit-appearance: none;
-      height: 32px;
-      padding: 0 28px 0 10px;
+      height: 30px;
+      padding: 0 24px 0 8px;
       border: 1.5px solid var(--border-weak);
       border-radius: 8px;
-      font-size: 11.5px;
+      font-size: 11px;
       font-weight: 700;
       background: var(--surface-1);
       color: var(--text-primary);
@@ -469,12 +511,32 @@ import { DatabaseService, Submission, UserProfile, Quiz, ActivityLog } from '../
     }
     .hist-sort-select:focus { border-color: #4F46E5; }
 
-    /* ===== CARDS ===== */
+    /* ===== HORIZONTAL SCROLL CAROUSEL ROW ===== */
+    .hist-row-horizontal {
+      display: flex;
+      gap: 14px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      padding: 4px 2px 14px 2px;
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
+    }
+    .hist-row-horizontal::-webkit-scrollbar {
+      height: 6px;
+    }
+    .hist-row-horizontal::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 10px;
+    }
+
+    /* ===== VERTICAL LIST ===== */
     .hist-list {
       display: flex;
       flex-direction: column;
       gap: 8px;
     }
+
+    /* ===== CARDS ===== */
     .hist-card {
       display: flex;
       align-items: center;
@@ -487,10 +549,21 @@ import { DatabaseService, Submission, UserProfile, Quiz, ActivityLog } from '../
       overflow: hidden;
       transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
     }
+    .hist-card.hc-horiz {
+      flex: 0 0 280px;
+      min-width: 280px;
+      max-width: 300px;
+      scroll-snap-align: start;
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 16px;
+      min-height: 200px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    }
     .hist-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px -6px rgba(0,0,0,0.1);
-      border-color: rgba(79,70,229,0.3);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 24px -6px rgba(79,70,229,0.15);
+      border-color: rgba(79,70,229,0.35);
     }
     .hc-accent {
       position: absolute;
@@ -498,12 +571,16 @@ import { DatabaseService, Submission, UserProfile, Quiz, ActivityLog } from '../
       width: 4px;
       border-radius: 14px 0 0 14px;
     }
+    .hist-card.hc-horiz .hc-accent {
+      top: 0; left: 0; right: 0; bottom: auto;
+      height: 4px; width: 100%;
+      border-radius: 14px 14px 0 0;
+    }
     .hc-icon {
-      width: 42px; height: 42px;
+      width: 40px; height: 40px;
       border-radius: 12px;
       display: flex; align-items: center; justify-content: center;
       flex-shrink: 0;
-      margin-left: 4px;
     }
     .hc-body {
       flex: 1;
@@ -580,13 +657,14 @@ import { DatabaseService, Submission, UserProfile, Quiz, ActivityLog } from '../
       border: 1.5px solid transparent;
     }
     .hc-score-ring {
-      width: 48px; height: 48px;
+      width: 44px; height: 44px;
       border-radius: 50%;
       border: 2.5px solid;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      flex-shrink: 0;
     }
 
     /* ===== EMPTY STATES ===== */
@@ -625,6 +703,7 @@ export class StudentHistoryComponent {
 
   activeSubTab = signal<'homework' | 'quizzes' | 'vocab' | 'exams'>('homework');
   sortOrder = signal<'newest' | 'oldest' | 'score'>('newest');
+  viewMode = signal<'horizontal' | 'vertical'>('horizontal');
 
   constructor() {
     this.db.observeCurrentUser().subscribe(u => {
@@ -663,6 +742,11 @@ export class StudentHistoryComponent {
         this.examAttempts.set(this.db.getStudentExamAttempts(user.id));
       }
     });
+  }
+
+  scrollHistRow(delta: number) {
+    const el = document.getElementById('hist-scroll-container');
+    if (el) el.scrollBy({ left: delta, behavior: 'smooth' });
   }
 
   // Computed Lists
