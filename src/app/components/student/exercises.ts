@@ -459,7 +459,10 @@ const defaultWordsBank = [
                 } @else if (activeExercise() === 'quiz') {
                   <span style="font-size:16px; font-weight:700; color:var(--text-primary)">{{ t("Chargement du quiz...", "Loading quiz...") }}</span>
                 } @else if (activeExercise() === 'exercise') {
-                  <span [style.color]="getExerciseColor(activeExerciseItem()?.type || '')">{{ getExerciseEmoji(activeExerciseItem()?.type || '') }} {{ t("Exercice de " + getExerciseLabel(activeExerciseItem()?.type || ''), getExerciseLabel(activeExerciseItem()?.type || '') + " Exercise") }}</span>
+                  <span [style.color]="getExerciseColor(activeExerciseItem()?.type || '')" style="display:inline-flex; align-items:center; gap:6px">
+                    <span [innerHTML]="getExerciseSvg(activeExerciseItem()?.type || '')"></span>
+                    <span>{{ t("Exercice de " + getExerciseLabel(activeExerciseItem()?.type || ''), getExerciseLabel(activeExerciseItem()?.type || '') + " Exercise") }}</span>
+                  </span>
                 } @else {
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2">
                     <rect x="3" y="3" width="7" height="9" rx="1" /><rect x="14" y="3" width="7" height="5" rx="1" /><rect x="14" y="12" width="7" height="9" rx="1" /><rect x="3" y="16" width="7" height="5" rx="1" />
@@ -501,8 +504,14 @@ const defaultWordsBank = [
                            [style.padding]="prevSub.score === 'A refaire' ? '10px' : '8px 0'"
                            [style.border-radius]="prevSub.score === 'A refaire' ? '6px' : '0'"
                            style="border-top:1px solid var(--border); margin-top:8px">
-                        <span style="font-size:13px; font-weight:700" [style.color]="prevSub.score === 'A refaire' ? '#D97706' : '#065F46'">
-                          {{ t('Note :', 'Grade:') }} {{ prevSub.score === 'A refaire' ? '🔄 ' + t('À refaire', 'Redo requested') : prevSub.score }}
+                        <span style="font-size:13px; font-weight:700; display:inline-flex; align-items:center; gap:6px" [style.color]="prevSub.score === 'A refaire' ? '#D97706' : '#065F46'">
+                          <span>{{ t('Note :', 'Grade:') }}</span>
+                          @if (prevSub.score === 'A refaire') {
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                            <span>{{ t('À refaire', 'Redo requested') }}</span>
+                          } @else {
+                            <span>{{ prevSub.score }}</span>
+                          }
                         </span>
                         @if (prevSub.feedback) {
                           <p style="font-size:12px; color:var(--text-secondary); margin:4px 0 0 0">{{ prevSub.feedback }}</p>
@@ -510,13 +519,15 @@ const defaultWordsBank = [
                       </div>
                     } @else {
                       <div style="border-top:1px solid var(--border); padding-top:8px; margin-top:8px; font-size:12px; color:var(--text-muted); display:flex; justify-content:space-between; align-items:center; gap:4px; flex-wrap:wrap">
-                        <div>
-                          <i class="ti ti-clock"></i> {{ t("En attente de correction.", 'Awaiting grading.') }}
+                        <div style="display:inline-flex; align-items:center; gap:6px">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                          <span>{{ t("En attente de correction.", 'Awaiting grading.') }}</span>
                         </div>
                         @if (canDeleteSubmission(prevSub)) {
                           <button (click)="deleteMySubmission(prevSub.id)" 
-                                  style="background:#FEF2F2; color:#DC2626; border:1px solid #FCA5A5; padding:4px 10px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:4px; transition: all 0.2s">
-                            🗑️ {{ t('Supprimer (20 min)', 'Delete & Redo') }}
+                                  style="background:#FEF2F2; color:#DC2626; border:1px solid #FCA5A5; padding:4px 10px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition: all 0.2s">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                            <span>{{ t('Supprimer (20 min)', 'Delete & Redo') }}</span>
                           </button>
                         }
                       </div>
@@ -536,7 +547,7 @@ const defaultWordsBank = [
                 } @else if (!getLatestExerciseSubmission(activeExerciseItem()!.id) || getLatestExerciseSubmission(activeExerciseItem()!.id)?.score === 'A refaire') {
                   @if (getLatestExerciseSubmission(activeExerciseItem()!.id)?.score === 'A refaire') {
                     <div style="background:#FFFBEB; border:1px solid #FCD34D; border-radius:8px; padding:12px; margin-bottom:16px; color:#D97706; font-size:12.5px; font-weight:600; display:flex; align-items:center; gap:8px">
-                      <span>🔄</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
                       <span>{{ t('Veuillez soumettre à nouveau en prenant en compte le feedback ci-dessus.', 'Please resubmit considering the feedback above.') }}</span>
                     </div>
                   }
@@ -549,7 +560,7 @@ const defaultWordsBank = [
                         <div style="background:#F5F3FF; border:1px solid #DDD6FE; border-radius:8px; padding:14px;">
                           <div style="font-size:12.5px; font-weight:700; color:#6D28D9; margin-bottom:6px; display:flex; align-items:center; gap:6px">
                             <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-                            <span>{{ t('Sujet d\'expression écrite', 'Writing Prompt Subject') }}</span>
+                            <span>{{ t("Sujet d'expression écrite", "Writing Prompt Subject") }}</span>
                           </div>
                           <p style="font-size:13px; color:var(--text-primary); line-height:1.6; margin:0;" [innerHTML]="activeExerciseItem()?.subject"></p>
                         </div>
@@ -557,7 +568,7 @@ const defaultWordsBank = [
                         <div style="background:#F0FDF4; border:1px solid #A7F3D0; border-radius:8px; padding:14px;">
                           <div style="font-size:12.5px; font-weight:700; color:#065F46; margin-bottom:6px; display:flex; align-items:center; gap:6px">
                             <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
-                            <span>{{ t('Consigne d\'expression orale', 'Speaking Instruction') }}</span>
+                            <span>{{ t("Consigne d'expression orale", "Speaking Instruction") }}</span>
                           </div>
                           <p style="font-size:13px; color:var(--text-primary); line-height:1.6; margin:0;" [innerHTML]="activeExerciseItem()?.speakingPrompt"></p>
                         </div>
@@ -602,7 +613,7 @@ const defaultWordsBank = [
                         <div class="homework-section">
                           <label class="homework-title-row">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-                            {{ t('Votre réponse écrite ou notes (optionnel pour l\'oral) :', 'Your written response or notes (optional for speaking) :') }}
+                            {{ t("Votre réponse écrite ou notes (optionnel pour l'oral) :", "Your written response or notes (optional for speaking) :") }}
                           </label>
                           <textarea [ngModel]="studentResponse()" (ngModelChange)="studentResponse.set($event)" 
                                     placeholder="Saisissez vos explications ou réponses écrites ici..." 
@@ -613,7 +624,7 @@ const defaultWordsBank = [
                         <!-- SECTION 2: AUDIO RECORDINGS -->
                         <div class="homework-section" style="border-color: rgba(16,185,129,0.25)">
                           <label class="homework-title-row" style="color: #059669">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
                             {{ t('Enregistrements vocaux (Optionnel, multi-parties supporté) :', 'Voice Recordings (Optional, multi-part supported) :') }}
                           </label>
 
@@ -641,7 +652,7 @@ const defaultWordsBank = [
                           <div class="audio-widget-recorder">
                             @if (exerciseRecordingState() === 'idle') {
                               <button (click)="startExerciseAudioRecording()" class="btn-mic-trigger">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
                               </button>
                               <div style="font-size:12px; font-weight:700; color:var(--text-secondary)">
                                 {{ t("Cliquez pour enregistrer un vocal", "Click to record a voice message") }}
@@ -677,10 +688,10 @@ const defaultWordsBank = [
                              [style.border]="isExerciseResponseReady() ? '1px solid #A7F3D0' : '1px solid #FCD34D'"
                              [style.color]="isExerciseResponseReady() ? '#065F46' : '#B45309'">
                           @if (isExerciseResponseReady()) {
-                            <span>✅</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
                             <span>{{ t('Exercice prêt ! Cliquez ci-dessous pour soumettre.', 'Exercise ready! Click below to submit.') }}</span>
                           } @else {
-                            <span>💡</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                             <span>{{ t('Pour débloquer la soumission, saisissez une réponse ou enregistrez un vocal.', 'To unlock submission, enter a response or record a voice note.') }}</span>
                           }
                         </div>
@@ -689,8 +700,9 @@ const defaultWordsBank = [
                         <button (click)="handleExerciseSubmit()" 
                                 class="btn-submit-premium"
                                 [class.ready]="isExerciseResponseReady()"
-                                style="width:100%; justify-content:center; font-size: 14.5px; padding: 14px 24px">
-                          🚀 {{ t('Soumettre mon Exercice', 'Submit Exercise') }}
+                                style="width:100%; justify-content:center; font-size: 14.5px; padding: 14px 24px; display:inline-flex; align-items:center; gap:8px">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                          <span>{{ t('Soumettre mon Exercice', 'Submit Exercise') }}</span>
                         </button>
                       </div>
                     </div>
