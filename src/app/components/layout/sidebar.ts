@@ -46,23 +46,27 @@ import { DatabaseService, UserProfile } from '../../services/database.service';
           <button class="sidebar-item" [class.active]="activeTab === 'dashboard'" (click)="setTab('dashboard')"
                   [style.opacity]="mustTakePlacementTest ? '0.4' : '1'"
                   [style.pointer-events]="mustTakePlacementTest ? 'none' : 'auto'">
-            <i class="ti ti-layout-dashboard"></i>{{ t('Tableau de bord', 'Dashboard') }}
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+            {{ t('Tableau de bord', 'Dashboard') }}
           </button>
           
           @if (showGarden) {
             <button class="sidebar-item" [class.active]="activeTab === 'garden'" (click)="setTab('garden')">
-              <i class="ti ti-plant"></i>My Garden
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 20h10"/><path d="M10 20c0-4.4 3.6-8 8-8"/><path d="M4 12c4.4 0 8 3.6 8 8"/><path d="M12 20V4"/></svg>
+              My Garden
             </button>
           }
           @if (showJourney) {
             <button class="sidebar-item" [class.active]="activeTab === 'journey'" (click)="setTab('journey')">
-              <i class="ti ti-map"></i>SpeakUp Journey
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>
+              SpeakUp Journey
             </button>
           }
 
           <button class="sidebar-item" [class.active]="activeTab === 'lessons'" (click)="setTab('lessons')"
                   [style.opacity]="mustTakePlacementTest ? '0.4' : '1'">
-            <i class="ti ti-book"></i>{{ t('Cours & Leçons', 'Lessons') }}
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5v-15z"/></svg>
+            {{ t('Cours & Leçons', 'Lessons') }}
             @if (newLessonsCount > 0) {
               <span class="sidebar-badge" style="background:#7C3AED">{{ newLessonsCount }}</span>
             }
@@ -71,12 +75,14 @@ import { DatabaseService, UserProfile } from '../../services/database.service';
           <button class="sidebar-item" [class.active]="activeTab === 'speaking'" [disabled]="currentUser?.role === 'guest'"
                   [style.opacity]="currentUser?.role === 'guest' ? '0.5' : (mustTakePlacementTest ? '0.4' : '1')" 
                   (click)="setTab('speaking')">
-            <i class="ti ti-microphone"></i>{{ t('Pratique Orale', 'Speaking') }}
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+            {{ t('Pratique Orale', 'Speaking') }}
           </button>
 
           <button class="sidebar-item" [class.active]="activeTab === 'quizzes'" (click)="setTab('quizzes')"
                   [style.opacity]="mustTakePlacementTest ? '0.4' : '1'">
-            <i class="ti ti-list-check"></i>{{ t('Quiz & Évaluations', 'Quizzes & Tests') }}
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            {{ t('Quiz & Évaluations', 'Quizzes & Tests') }}
             @if (newQuizzesCount > 0) {
               <span class="sidebar-badge" style="background:#7C3AED">{{ newQuizzesCount }}</span>
             }
@@ -84,7 +90,7 @@ import { DatabaseService, UserProfile } from '../../services/database.service';
 
           <button class="sidebar-item" [class.active]="activeTab === 'exercises'" (click)="setTab('exercises')"
                   [style.border]="mustTakePlacementTest && activeTab !== 'exercises' ? '1.5px solid #F59E0B' : 'none'">
-            <i class="ti ti-pencil" [style.color]="activeTab === 'exercises' ? '#FFFFFF' : (mustTakePlacementTest ? '#D97706' : 'inherit')"></i>
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" [style.color]="activeTab === 'exercises' ? '#FFFFFF' : (mustTakePlacementTest ? '#D97706' : 'inherit')"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
             <span [style.color]="activeTab === 'exercises' ? '#FFFFFF' : (mustTakePlacementTest ? '#B45309' : 'inherit')" [style.font-weight]="mustTakePlacementTest || activeTab === 'exercises' ? '800' : 'normal'">
               {{ mustTakePlacementTest ? t('Test de Niveau', 'Placement Test') : t('Jeux & Exercices', 'Games & Exercises') }}
             </span>
@@ -97,19 +103,22 @@ import { DatabaseService, UserProfile } from '../../services/database.service';
 
           <button class="sidebar-item" [class.active]="activeTab === 'dictionary'" (click)="setTab('dictionary')"
                   [style.opacity]="mustTakePlacementTest ? '0.4' : '1'">
-            <i class="ti ti-bookmarks"></i>{{ t('Dictionnaire', 'Dictionary') }}
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>
+            {{ t('Dictionnaire', 'Dictionary') }}
           </button>
 
           <button class="sidebar-item" [class.active]="activeTab === 'ebooks'" (click)="setTab('ebooks')"
                   [style.opacity]="mustTakePlacementTest ? '0.4' : '1'">
-            <i class="ti ti-book"></i>{{ t('Bibliothèque (Ebooks)', 'Ebooks Library') }}
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5v-15z"/></svg>
+            {{ t('Bibliothèque (Ebooks)', 'Ebooks Library') }}
           </button>
 
           <!-- COMMUNICATION SECTION -->
           <div class="nav-section-title" [style.color]="activeTheme === 'rose' ? '#BE185D' : (activeTheme === 'manga' ? '#8B74FC' : 'var(--text-muted)')">{{ t('Communauté', 'Community') }}</div>
           
           <button class="sidebar-item" [class.active]="activeTab === 'chat'" (click)="setTab('chat')">
-            <i class="ti ti-messages"></i>{{ t('Chat en Anglais', 'English Chat') }}
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            {{ t('Chat en Anglais', 'English Chat') }}
             @if (chatUnreadCount > 0) {
               <span class="sidebar-badge" style="background:#EF4444">{{ chatUnreadCount }}</span>
             }
@@ -117,20 +126,24 @@ import { DatabaseService, UserProfile } from '../../services/database.service';
           
           @if (showBoutique) {
             <button class="sidebar-item" [class.active]="activeTab === 'marketplace'" (click)="setTab('marketplace')">
-              <i class="ti ti-shopping-cart"></i>Boutique
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+              Boutique
             </button>
           }
 
           <button class="sidebar-item" [class.active]="activeTab === 'leaderboard'" (click)="setTab('leaderboard')">
-            <i class="ti ti-trophy"></i>{{ t('Classement (XP)', 'Leaderboard') }}
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+            {{ t('Classement (XP)', 'Leaderboard') }}
           </button>
 
           <button class="sidebar-item" [class.active]="activeTab === 'events'" (click)="setTab('events')">
-            <i class="ti ti-calendar-event"></i>{{ t('Événements', 'Events') }}
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            {{ t('Événements', 'Events') }}
           </button>
 
           <button class="sidebar-item" [class.active]="activeTab === 'announcements'" (click)="setTab('announcements')">
-            <i class="ti ti-volume"></i>{{ t('Annonces', 'Announcements') }}
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+            {{ t('Annonces', 'Announcements') }}
             @if (unreadAnnouncementsCount > 0) {
               <span class="sidebar-badge" style="background:#EF4444">{{ unreadAnnouncementsCount }}</span>
             }
@@ -147,14 +160,15 @@ import { DatabaseService, UserProfile } from '../../services/database.service';
           <div class="nav-section-title" [style.color]="activeTheme === 'rose' ? '#BE185D' : (activeTheme === 'manga' ? '#8B74FC' : 'var(--text-muted)')">{{ t('Cours en direct', 'Live Classes') }}</div>
           
           <button class="sidebar-item" [class.active]="activeTab === 'live-classes'" (click)="setTab('live-classes')">
-            <i class="ti ti-video"></i>{{ t('Classes en Direct', 'Live Classes') }}
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+            {{ t('Classes en Direct', 'Live Classes') }}
             @if (activeClassAvailable) {
               <span class="sidebar-badge" style="background:#EF4444; animation: pulse-live 1.5s infinite">LIVE</span>
             }
           </button>
 
           <button class="sidebar-item" [class.active]="activeTab === 'ice-breaker'" (click)="setTab('ice-breaker')">
-            <i class="ti ti-rotate" [style.color]="activeTab === 'ice-breaker' ? '#FFFFFF' : (activeTheme === 'rose' ? '#BE185D' : '#10B981')"></i>
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" [style.color]="activeTab === 'ice-breaker' ? '#FFFFFF' : (activeTheme === 'rose' ? '#BE185D' : '#10B981')"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
             <span style="font-weight:700" [style.color]="activeTab === 'ice-breaker' ? '#FFFFFF' : (activeTheme === 'rose' ? '#BE185D' : (activeTheme === 'manga' ? 'white' : '#10B981'))">{{ t('Ice Breaker', 'Ice Breaker') }}</span>
             @if (activeIceBreakerSession) {
               <span class="sidebar-badge" style="background:#EF4444; animation: pulse-live 1.5s infinite">LIVE</span>
@@ -165,18 +179,20 @@ import { DatabaseService, UserProfile } from '../../services/database.service';
           <div class="nav-section-title" [style.color]="activeTheme === 'rose' ? '#BE185D' : (activeTheme === 'manga' ? '#8B74FC' : 'var(--text-muted)')">{{ t('Progression', 'Progress') }}</div>
           
           <button class="sidebar-item" [class.active]="activeTab === 'history'" (click)="setTab('history')">
-            <i class="ti ti-history"></i>{{ t('Mon Historique', 'My History') }}
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg>
+            {{ t('Mon Historique', 'My History') }}
           </button>
 
           <button class="sidebar-item" [class.active]="activeTab === 'exam'" (click)="setTab('exam')">
-            <i class="ti ti-certificate"></i>{{ t('Mode Examen', 'Exam Mode') }}
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+            {{ t('Mode Examen', 'Exam Mode') }}
             @if (examModeIsNew) {
               <span class="sidebar-badge" style="background:#7C3AED">NEW</span>
             }
           </button>
 
           <button class="sidebar-item" [class.active]="activeTab === 'coaching'" (click)="setTab('coaching')">
-            <i class="ti ti-target" [style.color]="activeTab === 'coaching' ? '#FFFFFF' : '#D97706'"></i>
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" [style.color]="activeTab === 'coaching' ? '#FFFFFF' : '#D97706'"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
             <span style="font-weight:700" [style.color]="activeTab === 'coaching' ? '#FFFFFF' : '#B45309'">{{ t('Accompagnement Privé', 'Private Coaching') }}</span>
             @if (currentUser?.isPrivateCoaching) {
               <span class="sidebar-badge" style="background:#10B981">VIP</span>
@@ -187,95 +203,116 @@ import { DatabaseService, UserProfile } from '../../services/database.service';
         } @else if (currentUser?.role === 'admin') {
           <div class="nav-section-title" [style.color]="activeTheme === 'rose' ? '#BE185D' : (activeTheme === 'manga' ? '#8B74FC' : 'var(--text-muted)')">{{ t('Administration', 'Administration') }}</div>
           <button class="sidebar-item" [class.active]="activeTab === 'admin-management'" (click)="setTab('admin-management')">
-            <i class="ti ti-settings"></i>{{ t('Console Admin', 'Admin Control') }}
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            {{ t('Console Admin', 'Admin Control') }}
           </button>
           <button class="sidebar-item" [class.active]="activeTab === 'chat'" (click)="setTab('chat')">
-            <i class="ti ti-messages"></i>{{ t('Chat en Anglais', 'English Chat') }}
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            {{ t('Chat en Anglais', 'English Chat') }}
           </button>
           <button class="sidebar-item" [class.active]="activeTab === 'announcements'" (click)="setTab('announcements')">
-            <i class="ti ti-speakerphone"></i>{{ t('Annonces', 'Announcements') }}
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+            {{ t('Annonces', 'Announcements') }}
           </button>
           <button class="sidebar-item" [class.active]="activeTab === 'system-history'" (click)="setTab('system-history')">
-            <i class="ti ti-history"></i>{{ t('Logs Système', 'System Logs') }}
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg>
+            {{ t('Logs Système', 'System Logs') }}
           </button>
 
         <!-- TEACHER NAVIGATION -->
         } @else {
           <div class="nav-section-title" [style.color]="activeTheme === 'rose' ? '#BE185D' : (activeTheme === 'manga' ? '#8B74FC' : 'var(--text-muted)')">{{ t('Vue Générale', 'Overview') }}</div>
           <button class="sidebar-item" [class.active]="activeTab === 'overview'" (click)="setTab('overview')">
-            <i class="ti ti-layout-dashboard"></i>{{ t("Vue d'ensemble", 'Overview') }}
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+            {{ t("Vue d'ensemble", 'Overview') }}
           </button>
           <button class="sidebar-item" [class.active]="activeTab === 'chat'" (click)="setTab('chat')">
-            <i class="ti ti-messages"></i>{{ t('Chat en Anglais', 'English Chat') }}
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            {{ t('Chat en Anglais', 'English Chat') }}
           </button>
           <button class="sidebar-item" [class.active]="activeTab === 'leaderboard'" (click)="setTab('leaderboard')">
-            <i class="ti ti-trophy"></i>{{ t('Classement & Récompenses', 'Leaderboard & Rewards') }}
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+            {{ t('Classement & Récompenses', 'Leaderboard & Rewards') }}
           </button>
           <button class="sidebar-item" [class.active]="activeTab === 'students'" (click)="setTab('students')">
-            <i class="ti ti-users"></i>Mes Élèves
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Mes Élèves
           </button>
           <button class="sidebar-item" [class.active]="activeTab === 'teacher-coaching'" (click)="setTab('teacher-coaching')">
-            <i class="ti ti-target" [style.color]="activeTab === 'teacher-coaching' ? '#FFFFFF' : '#D97706'"></i>
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" [style.color]="activeTab === 'teacher-coaching' ? '#FFFFFF' : '#D97706'"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
             <span style="font-weight:700" [style.color]="activeTab === 'teacher-coaching' ? '#FFFFFF' : '#B45309'">{{ t('Coaching Privé', 'Private Coaching') }}</span>
             @if (pendingCoachingCount > 0) {
               <span class="sidebar-badge" style="background:#EF4444">{{ pendingCoachingCount }}</span>
             }
           </button>
           <button class="sidebar-item" [class.active]="activeTab === 'wheel-game'" (click)="setTab('wheel-game')">
-            <i class="ti ti-rotate" [style.color]="activeTab === 'wheel-game' ? '#FFFFFF' : '#10B981'"></i>
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" [style.color]="activeTab === 'wheel-game' ? '#FFFFFF' : '#10B981'"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
             <span style="font-weight:700" [style.color]="activeTab === 'wheel-game' ? '#FFFFFF' : '#047857'">{{ t('Roue des Noms', 'Wheel Game') }}</span>
           </button>
           
           <div class="nav-section-title" [style.color]="activeTheme === 'rose' ? '#BE185D' : (activeTheme === 'manga' ? '#8B74FC' : 'var(--text-muted)')">{{ t('Contenus', 'Content') }}</div>
           <button class="sidebar-item" [class.active]="activeTab === 'create-lesson'" (click)="setTab('create-lesson')">
-            <i class="ti ti-book"></i>{{ t('Créer un cours', 'Create Lesson') }}
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5v-15z"/></svg>
+            {{ t('Créer un cours', 'Create Lesson') }}
           </button>
           <button class="sidebar-item" [class.active]="activeTab === 'create-quiz'" (click)="setTab('create-quiz')">
-            <i class="ti ti-list-check"></i>{{ t('Gérer les Quiz', 'Quiz Builder') }}
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            {{ t('Gérer les Quiz', 'Quiz Builder') }}
           </button>
           <button class="sidebar-item" [class.active]="activeTab === 'exercises-manager'" (click)="setTab('exercises-manager')">
-            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px;flex-shrink:0"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><polyline points="9 12 11 14 15 10"/><line x1="9" y1="17" x2="15" y2="17"/></svg>{{ t('Gérer les Exercices', 'Exercises Manager') }}
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><polyline points="9 12 11 14 15 10"/><line x1="9" y1="17" x2="15" y2="17"/></svg>
+            {{ t('Gérer les Exercices', 'Exercises Manager') }}
           </button>
 
           <button class="sidebar-item" [class.active]="activeTab === 'grade-homework'" (click)="setTab('grade-homework')">
-            <i class="ti ti-writing"></i>{{ t('Corriger les Devoirs', 'Grade Homework') }}
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            {{ t('Corriger les Devoirs', 'Grade Homework') }}
             @if (pendingHomeworkCount > 0) {
               <span class="sidebar-badge" style="background:#FEE2E2; color:#DC2626">{{ pendingHomeworkCount }}</span>
             }
           </button>
           <button class="sidebar-item" [class.active]="activeTab === 'results'" (click)="setTab('results')">
-            <i class="ti ti-clipboard-data"></i>{{ t('Résultats Élèves', 'Students Results') }}
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M12 11v6"/><path d="M8 14v3"/><path d="M16 12v5"/></svg>
+            {{ t('Résultats Élèves', 'Students Results') }}
             @if (showResultsNewBadge) {
               <span class="sidebar-badge" style="background:#059669">NEW</span>
             }
           </button>
           <button class="sidebar-item" [class.active]="activeTab === 'ebooks'" (click)="setTab('ebooks')">
-            <i class="ti ti-notebook"></i>{{ t('Gérer les Ebooks', 'Manage Ebooks') }}
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5v-15z"/></svg>
+            {{ t('Gérer les Ebooks', 'Manage Ebooks') }}
           </button>
           
           <div class="nav-section-title" [style.color]="activeTheme === 'rose' ? '#BE185D' : (activeTheme === 'manga' ? '#8B74FC' : 'var(--text-muted)')">{{ t('Classes & Directs', 'Classes & Lives') }}</div>
           <button class="sidebar-item" [class.active]="activeTab === 'attendance'" (click)="setTab('attendance')">
-            <i class="ti ti-calendar-check"></i>{{ t('Feuille de Présences', 'Attendance Sheet') }}
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="m9 16 2 2 4-4"/></svg>
+            {{ t('Feuille de Présences', 'Attendance Sheet') }}
           </button>
           <button class="sidebar-item" [class.active]="activeTab === 'schedule-class'" (click)="setTab('schedule-class')">
-            <i class="ti ti-video"></i>{{ t('Analyses & Classes', 'Analytics & Classes') }}
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+            {{ t('Analyses & Classes', 'Analytics & Classes') }}
           </button>
           
           <div class="nav-section-title" [style.color]="activeTheme === 'rose' ? '#BE185D' : (activeTheme === 'manga' ? '#8B74FC' : 'var(--text-muted)')">{{ t('Administration', 'Administration') }}</div>
           <button class="sidebar-item" [class.active]="activeTab === 'announcements'" (click)="setTab('announcements')">
-            <i class="ti ti-speakerphone"></i>{{ t('Annonces Générales', 'Announcements') }}
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+            {{ t('Annonces Générales', 'Announcements') }}
           </button>
           <button class="sidebar-item" [class.active]="activeTab === 'payments'" (click)="setTab('payments')">
-            <i class="ti ti-credit-card"></i>{{ t('Suivi des Paiements', 'Payments Tracker') }}
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            {{ t('Suivi des Paiements', 'Payments Tracker') }}
           </button>
           <button class="sidebar-item" [class.active]="activeTab === 'teacher-events'" (click)="setTab('teacher-events')">
-            <i class="ti ti-calendar-event"></i>{{ t('Événements', 'Events') }}
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            {{ t('Événements', 'Events') }}
           </button>
           <button class="sidebar-item" [class.active]="activeTab === 'user-management'" (click)="setTab('user-management')">
-            <i class="ti ti-users"></i>{{ t('Utilisateurs & Modération', 'Users & Moderation') }}
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            {{ t('Utilisateurs & Modération', 'Users & Moderation') }}
           </button>
           <button class="sidebar-item" [class.active]="activeTab === 'system-history'" (click)="setTab('system-history')">
-            <i class="ti ti-history"></i>{{ t('Logs Système', 'System Logs') }}
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5"/><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"/><path d="M12 7v5l4 2"/></svg>
+            {{ t('Logs Système', 'System Logs') }}
           </button>
         }
 

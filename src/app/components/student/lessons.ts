@@ -948,7 +948,7 @@ export class StudentLessonsComponent {
     if (list.length === 0) return this.t('Non soumis', 'Unsubmitted');
     const latest = list.reduce((prev, current) => (new Date(prev.submittedAt) > new Date(current.submittedAt)) ? prev : current);
     if (latest.score === 'A refaire') {
-      return this.t('🔄 À refaire', '🔄 Redo');
+      return this.t('À refaire', 'Redo');
     }
     return latest.graded ? `${this.t('Corrigé', 'Graded')} (${latest.score})` : this.t('En attente', 'Pending');
   }
