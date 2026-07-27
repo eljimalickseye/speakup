@@ -1,5 +1,9 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { books as initialBooks, library as initialLibrary } from '../data/books.js';
+import { fetchCatalogFromCloud, saveCatalogToCloud, subscribeToCatalog } from '../lib/catalogApi.js';
+import { fetchReactionsFromCloud, toggleCloudBookReaction, subscribeToReactions } from '../lib/reactionsApi.js';
+import { subscribeToGlobalConfig, saveGlobalConfig, defaultConfig } from '../lib/configApi.js';
+import { signInWithGoogle, logoutUserFromFirebase } from '../lib/firebase.js';
 
 const AppContext = createContext();
 
@@ -82,6 +86,16 @@ export function AppProvider({ children }) {
   const [savedVocab, setSavedVocab] = useState(() => {
     const saved = localStorage.getItem('koko_vocab');
     return saved ? JSON.parse(saved) : [];
+  });
+
+  // Global Config Realtime State (Theme, Fonts, Monetization, Announcements)
+  const [globalConfig, setGlobalConfig] = useState(() => {
+    try {
+      const saved = localStorage.getItem('koko_global_config_v1');
+      return saved ? { ...defaultConfig, ...JSON.parse(saved) } : defaultConfig;
+    } catch {
+      return defaultConfig;
+    }
   });
 
   // Admin Master Switch for Public Creator Studio Access
@@ -249,15 +263,44 @@ export function AppProvider({ children }) {
     };
   }, []);
 
-  // Sync books state to LocalStorage and trigger BroadcastChannel
+  // Sync books state to LocalStorage and Firebase Cloud DB for global multi-device visibility
   const syncAndPersistBooks = (updatedList) => {
     const cleanList = sanitizeBooksList(updatedList);
     setBooksList(cleanList);
-    localStorage.setItem('koko_books_v3', JSON.stringify(cleanList));
+    saveCatalogToCloud(cleanList);
 
     if (catalogSyncChannel) {
       catalogSyncChannel.postMessage({ type: 'CATALOG_UPDATED', timestamp: Date.now() });
     }
+  };
+
+  // Real-time Firebase WebSocket subscription — new published books appear instantly on all devices!
+  useEffect(() => {
+    const unsubscribe = subscribeToCatalog((cloudBooks) => {
+      if (Array.isArray(cloudBooks) && cloudBooks.length > 0) {
+        setBooksList(sanitizeBooksList(cloudBooks));
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Real-time Firebase WebSocket subscription for Global Config
+  useEffect(() => {
+    const unsubscribe = subscribeToGlobalConfig((config) => {
+      setGlobalConfig(config);
+      if (config.isCreatorStudioPublic !== undefined) {
+        setIsCreatorStudioPublic(config.isCreatorStudioPublic);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const updateGlobalConfig = (newSettings) => {
+    const updated = { ...globalConfig, ...newSettings };
+    setGlobalConfig(updated);
+    saveGlobalConfig(updated);
   };
 
   useEffect(() => {
@@ -284,11 +327,92 @@ export function AppProvider({ children }) {
     logActivity(userProfile.name, 'A enregistré une session de lecture aujourd’hui', 'READ');
   };
 
-  // Vocabulary Actions
-  const addVocabWord = (en, fr) => {
-    if (savedVocab.some(v => v.en.toLowerCase() === en.toLowerCase())) return;
-    const newWord = { id: Date.now(), en, fr: fr || en, date: 'À l’instant' };
-    setSavedVocab((prev) => [newWord, ...prev]);
+  // Advanced Multi-Meaning Vocabulary Actions
+  // Allows saving a word multiple times, appending new meanings, and tracking save count
+  const addVocabWord = (en, fr, extraNote = '') => {
+    if (!en || !en.trim()) return;
+    const cleanEn = en.trim();
+    const cleanFr = fr ? fr.trim() : cleanEn;
+
+    setSavedVocab((prev) => {
+      const existingIdx = prev.findIndex(v => v.en.toLowerCase() === cleanEn.toLowerCase());
+
+      if (existingIdx !== -1) {
+        // Word already exists -> Add new meaning to array if unique, increment save count
+        const existing = prev[existingIdx];
+        const currentMeanings = Array.isArray(existing.meanings) ? [...existing.meanings] : [existing.fr];
+        if (cleanFr && !currentMeanings.includes(cleanFr)) {
+          currentMeanings.push(cleanFr);
+        }
+        if (extraNote && !currentMeanings.includes(extraNote)) {
+          currentMeanings.push(extraNote);
+        }
+
+        const updatedWord = {
+          ...existing,
+          fr: currentMeanings[0] || cleanFr,
+          meanings: currentMeanings,
+          timesSaved: (existing.timesSaved || 1) + 1,
+          lastSavedDate: 'À l’instant',
+        };
+
+        const list = [...prev];
+        list[existingIdx] = updatedWord;
+        return list;
+      } else {
+        // New word entry
+        const meaningsList = [cleanFr];
+        if (extraNote && extraNote !== cleanFr) meaningsList.push(extraNote);
+
+        const newWord = {
+          id: Date.now(),
+          en: cleanEn,
+          fr: cleanFr,
+          meanings: meaningsList,
+          date: 'À l’instant',
+          timesSaved: 1,
+        };
+        return [newWord, ...prev];
+      }
+    });
+  };
+
+  const addVocabMeaning = (wordId, newMeaning) => {
+    if (!newMeaning || !newMeaning.trim()) return;
+    setSavedVocab((prev) =>
+      prev.map((item) => {
+        if (item.id === wordId) {
+          const currentMeanings = Array.isArray(item.meanings) ? [...item.meanings] : [item.fr];
+          if (!currentMeanings.includes(newMeaning.trim())) {
+            currentMeanings.push(newMeaning.trim());
+          }
+          return {
+            ...item,
+            fr: currentMeanings[0],
+            meanings: currentMeanings,
+          };
+        }
+        return item;
+      })
+    );
+  };
+
+  const removeVocabMeaning = (wordId, meaningIndex) => {
+    setSavedVocab((prev) =>
+      prev.map((item) => {
+        if (item.id === wordId) {
+          const currentMeanings = Array.isArray(item.meanings) ? [...item.meanings] : [item.fr];
+          currentMeanings.splice(meaningIndex, 1);
+          if (currentMeanings.length === 0) return null; // Marked for deletion
+          return {
+            ...item,
+            fr: currentMeanings[0],
+            meanings: currentMeanings,
+          };
+        }
+        return item;
+      }).filter(Boolean)
+    );
   };
 
   const removeVocabWord = (id) => {
@@ -402,24 +526,12 @@ export function AppProvider({ children }) {
     logActivity(userProfile.name, `A laissé un avis (${newReview.rating}★) sur "${bookId}"`, 'REVIEW');
   };
 
-  const toggleBookReaction = (bookId, reactionType) => {
-    setBookReactions((prev) => {
-      const current = prev[bookId] || { love: 0, hate: 0, mindblown: 0, sad: 0, userReaction: null };
-      const isSame = current.userReaction === reactionType;
-      const newReaction = isSame ? null : reactionType;
-
-      const updatedCounts = { ...current };
-      if (current.userReaction) {
-        updatedCounts[current.userReaction] = Math.max(0, updatedCounts[current.userReaction] - 1);
-      }
-      if (newReaction) {
-        updatedCounts[newReaction] = (updatedCounts[newReaction] || 0) + 1;
-      }
-      updatedCounts.userReaction = newReaction;
-      const updatedAll = { ...prev, [bookId]: updatedCounts };
-      localStorage.setItem('koko_reactions', JSON.stringify(updatedAll));
-      return updatedAll;
-    });
+  const toggleBookReaction = async (bookId, reactionType = 'like') => {
+    // Instantly push reaction update to Global Cloud DB using unique Users Array
+    const cloudReactions = await toggleCloudBookReaction(bookId, reactionType, userProfile);
+    if (cloudReactions) {
+      setBookReactions(cloudReactions);
+    }
     logActivity(userProfile.name, `A réagi [${reactionType}] sur "${bookId}"`, 'REACTION');
   };
 
@@ -485,9 +597,17 @@ export function AppProvider({ children }) {
     } else if ('speechSynthesis' in window) {
       // PRIORITY 2: Immersive Web Speech Synthesis Fallback
       setAudioElement(null);
-      if (trackData.sentences && trackData.sentences.length > 0) {
-        const textToRead = trackData.sentences.map((s) => s.en || s).join('. ');
-        const utterance = new SpeechSynthesisUtterance(textToRead);
+      window.speechSynthesis.cancel();
+
+      const titleText = `${trackData.chapterTitle || 'Chapitre'}. `;
+      const bodyText = (trackData.sentences || [])
+        .map((s) => (typeof s === 'string' ? s : (s.en || s.fr || '')))
+        .filter(Boolean)
+        .join('. ');
+      const fullText = titleText + bodyText;
+
+      if (fullText.trim()) {
+        const utterance = new SpeechSynthesisUtterance(fullText);
         utterance.rate = playbackSpeed;
         utterance.lang = 'en-US';
         utterance.onend = () => {
@@ -513,12 +633,27 @@ export function AppProvider({ children }) {
       } else if ('speechSynthesis' in window) {
         if (window.speechSynthesis.paused) {
           window.speechSynthesis.resume();
-        } else if (activeAudio && activeAudio.sentences) {
-          const textToRead = activeAudio.sentences.map((s) => s.en || s).join('. ');
-          const utterance = new SpeechSynthesisUtterance(textToRead);
-          utterance.rate = playbackSpeed;
-          utterance.lang = 'en-US';
-          window.speechSynthesis.speak(utterance);
+        } else if (!window.speechSynthesis.speaking && activeAudio) {
+          window.speechSynthesis.cancel();
+          const titleText = `${activeAudio.chapterTitle || 'Chapitre'}. `;
+          const bodyText = (activeAudio.sentences || [])
+            .map((s) => (typeof s === 'string' ? s : (s.en || s.fr || '')))
+            .filter(Boolean)
+            .join('. ');
+          const fullText = titleText + bodyText;
+
+          if (fullText.trim()) {
+            const utterance = new SpeechSynthesisUtterance(fullText);
+            utterance.rate = playbackSpeed;
+            utterance.lang = 'en-US';
+            utterance.onend = () => {
+              setIsAudioPlaying(false);
+              setAudioProgress(100);
+            };
+            window.speechSynthesis.speak(utterance);
+          }
+        } else {
+          window.speechSynthesis.resume();
         }
       }
       setIsAudioPlaying(true);
@@ -577,8 +712,37 @@ export function AppProvider({ children }) {
     logActivity(userObj.name, 'S’est connecté à son compte', 'AUTH');
   };
 
+  const loginWithGoogle = async () => {
+    try {
+      const firebaseUser = await signInWithGoogle();
+      if (firebaseUser) {
+        const googleProfile = {
+          id: firebaseUser.uid,
+          name: firebaseUser.displayName || 'Lecteur Koko',
+          email: firebaseUser.email || 'google.user@koko.sn',
+          avatarUrl: firebaseUser.photoURL || '',
+          phone: firebaseUser.phoneNumber || '770000000',
+          coins: Math.max(userProfile.coins || 0, 50),
+          streak: Math.max(userProfile.streak || 0, 1),
+          isVip: true,
+          role: firebaseUser.email === 'malick@koko.app' ? 'admin' : (userProfile.role === 'admin' ? 'admin' : 'reader'),
+          accessStatus: 'APPROVED',
+          provider: 'google',
+        };
+        setUserProfile(googleProfile);
+        setIsLoggedIn(true);
+        logActivity(googleProfile.name, 'S’est connecté via Google Auth', 'AUTH');
+        return googleProfile;
+      }
+    } catch (error) {
+      console.error('Google Login Error:', error);
+      throw error;
+    }
+  };
+
   const logoutUser = () => {
     logActivity(userProfile.name, 'S’est déconnecté', 'AUTH');
+    logoutUserFromFirebase();
     setIsLoggedIn(false);
     setUserProfile({
       id: 'usr-reader',
@@ -641,6 +805,8 @@ export function AppProvider({ children }) {
         booksList,
         userLibrary,
         bookmarks,
+        globalConfig: globalConfig || defaultConfig,
+        updateGlobalConfig,
         userProfile,
         isLoggedIn,
         savedVocab,
@@ -681,6 +847,7 @@ export function AppProvider({ children }) {
         toggleCreatorStudioPublic,
         setUserProfile,
         loginUser,
+        loginWithGoogle,
         logoutUser,
         submitAccessRequest,
         updateUserRole,

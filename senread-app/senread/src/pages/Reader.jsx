@@ -23,6 +23,7 @@ import AudioBar from '../components/reader/AudioBar.jsx';
 import ReadingPreferencesModal from '../components/reader/ReadingPreferencesModal.jsx';
 import WordDefinitionModal from '../components/reader/WordDefinitionModal.jsx';
 import ChapterComments from '../components/comments/ChapterComments.jsx';
+import { fetchChapterComments, countTotalComments } from '../lib/commentsApi.js';
 import PaymentModal from '../components/monetization/PaymentModal.jsx';
 
 export default function Reader() {
@@ -41,6 +42,7 @@ export default function Reader() {
     bookReactions,
     toggleBookReaction,
     bookReviews,
+    stopAudioTrack,
   } = useApp();
 
   const chapterNum = Number(chapter) || 1;
@@ -76,6 +78,8 @@ export default function Reader() {
   const [isImmersive, setIsImmersive] = useState(false);
   const [showHudControls, setShowHudControls] = useState(false);
   const [showChapterDrawer, setShowChapterDrawer] = useState(false); // Chapter list drawer
+  const [chapterSearchQuery, setChapterSearchQuery] = useState('');
+  const [chapterSortAsc, setChapterSortAsc] = useState(true);
 
   const [readingPrefs, setReadingPrefs] = useState({
     theme: 'cream',
@@ -104,6 +108,35 @@ export default function Reader() {
     activeChapterNumRef.current = chapterNum;
   }, [chapterNum]);
 
+  // Real-time synchronization of comments count for active chapter (Cloud DB + Local Storage)
+  const [activeChapterCommentsCount, setActiveChapterCommentsCount] = useState(3);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const syncCommentsCount = async () => {
+      const bId = id || 'b1';
+      const cId = String(activeChapterNum || 1);
+      const commentsData = await fetchChapterComments(bId, cId);
+      if (isMounted && commentsData) {
+        setActiveChapterCommentsCount(countTotalComments(commentsData));
+      }
+    };
+
+    syncCommentsCount();
+    window.addEventListener('storage', syncCommentsCount);
+    window.addEventListener('koko_comments_updated', syncCommentsCount);
+
+    const interval = setInterval(syncCommentsCount, 2500);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+      window.removeEventListener('storage', syncCommentsCount);
+      window.removeEventListener('koko_comments_updated', syncCommentsCount);
+    };
+  }, [id, activeChapterNum, showCommentsModal]);
+
   // Track active chapter in view during continuous scroll
   // IMPORTANT: activeChapterNum is intentionally NOT in the dep array —
   // using a ref prevents the observer from tearing down/reconnecting on every
@@ -119,7 +152,7 @@ export default function Reader() {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting && entry.intersectionRatio >= 0.15) {
+          if (entry.isIntersecting) {
             const num = Number(entry.target.getAttribute('data-chapter-num'));
             if (num && num !== activeChapterNumRef.current) {
               activeChapterNumRef.current = num;
@@ -143,13 +176,41 @@ export default function Reader() {
           }
         });
       },
-      { root: container, threshold: [0.1, 0.15, 0.3] }
+      { root: container, rootMargin: '-10% 0px -55% 0px', threshold: 0.1 }
     );
 
     chapterBlocks.forEach((block) => observer.observe(block));
     return () => observer.disconnect();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, allChapters.length, readingPrefs.mode]);
+
+  // Robust Chapter Navigation Handler (works in both scroll & flip modes)
+  const handleNavigateChapter = (targetNum) => {
+    if (targetNum < 1 || targetNum > allChapters.length) return;
+
+    if (readingPrefs.mode === 'flip') {
+      navigate(`/book/${id}/read/${targetNum}`);
+      return;
+    }
+
+    const container = scrollContainerRef.current;
+    if (container) {
+      const targetEl = container.querySelector(`#chap-block-${targetNum}`);
+      if (targetEl) {
+        const containerTop = container.getBoundingClientRect().top;
+        const targetTop = targetEl.getBoundingClientRect().top;
+        const offset = targetTop - containerTop + container.scrollTop;
+        container.scrollTo({ top: offset, behavior: 'smooth' });
+
+        activeChapterNumRef.current = targetNum;
+        setActiveChapterNum(targetNum);
+      } else {
+        navigate(`/book/${id}/read/${targetNum}`);
+      }
+    } else {
+      navigate(`/book/${id}/read/${targetNum}`);
+    }
+  };
 
   useEffect(() => {
     recordReadingSession();
@@ -158,15 +219,21 @@ export default function Reader() {
     if (scrollContainerRef.current) {
       if (chapterNum > 1) {
         setTimeout(() => {
-          const targetEl = document.getElementById(`chap-block-${chapterNum}`);
-          if (targetEl) {
-            targetEl.scrollIntoView({ behavior: 'instant', block: 'start' });
+          const chapEl = document.getElementById(`chap-block-${chapterNum}`);
+          if (chapEl && scrollContainerRef.current) {
+            chapEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }
-        }, 50);
+        }, 150);
       } else {
         scrollContainerRef.current.scrollTop = 0;
       }
     }
+
+    return () => {
+      // Cleanly stop audio narration when leaving reader / exiting book
+      stopAudioTrack();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, chapterNum]);
 
   // Loading Failsafe for Chapter Transitions
@@ -374,19 +441,45 @@ export default function Reader() {
       }}
       onClick={handlePageTap}
     >
-      {/* Always-visible floating Settings pill — accessible without tapping the screen */}
+      {/* Always-visible persistent floating Chapter List pill on the top-left */}
+      {!showHudControls && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); setShowChapterDrawer(true); }}
+          className="fixed z-50 flex items-center gap-1.5 px-3 py-1.5 rounded-full shadow-md animate-fadeIn transition-all active:scale-95"
+          style={{
+            top: `max(16px, calc(env(safe-area-inset-top) + 8px))`,
+            left: 14,
+            backgroundColor: isLight ? 'rgba(250,248,245,0.92)' : 'rgba(18,18,24,0.92)',
+            border: `1px solid ${isLight ? 'rgba(0,0,0,0.10)' : 'rgba(255,255,255,0.14)'}`,
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            color: readingPrefs.text,
+          }}
+          aria-label="Liste des chapitres"
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#C8A951' }}>
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <line x1="3" y1="12" x2="21" y2="12"/>
+            <line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+          <span className="text-[10.5px] font-bold opacity-80">Ch. {activeChapterNum}</span>
+        </button>
+      )}
+
+      {/* Always-visible floating Settings pill on the top-right */}
       {!showHudControls && readingPrefs.mode !== 'flip' && (
         <button
           type="button"
           onClick={(e) => { e.stopPropagation(); setShowPreferences(true); }}
-          className="fixed z-50 flex items-center gap-1.5 px-3 py-1.5 rounded-full shadow-lg animate-fadeIn"
+          className="fixed z-50 flex items-center gap-1.5 px-3 py-1.5 rounded-full shadow-md animate-fadeIn"
           style={{
-            top: `max(14px, calc(env(safe-area-inset-top) + 10px))`,
+            top: `max(16px, calc(env(safe-area-inset-top) + 8px))`,
             right: 14,
-            backgroundColor: isLight ? 'rgba(250,248,245,0.88)' : 'rgba(18,18,24,0.88)',
-            border: `1px solid ${isLight ? 'rgba(0,0,0,0.10)' : 'rgba(255,255,255,0.12)'}`,
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
+            backgroundColor: isLight ? 'rgba(250,248,245,0.92)' : 'rgba(18,18,24,0.92)',
+            border: `1px solid ${isLight ? 'rgba(0,0,0,0.10)' : 'rgba(255,255,255,0.14)'}`,
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
           }}
           aria-label="Paramètres de lecture"
         >
@@ -394,11 +487,12 @@ export default function Reader() {
           <span className="text-[10.5px] font-bold" style={{ color: readingPrefs.text, opacity: 0.7 }}>Aa</span>
         </button>
       )}
+
       {/* Top Header — hidden by default in scroll mode, reveals on tap */}
       {showTopBar && (
         <div
           className="flex justify-between items-center px-3 pt-3 pb-2 animate-fadeIn flex-shrink-0 z-20"
-          style={{ paddingTop: 'max(12px, env(safe-area-inset-top))' }}
+          style={{ paddingTop: 'max(48px, calc(env(safe-area-inset-top) + 12px))' }}
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex items-center gap-1">
@@ -479,7 +573,7 @@ export default function Reader() {
 
       {/* STABLE, FIXED E-BOOK CANVAS FILLING 100% OF VIEWPORT */}
       {readingPrefs.mode === 'flip' || isImmersive ? (
-        <div className="flex-1 flex flex-col justify-between w-full max-w-xl mx-auto h-full overflow-hidden">
+        <div className="flex-1 flex flex-col justify-between w-full max-w-xl mx-auto h-full overflow-hidden pt-16 sm:pt-20">
           {/* E-Book Page Card (Touch Swipe + 3D Page Curl Effect) */}
           <div
             onTouchStart={handleTouchStart}
@@ -557,22 +651,14 @@ export default function Reader() {
                   }}
                 >
                   {(contentPages[currentPageIndex - 1] || []).map((s, i) => (
-                    <div
-                      key={i}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const clickedText = e.target.innerText;
-                        if (clickedText && clickedText.trim().length > 1) {
-                          setSelectedWord(clickedText.trim());
-                        }
-                      }}
-                    >
+                    <div key={i}>
                       <BilingualSentence
                         en={s.en}
                         fr={s.fr}
                         vocabWord={s.vocabWord}
                         vocabFr={s.vocabFr}
                         isLight={isLight}
+                        onSelectWord={(word) => setSelectedWord(word)}
                       />
                     </div>
                   ))}
@@ -594,7 +680,7 @@ export default function Reader() {
         <div
           key={`book-feed-${id}`}
           ref={scrollContainerRef}
-          className="flex-1 overflow-y-auto max-w-xl mx-auto w-full text-justify px-4 relative pb-16 transition-colors duration-300"
+          className="flex-1 overflow-y-auto max-w-xl mx-auto w-full text-justify px-4 pt-20 sm:pt-24 pb-20 relative transition-colors duration-300"
           style={{
             fontFamily: readingPrefs.font,
             fontSize: `${readingPrefs.fontSize}px`,
@@ -629,12 +715,7 @@ export default function Reader() {
 
                 {/* Sentences */}
                 {sentences.map((s, sIdx) => (
-                  <div key={sIdx} onClick={(e) => {
-                    const clickedText = e.target.innerText;
-                    if (clickedText && clickedText.trim().length > 1) {
-                      setSelectedWord(clickedText.trim());
-                    }
-                  }}>
+                  <div key={sIdx}>
                     <BilingualSentence
                       en={s.en}
                       fr={s.fr}
@@ -644,6 +725,7 @@ export default function Reader() {
                       fontSize={readingPrefs.fontSize}
                       lineHeight={readingPrefs.lineHeight}
                       fontFamily={readingPrefs.font}
+                      onSelectWord={(word) => setSelectedWord(word)}
                     />
                   </div>
                 ))}
@@ -730,41 +812,21 @@ export default function Reader() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z"/>
             </svg>
             <span className={`text-[13px] font-bold ${isLight ? 'text-ink/70' : 'text-white/60'}`}>
-              {bookReviews?.[id]?.length || 0}
+              {activeChapterCommentsCount > 999
+                ? (activeChapterCommentsCount / 1000).toFixed(1) + 'K'
+                : activeChapterCommentsCount}
             </span>
           </button>
         </div>
 
-        {/* RIGHT — Chapter list + Prev/Next */}
+        {/* RIGHT — Prev/Next Chapter Chevrons & Indicator */}
         <div className="flex items-center gap-2">
-
-          {/* Three-line chapter list icon */}
-          <button
-            type="button"
-            onClick={() => setShowChapterDrawer(true)}
-            className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-90 ${
-              isLight ? 'hover:bg-black/8' : 'hover:bg-white/10'
-            }`}
-            title="Liste des chapitres"
-          >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
-              style={{ color: isLight ? 'rgba(0,0,0,0.55)' : 'rgba(255,255,255,0.65)' }}>
-              <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-              <line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-              <line x1="3" y1="18" x2="21" y2="18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
-          </button>
-
           {/* Chevron Left — previous chapter */}
           <button
             type="button"
             disabled={activeChapterNum <= 1}
-            onClick={() => {
-              if (activeChapterNum > 1) {
-                const el = document.getElementById(`chap-block-${activeChapterNum - 1}`);
-                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              }
-            }}
+            onClick={() => handleNavigateChapter(activeChapterNum - 1)}
+            aria-label="Chapitre précédent"
             className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
               activeChapterNum <= 1
                 ? 'opacity-20 cursor-not-allowed'
@@ -772,21 +834,29 @@ export default function Reader() {
             }`}
           >
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
-              style={{ color: isLight ? 'rgba(0,0,0,0.55)' : 'rgba(255,255,255,0.65)' }}>
+              style={{ color: isLight ? 'rgba(0,0,0,0.65)' : 'rgba(255,255,255,0.75)' }}>
               <polyline points="15 18 9 12 15 6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
+          </button>
+
+          {/* Chapter Indicator Pill */}
+          <button
+            type="button"
+            onClick={() => setShowChapterDrawer(true)}
+            className={`px-3 py-1.5 rounded-full text-[11.5px] font-bold transition-all active:scale-95 flex items-center gap-1 ${
+              isLight ? 'bg-black/6 text-ink hover:bg-black/10' : 'bg-white/8 text-white hover:bg-white/14'
+            }`}
+          >
+            <span>Ch. {activeChapterNum} / {allChapters.length}</span>
+            <span className="text-[10px] text-gold font-bold">▾</span>
           </button>
 
           {/* Chevron Right — next chapter */}
           <button
             type="button"
             disabled={activeChapterNum >= allChapters.length}
-            onClick={() => {
-              if (activeChapterNum < allChapters.length) {
-                const el = document.getElementById(`chap-block-${activeChapterNum + 1}`);
-                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              }
-            }}
+            onClick={() => handleNavigateChapter(activeChapterNum + 1)}
+            aria-label="Chapitre suivant"
             className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${
               activeChapterNum >= allChapters.length
                 ? 'opacity-20 cursor-not-allowed'
@@ -794,96 +864,230 @@ export default function Reader() {
             }`}
           >
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
-              style={{ color: isLight ? 'rgba(0,0,0,0.55)' : 'rgba(255,255,255,0.65)' }}>
+              style={{ color: isLight ? 'rgba(0,0,0,0.65)' : 'rgba(255,255,255,0.75)' }}>
               <polyline points="9 18 15 12 9 6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </button>
         </div>
       </div>
 
-      {/* ═══ CHAPTER LIST DRAWER ═══ */}
+      {/* ═══ WEBTOON-STYLE FULL CHAPTER LIST MODAL ═══ */}
       {showChapterDrawer && (
         <div
-          className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm flex items-end justify-center animate-fadeIn"
+          className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center animate-fadeIn"
           onClick={() => setShowChapterDrawer(false)}
         >
           <div
-            className="w-full max-w-lg rounded-t-3xl flex flex-col"
+            className="w-full max-w-lg rounded-t-3xl sm:rounded-3xl flex flex-col shadow-2xl transition-colors duration-300 overflow-hidden"
             style={{
-              backgroundColor: isLight ? '#FAF8F5' : '#111113',
-              maxHeight: '75dvh',
+              backgroundColor: isLight ? '#FAF8F5' : '#121216',
+              maxHeight: '82dvh',
               paddingBottom: 'env(safe-area-inset-bottom)',
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Handle */}
+            {/* Drag Handle */}
             <div className="flex justify-center pt-3 pb-1">
-              <div className="w-10 h-1 rounded-full" style={{ backgroundColor: isLight ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.2)' }} />
+              <div
+                className="w-10 h-1 rounded-full"
+                style={{ backgroundColor: isLight ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.2)' }}
+              />
             </div>
 
-            {/* Header */}
-            <div className="flex items-center justify-between px-5 pt-2 pb-3 border-b" style={{ borderColor: isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.08)' }}>
+            {/* Modal Header */}
+            <div
+              className="flex items-center justify-between px-5 pt-2 pb-3 border-b flex-shrink-0"
+              style={{ borderColor: isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.08)' }}
+            >
               <div>
-                <p className="text-[10.5px] font-bold uppercase tracking-widest opacity-50" style={{ color: readingPrefs.text }}>Chapitres</p>
-                <h3 className="font-display font-bold text-[16px]" style={{ color: readingPrefs.text }}>{bookData?.title || 'Roman'}</h3>
+                <span className="text-[10.5px] font-mono font-bold uppercase tracking-widest text-gold block">
+                  Sommaire & Chapitres ({allChapters.length})
+                </span>
+                <h3 className="font-display font-bold text-[17px] truncate max-w-[240px] sm:max-w-[320px]" style={{ color: readingPrefs.text }}>
+                  {bookData?.title || 'Roman Koko'}
+                </h3>
               </div>
+
               <button
+                type="button"
                 onClick={() => setShowChapterDrawer(false)}
-                className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-[16px]"
-                style={{ backgroundColor: isLight ? 'rgba(0,0,0,0.07)' : 'rgba(255,255,255,0.08)', color: isLight ? '#1A1816' : '#F3F7F5' }}
+                className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-[16px] transition-colors"
+                style={{
+                  backgroundColor: isLight ? 'rgba(0,0,0,0.07)' : 'rgba(255,255,255,0.1)',
+                  color: readingPrefs.text,
+                }}
               >
                 ×
               </button>
             </div>
 
-            {/* Chapter list */}
-            <div className="overflow-y-auto flex-1 py-2">
-              {allChapters.map((chap, cIdx) => {
-                const cNum = cIdx + 1;
-                const isActive = cNum === activeChapterNum;
-                return (
+            {/* Search & Sort Controls Bar */}
+            <div
+              className="px-4 py-2.5 flex items-center gap-2 border-b flex-shrink-0"
+              style={{ borderColor: isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)' }}
+            >
+              {/* Search Bar */}
+              <div
+                className="flex-1 flex items-center gap-2 px-3 py-2 rounded-xl text-[12.5px]"
+                style={{
+                  backgroundColor: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.07)',
+                  border: `1px solid ${isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.1)'}`,
+                  color: readingPrefs.text,
+                }}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5 }}>
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <input
+                  type="text"
+                  value={chapterSearchQuery}
+                  onChange={(e) => setChapterSearchQuery(e.target.value)}
+                  placeholder="Rechercher un chapitre..."
+                  className="bg-transparent outline-none flex-1 text-[12.5px]"
+                  style={{ color: readingPrefs.text }}
+                />
+                {chapterSearchQuery && (
                   <button
-                    key={cNum}
                     type="button"
-                    onClick={() => {
-                      const el = document.getElementById(`chap-block-${cNum}`);
-                      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                      setShowChapterDrawer(false);
-                    }}
-                    className="w-full flex items-center gap-4 px-5 py-3.5 text-left transition-all active:opacity-70"
-                    style={{
-                      backgroundColor: isActive
-                        ? (isLight ? 'rgba(200,169,81,0.12)' : 'rgba(200,169,81,0.15)')
-                        : 'transparent',
-                      borderBottom: `1px solid ${isLight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)'}`,
-                    }}
+                    onClick={() => setChapterSearchQuery('')}
+                    className="text-[11px] font-bold opacity-60 hover:opacity-100 px-1"
                   >
-                    <span
-                      className="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-[12px] font-extrabold"
+                    ×
+                  </button>
+                )}
+              </div>
+
+              {/* Sort Order Toggle Button */}
+              <button
+                type="button"
+                onClick={() => setChapterSortAsc((prev) => !prev)}
+                className="px-3 py-2 rounded-xl text-[11.5px] font-bold flex items-center gap-1.5 transition-all active:scale-95 flex-shrink-0"
+                style={{
+                  backgroundColor: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.07)',
+                  border: `1px solid ${isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.1)'}`,
+                  color: readingPrefs.text,
+                }}
+                title={chapterSortAsc ? 'Tri : Chapitre 1 → N' : 'Tri : Chapitre N → 1'}
+              >
+                <span>{chapterSortAsc ? '⬇️ 1→N' : '⬆️ N→1'}</span>
+              </button>
+            </div>
+
+            {/* Scrollable Chapter List Items */}
+            <div className="overflow-y-auto flex-1 py-2 px-3 space-y-1.5">
+              {(() => {
+                const prepared = allChapters.map((c, idx) => ({ ...c, originalNum: idx + 1 }));
+                const filtered = prepared.filter((c) => {
+                  if (!chapterSearchQuery.trim()) return true;
+                  const q = chapterSearchQuery.toLowerCase();
+                  return (
+                    `chapitre ${c.originalNum}`.includes(q) ||
+                    (c.title && c.title.toLowerCase().includes(q))
+                  );
+                });
+                const sorted = chapterSortAsc ? filtered : [...filtered].reverse();
+
+                if (sorted.length === 0) {
+                  return (
+                    <div className="py-10 text-center text-[12.5px] opacity-50">
+                      Aucun chapitre ne correspond à "{chapterSearchQuery}"
+                    </div>
+                  );
+                }
+
+                return sorted.map((chap) => {
+                  const cNum = chap.originalNum;
+                  const isActive = cNum === activeChapterNum;
+                  const unlocked = isChapterUnlocked(id, cNum);
+                  const sentenceCount = chap.sentences?.length || 0;
+                  const estTimeMinutes = Math.max(1, Math.ceil(sentenceCount * 0.25));
+
+                  return (
+                    <button
+                      key={cNum}
+                      type="button"
+                      onClick={() => {
+                        handleNavigateChapter(cNum);
+                        setShowChapterDrawer(false);
+                      }}
+                      className="w-full flex items-center gap-3.5 p-3 rounded-2xl text-left transition-all active:scale-[0.98]"
                       style={{
-                        backgroundColor: isActive ? '#C8A951' : (isLight ? 'rgba(0,0,0,0.07)' : 'rgba(255,255,255,0.08)'),
-                        color: isActive ? '#1A1816' : (isLight ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.5)'),
+                        backgroundColor: isActive
+                          ? (isLight ? 'rgba(200,169,81,0.14)' : 'rgba(200,169,81,0.18)')
+                          : (isLight ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.03)'),
+                        border: `1px solid ${
+                          isActive
+                            ? 'rgba(200,169,81,0.4)'
+                            : (isLight ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)')
+                        }`,
                       }}
                     >
-                      {cNum}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p
-                        className="text-[13.5px] font-bold truncate"
-                        style={{ color: isActive ? '#C8A951' : (isLight ? '#1A1816' : '#F3F7F5') }}
+                      {/* Chapter Number Badge / Avatar */}
+                      <div
+                        className="w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center font-mono font-extrabold text-[12.5px] shadow-sm"
+                        style={{
+                          backgroundColor: isActive
+                            ? '#C8A951'
+                            : (isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)'),
+                          color: isActive
+                            ? '#1A1816'
+                            : (isLight ? 'rgba(0,0,0,0.65)' : 'rgba(255,255,255,0.75)'),
+                        }}
                       >
-                        {chap.title || `Chapitre ${cNum}`}
-                      </p>
-                      {isActive && (
-                        <p className="text-[11px] font-semibold" style={{ color: '#C8A951', opacity: 0.8 }}>En cours de lecture</p>
-                      )}
-                    </div>
-                    {isActive && (
-                      <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ backgroundColor: '#C8A951', color: '#1A1816' }}>▶</span>
-                    )}
-                  </button>
-                );
-              })}
+                        {cNum}
+                      </div>
+
+                      {/* Chapter Title & Dimensions/Metadata */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <h4
+                            className="text-[13.5px] font-bold truncate"
+                            style={{ color: isActive ? '#C8A951' : readingPrefs.text }}
+                          >
+                            {chap.title || `Chapitre ${cNum}`}
+                          </h4>
+                        </div>
+                        <p
+                          className="text-[11px] font-medium opacity-60 mt-0.5"
+                          style={{ color: readingPrefs.text }}
+                        >
+                          {sentenceCount > 0 ? `${sentenceCount} phrases` : 'Chapitre complet'} · ~{estTimeMinutes} min de lecture
+                        </p>
+                      </div>
+
+                      {/* Status / Lock / Current Indicator Pill */}
+                      <div className="flex-shrink-0">
+                        {isActive ? (
+                          <span className="text-[10.5px] font-extrabold px-2.5 py-1 rounded-full bg-gold text-deep-2 shadow-sm flex items-center gap-1">
+                            <span>▶ En cours</span>
+                          </span>
+                        ) : unlocked || !chap.isPaid ? (
+                          <span
+                            className="text-[10.5px] font-bold px-2 py-0.5 rounded-full"
+                            style={{
+                              backgroundColor: isLight ? 'rgba(76,175,138,0.12)' : 'rgba(76,175,138,0.2)',
+                              color: '#4CAF8A',
+                            }}
+                          >
+                            Gratuit
+                          </span>
+                        ) : (
+                          <span
+                            className="text-[10.5px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1"
+                            style={{
+                              backgroundColor: 'rgba(200,169,81,0.15)',
+                              color: '#C8A951',
+                            }}
+                          >
+                            🔒 {chap.coinPrice || 10} Coins
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  );
+                });
+              })()}
             </div>
           </div>
         </div>
@@ -970,8 +1174,9 @@ export default function Reader() {
       {showCommentsModal && (
         <ChapterComments
           bookId={id}
-          chapterId={chapterNum}
+          chapterId={activeChapterNum}
           onClose={() => setShowCommentsModal(false)}
+          isLight={isLight}
         />
       )}
 
@@ -981,6 +1186,17 @@ export default function Reader() {
         onClose={() => setShowPreferences(false)}
         preferences={readingPrefs}
         onUpdatePreferences={handleUpdatePreferences}
+      />
+
+      {/* Floating Audio Narration Button (Instant Vocal Mode) */}
+      <AudioBar
+        bookId={id}
+        bookTitle={bookData?.title || 'Roman Koko'}
+        chapterTitle={allChapters[activeChapterNum - 1]?.title || `Chapitre ${activeChapterNum}`}
+        duration={allChapters[activeChapterNum - 1]?.audioDuration}
+        sentences={allChapters[activeChapterNum - 1]?.sentences || chapterData?.sentences || []}
+        chapterNumber={activeChapterNum}
+        cover={bookData?.cover || 'c1'}
       />
 
       {/* Word Definition Modal */}

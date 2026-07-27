@@ -313,20 +313,41 @@ export default function Library() {
                 </p>
               </div>
             ) : (
-              savedVocab.map((item) => (
-                <div key={item.id} className="bg-white border border-surface-line rounded-2xl p-3.5 flex items-center justify-between shadow-sm">
-                  <div>
-                    <span className="font-display font-bold text-[14px] text-ink capitalize block">{item.en}</span>
-                    <span className="text-[12px] text-taupe font-semibold">{item.fr}</span>
+              savedVocab.map((item) => {
+                const meaningsList = Array.isArray(item.meanings) ? item.meanings : [item.fr || item.en];
+                return (
+                  <div key={item.id} className="bg-white border border-surface-line rounded-2xl p-4 space-y-2 shadow-sm">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-display font-extrabold text-[15px] text-ink capitalize block">{item.en}</span>
+                          {item.timesSaved > 1 && (
+                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-gold/20 text-gold">
+                              {item.timesSaved}×
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[10px] text-taupe font-medium">{item.date || 'À l\'instant'}</span>
+                      </div>
+                      <button
+                        onClick={() => removeVocabWord(item.id)}
+                        className="p-1.5 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
+                        title="Supprimer le mot"
+                      >
+                        <TrashIcon className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {meaningsList.map((m, mIdx) => (
+                        <span key={mIdx} className="text-[11.5px] font-bold px-2.5 py-0.5 rounded-lg bg-gold/10 border border-gold/25 text-ink">
+                          • {m}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                  <button
-                    onClick={() => removeVocabWord(item.id)}
-                    className="p-2 rounded-xl bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-colors"
-                  >
-                    <TrashIcon className="w-4 h-4" />
-                  </button>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>

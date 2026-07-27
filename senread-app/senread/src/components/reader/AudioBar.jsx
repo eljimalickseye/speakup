@@ -11,7 +11,7 @@ export default function AudioBar({ bookId, bookTitle, chapterTitle, duration, se
   } = useApp();
 
   const realDuration = duration || calculateRealisticAudioTime(sentences);
-  const isCurrentTrack = activeAudio && activeAudio.bookId === bookId;
+  const isCurrentTrack = activeAudio && activeAudio.bookId === bookId && (activeAudio.chapterNumber === chapterNumber || !activeAudio.chapterNumber);
 
   const handleTogglePlay = (e) => {
     e.stopPropagation();

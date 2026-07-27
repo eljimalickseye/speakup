@@ -16,6 +16,7 @@ import {
   LogOutIcon,
   SunIcon,
   MoonIcon,
+  GoogleIcon,
 } from '../components/ui/Icons.jsx';
 import PaymentModal from '../components/monetization/PaymentModal.jsx';
 
@@ -26,9 +27,12 @@ export default function Profile() {
     isLoggedIn,
     savedVocab,
     removeVocabWord,
+    addVocabMeaning,
+    removeVocabMeaning,
     updateUserProfileInfo,
     addCoins,
     loginUser,
+    loginWithGoogle,
     logoutUser,
     submitAccessRequest,
     appLanguage,
@@ -53,6 +57,20 @@ export default function Profile() {
   const [authMode, setAuthMode] = useState('login'); // 'login' | 'signup'
   const [loginUsername, setLoginUsername] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  const handleGoogleAuth = async () => {
+    try {
+      setGoogleLoading(true);
+      setAuthError('');
+      await loginWithGoogle();
+    } catch (e) {
+      console.error(e);
+      setAuthError(isEn ? 'Google Sign-In failed or was cancelled.' : 'Échec de la connexion Google ou fenêtre fermée.');
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
 
   // Instant Signup State
   const [signupName, setSignupName] = useState('');
@@ -73,28 +91,29 @@ export default function Profile() {
     e.preventDefault();
     const loginLower = loginUsername.trim().toLowerCase();
     
-    if (loginLower.includes('fatoumata') || loginLower.includes('fatou')) {
+    if (loginLower.includes('785423833') || loginLower.includes('785423') || loginLower.includes('malick') || loginLower.includes('admin')) {
+      localStorage.setItem('koko_admin_unlocked', 'true');
+      loginUser({
+        id: 'usr-admin',
+        name: 'El Hadji Malick Seye (Admin)',
+        email: 'malick@koko.sn',
+        phone: '785423833',
+        coins: 5000,
+        streak: 30,
+        isVip: true,
+        role: 'admin',
+        accessStatus: 'APPROVED',
+      });
+    } else if (loginLower.includes('fatoumata') || loginLower.includes('fatou')) {
       loginUser({
         id: 'usr-author',
         name: 'Fatoumata',
         email: 'fatoumata@koko.sn',
         phone: '778901234',
-        coins: 0,
-        streak: 0,
+        coins: 100,
+        streak: 15,
         isVip: true,
-        role: 'author', // Sole Writer
-        accessStatus: 'APPROVED',
-      });
-    } else if (loginLower.includes('malick') || loginLower.includes('admin')) {
-      loginUser({
-        id: 'usr-admin',
-        name: 'El Hadji Malick Seye',
-        email: 'malick@koko.sn',
-        phone: '785423833',
-        coins: 0,
-        streak: 0,
-        isVip: true,
-        role: 'admin', // Management & Admin
+        role: 'author',
         accessStatus: 'APPROVED',
       });
     } else {
@@ -103,10 +122,10 @@ export default function Profile() {
         name: loginUsername.trim() || 'Lecteur Koko',
         email: `${loginUsername.trim().replace(/\s+/g, '').toLowerCase() || 'lecteur'}@koko.sn`,
         phone: '771234567',
-        coins: 0,
-        streak: 0,
+        coins: 50,
+        streak: 1,
         isVip: false,
-        role: 'reader', // Standard Reader
+        role: 'reader',
         accessStatus: 'APPROVED',
       });
     }
@@ -187,6 +206,23 @@ export default function Profile() {
 
         {authMode === 'login' ? (
           <div className="w-full max-w-xs space-y-4">
+            {/* Prominent Google Sign-In Button */}
+            <button
+              type="button"
+              onClick={handleGoogleAuth}
+              disabled={googleLoading}
+              className="w-full bg-white border border-surface-line text-ink py-3 px-4 rounded-2xl font-bold text-[13px] shadow-sm hover:bg-paper flex items-center justify-center gap-3 transition-all active:scale-95 disabled:opacity-50"
+            >
+              <GoogleIcon className="w-5 h-5 flex-shrink-0" />
+              <span>{googleLoading ? (isEn ? 'Connecting...' : 'Connexion Google...') : (isEn ? 'Continue with Google' : 'Se connecter avec Google')}</span>
+            </button>
+
+            <div className="flex items-center gap-3 text-[10.5px] text-taupe uppercase tracking-wider font-bold">
+              <div className="h-px bg-surface-line flex-1" />
+              <span>{isEn ? 'OR' : 'OU'}</span>
+              <div className="h-px bg-surface-line flex-1" />
+            </div>
+
             {/* Main Login Card */}
             <form onSubmit={handleLoginSubmit} className="w-full space-y-4 bg-white p-5 rounded-2xl border border-surface-line shadow-sm">
               <div className="text-left space-y-1">
@@ -249,7 +285,25 @@ export default function Profile() {
           </div>
         ) : (
           /* Instant Signup Form */
-          <form onSubmit={handleInstantSignup} className="w-full max-w-xs space-y-3 bg-white p-5 rounded-2xl border border-surface-line shadow-sm">
+          <div className="w-full max-w-xs space-y-4">
+            {/* Prominent Google Sign-Up Button */}
+            <button
+              type="button"
+              onClick={handleGoogleAuth}
+              disabled={googleLoading}
+              className="w-full bg-white border border-surface-line text-ink py-3 px-4 rounded-2xl font-bold text-[13px] shadow-sm hover:bg-paper flex items-center justify-center gap-3 transition-all active:scale-95 disabled:opacity-50"
+            >
+              <GoogleIcon className="w-5 h-5 flex-shrink-0" />
+              <span>{googleLoading ? (isEn ? 'Connecting...' : 'Connexion Google...') : (isEn ? 'Sign Up with Google' : "S'inscrire avec Google")}</span>
+            </button>
+
+            <div className="flex items-center gap-3 text-[10.5px] text-taupe uppercase tracking-wider font-bold">
+              <div className="h-px bg-surface-line flex-1" />
+              <span>{isEn ? 'OR' : 'OU'}</span>
+              <div className="h-px bg-surface-line flex-1" />
+            </div>
+
+            <form onSubmit={handleInstantSignup} className="w-full space-y-3 bg-white p-5 rounded-2xl border border-surface-line shadow-sm">
             <div className="text-left">
               <label className="block text-[10.5px] font-bold text-taupe uppercase mb-1">
                 {isEn ? 'Full Name*' : 'Nom et Prénom*'}
@@ -299,9 +353,10 @@ export default function Profile() {
               {isEn ? 'Sign Up & Access Books (Free)' : "S'inscrire & Accéder aux Livres (Gratuit)"}
             </button>
           </form>
-        )}
-      </div>
-    );
+        </div>
+      )}
+    </div>
+  );
   }
 
   // Dynamic Profile Analytics
@@ -628,34 +683,74 @@ export default function Profile() {
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
           <div className="bg-paper border border-surface-line rounded-3xl p-6 w-full max-w-md text-left relative shadow-2xl space-y-4 max-h-[80vh] flex flex-col">
             <div className="flex justify-between items-center border-b border-surface-line pb-3">
-              <h3 className="font-display font-bold text-[16px] text-ink">
-                {isEn ? `Vocabulary Notebook (${savedVocab.length})` : `Carnet de Vocabulaire (${savedVocab.length})`}
-              </h3>
-              <button onClick={() => setShowVocabModal(false)} className="text-taupe text-lg font-bold">
+              <div>
+                <h3 className="font-display font-bold text-[16px] text-ink">
+                  {isEn ? `Vocabulary Notebook (${savedVocab.length})` : `Carnet de Vocabulaire (${savedVocab.length})`}
+                </h3>
+                <p className="text-[11px] text-taupe font-medium mt-0.5">
+                  {isEn ? 'Multi-meaning learning notebook' : 'Carnet d\'apprentissage & significations multiples'}
+                </p>
+              </div>
+              <button onClick={() => setShowVocabModal(false)} className="w-7 h-7 rounded-full bg-surface-line/50 text-taupe text-lg font-bold flex items-center justify-center">
                 ×
               </button>
             </div>
 
-            <div className="overflow-y-auto space-y-2 flex-1 pr-1">
+            <div className="overflow-y-auto space-y-3 flex-1 pr-1">
               {savedVocab.length === 0 ? (
-                <p className="text-[12px] text-taupe text-center py-6">
-                  {isEn ? 'No words saved yet.' : 'Aucun mot enregistré pour le moment.'}
+                <p className="text-[12px] text-taupe text-center py-8">
+                  {isEn ? 'No words saved yet.' : 'Aucun mot enregistré. Touchez un mot pendant la lecture pour l\'enregistrer ici !'}
                 </p>
               ) : (
-                savedVocab.map((w) => (
-                  <div key={w.id} className="p-3 rounded-xl bg-white border border-surface-line flex items-center justify-between">
-                    <div>
-                      <span className="font-bold text-ink text-[13px] block">{w.en}</span>
-                      <span className="italic text-taupe text-[11.5px] block">{w.fr}</span>
+                savedVocab.map((w) => {
+                  const meaningsList = Array.isArray(w.meanings) ? w.meanings : [w.fr || w.en];
+                  return (
+                    <div key={w.id} className="p-3.5 rounded-2xl bg-white border border-surface-line space-y-2 shadow-sm">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-display font-extrabold text-ink text-[15px] capitalize">{w.en}</span>
+                            {w.timesSaved > 1 && (
+                              <span className="text-[9.5px] font-bold px-2 py-0.5 rounded-full bg-gold/20 text-gold">
+                                Enregistré {w.timesSaved}×
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-[10px] text-taupe block font-medium mt-0.5">{w.date || 'À l\'instant'}</span>
+                        </div>
+                        <button
+                          onClick={() => removeVocabWord(w.id)}
+                          className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 transition-colors"
+                          title="Supprimer ce mot"
+                        >
+                          <TrashIcon className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      {/* Meanings Badges */}
+                      <div className="space-y-1 pt-1">
+                        <span className="text-[9.5px] font-extrabold uppercase tracking-wider text-taupe block">Signification(s) :</span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {meaningsList.map((m, mIdx) => (
+                            <span key={mIdx} className="text-[11.5px] font-bold px-2.5 py-1 rounded-xl bg-gold/10 border border-gold/25 text-ink flex items-center gap-1.5">
+                              <span>• {m}</span>
+                              {meaningsList.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => removeVocabMeaning(w.id, mIdx)}
+                                  className="text-red-500 hover:text-red-700 font-bold text-[10px] ml-0.5"
+                                  title="Supprimer cette signification"
+                                >
+                                  ×
+                                </button>
+                              )}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
                     </div>
-                    <button
-                      onClick={() => removeVocabWord(w.id)}
-                      className="p-1.5 rounded-lg text-red-600 hover:bg-red-50"
-                    >
-                      <TrashIcon className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>

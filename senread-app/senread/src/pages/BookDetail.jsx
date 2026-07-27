@@ -89,7 +89,7 @@ export default function BookDetail() {
   const isAuthor = userProfile.role === 'admin' || userProfile.role === 'author';
   const bookmarked = isBookmarked(book.id);
   const reviews = bookReviews[book.id] || [];
-  const reactions = bookReactions[book.id] || { love: 0, hate: 0, mindblown: 0, sad: 0, userReaction: null };
+  const reactions = bookReactions[book.id] || { like: 0, users: [], love: 0, hate: 0, mindblown: 0, sad: 0, userReaction: null };
 
   // Calculate Dynamic Rating Average
   const totalStars = reviews.reduce((sum, r) => sum + (r.rating || 5), 0) + (userRating || 5);
@@ -283,35 +283,35 @@ export default function BookDetail() {
           {isEn ? 'Reactions' : 'Réactions'}
         </span>
         <div className="grid grid-cols-4 gap-2 text-center">
-          {/* Heart SVG Reaction */}
+          {/* ❤️ J'aime — mapped to 'like' in Cloud DB */}
+          <button
+            onClick={() => toggleBookReaction(book.id, 'like')}
+            className={`py-3 rounded-2xl border flex items-center justify-center gap-1.5 transition-all ${
+              reactions.userReaction === 'like'
+                ? 'bg-red-50 border-red-300 text-red-600 shadow-sm ring-1 ring-red-300'
+                : 'bg-paper border-surface-line hover:border-red-300'
+            }`}
+            title={isEn ? 'Love' : 'Coup de Cœur'}
+          >
+            <HeartIcon className={`w-5 h-5 ${reactions.userReaction === 'like' ? 'fill-red-500 text-red-500' : 'text-red-400'}`} />
+            <span className="text-[11px] font-mono font-bold text-ink">{reactions.like || 0}</span>
+          </button>
+
+          {/* 👍 J'apprécie — mapped to 'love' in Cloud DB */}
           <button
             onClick={() => toggleBookReaction(book.id, 'love')}
             className={`py-3 rounded-2xl border flex items-center justify-center gap-1.5 transition-all ${
               reactions.userReaction === 'love'
-                ? 'bg-red-50 border-red-300 text-red-600 shadow-sm ring-1 ring-red-300'
-                : 'bg-paper border-surface-line hover:border-red-300'
-            }`}
-            title={isEn ? 'Love' : 'Coup de Coeur'}
-          >
-            <HeartIcon className={`w-5 h-5 ${reactions.userReaction === 'love' ? 'fill-red-500 text-red-500' : 'text-red-400'}`} />
-            <span className="text-[11px] font-mono font-bold text-ink">{reactions.love || 0}</span>
-          </button>
-
-          {/* Thumbs Up SVG Reaction */}
-          <button
-            onClick={() => toggleBookReaction(book.id, 'hate')}
-            className={`py-3 rounded-2xl border flex items-center justify-center gap-1.5 transition-all ${
-              reactions.userReaction === 'hate'
                 ? 'bg-sky-50 border-sky-300 text-sky-600 shadow-sm ring-1 ring-sky-300'
                 : 'bg-paper border-surface-line hover:border-sky-300'
             }`}
-            title={isEn ? 'Like' : 'J\'aime'}
+            title={isEn ? 'Like' : 'J\'apprécie'}
           >
-            <ThumbsUpIcon className={`w-5 h-5 ${reactions.userReaction === 'hate' ? 'fill-sky-500 text-sky-500' : 'text-sky-400'}`} />
-            <span className="text-[11px] font-mono font-bold text-ink">{reactions.hate || 0}</span>
+            <ThumbsUpIcon className={`w-5 h-5 ${reactions.userReaction === 'love' ? 'fill-sky-500 text-sky-500' : 'text-sky-400'}`} />
+            <span className="text-[11px] font-mono font-bold text-ink">{reactions.love || 0}</span>
           </button>
 
-          {/* Sparkles SVG Reaction */}
+          {/* ✨ Captivant — mapped to 'mindblown' in Cloud DB */}
           <button
             onClick={() => toggleBookReaction(book.id, 'mindblown')}
             className={`py-3 rounded-2xl border flex items-center justify-center gap-1.5 transition-all ${
@@ -325,7 +325,7 @@ export default function BookDetail() {
             <span className="text-[11px] font-mono font-bold text-ink">{reactions.mindblown || 0}</span>
           </button>
 
-          {/* Star Bookmark SVG Reaction */}
+          {/* ⭐ Favori — mapped to 'sad' in Cloud DB */}
           <button
             onClick={() => toggleBookReaction(book.id, 'sad')}
             className={`py-3 rounded-2xl border flex items-center justify-center gap-1.5 transition-all ${

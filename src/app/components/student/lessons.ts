@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
@@ -12,21 +12,72 @@ import { DialogService } from '../../services/dialog.service';
   template: `
     <div class="page">
       @if (!selectedLesson()) {
-        <!-- STATISTICS & FILTER PANEL -->
-        <div class="card" style="margin-bottom: 20px; background: linear-gradient(135deg, #EFF6FF 0%, #FAF5FF 100%); padding: 18px; border-radius: 12px; border: 1px solid var(--border-weak)">
-          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px">
-            <div>
-              <h3 style="font-size:15px; font-weight:700; color:var(--text-primary); margin:0">{{ t('Progrès de mes Cours', 'My Lessons Progress') }}</h3>
-              <p style="font-size:11.5px; color:var(--text-secondary); margin:4px 0 0 0">
-                {{ t('Complétés :', 'Completed:') }} <strong>{{ completedCount() }}</strong> / {{ lessons().length }} {{ t('cours', 'lessons') }}
-              </p>
-            </div>
-            <div style="display:flex; gap:12px; align-items:center">
-              <div style="background:#FFF; padding:6px 12px; border-radius:8px; border:1px solid var(--border); display:flex; align-items:center; gap:6px">
-                <i class="ti ti-search" style="color:var(--text-muted)"></i>
-                <input type="text" [(ngModel)]="searchQuery" [placeholder]="t('Rechercher un cours...', 'Search lessons...')" style="border:none; outline:none; font-size:12px; width:150px; background:transparent" />
+        <!-- SMART ANIMATED FEATURED VIDEO & PROGRESS HERO BANNER -->
+        <div class="card" style="margin-bottom: 24px; background: linear-gradient(135deg, #0F172A 0%, #1E1B4B 50%, #312E81 100%); color: white; padding: 24px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.12); box-shadow: 0 16px 40px rgba(15,23,42,0.3); position: relative; overflow: hidden">
+          
+          <!-- Background decorative glow -->
+          <div style="position:absolute; top:-40px; right:-40px; width:220px; height:220px; background:radial-gradient(circle, rgba(99,102,241,0.3) 0%, rgba(0,0,0,0) 70%); pointer-events:none"></div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:24px; position:relative; z-index:2">
+            
+            <!-- Left Info & Search Column -->
+            <div style="flex:1; min-width:280px">
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px">
+                <span style="font-size:10px; font-weight:900; background:#6366F1; color:white; padding:4px 12px; border-radius:20px; text-transform:uppercase; letter-spacing:0.5px; display:inline-flex; align-items:center; gap:5px">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                  {{ t('VIDÉO EN VEDETTE & SMART LESSON', 'FEATURED VIDEO & SMART LESSON') }}
+                </span>
+
+                <span style="font-size:11px; color:#A5B4FC; font-weight:700">
+                  {{ completedCount() }} / {{ lessons().length }} {{ t('cours complétés', 'lessons done') }}
+                </span>
               </div>
+
+              @if (featuredLesson(); as feat) {
+                <h2 style="font-size:20px; font-weight:900; color:white; margin:0 0 6px 0; line-height:1.3">
+                  {{ feat.title }}
+                </h2>
+                <p style="font-size:12.5px; color:#E0E7FF; margin:0 0 16px 0; opacity:0.9; max-width:480px; line-height:1.4">
+                  {{ feat.youtubeDescription || t('Découvrez le cours vidéo interactif avec grammaire, exercices et écoute !', 'Discover the interactive video lesson with grammar, exercises and audio!') }}
+                </p>
+
+                <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap">
+                  <button (click)="selectLesson(feat)" class="btn-p" style="background:#6366F1; border-color:#6366F1; color:white; font-size:12.5px; font-weight:900; padding:10px 20px; border-radius:12px; display:inline-flex; align-items:center; gap:8px; cursor:pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    {{ t('Lancer le Cours & Vidéo 🎬', 'Play Lesson & Video 🎬') }}
+                  </button>
+
+                  <div style="background:rgba(255,255,255,0.12); backdrop-filter:blur(6px); padding:6px 14px; border-radius:12px; border:1px solid rgba(255,255,255,0.15); display:flex; align-items:center; gap:8px">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#A5B4FC" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input type="text" [(ngModel)]="searchQuery" [placeholder]="t('Rechercher un cours...', 'Search lessons...')" style="border:none; outline:none; font-size:12px; color:white; background:transparent; width:140px" />
+                  </div>
+                </div>
+              }
             </div>
+
+            <!-- Right Side: SMART ANIMATED YOUTUBE VIDEO PREVIEW CARD -->
+            @if (featuredLesson(); as feat) {
+              @if (getYouTubeThumbnail(feat.youtubeUrl); as thumb) {
+                <div (click)="selectLesson(feat)" 
+                     style="width:240px; height:135px; border-radius:14px; overflow:hidden; position:relative; cursor:pointer; box-shadow:0 12px 28px rgba(0,0,0,0.5); border:2px solid rgba(255,255,255,0.25); flex-shrink:0; transition:transform 0.3s ease"
+                     onmouseover="this.style.transform='scale(1.05)'"
+                     onmouseout="this.style.transform='scale(1)'">
+                  <img [src]="thumb" style="width:100%; height:100%; object-fit:cover" />
+                  
+                  <!-- Smart Animated Glowing Play Button -->
+                  <div style="position:absolute; inset:0; background:rgba(15,23,42,0.4); display:flex; align-items:center; justify-content:center; backdrop-filter:blur(1px)">
+                    <div style="width:50px; height:50px; border-radius:50%; background:#EF4444; color:white; display:flex; align-items:center; justify-content:center; box-shadow:0 0 20px rgba(239,68,68,0.7)">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    </div>
+                  </div>
+
+                  <div style="position:absolute; bottom:8px; left:8px; right:8px; background:rgba(0,0,0,0.65); backdrop-filter:blur(4px); padding:4px 8px; border-radius:6px; font-size:10px; font-weight:800; color:white; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">
+                    ▶ {{ feat.title }}
+                  </div>
+                </div>
+              }
+            }
+
           </div>
         </div>
 
@@ -87,10 +138,18 @@ import { DialogService } from '../../services/dialog.service';
                  onmouseout="this.style.transform='none'; this.style.boxShadow='none'; this.style.borderColor='var(--border-weak)'">
               
               <!-- CARD COVER BANNER -->
-              <div [style.background]="lesson.coverImage ? 'none' : getGradient(lesson.colorTheme)"
+              <div [style.background]="(lesson.coverImage || getYouTubeThumbnail(lesson.youtubeUrl)) ? 'none' : getGradient(lesson.colorTheme)"
                    style="height:140px; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center">
-                @if (lesson.coverImage) {
-                  <img [src]="lesson.coverImage" style="width:100%; height:100%; object-fit:cover" />
+                @if (lesson.coverImage || getYouTubeThumbnail(lesson.youtubeUrl)) {
+                  <img [src]="lesson.coverImage || getYouTubeThumbnail(lesson.youtubeUrl)!" style="width:100%; height:100%; object-fit:cover" />
+                  @if (lesson.youtubeUrl) {
+                    <!-- YouTube Video Overlay Play Badge -->
+                    <div style="position:absolute; inset:0; background:rgba(15,23,42,0.3); display:flex; align-items:center; justify-content:center">
+                      <div style="width:38px; height:38px; border-radius:50%; background:#EF4444; color:white; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(239,68,68,0.5)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                      </div>
+                    </div>
+                  }
                 } @else {
                   <div style="width:54px; height:54px; border-radius:50%; background:rgba(255,255,255,0.25); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; color:white">
                     <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
@@ -1223,6 +1282,27 @@ export class StudentLessonsComponent {
       const scrollAmount = direction === 'left' ? -330 : 330;
       el.scrollBy({ left: scrollAmount, behavior: 'smooth' });
     }
+  }
+
+  featuredLesson = computed(() => {
+    const list = this.lessons();
+    return list.find(l => !!l.youtubeUrl) || list[0] || null;
+  });
+
+  getYouTubeThumbnail(url: string | undefined): string | null {
+    if (!url) return null;
+    let videoId = '';
+    try {
+      if (url.includes('youtu.be/')) {
+        videoId = url.split('youtu.be/')[1].split(/[?#]/)[0];
+      } else if (url.includes('youtube.com/watch')) {
+        const urlParams = new URLSearchParams(url.split('?')[1]);
+        videoId = urlParams.get('v') || '';
+      } else if (url.includes('youtube.com/embed/')) {
+        videoId = url.split('youtube.com/embed/')[1].split(/[?#]/)[0];
+      }
+    } catch (e) { return null; }
+    return videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : null;
   }
 
   getBadgeBg(type: string | undefined): string {
