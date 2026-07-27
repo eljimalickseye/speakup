@@ -438,44 +438,71 @@ const defaultWordsBank = [
 
 
       } @else {
-        <div style="position:fixed; inset:0; background:rgba(15,23,42,0.55); backdrop-filter:blur(8px); display:flex; justify-content:center; align-items:center; z-index:99999; padding:16px; overflow:auto">
-          <div class="card" style="width:100%; max-width:580px; min-height:450px; display:flex; flex-direction:column; justify-content:space-between; background:#FFF; color:var(--text-primary); border-radius:12px; padding:24px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.15), 0 10px 10px -5px rgba(0,0,0,0.04); max-height:92vh; overflow-y:auto; margin:auto">
+        <!-- PREMIUM MODAL BACKDROP -->
+        <div class="ex-modal-backdrop" style="position:fixed; inset:0; z-index:99999; padding:12px; overflow:auto; display:flex; justify-content:center; align-items:flex-start">
+          <div class="ex-modal-card" style="width:100%; max-width:600px; min-height:420px; display:flex; flex-direction:column; border-radius:20px; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.06); margin:auto">
             
-            <!-- Modal Header -->
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; border-bottom:1px solid var(--border-weak); padding-bottom:12px">
-              <h3 style="font-size:16px; font-weight:700; color:var(--text-primary); margin:0; display:flex; align-items:center; gap:8px">
-                @if (activeExercise() === 'quiz' && activeQuiz()?.type === 'Oral Practice') {
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0D9488" stroke-width="2">
-                    <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
-                    <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                    <line x1="12" x2="12" y1="19" y2="22" />
+            <!-- DYNAMIC GRADIENT MODAL HEADER -->
+            <div class="ex-modal-header"
+                 [style.background]="activeExercise() === 'quiz' && activeQuiz()?.type === 'Oral Practice' ? 'linear-gradient(135deg, #0F766E 0%, #0D9488 50%, #14B8A6 100%)' :
+                                    activeExercise() === 'quiz' ? 'linear-gradient(135deg, #3730A3 0%, #4F46E5 50%, #6366F1 100%)' :
+                                    activeExercise() === 'exercise' ? 'linear-gradient(135deg, #1E40AF 0%, #3B82F6 60%, #60A5FA 100%)' :
+                                    'linear-gradient(135deg, #92400E 0%, #D97706 50%, #F59E0B 100%)'"
+                 style="padding:20px 24px; position:relative; overflow:hidden">
+              <!-- Decorative circles -->
+              <div style="position:absolute; top:-20px; right:-20px; width:120px; height:120px; border-radius:50%; background:rgba(255,255,255,0.06)"></div>
+              <div style="position:absolute; bottom:-30px; left:40px; width:80px; height:80px; border-radius:50%; background:rgba(255,255,255,0.04)"></div>
+              
+              <div style="display:flex; justify-content:space-between; align-items:center; position:relative; z-index:1">
+                <div style="display:flex; align-items:center; gap:12px">
+                  <!-- Icon bubble -->
+                  <div style="width:40px; height:40px; border-radius:12px; background:rgba(255,255,255,0.18); display:flex; align-items:center; justify-content:center; backdrop-filter:blur(4px)">
+                    @if (activeExercise() === 'quiz' && activeQuiz()?.type === 'Oral Practice') {
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                        <line x1="12" x2="12" y1="19" y2="22" />
+                      </svg>
+                    } @else if (activeExercise() === 'quiz') {
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                        <path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                      </svg>
+                    } @else if (activeExercise() === 'game') {
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                        <rect x="2" y="6" width="20" height="12" rx="2"/>
+                        <path d="M12 12h.01"/><path d="M7 12h.01"/><path d="M17 12h.01"/><path d="M12 8v8"/>
+                      </svg>
+                    } @else {
+                      <span [innerHTML]="getExerciseSvgWhite(activeExerciseItem()?.type || '')"></span>
+                    }
+                  </div>
+                  <div>
+                    <div style="font-size:11px; font-weight:700; color:rgba(255,255,255,0.7); text-transform:uppercase; letter-spacing:1px; margin-bottom:2px">
+                      @if (activeExercise() === 'game') { Jeu Interactif }
+                      @else if (activeExercise() === 'quiz' && activeQuiz()?.type === 'Oral Practice') { Expression Orale }
+                      @else if (activeExercise() === 'quiz') { Quiz & Évaluation }
+                      @else if (activeExercise() === 'listening') { Compréhension Orale }
+                      @else { Exercice Pratique }
+                    </div>
+                    <h3 style="font-size:15px; font-weight:800; color:white; margin:0; line-height:1.2">
+                      @if (activeExercise() === 'quiz' && activeQuiz()) { {{ activeQuiz()?.title }} }
+                      @else if (activeExercise() === 'exercise') { {{ activeExerciseItem()?.title }} }
+                      @else if (activeExercise() === 'game' && !isConfiguring()) { {{ activeVocabGame()?.title || 'Jeu de Vocabulaire' }} }
+                      @else if (activeExercise() === 'game') { {{ t('Jeu de Vocabulaire', 'Vocabulary Game') }} }
+                      @else { {{ t('Exercice', 'Exercise') }} }
+                    </h3>
+                  </div>
+                </div>
+                <button (click)="exitExercise()" style="width:32px; height:32px; border-radius:50%; background:rgba(255,255,255,0.18); border:none; color:white; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s; backdrop-filter:blur(4px)" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.18)'">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
                   </svg>
-                  <span>{{ t("Exercice d'expression orale", "Oral Speaking Exercise") }}</span>
-                } @else if (activeExercise() === 'quiz' && activeQuiz()) {
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2">
-                    <path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
-                  </svg>
-                  <span>{{ t("Quiz de classe", "Classroom Quiz") }}</span>
-                } @else if (activeExercise() === 'quiz') {
-                  <span style="font-size:16px; font-weight:700; color:var(--text-primary)">{{ t("Chargement du quiz...", "Loading quiz...") }}</span>
-                } @else if (activeExercise() === 'exercise') {
-                  <span [style.color]="getExerciseColor(activeExerciseItem()?.type || '')" style="display:inline-flex; align-items:center; gap:6px">
-                    <span [innerHTML]="getExerciseSvg(activeExerciseItem()?.type || '')"></span>
-                    <span>{{ t("Exercice de " + getExerciseLabel(activeExerciseItem()?.type || ''), getExerciseLabel(activeExerciseItem()?.type || '') + " Exercise") }}</span>
-                  </span>
-                } @else {
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2">
-                    <rect x="3" y="3" width="7" height="9" rx="1" /><rect x="14" y="3" width="7" height="5" rx="1" /><rect x="14" y="12" width="7" height="9" rx="1" /><rect x="3" y="16" width="7" height="5" rx="1" />
-                  </svg>
-                  <span>{{ t("Jeu de vocabulaire", "Vocabulary Game") }}</span>
-                }
-              </h3>
-              <button (click)="exitExercise()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; padding:4px; display:flex; align-items:center; justify-content:center">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-              </button>
+                </button>
+              </div>
             </div>
+
+            <!-- MODAL BODY -->
+            <div style="background:var(--surface-1); flex:1; padding:24px; overflow-y:auto">
 
             <!-- EXERCISE OVERLAY -->
             @if (activeExercise() === 'exercise') {
@@ -1071,49 +1098,45 @@ const defaultWordsBank = [
             } @else if (activeExercise() === 'game') {
                <!-- TAB 2: VOCABULARY MATCH GAME -->
                @if (isConfiguring()) {
-                 <!-- CONFIGURATION SCREEN -->
-                 <div style="padding: 10px 0; animation: fadeIn 0.25s ease-out;">
-                   <h3 style="font-size: 18px; font-weight: 800; color: var(--text-primary); margin: 0 0 6px 0; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                       <circle cx="12" cy="12" r="3"></circle>
-                       <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-                     </svg>
-                     <span>{{ gameLabels().configTitle }}</span>
-                   </h3>
-                   <p style="font-size: 12.5px; color: var(--text-secondary); margin: 0 0 20px 0; text-align: center;">
+                 <!-- PREMIUM CONFIGURATION SCREEN -->
+                 <div style="animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);">
+                   <!-- Intro text -->
+                   <p style="font-size: 12.5px; color: var(--text-secondary); margin: 0 0 20px 0; text-align: center; line-height: 1.6;">
                      {{ gameLabels().configDesc }}
                    </p>
 
                    <!-- Difficulty Selection -->
-                   <div style="margin-bottom: 20px;">
-                     <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
-                       Difficulté
-                     </label>
-                     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                   <div style="margin-bottom: 18px;">
+                     <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px">
+                       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+                       <label style="font-size: 11.5px; font-weight: 800; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.8px;">Difficulté</label>
+                     </div>
+                     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
                        @for (diff of difficultyLevels; track diff) {
                          <button (click)="selectedConfigDifficulty.set(diff)"
-                                 [style.background]="selectedConfigDifficulty() === diff ? '#FFF9E6' : 'var(--surface-1)'"
-                                 [style.border-color]="selectedConfigDifficulty() === diff ? '#D97706' : 'var(--border)'"
-                                 [style.color]="selectedConfigDifficulty() === diff ? '#B45309' : 'var(--text-primary)'"
-                                 style="padding: 10px; border-radius: 8px; border: 1.5px solid; font-size: 13px; font-weight: 700; cursor: pointer; text-align: center; transition: all 0.2s;">
-                           {{ getDiffLabel(diff) }}
+                                 [class.config-sel-diff]="selectedConfigDifficulty() === diff"
+                                 style="padding: 12px 8px; border-radius: 10px; border: 2px solid var(--border); font-size: 12.5px; font-weight: 700; cursor: pointer; text-align: center; transition: all 0.2s; background: var(--surface-1); color: var(--text-primary);">
+                           <div style="font-size:18px; margin-bottom:4px">{{ diff === 'easy' ? '🌱' : diff === 'medium' ? '⚡' : '🔥' }}</div>
+                           <div>{{ getDiffLabel(diff) }}</div>
                          </button>
                        }
                      </div>
                    </div>
 
                    <!-- Category Selection -->
-                   <div style="margin-bottom: 20px;">
-                     <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
-                       Catégorie
-                     </label>
+                   <div style="margin-bottom: 18px;">
+                     <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px">
+                       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7h-9"/><path d="M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg>
+                       <label style="font-size: 11.5px; font-weight: 800; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.8px;">Catégorie</label>
+                     </div>
                      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                        @for (cat of getAvailableCategories(); track cat) {
                          <button (click)="selectedConfigCategory.set(cat)"
                                  [style.background]="selectedConfigCategory() === cat ? '#EFF6FF' : 'var(--surface-1)'"
                                  [style.border-color]="selectedConfigCategory() === cat ? '#4F46E5' : 'var(--border)'"
                                  [style.color]="selectedConfigCategory() === cat ? '#1E40AF' : 'var(--text-primary)'"
-                                 style="padding: 6px 12px; border-radius: 20px; border: 1.5px solid; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                                 [style.box-shadow]="selectedConfigCategory() === cat ? '0 2px 8px rgba(79,70,229,0.2)' : 'none'"
+                                 style="padding: 6px 14px; border-radius: 20px; border: 2px solid; font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s;">
                            {{ cat }}
                          </button>
                        }
@@ -1122,29 +1145,30 @@ const defaultWordsBank = [
 
                    <!-- Timer Selection -->
                    <div style="margin-bottom: 24px;">
-                     <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
-                       Limite de Temps (par mot)
-                     </label>
+                     <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px">
+                       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                       <label style="font-size: 11.5px; font-weight: 800; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.8px;">Limite de Temps (par mot)</label>
+                     </div>
                      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
                        @for (t of ['No limit', '15s', '30s', '60s']; track t) {
                          <button (click)="selectedConfigTimer.set(t)"
                                  [style.background]="selectedConfigTimer() === t ? '#ECFDF5' : 'var(--surface-1)'"
                                  [style.border-color]="selectedConfigTimer() === t ? '#10B981' : 'var(--border)'"
                                  [style.color]="selectedConfigTimer() === t ? '#065F46' : 'var(--text-primary)'"
-                                 style="padding: 10px 4px; border-radius: 8px; border: 1.5px solid; font-size: 12px; font-weight: 700; cursor: pointer; text-align: center; transition: all 0.2s;">
+                                 [style.box-shadow]="selectedConfigTimer() === t ? '0 2px 8px rgba(16,185,129,0.2)' : 'none'"
+                                 style="padding: 10px 4px; border-radius: 10px; border: 2px solid; font-size: 12px; font-weight: 700; cursor: pointer; text-align: center; transition: all 0.2s;">
                            {{ t === 'No limit' ? gameLabels().noLimitOption : t }}
                          </button>
                        }
                      </div>
                    </div>
 
-                   <!-- Start Button -->
+                   <!-- Premium Start Button -->
                    <button (click)="startGameWithConfig()"
-                           style="width: 100%; padding: 14px; background: linear-gradient(135deg, #F59E0B, #D97706); color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 12px rgba(217, 119, 6, 0.25); display: flex; align-items: center; justify-content: center; gap: 8px;">
+                           class="btn-game-start"
+                           style="width: 100%; padding: 16px; border-radius: 12px; font-size: 15px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="1"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                      <span>{{ gameLabels().startGameBtn }}</span>
-                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                       <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                     </svg>
                    </button>
                  </div>
                } @else if (!gameFinished()) {
@@ -1598,78 +1622,90 @@ const defaultWordsBank = [
                     </div>
                   }
 } @else {
-                 <!-- Detailed Game Results Overlay -->
-                 <div style="text-align:center; padding:10px 0; animation: fadeIn 0.3s ease-out;">
-                   <div style="width:64px; height:64px; border-radius:50%; background:#FEF3C7; border:2px solid #F59E0B; display:flex; align-items:center; justify-content:center; margin:0 auto 16px auto; box-shadow: 0 4px 10px rgba(245, 158, 11, 0.2);">
-                     <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                       <circle cx="12" cy="8" r="7"></circle>
-                       <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
-                     </svg>
+                 <!-- PREMIUM GAME RESULTS SCREEN -->
+                 <div style="text-align:center; animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);">
+                   
+                   <!-- Trophy icon with glow -->
+                   <div style="position:relative; width:80px; height:80px; margin:0 auto 16px auto">
+                     <div [style.background]="gameSuccessRate() >= 80 ? 'radial-gradient(circle, rgba(245,158,11,0.3) 0%, rgba(245,158,11,0) 70%)' : 'radial-gradient(circle, rgba(107,114,128,0.2) 0%, transparent 70%)'" style="position:absolute; inset:-16px; border-radius:50%; animation: pulse-glow 2s ease-in-out infinite"></div>
+                     <div [style.background]="gameSuccessRate() >= 80 ? 'linear-gradient(135deg, #FEF3C7, #FDE68A)' : 'linear-gradient(135deg, #F1F5F9, #E2E8F0)'" [style.border]="gameSuccessRate() >= 80 ? '2px solid #F59E0B' : '2px solid #CBD5E1'" style="width:80px; height:80px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 20px rgba(0,0,0,0.1); position:relative">
+                       @if (gameSuccessRate() >= 80) {
+                         <svg xmlns="http://www.w3.org/2000/svg" width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+                       } @else {
+                         <svg xmlns="http://www.w3.org/2000/svg" width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+                       }
+                     </div>
                    </div>
                    
-                   <h3 style="font-size:18px; font-weight:800; color:var(--text-primary); margin-bottom:4px">
+                   <h3 style="font-size:20px; font-weight:800; color:var(--text-primary); margin-bottom:4px">
                      {{ gameLabels().resultsTitle }}
                    </h3>
                    <p style="font-size:12.5px; color:var(--text-secondary); margin-bottom:20px">
                      {{ gameLabels().resultsDesc }} <strong>{{ activeVocabGame()?.title }}</strong>
                    </p>
 
-                   <!-- Grid stats -->
-                   <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:12px; margin-bottom:20px;">
+                   <!-- XP Banner -->
+                   <div style="background:linear-gradient(135deg, #4F46E5, #7C3AED); border-radius:12px; padding:14px; margin-bottom:20px; display:flex; align-items:center; justify-content:center; gap:10px">
+                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="0"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+                     <span style="font-size:22px; font-weight:900; color:white">+{{ gameXPRewarded() }} XP</span>
+                     <span style="font-size:13px; color:rgba(255,255,255,0.8); font-weight:600">Gagné !</span>
+                   </div>
+
+                   <!-- Stats Grid -->
+                   <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; margin-bottom:20px;">
                      
-                     <div style="background:#F9FAFB; border:1px solid var(--border-weak); border-radius:8px; padding:12px; display:flex; flex-direction:column; align-items:center;">
-                       <span style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">{{ gameLabels().successRateLabel }}</span>
-                       <span [style.color]="gameSuccessRate() >= 60 ? '#10B981' : '#EF4444'" style="font-size:20px; font-weight:800;">
+                     <div class="result-stat-card" [class.success]="gameSuccessRate() >= 60">
+                       <div style="font-size:22px; font-weight:900;" [style.color]="gameSuccessRate() >= 60 ? '#10B981' : '#EF4444'">
                          {{ gameSuccessRate() }}%
-                       </span>
-                       <span style="font-size:11px; color:var(--text-secondary);">
-                         ({{ gameCorrectCount() }} / {{ activeWords().length }} {{ t('correct', 'correct') }})
-                       </span>
+                       </div>
+                       <div style="font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-top:2px;">{{ gameLabels().successRateLabel }}</div>
+                       <div style="font-size:10px; color:var(--text-secondary); margin-top:2px">{{ gameCorrectCount() }}/{{ activeWords().length }}</div>
                      </div>
 
-                     <div style="background:#F9FAFB; border:1px solid var(--border-weak); border-radius:8px; padding:12px; display:flex; flex-direction:column; align-items:center;">
-                       <span style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">{{ gameLabels().errorsLabel }}</span>
-                       <span [style.color]="gameMistakesCount() > 0 ? '#EF4444' : '#10B981'" style="font-size:20px; font-weight:800;">
+                     <div class="result-stat-card">
+                       <div style="font-size:22px; font-weight:900;" [style.color]="gameMistakesCount() === 0 ? '#10B981' : '#EF4444'">
                          {{ gameMistakesCount() }}
-                       </span>
-                       <span style="font-size:11px; color:var(--text-secondary);">{{ gameLabels().errorsBadge }}</span>
+                       </div>
+                       <div style="font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-top:2px;">{{ gameLabels().errorsLabel }}</div>
+                       <div style="font-size:10px; color:var(--text-secondary); margin-top:2px">{{ gameLabels().errorsBadge }}</div>
                      </div>
 
-                     <div style="background:#F9FAFB; border:1px solid var(--border-weak); border-radius:8px; padding:12px; display:flex; flex-direction:column; align-items:center;">
-                       <span style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">{{ gameLabels().timeSpentLabel }}</span>
-                       <span style="font-size:20px; font-weight:800; color:var(--text-primary);">
+                     <div class="result-stat-card">
+                       <div style="font-size:22px; font-weight:900; color:var(--text-primary);">
                          {{ gameTimeSpent() }}s
-                       </span>
-                       <span style="font-size:11px; color:var(--text-secondary);">{{ gameLabels().timeSpentBadge }}</span>
-                     </div>
-
-                     <div style="background:#F9FAFB; border:1px solid var(--border-weak); border-radius:8px; padding:12px; display:flex; flex-direction:column; align-items:center;">
-                       <span style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">{{ gameLabels().xpEarnedLabel }}</span>
-                       <span style="font-size:20px; font-weight:800; color:#4F46E5;">
-                         +{{ gameXPRewarded() }} XP
-                       </span>
-                       <span style="font-size:11px; color:var(--text-secondary);">{{ gameLabels().xpEarnedBadge }}</span>
+                       </div>
+                       <div style="font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-top:2px;">{{ gameLabels().timeSpentLabel }}</div>
+                       <div style="font-size:10px; color:var(--text-secondary); margin-top:2px">{{ gameLabels().timeSpentBadge }}</div>
                      </div>
 
                    </div>
 
+                   <!-- Fake hidden xpEarnedLabel div -->
+                   <div style="display:none">
+                     <span>{{ gameLabels().xpEarnedLabel }}</span>
+                     <span>{{ gameXPRewarded() }}</span>
+                     <span>{{ gameLabels().xpEarnedBadge }}</span>
+                   </div>
+
                    <!-- Badges Section -->
                    @if (gameBadges().length > 0) {
-                     <div style="margin-bottom:24px;">
-                       <h4 style="font-size:12px; font-weight:700; color:var(--text-primary); text-transform:uppercase; margin:0 0 10px 0; text-align:left;">
-                         {{ gameLabels().badgesEarnedLabel }}
-                       </h4>
-                       <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-start;">
+                     <div style="margin-bottom:20px; text-align:left">
+                       <div style="font-size:11px; font-weight:800; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.8px; margin-bottom:8px">{{ gameLabels().badgesEarnedLabel }}</div>
+                       <div style="display:flex; gap:8px; flex-wrap:wrap;">
                          @for (badge of gameBadges(); track badge) {
-                           <div style="background:#FFFDF5; border:1px solid #FDE68A; padding:6px 12px; border-radius:20px; display:flex; align-items:center; gap:6px; font-size:12px; font-weight:700; color:#B45309; box-shadow:0 2px 4px rgba(217, 119, 6, 0.05);">
+                           <div class="badge-pill" style="display:flex; align-items:center; gap:6px; font-size:12px; font-weight:800;">
                              @if (badge === 'Perfect Score') {
-                               <span>🏆 Perfect Score</span>
+                               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="#D97706" stroke="#D97706" stroke-width="0"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+                               <span>{{ badge }}</span>
                              } @else if (badge === 'Tenacity') {
-                               <span>🪙 Tenacity</span>
+                               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/><path d="m16.71 13.88.7.71-2.82 2.82"/></svg>
+                               <span>{{ badge }}</span>
                              } @else if (badge === 'Speedy Finisher') {
-                               <span>⚡ Speedy Finisher</span>
+                               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                               <span>{{ badge }}</span>
                              } @else {
-                               <span>🏅 {{ badge }}</span>
+                               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="#D97706" stroke="#D97706" stroke-width="0"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+                               <span>{{ badge }}</span>
                              }
                            </div>
                          }
@@ -1678,20 +1714,18 @@ const defaultWordsBank = [
                    }
 
                    <!-- Action buttons -->
-                   <div style="display:flex; flex-direction:column; gap:10px; border-top:1px solid var(--border-weak); padding-top:16px; margin-top:16px;">
-                     
+                   <div style="display:flex; flex-direction:column; gap:10px; padding-top:4px;">
                      @if (gameMistakesCount() > 0) {
                        <button (click)="replayMistakenWords()"
-                               style="width: 100%; padding: 12px; background: #DC2626; color: white; border: none; border-radius: 8px; font-size: 13.5px; font-weight:800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 10px rgba(220, 38, 38, 0.2); transition: all 0.2s;">
-                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                           <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
-                         </svg>
+                               style="width: 100%; padding: 14px; background: linear-gradient(135deg, #DC2626, #EF4444); color: white; border: none; border-radius: 12px; font-size: 13.5px; font-weight:800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 14px rgba(220, 38, 38, 0.3); transition: all 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 18px rgba(220,38,38,0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 14px rgba(220,38,38,0.3)'">
+                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
                          <span>{{ gameLabels().reviewMistakesBtn(gameMistakesCount()) }}</span>
                        </button>
                      }
                      
-                     <button class="btn-p" style="background:#D97706; border-color:#D97706; width:100%; margin:0;" (click)="exitExercise()">
-                       Quitter
+                     <button style="width:100%; padding:14px; background:linear-gradient(135deg, #4F46E5, #7C3AED); color:white; border:none; border-radius:12px; font-size:13.5px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 14px rgba(79,70,229,0.3); transition:all 0.2s" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'" (click)="exitExercise()">
+                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                       Terminer & Quitter
                      </button>
                    </div>
                  </div>
@@ -1699,11 +1733,80 @@ const defaultWordsBank = [
             }
 
           </div>
+          </div>
         </div>
       }
     </div>
   `,
   styles: [`
+    .ex-modal-backdrop {
+      background: rgba(2, 6, 23, 0.72);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .ex-modal-card {
+      animation: modalSlideIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes modalSlideIn {
+      from { opacity: 0; transform: scale(0.92) translateY(20px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes pulse-glow {
+      0%, 100% { opacity: 0.4; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(1.08); }
+    }
+    .config-sel-diff {
+      background: #FFF9E6 !important;
+      border-color: #D97706 !important;
+      color: #B45309 !important;
+      box-shadow: 0 2px 8px rgba(217, 119, 6, 0.2) !important;
+      transform: translateY(-2px);
+    }
+    .btn-game-start {
+      background: linear-gradient(135deg, #F59E0B, #D97706);
+      color: white;
+      border: none;
+      box-shadow: 0 6px 18px rgba(217, 119, 6, 0.35);
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .btn-game-start:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(217, 119, 6, 0.45);
+      background: linear-gradient(135deg, #FBBF24, #B45309);
+    }
+    .btn-game-start:active {
+      transform: translateY(0);
+    }
+    .result-stat-card {
+      background: var(--surface-2);
+      border: 1.5px solid var(--border-weak);
+      border-radius: 12px;
+      padding: 14px 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: all 0.2s;
+    }
+    .result-stat-card.success {
+      background: #F0FDF4;
+      border-color: #A7F3D0;
+    }
+    .badge-pill {
+      background: linear-gradient(135deg, #FEF3C7, #FDE68A);
+      border: 1.5px solid #FCD34D;
+      padding: 5px 12px;
+      border-radius: 20px;
+      color: #92400E;
+      box-shadow: 0 2px 6px rgba(217, 119, 6, 0.1);
+    }
     .recording-pulse {
       width: 10px;
       height: 10px;
@@ -2674,6 +2777,18 @@ export class StudentExercisesComponent {
       vocabulary: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5v-15z"/></svg>'
     };
     return map[type] || '';
+  }
+
+  getExerciseSvgWhite(type: string): string {
+    const map: Record<string, string> = {
+      writing: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>',
+      speaking: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>',
+      listening: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>',
+      translation: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>',
+      pronunciation: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>',
+      vocabulary: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5v-15z"/></svg>'
+    };
+    return map[type] || '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
   }
 
   getExerciseLabel(type: string): string {
