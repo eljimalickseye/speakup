@@ -44,11 +44,11 @@ import { DialogService } from '../../services/dialog.service';
                 <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap">
                   <button (click)="selectLesson(feat)" class="btn-p" style="background:#6366F1; border-color:#6366F1; color:white; font-size:12.5px; font-weight:900; padding:10px 20px; border-radius:12px; display:inline-flex; align-items:center; gap:8px; cursor:pointer">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                    {{ t('Lancer le Cours & Vidéo 🎬', 'Play Lesson & Video 🎬') }}
+                    {{ t('Lancer le Cours & Vidéo', 'Play Lesson & Video') }}
                   </button>
 
                   <div style="background:rgba(255,255,255,0.12); backdrop-filter:blur(6px); padding:6px 14px; border-radius:12px; border:1px solid rgba(255,255,255,0.15); display:flex; align-items:center; gap:8px">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#A5B4FC" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="#A5B4FC" stroke="none"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                     <input type="text" [(ngModel)]="searchQuery" [placeholder]="t('Rechercher un cours...', 'Search lessons...')" style="border:none; outline:none; font-size:12px; color:white; background:transparent; width:140px" />
                   </div>
                 </div>
@@ -71,8 +71,9 @@ import { DialogService } from '../../services/dialog.service';
                     </div>
                   </div>
 
-                  <div style="position:absolute; bottom:8px; left:8px; right:8px; background:rgba(0,0,0,0.65); backdrop-filter:blur(4px); padding:4px 8px; border-radius:6px; font-size:10px; font-weight:800; color:white; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">
-                    ▶ {{ feat.title }}
+                  <div style="position:absolute; bottom:8px; left:8px; right:8px; background:rgba(0,0,0,0.65); backdrop-filter:blur(4px); padding:4px 8px; border-radius:6px; font-size:10px; font-weight:800; color:white; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:flex; align-items:center; gap:4px">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    <span>{{ feat.title }}</span>
                   </div>
                 </div>
               }
@@ -215,7 +216,10 @@ import { DialogService } from '../../services/dialog.service';
         <!-- SELECTED LESSON DETAIL VIEW -->
         <div class="card" style="padding:20px; border-radius:12px">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; border-bottom:1px solid var(--border-weak); padding-bottom:12px">
-            <button class="btn-s" (click)="selectedLesson.set(null)" style="font-size:12px; padding:6px 12px; border-radius:8px"><i class="ti ti-arrow-left"></i> {{ t('Retour aux cours', 'Back to Lessons') }}</button>
+            <button class="btn-s" (click)="selectedLesson.set(null)" style="font-size:12px; padding:6px 12px; border-radius:8px; display:inline-flex; align-items:center; gap:6px">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+              <span>{{ t('Retour aux cours', 'Back to Lessons') }}</span>
+            </button>
             <span class="pill" 
                   [class.done]="isLessonSubmitted(selectedLesson()!.id) && !getLessonListStatus(selectedLesson()!.id).includes('À refaire')" 
                   [class.new]="!isLessonSubmitted(selectedLesson()!.id) && !getLessonListStatus(selectedLesson()!.id).includes('À refaire')"
