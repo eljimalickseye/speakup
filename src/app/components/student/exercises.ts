@@ -439,8 +439,8 @@ const defaultWordsBank = [
 
       } @else {
         <!-- PREMIUM MODAL BACKDROP -->
-        <div class="ex-modal-backdrop" style="position:fixed; inset:0; z-index:99999; padding:12px; overflow:auto; display:flex; justify-content:center; align-items:flex-start">
-          <div class="ex-modal-card" style="width:100%; max-width:600px; min-height:420px; display:flex; flex-direction:column; border-radius:20px; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.06); margin:auto">
+        <div class="ex-modal-backdrop" style="position:fixed; inset:0; z-index:999999; padding:24px 16px; overflow-y:auto; display:flex; justify-content:center; align-items:center">
+          <div class="ex-modal-card" style="width:100%; max-width:620px; max-height:calc(100vh - 48px); display:flex; flex-direction:column; border-radius:20px; overflow:hidden; box-shadow:0 25px 60px -10px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.12); margin:auto; position:relative">
             
             <!-- DYNAMIC GRADIENT MODAL HEADER -->
             <div class="ex-modal-header"
@@ -1740,11 +1740,34 @@ const defaultWordsBank = [
   `,
   styles: [`
     .ex-modal-backdrop {
-      background: rgba(2, 6, 23, 0.72);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      z-index: 999999 !important;
+      background: rgba(2, 6, 23, 0.82) !important;
+      backdrop-filter: blur(12px) !important;
+      -webkit-backdrop-filter: blur(12px) !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      padding: 24px 16px !important;
+      overflow-y: auto !important;
     }
     .ex-modal-card {
+      width: 100% !important;
+      max-width: 620px !important;
+      max-height: calc(100vh - 48px) !important;
+      display: flex !important;
+      flex-direction: column !important;
+      border-radius: 20px !important;
+      overflow: hidden !important;
+      box-shadow: 0 25px 60px -10px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.12) !important;
+      margin: auto !important;
+      position: relative !important;
       animation: modalSlideIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
     @keyframes modalSlideIn {
