@@ -652,21 +652,21 @@ const defaultWordsBank = [
                                         [style.background]="exerciseInteractionMode() === 'input' ? '#4F46E5' : 'var(--surface-2)'"
                                         [style.color]="exerciseInteractionMode() === 'input' ? 'white' : 'var(--text-primary)'"
                                         style="border:1px solid var(--border); font-size:11.5px; font-weight:700; padding:5px 12px; border-radius:6px; cursor:pointer; display:flex; align-items:center; gap:4px">
-                                  ✍️ {{ t('Saisie directe (Inputs)', 'Direct Inputs') }}
+                                  <span>{{ t('Saisie directe (Inputs)', 'Direct Inputs') }}</span>
                                 </button>
                                 <button type="button" 
                                         (click)="exerciseInteractionMode.set('drag_drop')"
                                         [style.background]="exerciseInteractionMode() === 'drag_drop' ? '#4F46E5' : 'var(--surface-2)'"
                                         [style.color]="exerciseInteractionMode() === 'drag_drop' ? 'white' : 'var(--text-primary)'"
                                         style="border:1px solid var(--border); font-size:11.5px; font-weight:700; padding:5px 12px; border-radius:6px; cursor:pointer; display:flex; align-items:center; gap:4px">
-                                  🧩 {{ t('Glisser-Déposer (Puces)', 'Drag & Drop') }}
+                                  <span>{{ t('Glisser-Déposer (Puces)', 'Drag & Drop') }}</span>
                                 </button>
                                 <button type="button" 
                                         (click)="exerciseInteractionMode.set('free')"
                                         [style.background]="exerciseInteractionMode() === 'free' ? '#4F46E5' : 'var(--surface-2)'"
                                         [style.color]="exerciseInteractionMode() === 'free' ? 'white' : 'var(--text-primary)'"
                                         style="border:1px solid var(--border); font-size:11.5px; font-weight:700; padding:5px 12px; border-radius:6px; cursor:pointer; display:flex; align-items:center; gap:4px">
-                                  📝 {{ t('Réponse libre', 'Free Response') }}
+                                  <span>{{ t('Réponse libre', 'Free Response') }}</span>
                                 </button>
                               </div>
                             </div>
@@ -675,7 +675,7 @@ const defaultWordsBank = [
                             @if (exerciseInteractionMode() === 'drag_drop') {
                               <div style="background:linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%); border:1.5px dashed #6366F1; border-radius:12px; padding:14px; margin-bottom:14px">
                                 <div style="font-size:11.5px; font-weight:800; color:#4338CA; text-transform:uppercase; margin-bottom:8px; display:flex; align-items:center; justify-content:space-between">
-                                  <span>💡 {{ t('Puces de mots disponibles — Clic pour placer :', 'Available Word Chips — Click to place:') }}</span>
+                                  <span>{{ t('Puces de mots disponibles — Clic pour placer :', 'Available Word Chips — Click to place:') }}</span>
                                   <span style="font-size:10px; color:#6366F1; font-weight:700">{{ getAvailableWordBank().length }} {{ t('restants', 'remaining') }}</span>
                                 </div>
                                 <div style="display:flex; flex-wrap:wrap; gap:6px">
@@ -685,7 +685,7 @@ const defaultWordsBank = [
                                     </button>
                                   }
                                   @if (getAvailableWordBank().length === 0) {
-                                    <div style="font-size:12px; color:#059669; font-weight:700">🎉 {{ t('Tous les mots ont été placés !', 'All words have been placed!') }}</div>
+                                    <div style="font-size:12px; color:#059669; font-weight:700">{{ t('Tous les mots ont été placés !', 'All words have been placed!') }}</div>
                                   }
                                 </div>
                               </div>
@@ -711,7 +711,7 @@ const defaultWordsBank = [
                             @if (exerciseInteractionMode() === 'input') {
                               <div style="display:flex; flex-direction:column; gap:8px">
                                 <div style="font-size:12px; font-weight:800; color:#4F46E5; margin-bottom:4px">
-                                  ✍️ {{ t('Remplissez directement les trous ci-dessous :', 'Fill in the blanks directly below:') }}
+                                  {{ t('Remplissez directement les trous ci-dessous :', 'Fill in the blanks directly below:') }}
                                 </div>
                                 @for (slotIdx of [].constructor(getExerciseBlanksCount()); track $index) {
                                   <div style="display:flex; align-items:center; gap:8px; background:white; border:1px solid var(--border); padding:8px 12px; border-radius:8px">
@@ -3995,21 +3995,18 @@ export class StudentExercisesComponent {
     const bulletBankRegex = /([a-zA-Z0-9_\-\s]{2,}(?:•\s*[a-zA-Z0-9_\-\s]{2,})+)/gi;
     text = text.replace(bulletBankRegex, (match) => {
       const words = match.split('•').map(w => w.trim()).filter(Boolean);
-      const chips = words.map(w => `<span class="prompt-word-chip">${w}</span>`).join('');
+      const chips = words.map(w => `<span class="prompt-word-chip">${w}</span>`).join(' ');
       return `<div class="prompt-word-bank">
-                <div class="pwb-title">💡 Banque de Mots / Word Bank</div>
+                <div class="pwb-title">Banque de Mots / Word Bank</div>
                 <div class="pwb-chips">${chips}</div>
               </div>`;
     });
 
-    // 2. Format section headers: A), B), C), 1), 2)
-    text = text.replace(/(?:^|\n|\s)([A-Z1-9]\))\s*/g, '<div class="prompt-section-title">$1</div>');
+    // 2. Format section headers: A), B)
+    text = text.replace(/([A-Z]\))\s*/g, '<strong class="prompt-section-tag">$1</strong> ');
 
     // 3. Format blank underscores (________) as styled blank input lines
-    text = text.replace(/_{3,}/g, '<span class="prompt-fill-blank">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>');
-
-    // 4. Clean line breaks for sentences ending with period/colon followed by capital letter
-    text = text.replace(/([.:])\s+([A-Z][a-z])/g, '$1<br><br>$2');
+    text = text.replace(/_{3,}/g, '<span class="prompt-blank-inline">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>');
 
     return text;
   }

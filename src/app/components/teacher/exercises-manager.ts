@@ -452,10 +452,10 @@ import { DialogService } from '../../services/dialog.service';
                   <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
                     <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">{{ t("Mode de résolution de l'élève", "Student Resolution Mode") }}</label>
                     <select [(ngModel)]="formInteractionMode" style="width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 13px; background: var(--surface-1); color: var(--text-primary);">
-                      <option value="auto">⚡ {{ t("Auto-détection (Inputs interactifs + Glisser-Déposer)", "Auto-detect (Interactive Inputs + Drag & Drop)") }}</option>
-                      <option value="input">✍️ {{ t("Saisie directe dans les trous (Champs texte inline)", "Direct Inputs in blanks") }}</option>
-                      <option value="drag_drop">🧩 {{ t("Glisser-déposer des puces de mots (Drag & Drop)", "Drag & Drop Word Chips") }}</option>
-                      <option value="free">📝 {{ t("Réponse libre classique (Texte / Enregistrement vocal)", "Free Response (Text / Audio)") }}</option>
+                      <option value="auto">{{ t("Auto-détection (Inputs interactifs + Glisser-Déposer)", "Auto-detect (Interactive Inputs + Drag & Drop)") }}</option>
+                      <option value="input">{{ t("Saisie directe dans les trous (Champs texte inline)", "Direct Inputs in blanks") }}</option>
+                      <option value="drag_drop">{{ t("Glisser-déposer des puces de mots (Drag & Drop)", "Drag & Drop Word Chips") }}</option>
+                      <option value="free">{{ t("Réponse libre classique (Texte / Enregistrement vocal)", "Free Response (Text / Audio)") }}</option>
                     </select>
                   </div>
                 </div>
