@@ -16,6 +16,7 @@ export const books = [
       {
         id: 1,
         title: 'Chapitre 1 : Les Rives du Fleuve',
+        imageUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80',
         isPaid: false,
         coinPrice: 0,
         audioDuration: '02:30',
@@ -58,98 +59,55 @@ export const books = [
       {
         id: 2,
         title: 'Chapitre 2 : Les Secrets de la Nuit',
-        isPaid: true,
-        coinPrice: 5,
+        imageUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80',
+        isPaid: false,
+        coinPrice: 0,
         audioDuration: '03:15',
         audioFileName: '',
         audioUrl: '',
         sentences: [
           {
-            en: 'As dusk fell over the island, narrow stone streets whispered ancient stories carried by the ocean wind.',
-            fr: 'Alors que le crépuscule tombait sur l\'île, les ruelles étroites en pierre chuchotaient d\'anciennes histoires portées par le vent de l\'océan.',
-            vocabWord: 'dusk',
-            vocabFr: 'crépuscule'
+            en: 'Night fell quickly over the cobblestone alleys, and the cool sea wind began to blow.',
+            fr: 'La nuit tomba rapidement sur les ruelles pavées, et le vent frais de la mer commença à souffler.',
+            vocabWord: 'cobblestone',
+            vocabFr: 'ruelles pavées'
           },
           {
-            en: 'Aïda walked quietly past red bougainvillea flowers blooming along the historic pastel walls.',
-            fr: 'Aïda marchait en silence devant les bougainvilliers rouges en fleurs qui longeaient les murs historiques aux teintes pastel.',
-            vocabWord: 'blooming',
-            vocabFr: 'en fleurs / fleurissant'
-          },
-          {
-            en: 'She discovered an iron door concealed beneath thick ivy behind the House of Slaves.',
-            fr: 'Elle découvrit une porte en fer dissimulée sous du lierre épais derrière la Maison des Esclaves.',
-            vocabWord: 'concealed',
-            vocabFr: 'dissimulée / cachée'
-          },
-          {
-            en: 'When she inserted the key, a soft metallic sound echoed through the silent corridor.',
-            fr: 'Lorsqu\'elle inséra la clé, un doux son métallique résonna dans le couloir silencieux.',
-            vocabWord: 'echoed',
-            vocabFr: 'résonna'
+            en: 'Behind a carved wooden door, she discovered a small iron chest half-buried in sand.',
+            fr: 'Derrière une porte en bois sculpté, elle découvrit un petit coffre en fer à demi enfoui dans le sable.',
+            vocabWord: 'iron chest',
+            vocabFr: 'coffre en fer'
           }
         ],
         quiz: {
-          questionEn: 'Where was the iron door concealed?',
-          questionFr: 'Où la porte en fer était-elle dissimulée ?',
-          options: ['Beneath thick ivy', 'Under sand dunes', 'Behind a palm tree', 'Inside the lighthouse'],
+          questionEn: 'Where was the iron chest hidden?',
+          questionFr: 'Où le coffre en fer était-il caché ?',
+          options: ['Behind a carved wooden door', 'Inside a stone tower', 'Under a fishing boat', 'Near the main market'],
           correctIndex: 0,
-          explanation: 'The door was concealed beneath thick ivy.'
+          explanation: 'The iron chest was hidden behind a carved wooden door.'
         }
       },
       {
         id: 3,
-        title: 'Chapitre 3 : La Clé Cachée sous le Baobab',
-        isPaid: true,
-        coinPrice: 5,
-        audioDuration: '03:45',
+        title: 'Chapitre 3 : L\'Héritage Révélé',
+        imageUrl: 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?auto=format&fit=crop&w=1200&q=80',
+        isPaid: false,
+        coinPrice: 0,
+        audioDuration: '04:00',
         audioFileName: '',
         audioUrl: '',
         sentences: [
           {
-            en: 'Behind the door lay a sunlit courtyard with a giant ancient baobab tree standing in the center.',
-            fr: 'Derrière la porte se trouvait une cour baignée de soleil où se dressait au centre un baobab géant et séculaire.',
-            vocabWord: 'courtyard',
-            vocabFr: 'cour intérieure'
-          },
-          {
-            en: 'Buried between the hollow roots, she found a wooden chest containing the long-lost bilingual manuscript.',
-            fr: 'Enfouie entre les racines creuses, elle trouva un coffre en bois contenant le manuscrit bilingue disparu depuis si longtemps.',
-            vocabWord: 'buried',
-            vocabFr: 'enfouie / enterrée'
-          },
-          {
-            en: 'Every page revealed poetic letters of hope, peace, and cultural unity written by her ancestors.',
-            fr: 'Chaque page révélait des lettres poétiques d\'espoir, de paix et d\'unité culturelle rédigées par ses ancêtres.',
-            vocabWord: 'unity',
-            vocabFr: 'unité'
+            en: 'Inside the chest lay a series of letters telling the story of two families united across the sea.',
+            fr: 'À l\'intérieur du coffre se trouvaient une série de lettres racontant l\'histoire de deux familles unies par-delà la mer.',
+            vocabWord: 'letters',
+            vocabFr: 'lettres de correspondance'
           }
-        ],
-        quiz: {
-          questionEn: 'What was found buried between the roots of the giant baobab tree?',
-          questionFr: 'Qu\'a-t-on trouvé enfoui entre les racines du grand baobab ?',
-          options: ['A wooden chest with a manuscript', 'A gold coin container', 'A stone sculpture', 'A bronze statue'],
-          correctIndex: 0,
-          explanation: 'She found a wooden chest containing the bilingual manuscript.'
-        }
+        ]
       }
     ]
   }
 ];
 
-export const library = [
-  {
-    id: 'koko-goree-secret',
-    title: "Le Secret de l'Île de Gorée",
-    author: 'Fatoumata',
-    cover: 'c1',
-    progress: 0.35,
-    lastRead: 'Hier',
-  }
-];
-
-export const leaderboard = [
-  { rank: 1, name: 'Fatoumata', streak: 15, coins: 250, avatar: 'F' },
-  { rank: 2, name: 'Aïda Lefevre', streak: 12, coins: 150, avatar: 'A' },
-  { rank: 3, name: 'El Hadji Malick Seye', streak: 10, coins: 120, avatar: 'M' },
-];
+export const library = [];
+export const leaderboard = [];

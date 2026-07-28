@@ -426,7 +426,7 @@ export default function Reader() {
     }
   };
 
-  const showTopBar = showHudControls;
+  const showTopBar = true; // Always visible as requested so readers immediately see top controls!
 
   return (
     <div
@@ -441,135 +441,106 @@ export default function Reader() {
       }}
       onClick={handlePageTap}
     >
-      {/* Always-visible persistent floating Chapter List pill on the top-left */}
-      {!showHudControls && (
-        <button
-          type="button"
-          onClick={(e) => { e.stopPropagation(); setShowChapterDrawer(true); }}
-          className="fixed z-50 flex items-center gap-1.5 px-3 py-1.5 rounded-full shadow-md animate-fadeIn transition-all active:scale-95"
-          style={{
-            top: `max(16px, calc(env(safe-area-inset-top) + 8px))`,
-            left: 14,
-            backgroundColor: isLight ? 'rgba(250,248,245,0.92)' : 'rgba(18,18,24,0.92)',
-            border: `1px solid ${isLight ? 'rgba(0,0,0,0.10)' : 'rgba(255,255,255,0.14)'}`,
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
-            color: readingPrefs.text,
-          }}
-          aria-label="Liste des chapitres"
-        >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#C8A951' }}>
-            <line x1="3" y1="6" x2="21" y2="6"/>
-            <line x1="3" y1="12" x2="21" y2="12"/>
-            <line x1="3" y1="18" x2="21" y2="18"/>
-          </svg>
-          <span className="text-[10.5px] font-bold opacity-80">Ch. {activeChapterNum}</span>
-        </button>
-      )}
+      {/* ALWAYS VISIBLE FIXED TOP READER HEADER (OPTIMIZED FOR IPHONE & DESKTOP) */}
+      <div
+        className="fixed top-0 left-0 right-0 z-40 px-3 sm:px-5 py-2 flex justify-between items-center transition-all shadow-sm backdrop-blur-xl border-b"
+        style={{
+          paddingTop: `max(12px, calc(env(safe-area-inset-top) + 6px))`,
+          backgroundColor: isLight ? 'rgba(250, 248, 245, 0.95)' : 'rgba(18, 18, 24, 0.95)',
+          borderColor: isLight ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.1)',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Left: Back + Chapter List Drawer Button */}
+        <div className="flex items-center gap-1.5">
+          <IconButton
+            className={isLight ? 'bg-black/5 text-[#1A1816] hover:bg-black/10' : 'bg-white/10 text-[#F3F7F5] hover:bg-white/15'}
+            onClick={() => navigate(-1)}
+            aria-label="Retour"
+          >
+            <BackIcon className="w-4 h-4" />
+          </IconButton>
 
-      {/* Always-visible floating Settings pill on the top-right */}
-      {!showHudControls && readingPrefs.mode !== 'flip' && (
-        <button
-          type="button"
-          onClick={(e) => { e.stopPropagation(); setShowPreferences(true); }}
-          className="fixed z-50 flex items-center gap-1.5 px-3 py-1.5 rounded-full shadow-md animate-fadeIn"
-          style={{
-            top: `max(16px, calc(env(safe-area-inset-top) + 8px))`,
-            right: 14,
-            backgroundColor: isLight ? 'rgba(250,248,245,0.92)' : 'rgba(18,18,24,0.92)',
-            border: `1px solid ${isLight ? 'rgba(0,0,0,0.10)' : 'rgba(255,255,255,0.14)'}`,
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
-          }}
-          aria-label="Paramètres de lecture"
-        >
-          <SettingsIcon className="w-3.5 h-3.5" style={{ color: '#C8A951' }} />
-          <span className="text-[10.5px] font-bold" style={{ color: readingPrefs.text, opacity: 0.7 }}>Aa</span>
-        </button>
-      )}
-
-      {/* Top Header — hidden by default in scroll mode, reveals on tap */}
-      {showTopBar && (
-        <div
-          className="flex justify-between items-center px-3 pt-3 pb-2 animate-fadeIn flex-shrink-0 z-20"
-          style={{ paddingTop: 'max(48px, calc(env(safe-area-inset-top) + 12px))' }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="flex items-center gap-1">
-            <IconButton
-              className={isLight ? 'bg-black/8 text-[#1A1816]' : 'bg-white/10 text-[#F3F7F5]'}
-              onClick={() => navigate(-1)}
-              aria-label="Go back"
-            >
-              <BackIcon className="w-4 h-4" />
-            </IconButton>
-
-            {/* Top Chapter List Drawer Button */}
-            <button
-              type="button"
-              onClick={() => setShowChapterDrawer(true)}
-              title="Liste des chapitres"
-              className={`w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-95 ${
-                isLight ? 'bg-black/8 text-[#1A1816] hover:bg-black/12' : 'bg-white/10 text-[#F3F7F5] hover:bg-white/15'
-              }`}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="3" y1="6" x2="21" y2="6"/>
-                <line x1="3" y1="12" x2="21" y2="12"/>
-                <line x1="3" y1="18" x2="21" y2="18"/>
-              </svg>
-            </button>
-          </div>
-
-          {/* Clickable Middle Chapter Title Selector */}
           <button
             type="button"
             onClick={() => setShowChapterDrawer(true)}
-            className={`text-center truncate px-3 py-1 rounded-full transition-all active:scale-95 flex flex-col items-center justify-center ${
-              isLight ? 'hover:bg-black/5' : 'hover:bg-white/5'
+            title="Liste des chapitres"
+            className={`px-2.5 py-1.5 rounded-xl flex items-center gap-1.5 transition-all active:scale-95 text-[11px] font-bold ${
+              isLight ? 'bg-black/5 text-[#1A1816] hover:bg-black/10' : 'bg-white/10 text-[#F3F7F5] hover:bg-white/15'
             }`}
           >
-            <span className="text-[11px] font-bold opacity-75 truncate block max-w-[140px] sm:max-w-[200px]">{bookData?.title || 'Roman Koko'}</span>
-            <span className="text-[10.5px] font-bold text-gold flex items-center gap-1">
-              Chapitre {activeChapterNum} / {allChapters.length}
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="6 9 12 15 18 9"/>
-              </svg>
-            </span>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#C8A951' }}>
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <line x1="3" y1="12" x2="21" y2="12"/>
+              <line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+            <span className="hidden sm:inline">Chapitres</span>
           </button>
-
-          <div className="flex gap-1.5 items-center">
-            {quiz && (
-              <button
-                type="button"
-                title="Quiz (+5 Coins)"
-                onClick={() => { setSelectedOption(null); setQuizSubmitted(false); setShowQuizModal(true); }}
-                className="w-8 h-8 rounded-xl bg-gold/15 text-gold border border-gold/30 flex items-center justify-center"
-              >
-                <SparklesIcon className="w-4 h-4 text-gold" />
-              </button>
-            )}
-
-            <div className={`p-1 rounded-xl border flex gap-1 ${isLight ? 'bg-black/5 border-black/10' : 'bg-white/5 border-white/10'}`}>
-              <button type="button" title="Mode Feuilleter" onClick={() => setReadingPrefs((p) => ({ ...p, mode: 'flip' }))}
-                className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${readingPrefs.mode === 'flip' ? 'bg-gold text-paper' : 'opacity-60'}`}>
-                <BookOpenIcon className="w-3.5 h-3.5" />
-              </button>
-              <button type="button" title="Mode Défilement" onClick={() => setReadingPrefs((p) => ({ ...p, mode: 'scroll' }))}
-                className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${readingPrefs.mode !== 'flip' ? 'bg-gold text-paper' : 'opacity-60'}`}>
-                <span className="font-mono text-[11px] font-bold">☰</span>
-              </button>
-            </div>
-
-            <IconButton
-              className={isLight ? 'bg-black/8 text-[#1A1816]' : 'bg-white/10 text-[#F3F7F5]'}
-              onClick={() => setShowPreferences(true)}
-            >
-              <SettingsIcon className="w-4 h-4" />
-            </IconButton>
-          </div>
         </div>
-      )}
+
+        {/* Middle: Clickable Chapter & Book Title Indicator */}
+        <button
+          type="button"
+          onClick={() => setShowChapterDrawer(true)}
+          className={`text-center truncate px-3 py-1 rounded-full transition-all active:scale-95 flex flex-col items-center justify-center ${
+            isLight ? 'hover:bg-black/5' : 'hover:bg-white/5'
+          }`}
+        >
+          <span className="text-[11px] font-bold opacity-75 truncate block max-w-[130px] sm:max-w-[220px]">
+            {bookData?.title || 'Roman Koko'}
+          </span>
+          <span className="text-[10.5px] font-bold text-gold flex items-center gap-1">
+            Chapitre {activeChapterNum} / {allChapters.length}
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </span>
+        </button>
+
+        {/* Right: Quiz + Reading Preferences + Mode Toggle */}
+        <div className="flex gap-1.5 items-center">
+          {quiz && (
+            <button
+              type="button"
+              title="Quiz (+5 Coins)"
+              onClick={() => { setSelectedOption(null); setQuizSubmitted(false); setShowQuizModal(true); }}
+              className="w-8 h-8 rounded-xl bg-gold/15 text-gold border border-gold/30 flex items-center justify-center shadow-sm"
+            >
+              <SparklesIcon className="w-4 h-4 text-gold" />
+            </button>
+          )}
+
+          {/* Reading Mode Switcher */}
+          <div className={`p-1 rounded-xl border flex gap-0.5 ${isLight ? 'bg-black/5 border-black/10' : 'bg-white/5 border-white/10'}`}>
+            <button
+              type="button"
+              title="Mode Feuilleter (Pages)"
+              onClick={() => setReadingPrefs((p) => ({ ...p, mode: 'flip' }))}
+              className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${readingPrefs.mode === 'flip' ? 'bg-gold text-paper shadow-sm' : 'opacity-60'}`}
+            >
+              <BookOpenIcon className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              title="Mode Défilement (Webtoon)"
+              onClick={() => setReadingPrefs((p) => ({ ...p, mode: 'scroll' }))}
+              className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${readingPrefs.mode !== 'flip' ? 'bg-gold text-paper shadow-sm' : 'opacity-60'}`}
+            >
+              <span className="font-mono text-[11px] font-bold">☰</span>
+            </button>
+          </div>
+
+          {/* Reading Preferences */}
+          <IconButton
+            className={isLight ? 'bg-black/5 text-[#1A1816] hover:bg-black/10' : 'bg-white/10 text-[#F3F7F5] hover:bg-white/15'}
+            onClick={() => setShowPreferences(true)}
+            aria-label="Paramètres"
+            title="Taille de police & Couleurs"
+          >
+            <SettingsIcon className="w-4 h-4 text-gold" />
+          </IconButton>
+        </div>
+      </div>
 
       {/* STABLE, FIXED E-BOOK CANVAS FILLING 100% OF VIEWPORT */}
       {readingPrefs.mode === 'flip' || isImmersive ? (
@@ -680,7 +651,7 @@ export default function Reader() {
         <div
           key={`book-feed-${id}`}
           ref={scrollContainerRef}
-          className="flex-1 overflow-y-auto max-w-xl mx-auto w-full text-justify px-4 pt-20 sm:pt-24 pb-20 relative transition-colors duration-300"
+          className="flex-1 overflow-y-auto max-w-xl mx-auto w-full text-justify px-4 pt-24 sm:pt-28 pb-20 relative transition-colors duration-300"
           style={{
             fontFamily: readingPrefs.font,
             fontSize: `${readingPrefs.fontSize}px`,
@@ -703,7 +674,7 @@ export default function Reader() {
                 className="py-6 space-y-4 min-h-screen"
               >
                 {/* Chapter Header Card */}
-                <div className="text-center pt-4 pb-5 border-b border-surface-line/25 mb-6 space-y-1">
+                <div className="text-center pt-4 pb-5 border-b border-surface-line/25 mb-4 space-y-1">
                   <span className="text-[10.5px] font-mono font-bold uppercase tracking-widest text-gold block opacity-90">
                     Chapitre {cNum} / {allChapters.length}
                   </span>
@@ -712,6 +683,23 @@ export default function Reader() {
                   </h3>
                   <div className="w-12 h-[2.5px] bg-gold mx-auto mt-2 rounded-full opacity-70" />
                 </div>
+
+                {/* Chapter Top Illustration Banner */}
+                {chap.imageUrl && (
+                  <div className="w-full my-4 rounded-2xl overflow-hidden shadow-lg border border-surface-line/30 relative group">
+                    <img
+                      src={chap.imageUrl}
+                      alt={chap.title || `Illustration Chapitre ${cNum}`}
+                      className="w-full h-48 sm:h-64 object-cover transition-transform duration-700 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-70" />
+                    <span className="absolute bottom-2.5 left-3.5 text-[11px] font-bold text-white drop-shadow-md flex items-center gap-1.5">
+                      <SparklesIcon className="w-3.5 h-3.5 text-gold" />
+                      <span>Illustration Officielle · Chapitre {cNum}</span>
+                    </span>
+                  </div>
+                )}
 
                 {/* Sentences */}
                 {sentences.map((s, sIdx) => (

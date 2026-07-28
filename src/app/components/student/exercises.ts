@@ -680,8 +680,9 @@ const defaultWordsBank = [
                                 </div>
                                 <div style="display:flex; flex-wrap:wrap; gap:6px">
                                   @for (word of getAvailableWordBank(); track $index) {
-                                    <button type="button" (click)="selectWordChipForBlank(word)" class="prompt-word-chip" style="cursor:pointer; font-size:12px; font-weight:700; padding:5px 12px; border-radius:16px; background:white; color:#3730A3; border:1px solid #C7D2FE; box-shadow:0 2px 5px rgba(0,0,0,0.05)">
-                                      + {{ word }}
+                                    <button type="button" (click)="selectWordChipForBlank(word)" class="prompt-word-chip" style="cursor:pointer; font-size:12px; font-weight:700; padding:5px 12px; border-radius:16px; background:white; color:#3730A3; border:1px solid #C7D2FE; box-shadow:0 2px 5px rgba(0,0,0,0.05); display:inline-flex; align-items:center; gap:4px">
+                                      <span class="chip-num">{{ $index + 1 }}</span>
+                                      <span>{{ word }}</span>
                                     </button>
                                   }
                                   @if (getAvailableWordBank().length === 0) {
@@ -2800,7 +2801,7 @@ export class StudentExercisesComponent {
     if (mode === 'drag_drop' || mode === 'input' || mode === 'free') {
       this.exerciseInteractionMode.set(mode);
     } else {
-      this.exerciseInteractionMode.set('input');
+      this.exerciseInteractionMode.set('drag_drop');
     }
     this.resetExerciseAudioRecording();
     this.activeExercise.set('exercise');
@@ -3985,31 +3986,145 @@ export class StudentExercisesComponent {
 
   formatExerciseSubject(rawText: string | undefined): string {
     if (!rawText) return '';
-
     let text = rawText.trim();
-    if (text.includes('<div class="prompt-') || text.includes('<span class="prompt-')) {
-      return text;
+    if (text.includes('<div class="prompt-') || text.includes('<span class="prompt-')) return text;
+
+    // Words that ONLY appear at sentence starts (never in a vocabulary bank)
+    const SENTENCE_STARTERS = new Set([
+      'My', 'His', 'Her', 'Its', 'Our', 'Their',
+      'She', 'He', 'They', 'We', 'Every', 'Each', 'No'
+    ]);
+
+    let globalBlankIndex = 0;
+    const formatBlanks = (s: string) =>
+      s.replace(/_{3,}/g, () => {
+        globalBlankIndex++;
+        return `<span class="prompt-blank-box" title="Trou #${globalBlankIndex}"><span class="blank-num">#${globalBlankIndex}</span></span>`;
+      });
+
+    const formatSectionTags = (s: string) =>
+      s.replace(/\b([A-Z]\))\s+/g, '<strong class="prompt-section-tag">$1</strong>&nbsp;');
+
+    // Process a block of sentence text into numbered sentence lines + separate next sections (e.g. B))
+    const processSentenceBlock = (s: string): { sentencesHtml: string; nextSectionsHtml: string } => {
+      // Separate fill-in sentences from next exercise sections (e.g. B), C))
+      const secSplit = s.split(/(?=\b[B-Z]\)\s+)/);
+      const fillSentencesText = secSplit[0];
+      const remainingSectionsText = secSplit.slice(1).join(' ');
+
+      // Split fillSentencesText into per-sentence lines
+      const parts = fillSentencesText.split(/(?<=\.)\s+(?=[A-Z])/);
+      const sentencesHtml = parts
+        .map(p => p.trim())
+        .filter(Boolean)
+        .map(p => {
+          const formatted = formatSectionTags(formatBlanks(p));
+          return `<p class="prompt-sentence">${formatted}</p>`;
+        })
+        .join('');
+
+      let nextSectionsHtml = '';
+      if (remainingSectionsText.trim()) {
+        const nextParts = remainingSectionsText.split(/(?=\b[B-Z]\)\s+)/);
+        nextSectionsHtml = nextParts
+          .map(sec => {
+            const trimmed = sec.trim();
+            if (!trimmed) return '';
+            const formatted = formatSectionTags(formatBlanks(trimmed));
+            return `<div class="prompt-next-exercise-block">${formatted}</div>`;
+          })
+          .join('');
+      }
+
+      return { sentencesHtml, nextSectionsHtml };
+    };
+
+    const buildBankHtml = (words: string[]): string => {
+      const chips = words.map((w, idx) => 
+        `<span class="prompt-word-chip"><span class="chip-num">${idx + 1}</span> ${w}</span>`
+      ).join(' ');
+      return `<div class="prompt-word-bank"><div class="pwb-title">Banque de Mots / Word Bank</div><div class="pwb-chips">${chips}</div></div>`;
+    };
+
+    // ---- Path A: Word bank label detected ----
+    const wbMatch = text.match(/(Banque de Mots\s*(?:\/\s*)?Word Bank|Word Bank|Banque de Mots)\s*/i);
+
+    if (wbMatch && wbMatch.index !== undefined) {
+      const wbStart    = wbMatch.index;
+      const wbEnd      = wbStart + wbMatch[0].length;
+      const beforeBank = text.slice(0, wbStart);
+      const afterLabel = text.slice(wbEnd);
+
+      let vocabWords: string[] = [];
+      let sentenceSection = '';
+
+      if (afterLabel.includes('•')) {
+        // Bullet-separated
+        const bulletBlock = afterLabel.match(/([a-zA-Z'\-]+(?:\s*•\s*[a-zA-Z'\-]+)+)/);
+        if (bulletBlock) {
+          vocabWords = bulletBlock[0].split('•').map((w: string) => w.trim()).filter(Boolean);
+          sentenceSection = afterLabel.slice((bulletBlock.index || 0) + bulletBlock[0].length).trim();
+        }
+      } else {
+        // Space-separated — stop at first sentence-starter word
+        const tokens = afterLabel.split(/\s+/);
+        let i = 0;
+        for (; i < tokens.length; i++) {
+          const token = tokens[i].replace(/[.,!?;:]+$/, '').trim();
+          const isAlphaWord = /^[a-zA-Z'\-]{2,30}$/.test(token);
+          const isSentenceStart = SENTENCE_STARTERS.has(token);
+          if (!isAlphaWord || (isSentenceStart && vocabWords.length >= 2)) break;
+          vocabWords.push(token);
+        }
+        sentenceSection = tokens.slice(i).join(' ');
+      }
+
+      const instructionHtml = formatSectionTags(formatBlanks(beforeBank.trim()));
+      const { sentencesHtml, nextSectionsHtml } = processSentenceBlock(sentenceSection.trim());
+
+      return (instructionHtml ? `<div class="prompt-instruction-block">${instructionHtml}</div>` : '') +
+             buildBankHtml(vocabWords) +
+             (sentencesHtml ? `<div class="prompt-fill-sentences">${sentencesHtml}</div>` : '') +
+             (nextSectionsHtml ? nextSectionsHtml : '');
     }
 
-    // 1. Detect Word Bank with bullet points: e.g. "colleague • degree • responsibility..."
-    const bulletBankRegex = /([a-zA-Z0-9_\-\s]{2,}(?:•\s*[a-zA-Z0-9_\-\s]{2,})+)/gi;
-    text = text.replace(bulletBankRegex, (match) => {
-      const words = match.split('•').map(w => w.trim()).filter(Boolean);
-      const chips = words.map(w => `<span class="prompt-word-chip">${w}</span>`).join(' ');
-      return `<div class="prompt-word-bank">
-                <div class="pwb-title">Banque de Mots / Word Bank</div>
-                <div class="pwb-chips">${chips}</div>
-              </div>`;
-    });
+    // ---- Path B: No label — detect bullet-separated word bank ----
+    const bulletBankMatch = text.match(/([a-zA-Z'\-]+(?:\s*•\s*[a-zA-Z'\-]+){3,})/);
+    if (bulletBankMatch && bulletBankMatch.index !== undefined) {
+      const bStart     = bulletBankMatch.index;
+      const bEnd       = bStart + bulletBankMatch[0].length;
+      const beforeBank = text.slice(0, bStart);
+      const afterBank  = text.slice(bEnd).trim();
 
-    // 2. Format section headers: A), B)
-    text = text.replace(/([A-Z]\))\s*/g, '<strong class="prompt-section-tag">$1</strong> ');
+      const vocabWords = bulletBankMatch[0].split('•').map((w: string) => w.trim()).filter(Boolean);
 
-    // 3. Format blank underscores (________) as styled blank input lines
-    text = text.replace(/_{3,}/g, '<span class="prompt-blank-inline">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>');
+      let sentenceSection = afterBank;
+      const tokens = afterBank.split(/\s+/);
+      let i = 0;
+      for (; i < tokens.length; i++) {
+        const token = tokens[i].replace(/[.,!?;:]+$/, '').trim();
+        const isAlphaWord = /^[a-zA-Z'\-]{2,30}$/.test(token);
+        const isSentenceStart = SENTENCE_STARTERS.has(token);
+        if (!isAlphaWord || isSentenceStart) break;
+        vocabWords.push(token);
+      }
+      sentenceSection = tokens.slice(i).join(' ');
 
-    return text;
+      const instructionHtml = formatSectionTags(formatBlanks(beforeBank.trim()));
+      const { sentencesHtml, nextSectionsHtml } = processSentenceBlock(sentenceSection.trim());
+
+      return (instructionHtml ? `<div class="prompt-instruction-block">${instructionHtml}</div>` : '') +
+             buildBankHtml(vocabWords) +
+             (sentencesHtml ? `<div class="prompt-fill-sentences">${sentencesHtml}</div>` : '') +
+             (nextSectionsHtml ? nextSectionsHtml : '');
+    }
+
+    // ---- Path C: No word bank ----
+    const { sentencesHtml, nextSectionsHtml } = processSentenceBlock(text);
+    return (sentencesHtml ? `<div class="prompt-fill-sentences">${sentencesHtml}</div>` : '') +
+           (nextSectionsHtml ? nextSectionsHtml : '');
   }
+
 
   getVisualizerBarHeight(idx: number): number {
     return this.visualizerHeights()[idx] || 15;

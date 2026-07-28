@@ -302,6 +302,75 @@ export default function NotionChapterEditor({
         {activeTab === 'bilingual' ? (
           /* BILINGUAL WRITING SYSTEM WITH ROUND GLASS TRIGGER PINS ON EACH BLOCK */
           <div className="space-y-4">
+
+            {/* CHAPTER ILLUSTRATION IMAGE BANNER INPUT */}
+            <div className="bg-white p-4 rounded-2xl border border-surface-line shadow-sm space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <SparklesIcon className="w-4 h-4 text-gold" />
+                  <span className="text-[12px] font-bold text-ink">
+                    {isEn ? 'Chapter Top Illustration Image' : 'Image d\'Illustration du Chapitre'}
+                  </span>
+                </div>
+                <span className="text-[10px] text-taupe font-semibold">
+                  (Optionnel - Laissez vide si vous ne souhaitez pas d'image)
+                </span>
+              </div>
+
+              <div className="flex gap-2">
+                <input
+                  type="url"
+                  value={chapter.imageUrl || ''}
+                  onChange={(e) => onUpdateChapter({ ...chapter, imageUrl: e.target.value })}
+                  placeholder="ex: https://images.unsplash.com/photo-1518709268805-4e9042af9f23..."
+                  className="flex-1 px-3.5 py-2 rounded-xl border border-surface-line text-[12px] font-medium outline-none focus:border-gold bg-paper"
+                />
+                {chapter.imageUrl && (
+                  <button
+                    type="button"
+                    onClick={() => onUpdateChapter({ ...chapter, imageUrl: '' })}
+                    className="px-3 py-2 rounded-xl bg-red-50 text-red-600 border border-red-200 text-[11px] font-bold"
+                  >
+                    Effacer
+                  </button>
+                )}
+              </div>
+
+              {/* 1-Click Preset Chapter Image Suggestions */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                <span className="text-[10px] font-bold text-taupe uppercase flex-shrink-0">Suggestions :</span>
+                {[
+                  { name: 'Gorée Sunset', url: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=80' },
+                  { name: 'Océan Dakar', url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80' },
+                  { name: 'Livre Ancien', url: 'https://images.unsplash.com/photo-1476514525535-ce74f45814d9?auto=format&fit=crop&w=1200&q=80' },
+                  { name: 'Nature & Baobab', url: 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?auto=format&fit=crop&w=1200&q=80' },
+                ].map((preset, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => onUpdateChapter({ ...chapter, imageUrl: preset.url })}
+                    className={`px-2.5 py-1 rounded-xl text-[10.5px] font-bold flex-shrink-0 border transition-all ${
+                      chapter.imageUrl === preset.url
+                        ? 'bg-gold text-paper border-gold shadow-sm'
+                        : 'bg-paper text-ink border-surface-line hover:border-gold'
+                    }`}
+                  >
+                    {preset.name}
+                  </button>
+                ))}
+              </div>
+
+              {/* Live Preview Banner */}
+              {chapter.imageUrl && (
+                <div className="w-full h-32 rounded-xl overflow-hidden border border-surface-line relative shadow-sm">
+                  <img src={chapter.imageUrl} alt="Aperçu Chapitre" className="w-full h-full object-cover" />
+                  <span className="absolute bottom-2 left-2 bg-black/60 text-white text-[9.5px] px-2 py-0.5 rounded-full backdrop-blur-md">
+                    Aperçu Image d'En-tête
+                  </span>
+                </div>
+              )}
+            </div>
+
             <div className="flex flex-wrap justify-between items-center bg-gold/10 p-3.5 rounded-2xl border border-gold/30 gap-2">
               <div>
                 <span className="text-[10px] font-extrabold uppercase text-gold tracking-wider block">
