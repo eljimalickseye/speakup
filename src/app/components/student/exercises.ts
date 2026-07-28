@@ -690,10 +690,12 @@ const defaultWordsBank = [
                                 <span style="font-size:14px; font-weight:800; color:#EF4444">{{ exerciseRecordSeconds() }}s</span>
                               </div>
                               
-                              <!-- Visualizer animation -->
-                              <div style="width:100%; max-width:240px; height:32px; display:flex; align-items:center; justify-content:center; gap:3px">
-                                @for (bar of [15, 30, 45, 25, 60, 40, 75, 50, 30, 15]; track bar; let bIdx = $index) {
-                                  <div [style.height.%]="getVisualizerBarHeight(bIdx)" style="width:4px; background:linear-gradient(to top, #EF4444, #FCA5A5); border-radius:2px; transition:height 0.15s"></div>
+                              <!-- Enhanced Audio Equalizer Visualizer -->
+                              <div style="width:100%; max-width:260px; height:38px; display:flex; align-items:center; justify-content:center; gap:4px; margin:6px 0">
+                                @for (barVal of [1,2,3,4,5,6,7,8,9,10,11,12]; track $index) {
+                                  <div class="audio-equalizer-bar" 
+                                       [style.height.%]="getVisualizerBarHeight($index)" 
+                                       [style.animationDelay]="$index * 0.08 + 's'"></div>
                                 }
                               </div>
 
@@ -727,6 +729,7 @@ const defaultWordsBank = [
                         <button (click)="handleExerciseSubmit()" 
                                 class="btn-submit-premium"
                                 [class.ready]="isExerciseResponseReady()"
+                                [disabled]="!isExerciseResponseReady()"
                                 style="width:100%; justify-content:center; font-size: 14.5px; padding: 14px 24px; display:inline-flex; align-items:center; gap:8px">
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                           <span>{{ t('Soumettre mon Exercice', 'Submit Exercise') }}</span>
@@ -1837,6 +1840,20 @@ const defaultWordsBank = [
       background: #EF4444;
       display: inline-block;
       animation: pulse-red 1s infinite;
+    }
+    .audio-equalizer-bar {
+      width: 5px;
+      min-height: 8px;
+      background: linear-gradient(to top, #EF4444 0%, #F87171 50%, #FCA5A5 100%);
+      border-radius: 4px;
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+      transition: height 0.1s ease-in-out;
+      animation: equalizerWave 0.5s ease-in-out infinite alternate;
+    }
+    @keyframes equalizerWave {
+      0% { transform: scaleY(0.4); opacity: 0.6; }
+      50% { transform: scaleY(1.1); opacity: 1; filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.6)); }
+      100% { transform: scaleY(0.3); opacity: 0.5; }
     }
     @keyframes pulse-red {
       0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
@@ -3034,13 +3051,16 @@ export class StudentExercisesComponent {
   isExerciseResponseReady(): boolean {
     const ex = this.activeExerciseItem();
     if (!ex) return false;
-    if (ex.type === 'writing' || ex.type === 'translation') {
-      return !!this.studentResponse().trim();
-    }
-    if (ex.type === 'speaking' || ex.type === 'pronunciation') {
-      return this.recordedAudios().length > 0 || this.recordingState() === 'recording';
-    }
-    return true;
+
+    if (ex.type === 'vocabulary') return true;
+
+    const hasText = !!this.studentResponse().trim();
+    const hasAudio = this.recordedAudios().length > 0 ||
+                     this.exerciseRecordingState() === 'recording' ||
+                     this.recordingState() === 'recording';
+
+    // Unlocks as long as student provided either a written response or an audio recording
+    return hasText || hasAudio;
   }
 
   async handleExerciseSubmit() {
