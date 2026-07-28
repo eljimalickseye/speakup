@@ -448,7 +448,7 @@ const defaultWordsBank = [
                                     activeExercise() === 'quiz' ? 'linear-gradient(135deg, #3730A3 0%, #4F46E5 50%, #6366F1 100%)' :
                                     activeExercise() === 'exercise' ? 'linear-gradient(135deg, #1E40AF 0%, #3B82F6 60%, #60A5FA 100%)' :
                                     'linear-gradient(135deg, #92400E 0%, #D97706 50%, #F59E0B 100%)'"
-                 style="padding:20px 24px; position:relative; overflow:hidden">
+                 style="padding:20px 24px; position:relative; overflow:hidden; flex-shrink:0">
               <!-- Decorative circles -->
               <div style="position:absolute; top:-20px; right:-20px; width:120px; height:120px; border-radius:50%; background:rgba(255,255,255,0.06)"></div>
               <div style="position:absolute; bottom:-30px; left:40px; width:80px; height:80px; border-radius:50%; background:rgba(255,255,255,0.04)"></div>

@@ -163,7 +163,7 @@ import { SidebarComponent } from './sidebar';
              [style.minHeight]="(activeTheme() === 'manga' || activeTheme() === 'rose') ? '120px' : 'auto'"
              [style.padding]="(activeTheme() === 'manga' || activeTheme() === 'rose') ? '12px 24px' : '14px 20px'"
              [style.borderBottom]="activeTheme() === 'manga' ? '2px solid #000' : (activeTheme() === 'rose' ? '2px solid #FBCFE8' : '0.5px solid var(--border)')"
-             style="position:relative; overflow:visible; z-index:30">
+             style="position:relative; overflow:visible;">
           <!-- Hamburger menu button (Mobile only) -->
           <button class="hamburger-btn" (click)="toggleSidebar(true)">
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -287,9 +287,9 @@ import { SidebarComponent } from './sidebar';
         </div>
         
         <!-- CONTENT VIEWPORT -->
-        <div class="content" style="position:relative; z-index:1">
+        <div class="content">
           <!-- Sticky Banners Container -->
-          <div style="position:sticky; top:0; z-index:20; display:flex; flex-direction:column; gap:2px; flex-shrink:0">
+          <div style="position:sticky; top:0; display:flex; flex-direction:column; gap:2px; flex-shrink:0">
             <!-- ── PERSISTENT LIVE BANNER (student only, when live is active) ── -->
             @if (currentUser()?.role === 'student' && activeClassAvailable() && !activeJitsiCall()) {
               @let activeLive = getActiveLiveClass();
