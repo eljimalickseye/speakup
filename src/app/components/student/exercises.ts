@@ -636,6 +636,98 @@ const defaultWordsBank = [
                       <!-- UNIFIED MULTIPART SUBMISSION FORM -->
                       <div class="homework-workspace">
                         
+                        <!-- SECTION 0: INTERACTIVE FILL-IN-THE-BLANKS WORKSPACE -->
+                        @if (getExerciseBlanksCount() > 0) {
+                          <div style="background:var(--surface-2); border:1.5px solid var(--border-weak); border-radius:14px; padding:16px; margin-bottom:16px">
+                            
+                            <!-- MODE SWITCHER TOOLBAR -->
+                            <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; background:var(--surface-1); border:1px solid var(--border-weak); padding:8px 12px; border-radius:10px; margin-bottom:14px">
+                              <div style="font-size:12px; font-weight:800; color:var(--text-secondary); display:flex; align-items:center; gap:6px">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                                <span>{{ t('Mode de résolution des trous :', 'Fill-in-the-blank Mode:') }}</span>
+                              </div>
+                              <div style="display:flex; gap:6px">
+                                <button type="button" 
+                                        (click)="exerciseInteractionMode.set('input')"
+                                        [style.background]="exerciseInteractionMode() === 'input' ? '#4F46E5' : 'var(--surface-2)'"
+                                        [style.color]="exerciseInteractionMode() === 'input' ? 'white' : 'var(--text-primary)'"
+                                        style="border:1px solid var(--border); font-size:11.5px; font-weight:700; padding:5px 12px; border-radius:6px; cursor:pointer; display:flex; align-items:center; gap:4px">
+                                  ✍️ {{ t('Saisie directe (Inputs)', 'Direct Inputs') }}
+                                </button>
+                                <button type="button" 
+                                        (click)="exerciseInteractionMode.set('drag_drop')"
+                                        [style.background]="exerciseInteractionMode() === 'drag_drop' ? '#4F46E5' : 'var(--surface-2)'"
+                                        [style.color]="exerciseInteractionMode() === 'drag_drop' ? 'white' : 'var(--text-primary)'"
+                                        style="border:1px solid var(--border); font-size:11.5px; font-weight:700; padding:5px 12px; border-radius:6px; cursor:pointer; display:flex; align-items:center; gap:4px">
+                                  🧩 {{ t('Glisser-Déposer (Puces)', 'Drag & Drop') }}
+                                </button>
+                                <button type="button" 
+                                        (click)="exerciseInteractionMode.set('free')"
+                                        [style.background]="exerciseInteractionMode() === 'free' ? '#4F46E5' : 'var(--surface-2)'"
+                                        [style.color]="exerciseInteractionMode() === 'free' ? 'white' : 'var(--text-primary)'"
+                                        style="border:1px solid var(--border); font-size:11.5px; font-weight:700; padding:5px 12px; border-radius:6px; cursor:pointer; display:flex; align-items:center; gap:4px">
+                                  📝 {{ t('Réponse libre', 'Free Response') }}
+                                </button>
+                              </div>
+                            </div>
+
+                            <!-- DRAG & DROP MODE VIEW -->
+                            @if (exerciseInteractionMode() === 'drag_drop') {
+                              <div style="background:linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%); border:1.5px dashed #6366F1; border-radius:12px; padding:14px; margin-bottom:14px">
+                                <div style="font-size:11.5px; font-weight:800; color:#4338CA; text-transform:uppercase; margin-bottom:8px; display:flex; align-items:center; justify-content:space-between">
+                                  <span>💡 {{ t('Puces de mots disponibles — Clic pour placer :', 'Available Word Chips — Click to place:') }}</span>
+                                  <span style="font-size:10px; color:#6366F1; font-weight:700">{{ getAvailableWordBank().length }} {{ t('restants', 'remaining') }}</span>
+                                </div>
+                                <div style="display:flex; flex-wrap:wrap; gap:6px">
+                                  @for (word of getAvailableWordBank(); track $index) {
+                                    <button type="button" (click)="selectWordChipForBlank(word)" class="prompt-word-chip" style="cursor:pointer; font-size:12px; font-weight:700; padding:5px 12px; border-radius:16px; background:white; color:#3730A3; border:1px solid #C7D2FE; box-shadow:0 2px 5px rgba(0,0,0,0.05)">
+                                      + {{ word }}
+                                    </button>
+                                  }
+                                  @if (getAvailableWordBank().length === 0) {
+                                    <div style="font-size:12px; color:#059669; font-weight:700">🎉 {{ t('Tous les mots ont été placés !', 'All words have been placed!') }}</div>
+                                  }
+                                </div>
+                              </div>
+
+                              <div style="display:flex; flex-direction:column; gap:8px">
+                                @for (slotIdx of [].constructor(getExerciseBlanksCount()); track $index) {
+                                  <div style="display:flex; align-items:center; gap:8px; background:white; border:1px solid var(--border); padding:8px 12px; border-radius:8px">
+                                    <span style="font-size:12px; font-weight:800; color:#4F46E5; min-width:65px">Trou #{{ $index + 1 }} :</span>
+                                    @if (blankAnswers()[$index]) {
+                                      <button type="button" (click)="clearBlankSlot($index)" style="background:#4F46E5; color:white; border:none; border-radius:14px; padding:4px 12px; font-size:12px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:6px; box-shadow:0 2px 6px rgba(79,70,229,0.3)">
+                                        <span>{{ blankAnswers()[$index] }}</span>
+                                        <span style="font-size:10px; opacity:0.8">✕</span>
+                                      </button>
+                                    } @else {
+                                      <span style="font-size:12px; color:var(--text-muted); font-style:italic">[ {{ t('Cliquez sur une puce ci-dessus pour remplir ce trou', 'Click a chip above to fill this blank') }} ]</span>
+                                    }
+                                  </div>
+                                }
+                              </div>
+                            }
+
+                            <!-- DIRECT INPUT MODE VIEW -->
+                            @if (exerciseInteractionMode() === 'input') {
+                              <div style="display:flex; flex-direction:column; gap:8px">
+                                <div style="font-size:12px; font-weight:800; color:#4F46E5; margin-bottom:4px">
+                                  ✍️ {{ t('Remplissez directement les trous ci-dessous :', 'Fill in the blanks directly below:') }}
+                                </div>
+                                @for (slotIdx of [].constructor(getExerciseBlanksCount()); track $index) {
+                                  <div style="display:flex; align-items:center; gap:8px; background:white; border:1px solid var(--border); padding:8px 12px; border-radius:8px">
+                                    <span style="font-size:12px; font-weight:800; color:#4F46E5; min-width:65px">Trou #{{ $index + 1 }} :</span>
+                                    <input type="text" 
+                                           [ngModel]="blankAnswers()[$index] || ''"
+                                           (ngModelChange)="onBlankInputChange($index, $event)"
+                                           placeholder="Saisissez le mot manquant..."
+                                           style="flex:1; border:1px solid var(--border); border-radius:6px; padding:6px 10px; font-size:13px; background:var(--surface-1); color:var(--text-primary); outline:none" />
+                                  </div>
+                                }
+                              </div>
+                            }
+                          </div>
+                        }
+
                         <!-- SECTION 1: TEXT ANSWER -->
                         <div class="homework-section">
                           <label class="homework-title-row">
@@ -2703,6 +2795,13 @@ export class StudentExercisesComponent {
     this.recordedAudios.set([]);
     this.exerciseSubmitted.set(false);
     this.vocabularyActiveIdx.set(0);
+    this.blankAnswers.set({});
+    const mode = (ex as any)?.interactionMode;
+    if (mode === 'drag_drop' || mode === 'input' || mode === 'free') {
+      this.exerciseInteractionMode.set(mode);
+    } else {
+      this.exerciseInteractionMode.set('input');
+    }
     this.resetExerciseAudioRecording();
     this.activeExercise.set('exercise');
   }
@@ -3800,6 +3899,74 @@ export class StudentExercisesComponent {
         this.recordSeconds.set(0);
       }
     }
+  }
+
+  // --- Fill-in-the-blanks & Drag-and-Drop Interaction ---
+  exerciseInteractionMode = signal<'input' | 'drag_drop' | 'free'>('input');
+  blankAnswers = signal<Record<number, string>>({});
+
+  onBlankInputChange(blankIdx: number, val: string) {
+    const currentMap = { ...this.blankAnswers(), [blankIdx]: val };
+    this.blankAnswers.set(currentMap);
+    this.syncBlankAnswersToStudentResponse(currentMap);
+  }
+
+  selectWordChipForBlank(word: string) {
+    const totalBlanks = this.getExerciseBlanksCount();
+    const currentMap = { ...this.blankAnswers() };
+
+    for (let i = 0; i < totalBlanks; i++) {
+      if (!currentMap[i]) {
+        currentMap[i] = word;
+        this.blankAnswers.set(currentMap);
+        this.syncBlankAnswersToStudentResponse(currentMap);
+        break;
+      }
+    }
+  }
+
+  clearBlankSlot(blankIdx: number) {
+    const currentMap = { ...this.blankAnswers() };
+    delete currentMap[blankIdx];
+    this.blankAnswers.set(currentMap);
+    this.syncBlankAnswersToStudentResponse(currentMap);
+  }
+
+  syncBlankAnswersToStudentResponse(answers: Record<number, string>) {
+    const keys = Object.keys(answers).map(Number).sort((a, b) => a - b);
+    const formattedLines = keys
+      .filter(k => !!answers[k]?.trim())
+      .map(k => `${k + 1}. ${answers[k].trim()}`);
+
+    if (formattedLines.length > 0) {
+      this.studentResponse.set(formattedLines.join('\n'));
+    }
+  }
+
+  getAvailableWordBank(): string[] {
+    const ex = this.activeExerciseItem();
+    if (!ex) return [];
+
+    const subjectText = ex.subject || ex.speakingPrompt || ex.listeningInstruction || ex.textToTranslate || '';
+    const bulletMatch = subjectText.match(/([a-zA-Z0-9_\-\s]{2,}(?:•\s*[a-zA-Z0-9_\-\s]{2,})+)/);
+    
+    let allWords: string[] = [];
+    if (bulletMatch && bulletMatch[1]) {
+      allWords = bulletMatch[1].split('•').map(w => w.trim()).filter(Boolean);
+    } else if (ex.wordList && ex.wordList.length > 0) {
+      allWords = ex.wordList;
+    }
+
+    const usedValues = Object.values(this.blankAnswers());
+    return allWords.filter(w => !usedValues.includes(w));
+  }
+
+  getExerciseBlanksCount(): number {
+    const ex = this.activeExerciseItem();
+    if (!ex) return 0;
+    const subjectText = ex.subject || ex.speakingPrompt || ex.listeningInstruction || ex.textToTranslate || '';
+    const matches = subjectText.match(/_{3,}/g);
+    return matches ? matches.length : 0;
   }
 
   playAudioPlayback() {

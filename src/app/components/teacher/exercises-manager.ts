@@ -449,6 +449,15 @@ import { DialogService } from '../../services/dialog.service';
                       }
                     </select>
                   </div>
+                  <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
+                    <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">{{ t("Mode de résolution de l'élève", "Student Resolution Mode") }}</label>
+                    <select [(ngModel)]="formInteractionMode" style="width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 13px; background: var(--surface-1); color: var(--text-primary);">
+                      <option value="auto">⚡ {{ t("Auto-détection (Inputs interactifs + Glisser-Déposer)", "Auto-detect (Interactive Inputs + Drag & Drop)") }}</option>
+                      <option value="input">✍️ {{ t("Saisie directe dans les trous (Champs texte inline)", "Direct Inputs in blanks") }}</option>
+                      <option value="drag_drop">🧩 {{ t("Glisser-déposer des puces de mots (Drag & Drop)", "Drag & Drop Word Chips") }}</option>
+                      <option value="free">📝 {{ t("Réponse libre classique (Texte / Enregistrement vocal)", "Free Response (Text / Audio)") }}</option>
+                    </select>
+                  </div>
                 </div>
 
                 <!-- RICH TEXT TOOLBAR SECTION (Only for non-vocab types) -->
@@ -1095,6 +1104,7 @@ export class TeacherExercisesManagerComponent {
   formPoints = 20;
   formGroupId = '';
   formStatus = 'published';
+  formInteractionMode: 'auto' | 'input' | 'drag_drop' | 'free' = 'auto';
 
   // Type specific fields
   formSubject = '';
@@ -1377,6 +1387,7 @@ export class TeacherExercisesManagerComponent {
     this.formPoints = ex.points;
     this.formGroupId = ex.groupId || '';
     this.formStatus = ex.status;
+    this.formInteractionMode = (ex as any).interactionMode || 'auto';
 
     // Bind specific fields
     this.formSubject = ex.subject || '';
@@ -1475,6 +1486,7 @@ export class TeacherExercisesManagerComponent {
       points: this.formPoints,
       groupId: this.formGroupId || undefined,
       status: status,
+      interactionMode: this.formInteractionMode,
       authorId: user?.id || 'teacher',
       authorName: user?.name || 'Teacher'
     };
