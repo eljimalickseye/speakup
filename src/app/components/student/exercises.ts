@@ -583,21 +583,21 @@ const defaultWordsBank = [
                   @if (activeExerciseItem()?.type !== 'vocabulary') {
                     <div style="display:flex; flex-direction:column; gap:16px">
                       <!-- Subject / Prompt banner based on type -->
-                      @if (activeExerciseItem()?.type === 'writing') {
-                        <div style="background:#F5F3FF; border:1px solid #DDD6FE; border-radius:8px; padding:14px;">
-                          <div style="font-size:12.5px; font-weight:700; color:#6D28D9; margin-bottom:6px; display:flex; align-items:center; gap:6px">
+                      @if (activeExerciseItem()?.type === 'writing' || activeExerciseItem()?.subject) {
+                        <div style="background:#F5F3FF; border:1px solid #DDD6FE; border-radius:12px; padding:16px;">
+                          <div style="font-size:12.5px; font-weight:700; color:#6D28D9; margin-bottom:8px; display:flex; align-items:center; gap:6px">
                             <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-                            <span>{{ t("Sujet d'expression écrite", "Writing Prompt Subject") }}</span>
+                            <span>{{ t("Sujet d'expression écrite & Consignes", "Writing Prompt Subject & Instructions") }}</span>
                           </div>
-                          <p style="font-size:13px; color:var(--text-primary); line-height:1.6; margin:0;" [innerHTML]="activeExerciseItem()?.subject"></p>
+                          <div style="font-size:13px; color:var(--text-primary); line-height:1.7; margin:0;" [innerHTML]="formatExerciseSubject(activeExerciseItem()?.subject)"></div>
                         </div>
                       } @else if (activeExerciseItem()?.type === 'speaking') {
-                        <div style="background:#F0FDF4; border:1px solid #A7F3D0; border-radius:8px; padding:14px;">
-                          <div style="font-size:12.5px; font-weight:700; color:#065F46; margin-bottom:6px; display:flex; align-items:center; gap:6px">
+                        <div style="background:#F0FDF4; border:1px solid #A7F3D0; border-radius:12px; padding:16px;">
+                          <div style="font-size:12.5px; font-weight:700; color:#065F46; margin-bottom:8px; display:flex; align-items:center; gap:6px">
                             <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
                             <span>{{ t("Consigne d'expression orale", "Speaking Instruction") }}</span>
                           </div>
-                          <p style="font-size:13px; color:var(--text-primary); line-height:1.6; margin:0;" [innerHTML]="activeExerciseItem()?.speakingPrompt"></p>
+                          <div style="font-size:13px; color:var(--text-primary); line-height:1.7; margin:0;" [innerHTML]="formatExerciseSubject(activeExerciseItem()?.speakingPrompt)"></div>
                         </div>
                       } @else if (activeExerciseItem()?.type === 'listening') {
                         @if (activeExerciseItem()?.youtubeUrl) {
@@ -608,20 +608,20 @@ const defaultWordsBank = [
                             </a>
                           </div>
                         }
-                        <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
-                          <div style="font-size: 13px; font-weight: 700; color: #1E40AF; margin-bottom: 6px; display:flex; align-items:center; gap:6px">
+                        <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+                          <div style="font-size: 13px; font-weight: 700; color: #1E40AF; margin-bottom: 8px; display:flex; align-items:center; gap:6px">
                             <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
                             <span>Instructions</span>
                           </div>
-                          <p style="font-size: 13px; color: var(--text-primary); line-height: 1.6; margin: 0;" [innerHTML]="activeExerciseItem()?.listeningInstruction"></p>
+                          <div style="font-size: 13px; color: var(--text-primary); line-height: 1.7; margin: 0;" [innerHTML]="formatExerciseSubject(activeExerciseItem()?.listeningInstruction)"></div>
                         </div>
                       } @else if (activeExerciseItem()?.type === 'translation') {
-                        <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 14px; margin-bottom: 16px;">
-                          <div style="font-size: 13px; font-weight: 700; color: #92400E; margin-bottom: 6px; display:flex; align-items:center; gap:6px">
+                        <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+                          <div style="font-size: 13px; font-weight: 700; color: #92400E; margin-bottom: 8px; display:flex; align-items:center; gap:6px">
                             <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
                             <span>Text to translate ({{ activeExerciseItem()?.translationDirection === 'fr-en' ? 'FR → EN' : 'EN → FR' }})</span>
                           </div>
-                          <p style="font-size: 14px; color: var(--text-primary); line-height: 1.7; margin: 0; font-style: italic;" [innerHTML]="activeExerciseItem()?.textToTranslate"></p>
+                          <div style="font-size: 14px; color: var(--text-primary); line-height: 1.7; margin: 0; font-style: italic;" [innerHTML]="formatExerciseSubject(activeExerciseItem()?.textToTranslate)"></div>
                         </div>
                       } @else if (activeExerciseItem()?.type === 'pronunciation') {
                         <div style="text-align: center; padding: 24px; background: #FFF1F2; border: 1px solid #FECDD3; border-radius: 12px; margin-bottom: 16px;">
@@ -1859,6 +1859,67 @@ const defaultWordsBank = [
       0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
       70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
       100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+    .prompt-word-bank {
+      background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 100%);
+      border: 1.5px dashed #6366F1;
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin: 10px 0 16px 0;
+      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.08);
+    }
+    .pwb-title {
+      font-size: 11px;
+      font-weight: 800;
+      color: #4338CA;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .pwb-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .prompt-word-chip {
+      background: #FFFFFF;
+      color: #3730A3;
+      border: 1px solid #C7D2FE;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 11px;
+      border-radius: 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+      transition: all 0.2s;
+      user-select: none;
+      display: inline-block;
+    }
+    .prompt-word-chip:hover {
+      background: #4F46E5;
+      color: #FFFFFF;
+      border-color: #3730A3;
+      transform: translateY(-1px);
+    }
+    .prompt-section-title {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: #4F46E5;
+      margin: 16px 0 6px 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .prompt-fill-blank {
+      display: inline-block;
+      min-width: 80px;
+      border-bottom: 2.5px solid #4F46E5;
+      background: rgba(79, 70, 229, 0.07);
+      border-radius: 4px 4px 0 0;
+      margin: 0 4px;
+      vertical-align: middle;
     }
     .homework-workspace {
       background: var(--surface-1);
@@ -3753,6 +3814,37 @@ export class StudentExercisesComponent {
     const m = Math.floor(sec / 60);
     const s = sec % 60;
     return `${m}:${s < 10 ? '0' : ''}${s}`;
+  }
+
+  formatExerciseSubject(rawText: string | undefined): string {
+    if (!rawText) return '';
+
+    let text = rawText.trim();
+    if (text.includes('<div class="prompt-') || text.includes('<span class="prompt-')) {
+      return text;
+    }
+
+    // 1. Detect Word Bank with bullet points: e.g. "colleague • degree • responsibility..."
+    const bulletBankRegex = /([a-zA-Z0-9_\-\s]{2,}(?:•\s*[a-zA-Z0-9_\-\s]{2,})+)/gi;
+    text = text.replace(bulletBankRegex, (match) => {
+      const words = match.split('•').map(w => w.trim()).filter(Boolean);
+      const chips = words.map(w => `<span class="prompt-word-chip">${w}</span>`).join('');
+      return `<div class="prompt-word-bank">
+                <div class="pwb-title">💡 Banque de Mots / Word Bank</div>
+                <div class="pwb-chips">${chips}</div>
+              </div>`;
+    });
+
+    // 2. Format section headers: A), B), C), 1), 2)
+    text = text.replace(/(?:^|\n|\s)([A-Z1-9]\))\s*/g, '<div class="prompt-section-title">$1</div>');
+
+    // 3. Format blank underscores (________) as styled blank input lines
+    text = text.replace(/_{3,}/g, '<span class="prompt-fill-blank">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>');
+
+    // 4. Clean line breaks for sentences ending with period/colon followed by capital letter
+    text = text.replace(/([.:])\s+([A-Z][a-z])/g, '$1<br><br>$2');
+
+    return text;
   }
 
   getVisualizerBarHeight(idx: number): number {
