@@ -94,7 +94,32 @@ import { DialogService } from '../../services/dialog.service';
             </span>
           </div>
           
-          <div style="display:flex; align-items:center; gap:12px">
+          <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap">
+            <!-- View Mode Switcher -->
+            <div style="display:flex; align-items:center; gap:2px; background:var(--surface-2); padding:3px; border-radius:10px; border:1px solid var(--border-weak)">
+              <button type="button" 
+                      (click)="lessonViewMode.set('carousel')" 
+                      [style.background]="lessonViewMode() === 'carousel' ? 'white' : 'transparent'"
+                      [style.color]="lessonViewMode() === 'carousel' ? '#4F46E5' : 'var(--text-muted)'"
+                      [style.box-shadow]="lessonViewMode() === 'carousel' ? '0 2px 5px rgba(0,0,0,0.08)' : 'none'"
+                      title="Mode Défilement Carrousel"
+                      style="border:none; padding:4px 10px; border-radius:7px; font-size:11px; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.15s">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="7" width="20" height="10" rx="2"/><path d="M12 7v10"/></svg>
+                <span>{{ t('Carrousel', 'Carousel') }}</span>
+              </button>
+              
+              <button type="button" 
+                      (click)="lessonViewMode.set('grid')" 
+                      [style.background]="lessonViewMode() === 'grid' ? 'white' : 'transparent'"
+                      [style.color]="lessonViewMode() === 'grid' ? '#4F46E5' : 'var(--text-muted)'"
+                      [style.box-shadow]="lessonViewMode() === 'grid' ? '0 2px 5px rgba(0,0,0,0.08)' : 'none'"
+                      title="Mode Grille Compacte (5 par ligne)"
+                      style="border:none; padding:4px 10px; border-radius:7px; font-size:11px; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.15s">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+                <span>{{ t('Grille (5/ligne)', 'Grid (5/row)') }}</span>
+              </button>
+            </div>
+
             <!-- Filter Pills -->
             <div style="display:flex; gap:6px; flex-wrap:wrap">
               @for (type of ['All', 'Grammar', 'Listening', 'Vocabulary']; track type) {
@@ -109,109 +134,181 @@ import { DialogService } from '../../services/dialog.service';
               }
             </div>
 
-            <!-- Left / Right Horizontal Scroll Navigation Buttons -->
-            <div style="display:flex; gap:6px">
-              <button (click)="scrollLessonsTrack('left')" 
-                      title="Défiler vers la gauche" 
-                      style="width:34px; height:34px; border-radius:50%; border:1px solid var(--border); background:var(--surface-1); color:var(--text-primary); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s"
-                      onmouseover="this.style.background='#EEF2FF'; this.style.borderColor='#4F46E5'; this.style.color='#4F46E5'"
-                      onmouseout="this.style.background='var(--surface-1)'; this.style.borderColor='var(--border)'; this.style.color='var(--text-primary)'">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-              </button>
-              <button (click)="scrollLessonsTrack('right')" 
-                      title="Défiler vers la droite" 
-                      style="width:34px; height:34px; border-radius:50%; border:1px solid var(--border); background:var(--surface-1); color:var(--text-primary); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s"
-                      onmouseover="this.style.background='#EEF2FF'; this.style.borderColor='#4F46E5'; this.style.color='#4F46E5'"
-                      onmouseout="this.style.background='var(--surface-1)'; this.style.borderColor='var(--border)'; this.style.color='var(--text-primary)'">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-              </button>
-            </div>
+            @if (lessonViewMode() === 'carousel') {
+              <!-- Left / Right Horizontal Scroll Navigation Buttons -->
+              <div style="display:flex; gap:6px">
+                <button (click)="scrollLessonsTrack('left')" 
+                        title="Défiler vers la gauche" 
+                        style="width:34px; height:34px; border-radius:50%; border:1px solid var(--border); background:var(--surface-1); color:var(--text-primary); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s"
+                        onmouseover="this.style.background='#EEF2FF'; this.style.borderColor='#4F46E5'; this.style.color='#4F46E5'"
+                        onmouseout="this.style.background='var(--surface-1)'; this.style.borderColor='var(--border)'; this.style.color='var(--text-primary)'">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                </button>
+                <button (click)="scrollLessonsTrack('right')" 
+                        title="Défiler vers la droite" 
+                        style="width:34px; height:34px; border-radius:50%; border:1px solid var(--border); background:var(--surface-1); color:var(--text-primary); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s"
+                        onmouseover="this.style.background='#EEF2FF'; this.style.borderColor='#4F46E5'; this.style.color='#4F46E5'"
+                        onmouseout="this.style.background='var(--surface-1)'; this.style.borderColor='var(--border)'; this.style.color='var(--text-primary)'">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </button>
+              </div>
+            }
           </div>
         </div>
 
-        <!-- HORIZONTAL SCROLLABLE LESSONS CARDS TRACK (METTRE EN HORIZONTAL) -->
-        <div id="horizontalLessonsTrack" 
-             style="display:flex; gap:20px; overflow-x:auto; scroll-snap-type:x mandatory; padding:10px 4px 20px 4px; scrollbar-width:thin; scroll-behavior:smooth">
-          @for (lesson of filteredLessons(); track lesson.id) {
-            <div class="card" (click)="selectLesson(lesson)" 
-                 style="flex:0 0 310px; width:310px; scroll-snap-align:start; cursor:pointer; margin:0; padding:0; border-radius:16px; overflow:hidden; border:1.5px solid var(--border-weak); display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.25s ease, box-shadow 0.25s ease; background:var(--surface-1)"
-                 onmouseover="this.style.transform='translateY(-6px)'; this.style.boxShadow='0 14px 30px rgba(79, 70, 229, 0.15)'; this.style.borderColor='#818CF8'"
-                 onmouseout="this.style.transform='none'; this.style.boxShadow='none'; this.style.borderColor='var(--border-weak)'">
-              
-              <!-- CARD COVER BANNER -->
-              <div [style.background]="(lesson.coverImage || getYouTubeThumbnail(lesson.youtubeUrl)) ? 'none' : getGradient(lesson.colorTheme)"
-                   style="height:140px; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center">
-                @if (lesson.coverImage || getYouTubeThumbnail(lesson.youtubeUrl)) {
-                  <img [src]="lesson.coverImage || getYouTubeThumbnail(lesson.youtubeUrl)!" style="width:100%; height:100%; object-fit:cover" />
-                  @if (lesson.youtubeUrl) {
-                    <!-- YouTube Video Overlay Play Badge -->
-                    <div style="position:absolute; inset:0; background:rgba(15,23,42,0.3); display:flex; align-items:center; justify-content:center">
-                      <div style="width:38px; height:38px; border-radius:50%; background:#EF4444; color:white; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(239,68,68,0.5)">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        @if (lessonViewMode() === 'carousel') {
+          <!-- HORIZONTAL SCROLLABLE LESSONS CARDS TRACK -->
+          <div id="horizontalLessonsTrack" 
+               style="display:flex; gap:20px; overflow-x:auto; scroll-snap-type:x mandatory; padding:10px 4px 20px 4px; scrollbar-width:thin; scroll-behavior:smooth">
+            @for (lesson of filteredLessons(); track lesson.id) {
+              <div class="card" (click)="selectLesson(lesson)" 
+                   style="flex:0 0 310px; width:310px; scroll-snap-align:start; cursor:pointer; margin:0; padding:0; border-radius:16px; overflow:hidden; border:1.5px solid var(--border-weak); display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.25s ease, box-shadow 0.25s ease; background:var(--surface-1)"
+                   onmouseover="this.style.transform='translateY(-6px)'; this.style.boxShadow='0 14px 30px rgba(79, 70, 229, 0.15)'; this.style.borderColor='#818CF8'"
+                   onmouseout="this.style.transform='none'; this.style.boxShadow='none'; this.style.borderColor='var(--border-weak)'">
+                
+                <!-- CARD COVER BANNER -->
+                <div [style.background]="(lesson.coverImage || getYouTubeThumbnail(lesson.youtubeUrl)) ? 'none' : getGradient(lesson.colorTheme)"
+                     style="height:140px; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center">
+                  @if (lesson.coverImage || getYouTubeThumbnail(lesson.youtubeUrl)) {
+                    <img [src]="lesson.coverImage || getYouTubeThumbnail(lesson.youtubeUrl)!" style="width:100%; height:100%; object-fit:cover" />
+                    @if (lesson.youtubeUrl) {
+                      <div style="position:absolute; inset:0; background:rgba(15,23,42,0.3); display:flex; align-items:center; justify-content:center">
+                        <div style="width:38px; height:38px; border-radius:50%; background:#EF4444; color:white; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(239,68,68,0.5)">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                        </div>
                       </div>
+                    }
+                  } @else {
+                    <div style="width:54px; height:54px; border-radius:50%; background:rgba(255,255,255,0.25); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; color:white">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
                     </div>
                   }
-                } @else {
-                  <div style="width:54px; height:54px; border-radius:50%; background:rgba(255,255,255,0.25); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; color:white">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
-                  </div>
-                }
 
-                <!-- TOP BADGES OVERLAY -->
-                <div style="position:absolute; top:12px; left:12px; right:12px; display:flex; justify-content:space-between; align-items:center; z-index:2">
-                  <span class="badge" [style.background]="getBadgeBg(lesson.type)" [style.color]="getBadgeColor(lesson.type)" style="font-size:9.5px; font-weight:800; text-transform:uppercase; padding:3px 8px; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.1)">
-                    {{ lesson.type === 'Grammar' ? t('Grammaire', 'Grammar') : (lesson.type === 'Listening' ? t('Compréhension', 'Listening') : t('Vocabulaire', 'Vocabulary')) }}
-                  </span>
-
-                  <span class="pill" 
-                        [class.done]="isLessonSubmitted(lesson.id) && !getLessonListStatus(lesson.id).includes('À refaire')" 
-                        [class.new]="!isLessonSubmitted(lesson.id) && !getLessonListStatus(lesson.id).includes('À refaire')"
-                        [style.background]="getLessonListStatus(lesson.id).includes('À refaire') ? '#FEF3C7' : null"
-                        [style.color]="getLessonListStatus(lesson.id).includes('À refaire') ? '#D97706' : null"
-                        [style.border-color]="getLessonListStatus(lesson.id).includes('À refaire') ? '#FCD34D' : null"
-                        style="font-size:10px; padding:2px 8px; font-weight:800; box-shadow:0 2px 8px rgba(0,0,0,0.1)">
-                    {{ getLessonListStatus(lesson.id) }}
-                  </span>
-                </div>
-              </div>
-
-              <!-- CARD BODY DETAILS -->
-              <div style="padding:16px; flex:1; display:flex; flex-direction:column; justify-content:space-between">
-                <div>
-                  <h4 style="font-size:15px; font-weight:900; color:var(--text-primary); margin:0 0 8px 0; line-height:1.35; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden">
-                    {{ lesson.title }}
-                  </h4>
-
-                  <div style="display:flex; align-items:center; gap:12px; margin-bottom:14px; flex-wrap:wrap">
-                    <span style="font-size:11.5px; color:var(--text-muted); display:inline-flex; align-items:center; gap:4px">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                      {{ t('Limite :', 'Due:') }} {{ lesson.dueDate }}
+                  <!-- TOP BADGES OVERLAY -->
+                  <div style="position:absolute; top:12px; left:12px; right:12px; display:flex; justify-content:space-between; align-items:center; z-index:2">
+                    <span class="badge" [style.background]="getBadgeBg(lesson.type)" [style.color]="getBadgeColor(lesson.type)" style="font-size:9.5px; font-weight:800; text-transform:uppercase; padding:3px 8px; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.1)">
+                      {{ lesson.type === 'Grammar' ? t('Grammaire', 'Grammar') : (lesson.type === 'Listening' ? t('Compréhension', 'Listening') : t('Vocabulaire', 'Vocabulary')) }}
                     </span>
 
-                    @if (lesson.attachments && lesson.attachments.length > 0) {
-                      <span style="font-size:11.5px; color:#4F46E5; font-weight:700; display:inline-flex; align-items:center; gap:4px">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-                        {{ lesson.attachments.length }} {{ t('fichier(s)', 'file(s)') }}
-                      </span>
-                    }
+                    <span class="pill" 
+                          [class.done]="isLessonSubmitted(lesson.id) && !getLessonListStatus(lesson.id).includes('À refaire')" 
+                          [class.new]="!isLessonSubmitted(lesson.id) && !getLessonListStatus(lesson.id).includes('À refaire')"
+                          [style.background]="getLessonListStatus(lesson.id).includes('À refaire') ? '#FEF3C7' : null"
+                          [style.color]="getLessonListStatus(lesson.id).includes('À refaire') ? '#D97706' : null"
+                          [style.border-color]="getLessonListStatus(lesson.id).includes('À refaire') ? '#FCD34D' : null"
+                          style="font-size:10px; padding:2px 8px; font-weight:800; box-shadow:0 2px 8px rgba(0,0,0,0.1)">
+                      {{ getLessonListStatus(lesson.id) }}
+                    </span>
                   </div>
                 </div>
 
-                <!-- CARD CTA ACTION FOOTER -->
-                <button class="btn-p" style="width:100%; height:38px; font-size:12px; font-weight:800; background:linear-gradient(135deg, #4F46E5 0%, #6366F1 100%); border:none; color:white; border-radius:10px; display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer">
-                  <span>{{ t('Consulter la Leçon', 'Open Lesson') }}</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-                </button>
-              </div>
+                <!-- CARD BODY DETAILS -->
+                <div style="padding:16px; flex:1; display:flex; flex-direction:column; justify-content:space-between">
+                  <div>
+                    <h4 style="font-size:15px; font-weight:900; color:var(--text-primary); margin:0 0 8px 0; line-height:1.35; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden">
+                      {{ lesson.title }}
+                    </h4>
 
-            </div>
-          } @empty {
-            <div class="card" style="width:100%; text-align:center; padding:40px; color:var(--text-muted)">
-              <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom:12px"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg>
-              <p style="font-size:13px; font-weight:500; margin:0">{{ t('Aucun cours trouvé pour cette recherche.', 'No lessons found matching the selected filter query.') }}</p>
-            </div>
-          }
-        </div>
+                    <div style="display:flex; align-items:center; gap:12px; margin-bottom:14px; flex-wrap:wrap">
+                      <span style="font-size:11.5px; color:var(--text-muted); display:inline-flex; align-items:center; gap:4px">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        {{ t('Limite :', 'Due:') }} {{ lesson.dueDate }}
+                      </span>
+
+                      @if (lesson.attachments && lesson.attachments.length > 0) {
+                        <span style="font-size:11.5px; color:#4F46E5; font-weight:700; display:inline-flex; align-items:center; gap:4px">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                          {{ lesson.attachments.length }} {{ t('fichier(s)', 'file(s)') }}
+                        </span>
+                      }
+                    </div>
+                  </div>
+
+                  <!-- CARD CTA ACTION FOOTER -->
+                  <button class="btn-p" style="width:100%; height:38px; font-size:12px; font-weight:800; background:linear-gradient(135deg, #4F46E5 0%, #6366F1 100%); border:none; color:white; border-radius:10px; display:flex; align-items:center; justify-content:center; gap:6px; cursor:pointer">
+                    <span>{{ t('Consulter la Leçon', 'Open Lesson') }}</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                  </button>
+                </div>
+
+              </div>
+            } @empty {
+              <div class="card" style="width:100%; text-align:center; padding:40px; color:var(--text-muted)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom:12px"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg>
+                <p style="font-size:13px; font-weight:500; margin:0">{{ t('Aucun cours trouvé pour cette recherche.', 'No lessons found matching the selected filter query.') }}</p>
+              </div>
+            }
+          </div>
+        } @else {
+          <!-- COMPACT GRID VIEW (5 per row) -->
+          <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(195px, 1fr)); gap:14px; padding:10px 4px 20px 4px">
+            @for (lesson of filteredLessons(); track lesson.id) {
+              <div class="card" (click)="selectLesson(lesson)" 
+                   style="cursor:pointer; margin:0; padding:0; border-radius:14px; overflow:hidden; border:1.5px solid var(--border-weak); display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s ease, box-shadow 0.2s ease; background:var(--surface-1)"
+                   onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 24px rgba(79, 70, 229, 0.12)'; this.style.borderColor='#818CF8'"
+                   onmouseout="this.style.transform='none'; this.style.boxShadow='none'; this.style.borderColor='var(--border-weak)'">
+                
+                <!-- COMPACT COVER BANNER -->
+                <div [style.background]="(lesson.coverImage || getYouTubeThumbnail(lesson.youtubeUrl)) ? 'none' : getGradient(lesson.colorTheme)"
+                     style="height:88px; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center">
+                  @if (lesson.coverImage || getYouTubeThumbnail(lesson.youtubeUrl)) {
+                    <img [src]="lesson.coverImage || getYouTubeThumbnail(lesson.youtubeUrl)!" style="width:100%; height:100%; object-fit:cover" />
+                    @if (lesson.youtubeUrl) {
+                      <div style="position:absolute; inset:0; background:rgba(15,23,42,0.3); display:flex; align-items:center; justify-content:center">
+                        <div style="width:28px; height:28px; border-radius:50%; background:#EF4444; color:white; display:flex; align-items:center; justify-content:center">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                        </div>
+                      </div>
+                    }
+                  } @else {
+                    <div style="width:36px; height:36px; border-radius:50%; background:rgba(255,255,255,0.25); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; color:white">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+                    </div>
+                  }
+
+                  <!-- TOP BADGES OVERLAY -->
+                  <div style="position:absolute; top:8px; left:8px; right:8px; display:flex; justify-content:space-between; align-items:center; z-index:2">
+                    <span class="badge" [style.background]="getBadgeBg(lesson.type)" [style.color]="getBadgeColor(lesson.type)" style="font-size:8.5px; font-weight:800; text-transform:uppercase; padding:2px 6px; border-radius:8px">
+                      {{ lesson.type === 'Grammar' ? 'Gram' : (lesson.type === 'Listening' ? 'Listen' : 'Vocab') }}
+                    </span>
+
+                    <span class="pill" 
+                          [class.done]="isLessonSubmitted(lesson.id) && !getLessonListStatus(lesson.id).includes('À refaire')" 
+                          [class.new]="!isLessonSubmitted(lesson.id) && !getLessonListStatus(lesson.id).includes('À refaire')"
+                          [style.background]="getLessonListStatus(lesson.id).includes('À refaire') ? '#FEF3C7' : null"
+                          [style.color]="getLessonListStatus(lesson.id).includes('À refaire') ? '#D97706' : null"
+                          style="font-size:8.5px; padding:1px 6px; font-weight:800">
+                      {{ getLessonListStatus(lesson.id) }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- COMPACT CARD BODY DETAILS -->
+                <div style="padding:10px 12px; flex:1; display:flex; flex-direction:column; justify-content:space-between">
+                  <div>
+                    <h4 style="font-size:13px; font-weight:800; color:var(--text-primary); margin:0 0 4px 0; line-height:1.3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; height:34px" [title]="lesson.title">
+                      {{ lesson.title }}
+                    </h4>
+
+                    <div style="font-size:10.5px; color:var(--text-muted); display:flex; align-items:center; gap:4px; margin-bottom:8px">
+                      <span>⏳ {{ lesson.dueDate }}</span>
+                    </div>
+                  </div>
+
+                  <button class="btn-p" style="width:100%; height:30px; font-size:11px; font-weight:800; background:linear-gradient(135deg, #4F46E5 0%, #6366F1 100%); border:none; color:white; border-radius:8px; display:flex; align-items:center; justify-content:center; gap:4px; cursor:pointer">
+                    <span>{{ t('Ouvrir', 'Open') }}</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                  </button>
+                </div>
+
+              </div>
+            } @empty {
+              <div class="card" style="grid-column:1/-1; text-align:center; padding:30px; color:var(--text-muted)">
+                <p style="font-size:13px; font-weight:500; margin:0">{{ t('Aucun cours trouvé pour cette recherche.', 'No lessons found.') }}</p>
+              </div>
+            }
+          </div>
+        }
       } @else {
         <!-- SELECTED LESSON DETAIL VIEW -->
         <div class="card" style="padding:20px; border-radius:12px">
@@ -832,6 +929,7 @@ export class StudentLessonsComponent {
 
   activeTab = signal<string>('all');
   selectedTypeFilter = signal<string>('All');
+  lessonViewMode = signal<'carousel' | 'grid'>('carousel');
   detailTab = signal<string>('content');
   lessons = signal<Lesson[]>([]);
   submissions = signal<Submission[]>([]);
