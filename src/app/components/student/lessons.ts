@@ -903,7 +903,12 @@ export class StudentLessonsComponent {
       list = list.filter(l => l.title.toLowerCase().includes(query));
     }
 
-    return list;
+    // Sort newest created lessons first
+    return [...list].sort((a, b) => {
+      const timeA = a.createdAt ? new Date(a.createdAt).getTime() : (parseInt(a.id.replace(/\D/g, '')) || 0);
+      const timeB = b.createdAt ? new Date(b.createdAt).getTime() : (parseInt(b.id.replace(/\D/g, '')) || 0);
+      return timeB - timeA;
+    });
   }
 
   selectLesson(lesson: Lesson) {

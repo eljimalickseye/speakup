@@ -5,7 +5,7 @@ export const books = [
     title: "Le Secret de l'Île de Gorée",
     author: 'Fatoumata',
     cover: 'c1',
-    customCoverUrl: '',
+    customCoverUrl: 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?auto=format&fit=crop&w=1000&q=80',
     genres: ['Fiction Littéraire', 'Mystère & Histoire'],
     level: 'B1 · Anglais Intermédiaire',
     rating: 0,

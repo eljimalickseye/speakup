@@ -686,8 +686,11 @@ export default function ChapterComments({ bookId, chapterId, onClose, isLight = 
             >
               {/* ═══ TOP HEADER BAR WITH BACK BUTTON ═══ */}
               <div
-                className="flex items-center justify-between px-4 py-3 border-b flex-shrink-0"
-                style={{ borderColor }}
+                className="flex items-center justify-between px-4 pb-3 border-b flex-shrink-0"
+                style={{
+                  borderColor,
+                  paddingTop: 'max(16px, calc(env(safe-area-inset-top) + 10px))',
+                }}
               >
                 <div className="flex items-center gap-3">
                   {/* Back Button */}

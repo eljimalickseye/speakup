@@ -17,6 +17,7 @@ import {
   HeartIcon,
   MessageSquareIcon,
   StarIcon,
+  HomeIcon,
 } from '../components/ui/Icons.jsx';
 import BilingualSentence from '../components/reader/BilingualSentence.jsx';
 import AudioBar from '../components/reader/AudioBar.jsx';
@@ -49,22 +50,17 @@ export default function Reader() {
 
   // Find book and chapter 100% dynamically from booksList
   const bookData = booksList.find((b) => b.id === id);
-  const chapterData = bookData?.chaptersData?.[chapterNum - 1] || {
-    id: chapterNum,
-    title: `Chapitre ${chapterNum} : Les Rives de Dakar`,
-    audioDuration: '00:15',
-    sentences: [
-      { en: 'The sun set over Dakar, turning the Atlantic ocean into gold.', fr: 'Le soleil se couchait sur Dakar, transformant l\'océan Atlantique en or.', vocabWord: 'ocean', vocabFr: 'océan' },
-      { en: 'She looked at the lighthouse flickering gently in the night breeze.', fr: 'Elle regardait le phare vaciller doucement dans la brise nocturne.', vocabWord: 'lighthouse', vocabFr: 'phare' },
-    ],
-    quiz: {
-      questionEn: 'What flickered gently in the night breeze?',
-      questionFr: 'Qu\'est-ce qui vacillait doucement dans la brise nocturne ?',
-      options: ['The lighthouse', 'The ferry boat', 'The wooden tree', 'The street lamp'],
-      correctIndex: 0,
-      explanation: 'The lighthouse flickered gently in the night breeze.'
-    }
-  };
+  const totalBookChapters = bookData?.chaptersData?.length || 0;
+  const isChapterAvailable = Boolean(
+    bookData &&
+    chapterNum >= 1 &&
+    chapterNum <= totalBookChapters &&
+    bookData.chaptersData[chapterNum - 1]
+  );
+
+  const chapterData = isChapterAvailable
+    ? bookData.chaptersData[chapterNum - 1]
+    : null;
 
   const [selectedOption, setSelectedOption] = useState(null);
   const [quizSubmitted, setQuizSubmitted] = useState(false);
@@ -264,6 +260,101 @@ export default function Reader() {
         >
           Retour au Profil
         </button>
+      </div>
+    );
+  }
+
+  // Handle Chapter Not Found / Not Published Yet Error View (No white blank screen!)
+  if (!chapterData || !isChapterAvailable) {
+    return (
+      <div
+        className="fixed inset-0 z-50 overflow-y-auto flex flex-col justify-between p-6 text-center select-none animate-fadeIn transition-colors duration-300"
+        style={{
+          backgroundColor: readingPrefs.bg,
+          color: readingPrefs.text,
+          paddingTop: `max(32px, calc(env(safe-area-inset-top) + 20px))`,
+          paddingBottom: `max(24px, calc(env(safe-area-inset-bottom) + 16px))`,
+        }}
+      >
+        {/* Top Header Controls Bar for Exit */}
+        <div className="flex justify-between items-center w-full max-w-md mx-auto">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className={`p-2.5 rounded-2xl flex items-center justify-center transition-all ${
+              isLight ? 'bg-black/5 text-ink' : 'bg-white/10 text-paper'
+            }`}
+            aria-label="Retour"
+          >
+            <BackIcon className="w-5 h-5" />
+          </button>
+          <span className="text-[11px] font-bold opacity-75">{bookData?.title || 'Roman Koko'}</span>
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className={`p-2.5 rounded-2xl flex items-center justify-center transition-all ${
+              isLight ? 'bg-black/5 text-ink' : 'bg-white/10 text-paper'
+            }`}
+            aria-label="Accueil"
+          >
+            <BookOpenIcon className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Central Not Available Card */}
+        <div className="my-auto max-w-sm mx-auto p-6 sm:p-8 rounded-3xl bg-white border border-surface-line shadow-xl space-y-5 text-ink">
+          <div className="w-16 h-16 rounded-full bg-gold/15 text-gold border border-gold/30 flex items-center justify-center mx-auto shadow-md">
+            <LockIcon className="w-8 h-8 text-gold animate-bounce" />
+          </div>
+
+          <div className="space-y-1.5">
+            <span className="text-[10px] font-mono font-extrabold uppercase tracking-widest text-gold bg-gold/15 px-3 py-1 rounded-full border border-gold/30">
+              Prochainement Disponible
+            </span>
+            <h2 className="font-display font-bold text-[22px] text-ink leading-tight pt-1">
+              Chapitre {chapterNum} Non Disponible
+            </h2>
+            <p className="text-[12.5px] text-taupe leading-relaxed">
+              L'auteur n'a pas encore rédigé ou publié le Chapitre {chapterNum} de "{bookData?.title || 'ce roman'}". Revenez très bientôt pour découvrir la suite !
+            </p>
+          </div>
+
+          <div className="space-y-2.5 pt-2">
+            {chapterNum > 1 && (
+              <button
+                type="button"
+                onClick={() => navigate(`/book/${id}/read/${chapterNum - 1}`)}
+                className="w-full py-3.5 rounded-2xl bg-gold text-deep-2 font-bold text-[13.5px] shadow-md hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
+              >
+                <BackIcon className="w-4 h-4 text-deep-2" />
+                <span>Relire le Chapitre {chapterNum - 1}</span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() => navigate(`/book/${id}`)}
+              className="w-full py-3 rounded-2xl bg-paper border border-surface-line text-ink font-bold text-[13px] hover:bg-surface transition-all flex items-center justify-center gap-2"
+            >
+              <BookOpenIcon className="w-4 h-4 text-gold" />
+              <span>Voir la Fiche du Livre</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => navigate('/')}
+              className="w-full py-2.5 text-taupe font-bold text-[12px] hover:text-ink transition-all flex items-center justify-center gap-2"
+            >
+              <HomeIcon className="w-4 h-4 text-gold" />
+              <span>Retour à l'Accueil Koko</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <span className="text-[10.5px] font-mono text-taupe opacity-60">
+          Koko Stories & Audio · Sénégal
+        </span>
       </div>
     );
   }
@@ -661,30 +752,30 @@ export default function Reader() {
             overscrollBehavior: 'contain',
           }}
         >
+          {/* DÉFILEMENT CONTINU UNIFIÉ STYLE WEBTOON (FLUIDE & INTELLIGENT) */}
           {allChapters.map((chap, cIdx) => {
             const cNum = cIdx + 1;
             const sentences = chap.sentences || [];
-            const nextChap = allChapters[cIdx + 1];
 
             return (
               <div
                 key={`chap-block-${cNum}`}
                 id={`chap-block-${cNum}`}
                 data-chapter-num={cNum}
-                className="py-6 space-y-4 min-h-screen"
+                className="py-6 space-y-4 min-h-[70vh]"
               >
-                {/* Chapter Header Card */}
-                <div className="text-center pt-4 pb-5 border-b border-surface-line/25 mb-4 space-y-1">
-                  <span className="text-[10.5px] font-mono font-bold uppercase tracking-widest text-gold block opacity-90">
-                    Chapitre {cNum} / {allChapters.length}
+                {/* Well-Framed Chapter Header Banner */}
+                <div className="text-center pt-6 pb-5 border-t border-b border-surface-line/30 my-6 space-y-1.5 bg-paper/60 backdrop-blur-sm rounded-3xl p-4 shadow-sm">
+                  <span className="text-[10px] font-mono font-extrabold uppercase tracking-widest text-gold bg-gold/15 px-3.5 py-1 rounded-full border border-gold/30">
+                    Chapitre {cNum} sur {allChapters.length}
                   </span>
-                  <h3 className="font-display font-bold text-[20px] tracking-wide text-ink">
+                  <h3 className="font-display font-extrabold text-[22px] sm:text-[24px] tracking-wide text-ink">
                     {chap.title || `Chapitre ${cNum}`}
                   </h3>
-                  <div className="w-12 h-[2.5px] bg-gold mx-auto mt-2 rounded-full opacity-70" />
+                  <div className="w-12 h-[2.5px] bg-gold mx-auto mt-2 rounded-full opacity-80" />
                 </div>
 
-                {/* Chapter Top Illustration Banner */}
+                {/* Optional Chapter Top Illustration Banner */}
                 {chap.imageUrl && (
                   <div className="w-full my-4 rounded-2xl overflow-hidden shadow-lg border border-surface-line/30 relative group">
                     <img
@@ -718,14 +809,16 @@ export default function Reader() {
                   </div>
                 ))}
 
-                {/* Minimalist Chapter End Separator */}
-                <div className="my-12 py-4 text-center">
+                {/* Minimalist End of Chapter Separator (No button box as requested!) */}
+                <div className="my-10 py-4 text-center">
                   <div className="flex items-center justify-center gap-3">
-                    <div className="h-[1px] flex-1 bg-surface-line/30" />
-                    <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-taupe block opacity-40">
-                      — Fin du Chapitre {cNum} —
+                    <div className="h-[1px] flex-1 bg-surface-line/40" />
+                    <span className="text-[10px] font-mono font-extrabold uppercase tracking-widest text-taupe block opacity-60 bg-surface px-3 py-1 rounded-full border border-surface-line/40">
+                      {cNum < allChapters.length
+                        ? `— FIN DU CHAPITRE ${cNum} · DEFILEZ POUR LE CHAPITRE ${cNum + 1} —`
+                        : `— FIN DU ROMAN (${allChapters.length} CHAPITRES) —`}
                     </span>
-                    <div className="h-[1px] flex-1 bg-surface-line/30" />
+                    <div className="h-[1px] flex-1 bg-surface-line/40" />
                   </div>
                 </div>
               </div>

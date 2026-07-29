@@ -527,11 +527,49 @@ export function AppProvider({ children }) {
   };
 
   const toggleBookReaction = async (bookId, reactionType = 'like') => {
-    // Instantly push reaction update to Global Cloud DB using unique Users Array
-    const cloudReactions = await toggleCloudBookReaction(bookId, reactionType, userProfile);
-    if (cloudReactions) {
-      setBookReactions(cloudReactions);
+    // 1. Instant Optimistic Local State & LocalStorage Save
+    setBookReactions((prev) => {
+      const current = prev[bookId] || { likes: 0, dislikes: 0, userReaction: null, userIds: [] };
+      const alreadyLiked = current.userReaction === reactionType;
+
+      const newReaction = alreadyLiked ? null : reactionType;
+      const likesDelta = reactionType === 'like' ? (alreadyLiked ? -1 : 1) : (current.userReaction === 'like' ? -1 : 0);
+      const dislikesDelta = reactionType === 'dislike' ? (alreadyLiked ? -1 : 1) : (current.userReaction === 'dislike' ? -1 : 0);
+
+      const updated = {
+        ...prev,
+        [bookId]: {
+          ...current,
+          likes: Math.max(0, (current.likes || 0) + likesDelta),
+          dislikes: Math.max(0, (current.dislikes || 0) + dislikesDelta),
+          userReaction: newReaction,
+        },
+      };
+
+      try {
+        localStorage.setItem('koko_reactions', JSON.stringify(updated));
+      } catch (e) {
+        console.warn('LocalStorage reactions save error', e);
+      }
+      return updated;
+    });
+
+    // 2. Cloud DB Background Sync
+    try {
+      const cloudReactions = await toggleCloudBookReaction(bookId, reactionType, userProfile);
+      if (cloudReactions) {
+        setBookReactions((prev) => {
+          const merged = { ...prev, ...cloudReactions };
+          try {
+            localStorage.setItem('koko_reactions', JSON.stringify(merged));
+          } catch (e) {}
+          return merged;
+        });
+      }
+    } catch (err) {
+      console.warn('Cloud reaction sync error', err);
     }
+
     logActivity(userProfile.name, `A réagi [${reactionType}] sur "${bookId}"`, 'REACTION');
   };
 

@@ -20,6 +20,8 @@ export default function App() {
           <Route path="/discover" element={<Discover />} />
           <Route path="/book/:id" element={<BookDetail />} />
           <Route path="/book/:id/read/:chapter" element={<Reader />} />
+          <Route path="/read/:id/:chapter" element={<Reader />} />
+          <Route path="/read/:id" element={<Reader />} />
           <Route path="/library" element={<Library />} />
           <Route path="/ranking" element={<Ranking />} />
           <Route path="/publish" element={<Publish />} />

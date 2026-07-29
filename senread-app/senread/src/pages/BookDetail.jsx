@@ -134,10 +134,12 @@ export default function BookDetail() {
     setShowReviewModal(false);
   };
 
+  const coverSrc = book.customCoverUrl || book.coverUrl || book.coverImage || (typeof book.cover === 'string' && (book.cover.startsWith('http') || book.cover.startsWith('data:')) ? book.cover : null);
+
   return (
-    <div className="px-5 pt-6 pb-6 text-ink">
+    <div className="px-4 sm:px-6 pt-6 pb-8 text-ink max-w-4xl mx-auto">
       {/* Top Header Controls */}
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-between items-center mb-5">
         <IconButton aria-label="Go back" onClick={() => navigate(-1)}>
           <BackIcon className="w-4 h-4" />
         </IconButton>
@@ -174,71 +176,124 @@ export default function BookDetail() {
         </div>
       </div>
 
-      {/* Author & Admin Status Banner */}
-      {isAuthor && (
-        <div className={`p-3.5 rounded-2xl border text-[12px] flex items-center justify-between shadow-sm text-left ${
-          book.status === 'DRAFT'
-            ? 'bg-amber-50 text-amber-900 border-amber-300'
-            : 'bg-emerald-50 text-emerald-900 border-emerald-300'
-        }`}>
-          <div className="space-y-0.5">
-            <span className="font-bold text-[13px] block">
-              {book.status === 'DRAFT'
-                ? (isEn ? '🟡 Private Draft Mode' : '🟡 Mode Brouillon Privé')
-                : (isEn ? '🟢 Live Published Mode' : '🟢 Publié Officiellement')}
-            </span>
-            <span className="text-[11px] opacity-80 block">
-              {book.status === 'DRAFT'
-                ? (isEn ? 'Only you & admin can view this book.' : 'Seul vous et l’administrateur voyez ce roman.')
-                : (isEn ? 'Visible to all readers across Koko.' : 'Visible par tous les lecteurs sur Koko.')}
-            </span>
-          </div>
+      {/* HERO SECTION — 2-COLUMN RESPONSIVE LAYOUT FOR DESKTOP & MOBILE */}
+      <div className="flex flex-col md:flex-row gap-6 md:gap-8 items-center md:items-start text-left bg-white border border-surface-line p-5 sm:p-7 rounded-3xl shadow-sm mb-6">
+        {/* LEFT: 3D VERTICAL BOOK COVER (3:4 RATIO — NO CROPPING!) */}
+        <div className="w-48 sm:w-56 md:w-60 aspect-[3/4] flex-shrink-0 relative rounded-2xl overflow-hidden shadow-2xl border border-black/10 group bg-neutral-900 mx-auto md:mx-0">
+          {coverSrc ? (
+            <img
+              src={coverSrc}
+              alt={book.title}
+              className="w-full h-full object-cover rounded-2xl transition-transform duration-500 group-hover:scale-105"
+            />
+          ) : (
+            <div className="w-full h-full p-4 flex flex-col justify-between items-center text-center bg-gradient-to-br from-[#181620] via-[#121118] to-[#0A0A0E] relative overflow-hidden rounded-2xl">
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gold/25 via-transparent to-transparent opacity-70" />
+              <div className="absolute inset-2.5 border border-gold/30 rounded-xl pointer-events-none" />
 
-          <button
-            type="button"
-            onClick={() => toggleBookStatus(book.id)}
-            className={`px-3 py-1.5 rounded-xl font-bold text-[11px] border transition-all flex-shrink-0 ${
-              book.status === 'DRAFT'
-                ? 'bg-emerald-600 text-white border-emerald-700 shadow-sm'
-                : 'bg-amber-100 text-amber-900 border-amber-300'
-            }`}
-          >
-            {book.status === 'DRAFT' ? (isEn ? 'Publish Now' : 'Rendre Public') : (isEn ? 'Switch to Draft' : 'Passer Brouillon')}
-          </button>
+              <div className="pt-3 z-10">
+                <span className="text-[9px] font-mono font-extrabold uppercase tracking-widest text-gold bg-gold/15 px-2.5 py-0.5 rounded-full border border-gold/30">
+                  {book.genres?.[0] || 'Roman Koko'}
+                </span>
+              </div>
+
+              <div className="my-auto z-10 px-2 space-y-2">
+                <BookOpenIcon className="w-8 h-8 text-gold mx-auto opacity-90 drop-shadow" />
+                <h3 className="font-display font-extrabold text-[16px] text-paper leading-tight drop-shadow-md">
+                  {book.title}
+                </h3>
+                <div className="w-8 h-[2px] bg-gold mx-auto rounded-full" />
+              </div>
+
+              <div className="pb-2 z-10">
+                <span className="text-[10.5px] font-medium text-gold/80 italic">
+                  par {book.author}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Realistic 3D Book Spine Shadow on Left Edge */}
+          <div className="absolute inset-y-0 left-0 w-3 bg-gradient-to-r from-black/45 via-black/20 to-transparent pointer-events-none" />
+
+          {/* Dynamic Rating Badge */}
+          {reviews.length > 0 && dynamicRating && Number(dynamicRating) > 0 && (
+            <div className="absolute top-2.5 right-2.5 bg-black/85 backdrop-blur-md text-white text-[11px] font-black px-2.5 py-1 rounded-full flex items-center gap-1 border border-[#FFD700]/70 shadow-lg">
+              <StarIcon className="w-3.5 h-3.5 text-[#FFD700] fill-[#FFD700]" />
+              <span className="text-white font-extrabold">{dynamicRating}</span>
+            </div>
+          )}
         </div>
-      )}
 
-      {/* Hero Cover */}
-      <CoverArt
-        gradient={covers[book.cover] || covers.c1}
-        className="w-full h-[220px] items-center justify-center shadow-lg relative overflow-hidden rounded-3xl"
-      >
-        {book.customCoverUrl ? (
-          <img src={book.customCoverUrl} alt={book.title} className="w-full h-full object-cover" />
-        ) : (
-          <BookOpenIcon className="w-12 h-12 opacity-25 text-white" />
-        )}
-        {/* Dynamic High-Contrast Gold Glow Badge - Hidden if unrated */}
-        {reviews.length > 0 && dynamicRating && Number(dynamicRating) > 0 && (
-          <div className="absolute top-3 right-3 bg-black/85 backdrop-blur-md text-white text-[11.5px] font-black px-3 py-1 rounded-full flex items-center gap-1.5 border border-[#FFD700]/70 shadow-xl">
-            <StarIcon className="w-4 h-4 text-[#FFD700] fill-[#FFD700] drop-shadow-[0_0_6px_rgba(255,215,0,0.9)]" />
-            <span className="text-white font-extrabold">{dynamicRating} / 5.0</span>
+        {/* RIGHT: BOOK DETAILS, METADATA & CTA */}
+        <div className="flex-1 min-w-0 space-y-4 w-full">
+          {/* Author & Admin Status Banner */}
+          {isAuthor && (
+            <div className={`p-3 rounded-2xl border text-[12px] flex items-center justify-between shadow-sm text-left ${
+              book.status === 'DRAFT'
+                ? 'bg-amber-50 text-amber-900 border-amber-300'
+                : 'bg-emerald-50 text-emerald-900 border-emerald-300'
+            }`}>
+              <div className="space-y-0.5">
+                <span className="font-bold text-[12.5px] block">
+                  {book.status === 'DRAFT'
+                    ? (isEn ? '🟡 Private Draft Mode' : '🟡 Mode Brouillon Privé')
+                    : (isEn ? '🟢 Live Published Mode' : '🟢 Publié Officiellement')}
+                </span>
+                <span className="text-[11px] opacity-80 block">
+                  {book.status === 'DRAFT'
+                    ? (isEn ? 'Only you & admin can view this book.' : 'Seul vous et l’administrateur voyez ce roman.')
+                    : (isEn ? 'Visible to all readers across Koko.' : 'Visible par tous les lecteurs sur Koko.')}
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => toggleBookStatus(book.id)}
+                className={`px-3 py-1.5 rounded-xl font-bold text-[11px] border transition-all flex-shrink-0 ${
+                  book.status === 'DRAFT'
+                    ? 'bg-emerald-600 text-white border-emerald-700 shadow-sm'
+                    : 'bg-amber-100 text-amber-900 border-amber-300'
+                }`}
+              >
+                {book.status === 'DRAFT' ? (isEn ? 'Publish Now' : 'Rendre Public') : (isEn ? 'Switch to Draft' : 'Passer Brouillon')}
+              </button>
+            </div>
+          )}
+
+          <div>
+            <h1 className="font-display font-extrabold text-[24px] sm:text-[30px] text-ink leading-tight">
+              {book.title}
+            </h1>
+            <p className="text-[13px] text-taupe font-medium mt-1">
+              {isEn ? 'by' : 'par'} <span className="font-bold text-ink">{book.author}</span>
+            </p>
           </div>
-        )}
-      </CoverArt>
 
-      {/* Title & Author */}
-      <h1 className="font-display italic font-medium text-[24px] mt-5 mb-0.5 text-left break-words max-w-full overflow-hidden">{book.title}</h1>
-      <p className="text-[13px] text-taupe mb-4 text-left truncate">
-        {isEn ? 'by' : 'par'} {book.author}
-      </p>
+          {/* Tags */}
+          <div className="flex gap-1.5 flex-wrap">
+            {book.genres?.map((g) => (
+              <Tag key={g}>{g}</Tag>
+            ))}
+            {book.level && <Tag>{book.level}</Tag>}
+          </div>
 
-      {/* Tags */}
-      <div className="flex gap-1.5 flex-wrap mb-4">
-        {book.genres?.map((g) => (
-          <Tag key={g}>{g}</Tag>
-        ))}
-        {book.level && <Tag>{book.level}</Tag>}
+          {/* Description / Synopsis */}
+          {book.description && (
+            <p className="text-[13px] text-ink/80 leading-relaxed font-medium">
+              {book.description}
+            </p>
+          )}
+
+          {/* Primary Start Reading Action Button */}
+          <Link
+            to={`/book/${book.id}/read/1`}
+            className="inline-flex w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-deep text-paper font-bold text-[14px] shadow-lg hover:bg-black transition-all items-center justify-center gap-2 mt-2"
+          >
+            <BookOpenIcon className="w-4.5 h-4.5 text-gold" />
+            <span>{isEn ? 'Start Reading (Chapter 1)' : 'Commencer la Lecture (Chapitre 1)'}</span>
+          </Link>
+        </div>
       </div>
 
       {/* DYNAMIC INTERACTIVE STAR RATING BAR */}
@@ -294,7 +349,7 @@ export default function BookDetail() {
             title={isEn ? 'Love' : 'Coup de Cœur'}
           >
             <HeartIcon className={`w-5 h-5 ${reactions.userReaction === 'like' ? 'fill-red-500 text-red-500' : 'text-red-400'}`} />
-            <span className="text-[11px] font-mono font-bold text-ink">{reactions.like || 0}</span>
+            <span className="text-[11px] font-mono font-bold text-ink">{reactions.likes ?? reactions.like ?? 0}</span>
           </button>
 
           {/* 👍 J'apprécie — mapped to 'love' in Cloud DB */}

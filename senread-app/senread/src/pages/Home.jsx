@@ -84,21 +84,35 @@ export default function Home() {
             onClick={() => navigate(`/book/${inProgressItem.id}/read/${inProgressItem.chapter || 1}`)}
             className="bg-white border border-surface-line rounded-3xl p-4 shadow-sm hover:shadow-md hover:border-gold transition-all cursor-pointer flex items-center gap-4 group"
           >
-            <CoverArt
-              gradient={covers[inProgressItem.cover] || covers.c1}
-              className="w-16 h-22 rounded-2xl flex-shrink-0 relative overflow-hidden flex items-center justify-center text-paper shadow-md group-hover:scale-105 transition-transform"
-            >
-              {inProgressItem.customCoverUrl && !imgErrors[inProgressItem.id] ? (
-                <img
-                  src={inProgressItem.customCoverUrl}
-                  alt={inProgressItem.title}
-                  onError={() => handleImgError(inProgressItem.id)}
-                  className="w-full h-full object-cover rounded-2xl"
-                />
-              ) : (
-                <BookOpenIcon className="w-6 h-6 opacity-30 text-white" />
-              )}
-            </CoverArt>
+            {(() => {
+              const coverSrc = inProgressItem.customCoverUrl || inProgressItem.coverUrl || inProgressItem.coverImage || (typeof inProgressItem.cover === 'string' && (inProgressItem.cover.startsWith('http') || inProgressItem.cover.startsWith('data:')) ? inProgressItem.cover : null);
+              const hasCover = Boolean(coverSrc && !imgErrors[inProgressItem.id]);
+
+              return (
+                <div className="w-16 h-22 rounded-2xl flex-shrink-0 relative overflow-hidden shadow-md group-hover:scale-105 transition-transform bg-neutral-900 border border-black/10">
+                  {hasCover ? (
+                    <img
+                      src={coverSrc}
+                      alt={inProgressItem.title}
+                      onError={() => handleImgError(inProgressItem.id)}
+                      className="w-full h-full object-cover rounded-2xl"
+                    />
+                  ) : (
+                    <div className="w-full h-full p-2 flex flex-col justify-between items-center text-center bg-gradient-to-br from-[#181620] via-[#121118] to-[#0A0A0E] relative overflow-hidden rounded-2xl">
+                      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gold/25 via-transparent to-transparent opacity-70" />
+                      <div className="my-auto z-10 space-y-1">
+                        <BookOpenIcon className="w-5 h-5 text-gold mx-auto opacity-90 drop-shadow" />
+                        <span className="font-display font-extrabold text-[9px] text-paper leading-tight block line-clamp-2">
+                          {inProgressItem.title}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  {/* Spine Effect */}
+                  <div className="absolute inset-y-0 left-0 w-2.5 bg-gradient-to-r from-black/45 via-black/20 to-transparent pointer-events-none" />
+                </div>
+              );
+            })()}
 
             <div className="space-y-2 flex-1 min-w-0">
               <div>

@@ -155,7 +155,7 @@ export default function PaymentModal({ isOpen, onClose, onPaymentSuccess }) {
     e.preventDefault();
     setErrorMsg('');
 
-    if (!validatePhone(phone)) {
+    if (method !== 'apple_pay' && !validatePhone(phone)) {
       setErrorMsg('Numéro invalide. Entrez un numéro sénégalais valide (ex: 771234567, 78..., 76...)');
       return;
     }
@@ -163,6 +163,14 @@ export default function PaymentModal({ isOpen, onClose, onPaymentSuccess }) {
     setLoading(true);
     const newTxId = generateTransactionId('user-1', selectedPack.title);
     setTxId(newTxId);
+
+    if (method === 'apple_pay') {
+      setTimeout(() => {
+        setLoading(false);
+        triggerSuccess(selectedPack.coins, selectedPack.isSubscription);
+      }, 900);
+      return;
+    }
 
     try {
       const res = await initiateIntechPayment({
@@ -256,14 +264,17 @@ export default function PaymentModal({ isOpen, onClose, onPaymentSuccess }) {
             </div>
 
             {/* Payment Method & Phone */}
-            <div className="space-y-2 pt-1 border-t border-surface-line">
+            <div className="space-y-2.5 pt-1 border-t border-surface-line">
+              <span className="text-[10px] font-extrabold text-taupe uppercase tracking-wider block">
+                Mode de Règlement :
+              </span>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={() => setMethod('wave')}
                   className={`p-2.5 rounded-xl border text-[12px] font-bold flex items-center justify-center gap-2 transition-all ${
                     method === 'wave'
-                      ? 'bg-sky-500/15 border-sky-500 text-sky-800'
+                      ? 'bg-sky-500/15 border-sky-500 text-sky-800 ring-1 ring-sky-400'
                       : 'bg-white border-surface-line text-taupe'
                   }`}
                 >
@@ -276,36 +287,76 @@ export default function PaymentModal({ isOpen, onClose, onPaymentSuccess }) {
                   onClick={() => setMethod('orange')}
                   className={`p-2.5 rounded-xl border text-[12px] font-bold flex items-center justify-center gap-2 transition-all ${
                     method === 'orange'
-                      ? 'bg-orange-500/15 border-orange-500 text-orange-800'
+                      ? 'bg-orange-500/15 border-orange-500 text-orange-800 ring-1 ring-orange-400'
                       : 'bg-white border-surface-line text-taupe'
                   }`}
                 >
                   <span className="w-2.5 h-2.5 rounded-full bg-orange-500" />
                   <span>Orange Money</span>
                 </button>
+
+                <button
+                  type="button"
+                  onClick={() => setMethod('free')}
+                  className={`p-2.5 rounded-xl border text-[12px] font-bold flex items-center justify-center gap-2 transition-all ${
+                    method === 'free'
+                      ? 'bg-emerald-500/15 border-emerald-500 text-emerald-800 ring-1 ring-emerald-400'
+                      : 'bg-white border-surface-line text-taupe'
+                  }`}
+                >
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                  <span>Free Money</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setMethod('apple_pay')}
+                  className={`p-2.5 rounded-xl border text-[12px] font-bold flex items-center justify-center gap-2 transition-all ${
+                    method === 'apple_pay'
+                      ? 'bg-black text-white border-black ring-1 ring-black shadow-sm'
+                      : 'bg-white border-surface-line text-taupe'
+                  }`}
+                >
+                  <span className="text-[14px]"></span>
+                  <span>Apple Pay</span>
+                </button>
               </div>
 
-              <input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="Votre numéro (ex: 77 123 45 67)"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-surface-line text-[13px] font-mono outline-none focus:border-gold"
-              />
+              {method !== 'apple_pay' && (
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="Votre numéro (ex: 77 123 45 67)"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-white border border-surface-line text-[13px] font-mono outline-none focus:border-gold"
+                />
+              )}
+
               {errorMsg && <p className="text-[11px] text-red-600 font-semibold">{errorMsg}</p>}
             </div>
 
             <button
               onClick={handleStartPayment}
               disabled={loading}
-              className="w-full bg-deep text-paper py-3.5 rounded-2xl font-bold text-[13.5px] shadow-sm hover:opacity-95 transition-all flex items-center justify-center gap-2"
+              className={`w-full py-3.5 rounded-2xl font-bold text-[13.5px] shadow-sm hover:opacity-95 transition-all flex items-center justify-center gap-2 ${
+                method === 'apple_pay' ? 'bg-black text-white' : 'bg-deep text-paper'
+              }`}
             >
               {loading ? (
                 <span>Initialisation du paiement...</span>
               ) : (
                 <>
-                  <span>Payer {selectedPack.amount} FCFA avec {method === 'wave' ? 'Wave' : 'Orange Money'}</span>
-                  <SparklesIcon className="w-4 h-4 text-gold" />
+                  {method === 'apple_pay' ? (
+                    <>
+                      <span> Payer {selectedPack.amount} FCFA avec Apple Pay</span>
+                      <SparklesIcon className="w-4 h-4 text-gold" />
+                    </>
+                  ) : (
+                    <>
+                      <span>Payer {selectedPack.amount} FCFA avec {method === 'wave' ? 'Wave' : method === 'orange' ? 'Orange Money' : 'Free Money'}</span>
+                      <SparklesIcon className="w-4 h-4 text-gold" />
+                    </>
+                  )}
                 </>
               )}
             </button>

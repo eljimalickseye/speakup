@@ -46,16 +46,16 @@ function saveUserCurrentReaction(bookId, currentUserId, reactionType) {
 function buildClientItem(item = {}, currentUserId) {
   const usersList = Array.isArray(item.users) ? item.users :
     (item.users && typeof item.users === 'object') ? Object.values(item.users) : [];
-  const likeCount = usersList.length > 0 ? usersList.length : (item.like || 0);
+  const likeCount = usersList.length > 0 ? usersList.length : (item.likes || item.like || 0);
   const isLiked = usersList.includes(currentUserId);
 
   return {
-    like: likeCount,
+    likes: likeCount,
     users: usersList,
+    userReaction: isLiked ? 'like' : null,
     love: item.love || 0,
     mindblown: item.mindblown || 0,
     sad: item.sad || 0,
-    userReaction: isLiked ? 'like' : null,
   };
 }
 
@@ -134,6 +134,7 @@ export async function toggleCloudBookReaction(bookId, reactionType = 'like', use
         } else {
           usersList.push(currentUserId); // Like
         }
+        currentData.likes = usersList.length;
         currentData.like = usersList.length;
         currentData.users = usersList;
 

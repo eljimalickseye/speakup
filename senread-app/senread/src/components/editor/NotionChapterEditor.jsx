@@ -7,7 +7,7 @@ import {
   CheckIcon,
   SparklesIcon,
 } from '../ui/Icons.jsx';
-import { translateEnToFr } from '../../lib/translate.js';
+import { translateEnToFr, translateFrToEn } from '../../lib/translate.js';
 
 export default function NotionChapterEditor({
   chapter,
@@ -34,10 +34,13 @@ export default function NotionChapterEditor({
   const [bgColor, setBgColor] = useState('transparent');
   const [isDragOver, setIsDragOver] = useState(false);
 
-  // Live Auto-Translation Engine (EN -> FR)
+  // Live Auto-Translation Engine (EN <-> FR)
+  const [primaryLang, setPrimaryLang] = useState('FR'); // 'FR' (Français d'abord) | 'EN' (Anglais d'abord)
   const [autoTranslateEnabled, setAutoTranslateEnabled] = useState(true);
   const [translatingIdx, setTranslatingIdx] = useState(null);
   const [isTranslatingAll, setIsTranslatingAll] = useState(false);
+  const [showPasteModal, setShowPasteModal] = useState(false);
+  const [pasteText, setPasteText] = useState('');
   const translateTimerRef = useRef({});
 
   // Autosave Engine
@@ -88,7 +91,29 @@ export default function NotionChapterEditor({
     }
   };
 
-  // Translate Single Sentence (EN -> FR)
+  // Translate Single Sentence FR -> EN
+  const handleTranslateSentenceFrToEn = async (index, customFrText) => {
+    const frText = customFrText !== undefined ? customFrText : chapter.sentences[index]?.fr;
+    if (!frText || !frText.trim()) return;
+
+    setTranslatingIdx(index);
+    try {
+      const translatedEn = await translateFrToEn(frText);
+      if (translatedEn) {
+        const updated = chapter.sentences.map((s, idx) => {
+          if (idx === index) {
+            return { ...s, en: translatedEn };
+          }
+          return s;
+        });
+        pushToHistory(updated);
+      }
+    } finally {
+      setTranslatingIdx(null);
+    }
+  };
+
+  // Translate Single Sentence EN -> FR
   const handleTranslateSentence = async (index, customEnText) => {
     const enText = customEnText !== undefined ? customEnText : chapter.sentences[index]?.en;
     if (!enText || !enText.trim()) return;
@@ -110,18 +135,57 @@ export default function NotionChapterEditor({
     }
   };
 
-  // Translate All Sentences in Chapter
+  // Translate All Sentences (FR -> EN or EN -> FR)
   const handleTranslateAllSentences = async () => {
     setIsTranslatingAll(true);
     try {
       const updatedSentences = await Promise.all(
         chapter.sentences.map(async (s) => {
-          if (!s.en || !s.en.trim() || s.fr) return s;
-          const translatedFr = await translateEnToFr(s.en);
-          return { ...s, fr: translatedFr || s.fr };
+          if (primaryLang === 'FR') {
+            if (!s.fr || !s.fr.trim()) return s;
+            const translatedEn = await translateFrToEn(s.fr);
+            return { ...s, en: translatedEn || s.en };
+          } else {
+            if (!s.en || !s.en.trim()) return s;
+            const translatedFr = await translateEnToFr(s.en);
+            return { ...s, fr: translatedFr || s.fr };
+          }
         })
       );
       pushToHistory(updatedSentences);
+    } finally {
+      setIsTranslatingAll(false);
+    }
+  };
+
+  // Bulk Paste & Import Full French Story
+  const handlePasteAndAutoTranslateFr = async () => {
+    if (!pasteText || !pasteText.trim()) return;
+
+    const lines = pasteText
+      .split(/(?<=[.!?])\s+|\n+/)
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0);
+
+    if (lines.length === 0) return;
+
+    setIsTranslatingAll(true);
+    try {
+      const newSentencePairs = await Promise.all(
+        lines.map(async (frLine) => {
+          const translatedEn = await translateFrToEn(frLine);
+          return {
+            fr: frLine,
+            en: translatedEn || frLine,
+            vocabWord: '',
+            vocabFr: '',
+          };
+        })
+      );
+
+      pushToHistory(newSentencePairs);
+      setPasteText('');
+      setShowPasteModal(false);
     } finally {
       setIsTranslatingAll(false);
     }
@@ -137,11 +201,15 @@ export default function NotionChapterEditor({
     });
     pushToHistory(updated);
 
-    // If typing English and auto-translation is enabled, trigger debounced translation to FR
-    if (field === 'en' && autoTranslateEnabled && value.trim().length > 3) {
+    // Debounced Auto-Translation based on primary language
+    if (autoTranslateEnabled && value.trim().length > 3) {
       if (translateTimerRef.current[index]) clearTimeout(translateTimerRef.current[index]);
       translateTimerRef.current[index] = setTimeout(() => {
-        handleTranslateSentence(index, value);
+        if (field === 'fr' && primaryLang === 'FR') {
+          handleTranslateSentenceFrToEn(index, value);
+        } else if (field === 'en' && primaryLang === 'EN') {
+          handleTranslateSentence(index, value);
+        }
       }, 600);
     }
   };
@@ -371,17 +439,56 @@ export default function NotionChapterEditor({
               )}
             </div>
 
-            <div className="flex flex-wrap justify-between items-center bg-gold/10 p-3.5 rounded-2xl border border-gold/30 gap-2">
+            <div className="flex flex-wrap justify-between items-center bg-gold/10 p-3.5 rounded-2xl border border-gold/30 gap-3">
               <div>
                 <span className="text-[10px] font-extrabold uppercase text-gold tracking-wider block">
-                  {isEn ? 'Bilingual Writing System' : 'Système d’Écriture Bilingue'}
+                  {isEn ? 'Bilingual Block Layout' : 'Agencement du Bloc Principal'}
                 </span>
-                <p className="text-[12px] font-bold text-ink flex items-center gap-1.5">
-                  <span>{isEn ? 'Alternating EN + FR Paired Sentences' : 'Alternance Paires Anglais + Français'}</span>
+                <p className="text-[12px] font-bold text-ink">
+                  {isEn ? 'Select Primary Writing Block (Chosen by Author):' : 'Définissez la langue du bloc principal (Au choix de l’auteur) :'}
                 </p>
               </div>
 
               <div className="flex items-center gap-2 flex-wrap">
+                {/* Author's Primary Block Order Switcher */}
+                <div className="flex bg-white p-1 rounded-2xl border border-gold/40 text-[11.5px] font-bold shadow-sm">
+                  <button
+                    type="button"
+                    onClick={() => setPrimaryLang('FR')}
+                    className={`px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 ${
+                      primaryLang === 'FR'
+                        ? 'bg-emerald-600 text-white shadow-md'
+                        : 'text-taupe hover:text-ink'
+                    }`}
+                  >
+                    <span>🇫🇷</span>
+                    <span>Français (Bloc Principal)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPrimaryLang('EN')}
+                    className={`px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 ${
+                      primaryLang === 'EN'
+                        ? 'bg-gold text-paper shadow-md'
+                        : 'text-taupe hover:text-ink'
+                    }`}
+                  >
+                    <span>🇬🇧</span>
+                    <span>Anglais (Bloc Principal)</span>
+                  </button>
+                </div>
+
+                {/* French Copy-Paste Bulk Import Button */}
+                <button
+                  type="button"
+                  onClick={() => setShowPasteModal(true)}
+                  className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-gold to-amber-600 text-paper text-[11.5px] font-extrabold shadow-sm hover:opacity-95 transition-all flex items-center gap-1.5 active:scale-95"
+                  title="Coller un texte entier et l'importer dans les blocs"
+                >
+                  <span>📋</span>
+                  <span>{isEn ? 'Paste Full Text' : 'Coller un Texte Complet'}</span>
+                </button>
+
                 {/* Auto-Translate Toggle Switch */}
                 <button
                   type="button"
@@ -391,27 +498,11 @@ export default function NotionChapterEditor({
                       ? 'bg-sky-500 text-white border-sky-600 shadow-sm'
                       : 'bg-white text-taupe border-surface-line hover:text-ink'
                   }`}
-                  title="Activer la traduction automatique directe lors de la frappe en anglais"
+                  title="Activer la traduction automatique directe"
                 >
                   <SparklesIcon className="w-3.5 h-3.5" />
-                  <span>{autoTranslateEnabled ? 'Traduction Auto EN→FR [ON]' : 'Traduction Auto [OFF]'}</span>
+                  <span>{autoTranslateEnabled ? 'Traduction Auto [ON]' : 'Traduction Auto [OFF]'}</span>
                 </button>
-
-                {/* Translate All Sentences Button */}
-                <button
-                  type="button"
-                  onClick={handleTranslateAllSentences}
-                  disabled={isTranslatingAll}
-                  className="px-3 py-1.5 rounded-xl bg-gold text-deep-2 border border-gold/40 text-[11px] font-bold hover:bg-gold/90 transition-all shadow-sm flex items-center gap-1.5 active:scale-95 disabled:opacity-50"
-                  title="Traduire toutes les phrases anglaises en français"
-                >
-                  <SparklesIcon className="w-3.5 h-3.5" />
-                  <span>{isTranslatingAll ? 'Traduction en cours...' : 'Tout traduire en FR'}</span>
-                </button>
-
-                <span className="text-[11px] font-mono font-bold text-gold bg-white px-2.5 py-1 rounded-full border border-gold/30">
-                  {chapter.sentences.length} {isEn ? 'Pairs' : 'Paires'}
-                </span>
               </div>
             </div>
 
@@ -474,58 +565,70 @@ export default function NotionChapterEditor({
                   </div>
                 </div>
 
-                {/* Clean English Sentence Input (No inline text format buttons) */}
+                {/* FRENCH FIELD (FIRST IF PRIMARY FR) */}
                 <div className="space-y-1">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] font-mono font-extrabold uppercase px-2 py-0.5 rounded-full bg-gold/20 text-gold border border-gold/40">
-                      EN
-                    </span>
-                    <span className="text-[10.5px] font-extrabold text-ink">
-                      {isEn ? 'English Sentence' : 'Phrase Anglaise'}
-                    </span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] font-mono font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-300">
+                        🇫🇷 FR
+                      </span>
+                      <span className="text-[10.5px] font-extrabold text-ink">
+                        {isEn ? 'French Sentence' : 'Phrase en Français'}
+                      </span>
+                    </div>
+
+                    {/* Single Translate Button FR -> EN */}
+                    <button
+                      type="button"
+                      onClick={() => handleTranslateSentenceFrToEn(idx)}
+                      disabled={translatingIdx === idx || !s.fr || !s.fr.trim()}
+                      className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10.5px] font-bold hover:bg-emerald-100 transition-all flex items-center gap-1 active:scale-95 disabled:opacity-40"
+                      title="Traduire cette phrase française en anglais"
+                    >
+                      <SparklesIcon className="w-3 h-3 text-emerald-600" />
+                      <span>{translatingIdx === idx ? 'Traduction...' : 'Traduire en EN 🇬🇧'}</span>
+                    </button>
                   </div>
                   <textarea
                     rows={2}
-                    value={s.en}
-                    onChange={(e) => handleSentenceChange(idx, 'en', e.target.value)}
-                    placeholder={isEn ? 'Write English sentence...' : 'Rédigez la phrase en anglais...'}
+                    value={s.fr}
+                    onChange={(e) => handleSentenceChange(idx, 'fr', e.target.value)}
+                    placeholder={isEn ? 'Write or paste French sentence...' : 'Rédigez ou collez la phrase en français...'}
                     style={{ color: textColor, backgroundColor: bgColor !== 'transparent' ? bgColor : undefined }}
                     className={`w-full p-3 rounded-2xl bg-paper/70 border border-surface-line text-[13px] outline-none focus:border-gold ${selectedFont} ${selectedFontSize} ${selectedAlign}`}
                   />
                 </div>
 
-                {/* Clean French Translation Input with 1-Click Translation Button */}
+                {/* ENGLISH FIELD */}
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-[10px] font-mono font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-300">
-                        FR
+                      <span className="text-[10px] font-mono font-extrabold uppercase px-2 py-0.5 rounded-full bg-gold/20 text-gold border border-gold/40">
+                        🇬🇧 EN
                       </span>
                       <span className="text-[10.5px] font-extrabold text-ink">
-                        {isEn ? 'French Translation' : 'Traduction Française'}
+                        {isEn ? 'English Translation' : 'Traduction Anglaise'}
                       </span>
                     </div>
 
-                    {/* Individual Sentence Translate Button */}
                     <button
                       type="button"
                       onClick={() => handleTranslateSentence(idx)}
                       disabled={translatingIdx === idx || !s.en || !s.en.trim()}
-                      className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10.5px] font-bold hover:bg-emerald-100 transition-all flex items-center gap-1 active:scale-95 disabled:opacity-40"
+                      className="px-2.5 py-1 rounded-lg bg-gold/15 text-gold border border-gold/30 text-[10.5px] font-bold hover:bg-gold/25 transition-all flex items-center gap-1 active:scale-95 disabled:opacity-40"
                       title="Traduire cette phrase anglaise en français"
                     >
-                      <SparklesIcon className="w-3 h-3 text-emerald-600" />
-                      <span>{translatingIdx === idx ? 'Traduction...' : 'Traduire en FR'}</span>
+                      <SparklesIcon className="w-3 h-3 text-gold" />
+                      <span>{translatingIdx === idx ? 'Traduction...' : 'Traduire en FR 🇫🇷'}</span>
                     </button>
                   </div>
-
                   <textarea
                     rows={2}
-                    value={s.fr || ''}
-                    onChange={(e) => handleSentenceChange(idx, 'fr', e.target.value)}
-                    placeholder={isEn ? 'French translation (auto-generated or written)...' : 'Traduction française (auto-générée ou rédigée)...'}
+                    value={s.en}
+                    onChange={(e) => handleSentenceChange(idx, 'en', e.target.value)}
+                    placeholder={isEn ? 'English translation (auto-generated)...' : 'Traduction en anglais (générée automatiquement)...'}
                     style={{ color: textColor, backgroundColor: bgColor !== 'transparent' ? bgColor : undefined }}
-                    className={`w-full p-3 rounded-2xl bg-paper/70 border border-surface-line text-[13px] outline-none focus:border-emerald-500 ${selectedFont} ${selectedFontSize} ${selectedAlign}`}
+                    className={`w-full p-3 rounded-2xl bg-paper/70 border border-surface-line text-[13px] outline-none focus:border-gold ${selectedFont} ${selectedFontSize} ${selectedAlign}`}
                   />
                 </div>
               </div>
@@ -725,6 +828,80 @@ export default function NotionChapterEditor({
             >
               {isEn ? 'Apply Changes to Block' : 'Appliquer au Paragraphe'}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* BULK PASTE FRENCH TEXT MODAL */}
+      {showPasteModal && (
+        <div
+          className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn"
+          onClick={() => setShowPasteModal(false)}
+        >
+          <div
+            className="w-full max-w-lg bg-white text-ink rounded-3xl p-6 relative shadow-2xl space-y-4 border border-surface-line text-left animate-fadeIn"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex justify-between items-start pb-3 border-b border-surface-line">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-gold/20 text-gold flex items-center justify-center font-bold text-[18px]">
+                  📋
+                </div>
+                <div>
+                  <h3 className="font-display font-bold text-[17px] text-ink">
+                    {isEn ? 'Paste Full French Text' : 'Coller votre Texte en Français'}
+                  </h3>
+                  <p className="text-[11.5px] text-taupe">
+                    {isEn
+                      ? 'Paste your chapter story in French. It will be split into blocks and translated into English automatically.'
+                      : 'Collez l’histoire de votre chapitre en français. Elle sera automatiquement découpée en blocs et traduite en anglais.'}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowPasteModal(false)}
+                className="w-8 h-8 rounded-full bg-paper flex items-center justify-center text-taupe hover:text-ink font-bold text-[16px]"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Textarea */}
+            <div className="space-y-2">
+              <label className="text-[11px] font-bold text-taupe uppercase tracking-wider block">
+                Contenu de votre chapitre en Français :
+              </label>
+              <textarea
+                rows={8}
+                value={pasteText}
+                onChange={(e) => setPasteText(e.target.value)}
+                placeholder="Collez ici votre texte en français (paragraphes, histoires, dialogues)...&#10;&#10;Exemple :&#10;Le soleil du matin se levait doucement sur l'océan Atlantique.&#10;Aïda tenait la vieille clé en laiton dans sa main droite."
+                className="w-full p-4 rounded-2xl bg-paper border border-surface-line text-[13.5px] font-medium outline-none focus:border-gold"
+              />
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowPasteModal(false)}
+                className="flex-1 py-3 rounded-xl bg-paper border border-surface-line text-taupe font-bold text-[13px] hover:text-ink transition-all"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={handlePasteAndAutoTranslateFr}
+                disabled={isTranslatingAll || !pasteText.trim()}
+                className="flex-1 py-3 rounded-xl bg-gold text-paper font-bold text-[13px] shadow-md hover:opacity-90 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                <SparklesIcon className="w-4 h-4 text-paper" />
+                <span>{isTranslatingAll ? 'Importation & Traduction...' : 'Importer & Traduire en EN 🇬🇧'}</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

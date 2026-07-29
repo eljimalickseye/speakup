@@ -363,6 +363,7 @@ export interface Exercise {
   authorName: string;
   status: 'draft' | 'published';
   points: number;
+  dueDate?: string;
 
   // Writing / Essay
   subject?: string;

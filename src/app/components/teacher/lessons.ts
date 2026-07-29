@@ -321,9 +321,23 @@ import { DialogService } from '../../services/dialog.service';
 
               <div class="tb-divider" style="width:1px; height:18px; background:var(--border-weak); margin:0 4px"></div>
 
+              <!-- INSERT TABLE BUTTON -->
+              <button type="button" class="tb-btn" (click)="openTableGeneratorModal()" [title]="t('Insérer un Tableau', 'Insert Table')" style="display:flex; align-items:center; gap:4px; font-size:11.5px; font-weight:700; padding:4px 8px; background:#EEF2FF; color:#4F46E5; border:1px solid #C7D2FE; border-radius:6px; cursor:pointer">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                  <path d="M3 9h18"/>
+                  <path d="M3 15h18"/>
+                  <path d="M9 3v18"/>
+                  <path d="M15 3v18"/>
+                </svg>
+                <span>{{ t('Tableau', 'Table') }}</span>
+              </button>
+
+              <div class="tb-divider" style="width:1px; height:18px; background:var(--border-weak); margin:0 4px"></div>
+
               <!-- Remove Format -->
               <button type="button" class="tb-btn" (click)="execCmd('removeFormat')" title="Clear Formatting">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18.8 4A9 9 0 0 1 20 12a9 9 0 0 1-9 9 9 9 0 0 1-9-9 9 9 0 0 1 1.2-4.5"/><path d="M12 2v20"/><path d="m2 12 20-3"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18.8 4A9 9 0 0 1 20 12a9 9 0 0 1-9 9 9 9 0 0 1-1-9 9 9 0 0 1 1.2-4.5"/><path d="M12 2v20"/><path d="m2 12 20-3"/></svg>
               </button>
             </div>
 
@@ -517,6 +531,110 @@ import { DialogService } from '../../services/dialog.service';
           }
         </div>
       }
+
+      <!-- TABLE GENERATOR MODAL -->
+      @if (showTableModal()) {
+        <div style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(15,23,42,0.6); backdrop-filter:blur(4px); z-index:9999; display:flex; align-items:center; justify-content:center; padding:16px">
+          <div style="background:white; border-radius:16px; width:100%; max-width:850px; max-height:90vh; overflow-y:auto; padding:24px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); border:1px solid #E2E8F0; display:flex; flex-direction:column; gap:20px">
+            
+            <!-- Header -->
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #E2E8F0; padding-bottom:12px">
+              <div style="display:flex; align-items:center; gap:10px">
+                <div style="width:38px; height:38px; background:#EEF2FF; color:#4F46E5; border-radius:10px; display:flex; align-items:center; justify-content:center">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/><path d="M15 3v18"/></svg>
+                </div>
+                <div>
+                  <h3 style="font-size:16px; font-weight:800; color:#1E293B; margin:0">{{ t('Générateur de Tableau Sur-Mesure', 'Custom Table Builder') }}</h3>
+                  <p style="font-size:12px; color:#64748B; margin:0">{{ t('Définissez les dimensions, le thème visuel et saisissez vos données.', 'Configure dimensions, theme, and fill cell contents.') }}</p>
+                </div>
+              </div>
+              <button type="button" (click)="closeTableGeneratorModal()" style="background:none; border:none; color:#64748B; cursor:pointer; font-size:18px; font-weight:700">✕</button>
+            </div>
+
+            <!-- Controls: Dimensions & Theme -->
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px; background:#F8FAFC; padding:16px; border-radius:12px; border:1px solid #E2E8F0">
+              <!-- Rows & Cols Count -->
+              <div style="display:flex; flex-direction:column; gap:6px">
+                <label style="font-size:11.5px; font-weight:700; color:#334155">{{ t('Dimensions du Tableau', 'Table Dimensions') }}</label>
+                <div style="display:flex; align-items:center; gap:8px">
+                  <span style="font-size:11px; color:#64748B">{{ t('Lignes :', 'Rows:') }}</span>
+                  <input type="number" [ngModel]="tableRowsCount()" (ngModelChange)="updateTableDimensions($event, tableColsCount())" min="1" max="12" style="width:55px; padding:5px 8px; border:1px solid #CBD5E1; border-radius:6px; font-size:12px; text-align:center" />
+                  <span style="font-size:11px; color:#64748B">× {{ t('Colonnes :', 'Cols:') }}</span>
+                  <input type="number" [ngModel]="tableColsCount()" (ngModelChange)="updateTableDimensions(tableRowsCount(), $event)" min="1" max="8" style="width:55px; padding:5px 8px; border:1px solid #CBD5E1; border-radius:6px; font-size:12px; text-align:center" />
+                </div>
+              </div>
+
+              <!-- Theme Selector -->
+              <div style="display:flex; flex-direction:column; gap:6px">
+                <label style="font-size:11.5px; font-weight:700; color:#334155">{{ t('Style & Thème Visuel', 'Design Theme') }}</label>
+                <select [ngModel]="tableTheme()" (ngModelChange)="tableTheme.set($event)" style="padding:6px 10px; border:1px solid #CBD5E1; border-radius:6px; font-size:12px; background:white; color:#1E293B; cursor:pointer">
+                  <option value="indigo">💜 Indigo Modern (Default)</option>
+                  <option value="emerald">🟢 Emerald Sleek</option>
+                  <option value="amber">🟠 Warm Amber Accent</option>
+                  <option value="slate">⚫ Slate Dark Header</option>
+                  <option value="bordered">🔲 Minimal Bordered</option>
+                  <option value="glass">✨ Glassmorphism</option>
+                </select>
+              </div>
+
+              <!-- Header Row Toggle -->
+              <div style="display:flex; flex-direction:column; gap:6px">
+                <label style="font-size:11.5px; font-weight:700; color:#334155">{{ t('Ligne d\'En-Tête (Header)', 'Header Row') }}</label>
+                <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:#1E293B; cursor:pointer; margin-top:4px">
+                  <input type="checkbox" [checked]="tableHasHeader()" (change)="tableHasHeader.set($any($event.target).checked)" />
+                  <span>{{ t('Activer la première ligne comme en-tête', 'First row is header') }}</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Table Matrix Grid Editor -->
+            <div style="display:flex; flex-direction:column; gap:8px">
+              <div style="display:flex; justify-content:space-between; align-items:center">
+                <span style="font-size:12px; font-weight:800; color:#334155">{{ t('Éditeur Direct des Cellules', 'Direct Cell Editor Matrix') }}</span>
+                <div style="display:flex; gap:6px">
+                  <button type="button" (click)="addRow()" style="background:#EEF2FF; color:#4F46E5; border:1px solid #C7D2FE; padding:4px 10px; border-radius:6px; font-size:11.5px; font-weight:700; cursor:pointer">+ {{ t('Ligne', 'Row') }}</button>
+                  <button type="button" (click)="addCol()" style="background:#EEF2FF; color:#4F46E5; border:1px solid #C7D2FE; padding:4px 10px; border-radius:6px; font-size:11.5px; font-weight:700; cursor:pointer">+ {{ t('Colonne', 'Column') }}</button>
+                </div>
+              </div>
+
+              <div style="overflow-x:auto; border:1px solid #E2E8F0; border-radius:10px; padding:10px; background:#FAFAFA">
+                <table style="width:100%; border-collapse:collapse">
+                  @for (row of tableData(); track $index; let rIdx = $index) {
+                    <tr>
+                      @for (cell of row; track $index; let cIdx = $index) {
+                        <td style="padding:4px">
+                          <input type="text" 
+                                 [ngModel]="cell" 
+                                 (ngModelChange)="updateCell(rIdx, cIdx, $event)"
+                                 [placeholder]="rIdx === 0 && tableHasHeader() ? 'Header ' + (cIdx + 1) : 'Cell ' + (rIdx + 1) + '-' + (cIdx + 1)"
+                                 [style.background]="rIdx === 0 && tableHasHeader() ? '#EEF2FF' : 'white'"
+                                 [style.font-weight]="rIdx === 0 && tableHasHeader() ? '800' : '500'"
+                                 [style.color]="rIdx === 0 && tableHasHeader() ? '#4F46E5' : '#1E293B'"
+                                 style="width:100%; min-width:110px; border:1px solid #CBD5E1; border-radius:6px; padding:6px 10px; font-size:12px; outline:none" />
+                        </td>
+                      }
+                      <td style="width:28px; text-align:center; padding:4px">
+                        <button type="button" (click)="removeRow(rIdx)" title="Supprimer la ligne" style="background:#FEF2F2; color:#EF4444; border:1px solid #FCA5A5; border-radius:6px; width:24px; height:24px; cursor:pointer; font-size:11px; font-weight:800">✕</button>
+                      </td>
+                    </tr>
+                  }
+                </table>
+              </div>
+            </div>
+
+            <!-- Action Footer Buttons -->
+            <div style="display:flex; justify-content:flex-end; gap:12px; border-top:1px solid #E2E8F0; padding-top:16px">
+              <button type="button" (click)="closeTableGeneratorModal()" style="background:#F1F5F9; color:#475569; border:1px solid #CBD5E1; padding:8px 16px; border-radius:8px; font-weight:700; font-size:12.5px; cursor:pointer">
+                {{ t('Annuler', 'Cancel') }}
+              </button>
+              <button type="button" (click)="insertGeneratedTable()" style="background:#4F46E5; color:white; border:none; padding:8px 24px; border-radius:8px; font-weight:800; font-size:12.5px; cursor:pointer; box-shadow:0 4px 12px rgba(79,70,229,0.25); display:flex; align-items:center; gap:6px">
+                <span>{{ t('Insérer le Tableau dans le cours ➔', 'Insert Table into Lesson ➔') }}</span>
+              </button>
+            </div>
+
+          </div>
+        </div>
+      }
     </div>
   `,
   styles: [`
@@ -629,8 +747,13 @@ export class TeacherLessonsComponent {
 
   constructor() {
     this.db.observeLessons().subscribe(list => {
-      this.lessons.set(list.filter(l => l.status === 'published'));
-      this.drafts.set(list.filter(l => l.status === 'draft'));
+      const sorted = [...list].sort((a, b) => {
+        const timeA = a.createdAt ? new Date(a.createdAt).getTime() : (parseInt(a.id.replace(/\D/g, '')) || 0);
+        const timeB = b.createdAt ? new Date(b.createdAt).getTime() : (parseInt(b.id.replace(/\D/g, '')) || 0);
+        return timeB - timeA;
+      });
+      this.lessons.set(sorted.filter(l => l.status === 'published'));
+      this.drafts.set(sorted.filter(l => l.status === 'draft'));
     });
   }
 
@@ -944,5 +1067,113 @@ export class TeacherLessonsComponent {
   execCmdOnHomework(command: string) {
     document.execCommand(command, false, '');
     this.syncHomeworkFromDOM();
+  }
+
+  // --- TABLE GENERATOR STATE & METHODS ---
+  showTableModal = signal<boolean>(false);
+  tableRowsCount = signal<number>(3);
+  tableColsCount = signal<number>(3);
+  tableTheme = signal<'indigo' | 'emerald' | 'amber' | 'slate' | 'bordered' | 'glass'>('indigo');
+  tableHasHeader = signal<boolean>(true);
+  tableData = signal<string[][]>([
+    ['Grammar Structure', 'Example Sentence', 'Usage Notes'],
+    ['Subject + Have/Has + Past Participle', 'I have completed the report.', 'Present Perfect for past action with present effect'],
+    ['Subject + Had + Past Participle', 'She had left before I arrived.', 'Past Perfect for action before another past action']
+  ]);
+
+  openTableGeneratorModal() {
+    this.showTableModal.set(true);
+  }
+
+  closeTableGeneratorModal() {
+    this.showTableModal.set(false);
+  }
+
+  updateTableDimensions(rows: number, cols: number) {
+    const r = Math.max(1, Math.min(12, Number(rows) || 1));
+    const c = Math.max(1, Math.min(8, Number(cols) || 1));
+    this.tableRowsCount.set(r);
+    this.tableColsCount.set(c);
+
+    const current = this.tableData();
+    const newMatrix: string[][] = [];
+    for (let i = 0; i < r; i++) {
+      const row: string[] = [];
+      for (let j = 0; j < c; j++) {
+        row.push(current[i] && current[i][j] !== undefined ? current[i][j] : (i === 0 && this.tableHasHeader() ? `Header ${j+1}` : `Cell ${i+1}-${j+1}`));
+      }
+      newMatrix.push(row);
+    }
+    this.tableData.set(newMatrix);
+  }
+
+  addRow() {
+    this.updateTableDimensions(this.tableRowsCount() + 1, this.tableColsCount());
+  }
+
+  removeRow(rIdx: number) {
+    if (this.tableRowsCount() <= 1) return;
+    const matrix = this.tableData().filter((_, i) => i !== rIdx);
+    this.tableRowsCount.set(matrix.length);
+    this.tableData.set(matrix);
+  }
+
+  addCol() {
+    this.updateTableDimensions(this.tableRowsCount(), this.tableColsCount() + 1);
+  }
+
+  removeCol(cIdx: number) {
+    if (this.tableColsCount() <= 1) return;
+    const matrix = this.tableData().map(row => row.filter((_, j) => j !== cIdx));
+    this.tableColsCount.set(matrix[0]?.length || 1);
+    this.tableData.set(matrix);
+  }
+
+  updateCell(r: number, c: number, value: string) {
+    const matrix = this.tableData().map(row => [...row]);
+    if (matrix[r]) {
+      matrix[r][c] = value;
+      this.tableData.set(matrix);
+    }
+  }
+
+  insertGeneratedTable() {
+    const data = this.tableData();
+    const hasHeader = this.tableHasHeader();
+    const theme = this.tableTheme();
+
+    if (!data || data.length === 0) return;
+
+    let tableHtml = `<div class="lesson-table-container"><table class="lesson-custom-table theme-${theme}">`;
+    
+    if (hasHeader && data.length > 0) {
+      tableHtml += '<thead><tr>';
+      data[0].forEach(cell => {
+        tableHtml += `<th>${cell || '&nbsp;'}</th>`;
+      });
+      tableHtml += '</tr></thead>';
+    }
+
+    tableHtml += '<tbody>';
+    const bodyRows = hasHeader ? data.slice(1) : data;
+    bodyRows.forEach(row => {
+      tableHtml += '<tr>';
+      row.forEach(cell => {
+        tableHtml += `<td>${cell || '&nbsp;'}</td>`;
+      });
+      tableHtml += '</tr>';
+    });
+    tableHtml += '</tbody></table></div><p><br></p>';
+
+    const el = document.getElementById('richEditor');
+    if (el) {
+      el.focus();
+      document.execCommand('insertHTML', false, tableHtml);
+      this.content = el.innerHTML;
+    } else {
+      this.content += tableHtml;
+    }
+
+    this.showTableModal.set(false);
   }
 }

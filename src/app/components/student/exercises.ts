@@ -291,12 +291,14 @@ const defaultWordsBank = [
                 
                 @for (ex of sortedExercises(); track ex.id) {
                   @let exDone = getExerciseStatus(ex.id) === 'Completed';
+                  @let isExpired = isExerciseExpired(ex);
                   <div class="card exercise-card" (click)="openExercise(ex)"
-                       [style.opacity]="exDone ? '0.75' : '1'"
-                       style="flex: 0 0 250px; width: 250px; scroll-snap-align: start; border-radius: 14px; border: 1.5px solid var(--border-weak); background: var(--surface-1); overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; transition: all 0.25s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.04);">
+                       [style.opacity]="isExpired ? '0.6' : (exDone ? '0.75' : '1')"
+                       [style.filter]="isExpired ? 'grayscale(0.35)' : 'none'"
+                       style="flex: 0 0 250px; width: 250px; scroll-snap-align: start; border-radius: 14px; border: 1.5px solid var(--border-weak); background: var(--surface-1); overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; transition: all 0.25s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.04); position: relative;">
                     
                     <!-- Top Header Box with Category Color -->
-                    <div [style.background]="exDone ? 'linear-gradient(135deg, #64748B, #94A3B8)' : 'linear-gradient(135deg, ' + getExerciseColor(ex.type) + 'DD, ' + getExerciseColor(ex.type) + ')'"
+                    <div [style.background]="isExpired ? 'linear-gradient(135deg, #475569, #334155)' : (exDone ? 'linear-gradient(135deg, #64748B, #94A3B8)' : 'linear-gradient(135deg, ' + getExerciseColor(ex.type) + 'DD, ' + getExerciseColor(ex.type) + ')') "
                          style="height: 76px; width: 100%; position: relative; display: flex; align-items: flex-start; justify-content: space-between; padding: 8px 10px; overflow: hidden; flex-shrink: 0; color: white;">
                       
                       <!-- Type Label Badge -->
@@ -311,7 +313,9 @@ const defaultWordsBank = [
 
                       <!-- Icon Box -->
                       <span style="width: 28px; height: 28px; border-radius: 8px; background: rgba(255,255,255,0.25); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center;">
-                        @if (exDone) {
+                        @if (isExpired) {
+                          <span style="font-size: 14px;">🔒</span>
+                        } @else if (exDone) {
                           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                         } @else {
                           @switch (ex.type) {
@@ -350,12 +354,21 @@ const defaultWordsBank = [
                           <span>•</span>
                           <span style="color: #059669; font-weight: 700;">+{{ ex.points }} XP</span>
                         </div>
+                        @if (ex.dueDate) {
+                          <div style="font-size: 10px; color: #DC2626; font-weight: 700; margin-top: 4px; display: flex; align-items: center; gap: 4px;">
+                            <span>⏳ {{ t('Limite :', 'Due:') }} {{ ex.dueDate | date:'dd/MM/yyyy HH:mm' }}</span>
+                          </div>
+                        }
                       </div>
                     </div>
 
                     <!-- Card Footer -->
                     <div style="padding: 8px 12px; border-top: 1.5px solid var(--border-weak); background: var(--surface-2); display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-                      @if (exDone) {
+                      @if (isExpired) {
+                        <span style="font-size: 10.5px; color: #DC2626; font-weight: 800; background: #FEF2F2; padding: 3px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                          🔒 Expiré (Verrouillé)
+                        </span>
+                      } @else if (exDone) {
                         <span style="font-size: 10.5px; color: #047857; font-weight: 700; background: #ECFDF5; padding: 3px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
                           <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
                           Fait
@@ -2477,14 +2490,17 @@ export class StudentExercisesComponent {
     });
   });
 
+  isExerciseExpired(ex: Exercise | null | undefined): boolean {
+    if (!ex || !ex.dueDate) return false;
+    return new Date(ex.dueDate).getTime() < Date.now();
+  }
+
   sortedExercises = computed(() => {
     const list = this.exercises();
     return [...list].sort((a, b) => {
-      const aNew = this.isItemNew(a.id);
-      const bNew = this.isItemNew(b.id);
-      if (aNew && !bNew) return -1;
-      if (!aNew && bNew) return 1;
-      return 0;
+      const timeA = a.createdAt ? new Date(a.createdAt).getTime() : (parseInt(a.id.replace(/\D/g, '')) || 0);
+      const timeB = b.createdAt ? new Date(b.createdAt).getTime() : (parseInt(b.id.replace(/\D/g, '')) || 0);
+      return timeB - timeA;
     });
   });
   placementQuizzes = signal<Quiz[]>([]);
@@ -2774,6 +2790,14 @@ export class StudentExercisesComponent {
   }
 
   openExercise(ex: Exercise) {
+    if (this.isExerciseExpired(ex)) {
+      this.dialogService.alert(
+        this.t('Exercice Verrouillé 🔒', 'Exercise Locked 🔒'),
+        this.t('Cet exercice est verrouillé car la date d\'échéance est dépassée. Seul votre professeur peut le réactiver.', 'This exercise is locked because the due date has passed. Only your teacher can reactivate it.'),
+        'info'
+      );
+      return;
+    }
     this.registerClick(ex.id);
     if (ex.type === 'vocabulary') {
       const game: VocabGame = {

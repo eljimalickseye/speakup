@@ -157,11 +157,31 @@ import { DialogService } from '../../services/dialog.service';
                           {{ labels().groupLabel }} <span style="font-weight: 600; color: var(--text-secondary);">{{ getGroupName(ex.groupId) }}</span>
                         </div>
                       }
+                      @if (ex.dueDate) {
+                        <div style="display: flex; align-items: center; gap: 4px; font-size: 11.5px; font-weight: 600; margin-top: 2px;">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                          <span style="color: var(--text-muted)">{{ t("Échéance :", "Due:") }}</span>
+                          <span [style.color]="isExerciseExpired(ex) ? '#EF4444' : '#10B981'" style="font-weight: 700;">
+                            {{ ex.dueDate | date:'dd/MM/yyyy HH:mm' }}
+                          </span>
+                          @if (isExerciseExpired(ex)) {
+                            <span style="background: #FEF2F2; color: #DC2626; border: 1px solid #FCA5A5; font-size: 10px; font-weight: 800; padding: 1px 6px; border-radius: 10px; margin-left: 4px">
+                              🔒 {{ t('Expiré (Verrouillé)', 'Expired (Locked)') }}
+                            </span>
+                          }
+                        </div>
+                      }
                     </div>
                   </div>
 
                   <!-- Actions -->
                   <div style="display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--border-weak); padding-top: 12px; margin-top: 8px;">
+                    @if (isExerciseExpired(ex)) {
+                      <button (click)="reactivateExercise(ex)" style="background: #10B981; color: white; border: none; border-radius: 4px; padding: 4px 8px; font-size: 11px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+                        {{ t('Réactiver', 'Reactivate') }}
+                      </button>
+                    }
                     @if (ex.status === 'draft') {
                       <button (click)="publishExercise(ex)" style="background: none; border: 1px solid #10B981; color: #10B981; border-radius: 4px; padding: 4px 8px; font-size: 11px; font-weight: 600; cursor: pointer;">
                         {{ labels().publishBtn }}
@@ -457,6 +477,11 @@ import { DialogService } from '../../services/dialog.service';
                       <option value="drag_drop">{{ t("Glisser-déposer des puces de mots (Drag & Drop)", "Drag & Drop Word Chips") }}</option>
                       <option value="free">{{ t("Réponse libre classique (Texte / Enregistrement vocal)", "Free Response (Text / Audio)") }}</option>
                     </select>
+                  </div>
+                  <div class="input-row" style="display: flex; flex-direction: column; gap: 6px;">
+                    <label style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">{{ t("Date et heure d'échéance (Deadline)", "Due Date & Time (Deadline)") }}</label>
+                    <input type="datetime-local" [(ngModel)]="formDueDate" style="width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 13px; background: var(--surface-1); color: var(--text-primary);" />
+                    <span style="font-size: 11px; color: var(--text-muted);">{{ t("Après cette date, l'exercice sera grisé et verrouillé pour les élèves jusqu'à ce que vous le réactiviez.", "Once passed, the exercise is grayed out & locked for students until reactivated.") }}</span>
                   </div>
                 </div>
 
@@ -1105,6 +1130,31 @@ export class TeacherExercisesManagerComponent {
   formGroupId = '';
   formStatus = 'published';
   formInteractionMode: 'auto' | 'input' | 'drag_drop' | 'free' = 'auto';
+  formDueDate = '';
+
+  isExerciseExpired(ex: Exercise | null | undefined): boolean {
+    if (!ex || !ex.dueDate) return false;
+    return new Date(ex.dueDate).getTime() < Date.now();
+  }
+
+  async reactivateExercise(ex: Exercise) {
+    const newDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const formattedDefault = newDate.toISOString().slice(0, 16);
+
+    const val = window.prompt(
+      this.t("Réactiver l'exercice 🔓\nSaisissez la nouvelle date/heure d'échéance (YYYY-MM-DDTHH:mm) :", "Reactivate Exercise 🔓\nEnter new due date & time (YYYY-MM-DDTHH:mm):"),
+      formattedDefault
+    );
+
+    if (val && val.trim()) {
+      await this.db.updateExercise(ex.id, { dueDate: val.trim() });
+      this.dialogService.alert(
+        this.t("Exercice Réactivé !", "Exercise Reactivated!"),
+        this.t("L'exercice a été déverrouillé et sa date d'échéance a été mise à jour.", "Exercise has been unlocked with updated due date."),
+        'success'
+      );
+    }
+  }
 
   // Type specific fields
   formSubject = '';
@@ -1388,6 +1438,7 @@ export class TeacherExercisesManagerComponent {
     this.formGroupId = ex.groupId || '';
     this.formStatus = ex.status;
     this.formInteractionMode = (ex as any).interactionMode || 'auto';
+    this.formDueDate = ex.dueDate || '';
 
     // Bind specific fields
     this.formSubject = ex.subject || '';
@@ -1487,6 +1538,7 @@ export class TeacherExercisesManagerComponent {
       groupId: this.formGroupId || undefined,
       status: status,
       interactionMode: this.formInteractionMode,
+      dueDate: this.formDueDate ? this.formDueDate : undefined,
       authorId: user?.id || 'teacher',
       authorName: user?.name || 'Teacher'
     };
@@ -1574,6 +1626,7 @@ export class TeacherExercisesManagerComponent {
     this.formPoints = 20;
     this.formGroupId = '';
     this.formStatus = 'published';
+    this.formDueDate = '';
     this.formSubject = '';
     this.formSpeakingPrompt = '';
     this.formYoutubeUrl = '';
