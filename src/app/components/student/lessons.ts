@@ -240,11 +240,11 @@ import { DialogService } from '../../services/dialog.service';
             }
           </div>
         } @else {
-          <!-- COMPACT GRID VIEW (5 per row) -->
-          <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(195px, 1fr)); gap:14px; padding:10px 4px 20px 4px">
+          <!-- COMPACT GRID VIEW (Equitable 5 per row) -->
+          <div class="lessons-equitable-grid">
             @for (lesson of filteredLessons(); track lesson.id) {
               <div class="card" (click)="selectLesson(lesson)" 
-                   style="cursor:pointer; margin:0; padding:0; border-radius:14px; overflow:hidden; border:1.5px solid var(--border-weak); display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s ease, box-shadow 0.2s ease; background:var(--surface-1)"
+                   style="cursor:pointer; margin:0; padding:0; border-radius:14px; overflow:hidden; border:1.5px solid var(--border-weak); display:flex; flex-direction:column; justify-content:space-between; transition:transform 0.2s ease, box-shadow 0.2s ease; background:var(--surface-1); height:100%"
                    onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 10px 24px rgba(79, 70, 229, 0.12)'; this.style.borderColor='#818CF8'"
                    onmouseout="this.style.transform='none'; this.style.boxShadow='none'; this.style.borderColor='var(--border-weak)'">
                 
@@ -291,7 +291,8 @@ import { DialogService } from '../../services/dialog.service';
                     </h4>
 
                     <div style="font-size:10.5px; color:var(--text-muted); display:flex; align-items:center; gap:4px; margin-bottom:8px">
-                      <span>⏳ {{ lesson.dueDate }}</span>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                      <span>{{ lesson.dueDate }}</span>
                     </div>
                   </div>
 
