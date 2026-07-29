@@ -180,6 +180,8 @@ export interface Ebook {
   content: string;
   createdAt: string;
   views?: number;
+  likes?: number;
+  likedBy?: string[];
   language?: 'fr' | 'en';
   coverColor?: string;
   coverGradient?: string;
@@ -3787,6 +3789,46 @@ export class DatabaseService {
         }
       }
     }
+  }
+
+  async toggleLikeEbook(ebookId: string, userId: string): Promise<boolean> {
+    const list = [...this.ebooks$.value];
+    const idx = list.findIndex(b => b.id === ebookId);
+    if (idx !== -1) {
+      const book = list[idx];
+      const likedBy = Array.isArray(book.likedBy) ? [...book.likedBy] : [];
+      const userIdx = likedBy.indexOf(userId);
+      let isLiked = false;
+
+      if (userIdx >= 0) {
+        likedBy.splice(userIdx, 1);
+        book.likes = Math.max(0, (book.likes || 1) - 1);
+        isLiked = false;
+      } else {
+        likedBy.push(userId);
+        book.likes = (book.likes || 0) + 1;
+        isLiked = true;
+      }
+      book.likedBy = likedBy;
+      const updated = { ...book };
+      list[idx] = updated;
+
+      this.ebooks$.next(list);
+      this.saveLocal('speak_ebooks', list);
+
+      if (this.useFirebase) {
+        try {
+          await updateDoc(doc(this.firestore, 'ebooks', ebookId), {
+            likes: updated.likes,
+            likedBy: updated.likedBy
+          });
+        } catch (e) {
+          console.warn('Firestore update ebook likes failed:', e);
+        }
+      }
+      return isLiked;
+    }
+    return false;
   }
 
   observeActiveHighlightSession(): Observable<{ bookId: string; active: boolean } | null> {

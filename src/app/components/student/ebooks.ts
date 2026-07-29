@@ -327,23 +327,50 @@ import { DatabaseService, Ebook, EbookPage, UserProfile, EbookHighlight } from '
 
                   </div>
 
-                  <!-- Book Turn controls & indicators -->
-                  <div style="display:flex; justify-content:space-between; align-items:center; width:100%; max-width:1150px; margin-top:20px" [style.color]="getThemeText()">
-                    <button [disabled]="activePageIndex() === 0" (click)="activePageIndex.set(activePageIndex() - 2)"
-                            style="background:none; border:1px solid currentColor; color:inherit; border-radius:30px; height:38px; padding:0 20px; font-size:12px; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; gap:8px; transition:all 0.2s"
-                            [style.opacity]="activePageIndex() === 0 ? '0.3' : '1'"
-                            onmouseover="this.style.background='rgba(0,0,0,0.03)'" onmouseout="this.style.background='none'">
-                      ← {{ t('Feuilleter Précédent', 'Turn Page Back') }}
-                    </button>
-                    <span style="font-size:12px; font-weight:800; opacity:0.8">
-                      {{ activePageIndex() + 1 }}-{{ (activePageIndex() + 2) < (book.pages?.length || 0) ? activePageIndex() + 2 : (book.pages?.length || 1) }} / {{ book.pages?.length || 1 }}
-                    </span>
-                    <button [disabled]="activePageIndex() >= (book.pages?.length || 1) - 2" (click)="activePageIndex.set(activePageIndex() + 2)"
-                            style="background:#4F46E5; border:1px solid #4F46E5; color:white; border-radius:30px; height:38px; padding:0 20px; font-size:12px; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; gap:8px; transition:all 0.2s"
-                            [style.opacity]="activePageIndex() >= (book.pages?.length || 1) - 2 ? '0.3' : '1'"
-                            onmouseover="this.style.background='#4338CA'" onmouseout="this.style.background='#4F46E5'">
-                      {{ t('Feuilleter Suivant', 'Turn Page Forward') }} →
-                    </button>
+                  <!-- Book Turn controls & indicators with Like button and Chapter navigation -->
+                  <div style="display:flex; justify-content:space-between; align-items:center; width:100%; max-width:1150px; margin-top:20px; border-top:1px solid rgba(0,0,0,0.06); padding-top:16px" [style.color]="getThemeText()">
+                    <!-- Like & Comment buttons -->
+                    <div style="display:flex; align-items:center; gap:16px">
+                      <button (click)="toggleLike(book, $event)" 
+                              title="J'aime ce livre"
+                              style="background:none; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border-radius:20px; transition:transform 0.15s ease"
+                              onmouseover="this.style.transform='scale(1.1)'"
+                              onmouseout="this.style.transform='scale(1)'">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" 
+                             [attr.fill]="isBookLiked(book) ? '#EF4444' : 'none'" 
+                             [attr.stroke]="isBookLiked(book) ? '#EF4444' : '#DC2626'" 
+                             stroke-width="2.2">
+                          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                        </svg>
+                        <span style="font-size:14px; font-weight:800; color:#DC2626">{{ getBookLikesCount(book) }}</span>
+                      </button>
+
+                      <div style="display:inline-flex; align-items:center; gap:6px; opacity:0.85">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        <span style="font-size:14px; font-weight:800">{{ getMyHighlights().length || 1 }}</span>
+                      </div>
+                    </div>
+
+                    <!-- Chapter selector & arrows -->
+                    <div style="display:flex; align-items:center; gap:8px">
+                      <button [disabled]="activePageIndex() === 0" (click)="activePageIndex.set(activePageIndex() - 1)"
+                              title="Chapitre précédent"
+                              style="background:none; border:none; color:inherit; cursor:pointer; padding:6px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; transition:all 0.2s"
+                              [style.opacity]="activePageIndex() === 0 ? '0.3' : '1'">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                      </button>
+
+                      <span style="background:rgba(0,0,0,0.05); padding:5px 12px; border-radius:20px; font-size:11.5px; font-weight:800; display:inline-flex; align-items:center; gap:4px">
+                        Ch. {{ activePageIndex() + 1 }} / {{ book.pages?.length || 1 }}
+                      </span>
+
+                      <button [disabled]="activePageIndex() >= (book.pages?.length || 1) - 1" (click)="activePageIndex.set(activePageIndex() + 1)"
+                              title="Chapitre suivant"
+                              style="background:none; border:none; color:inherit; cursor:pointer; padding:6px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; transition:all 0.2s"
+                              [style.opacity]="activePageIndex() >= (book.pages?.length || 1) - 1 ? '0.3' : '1'">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                      </button>
+                    </div>
                   </div>
 
                 </div>
@@ -537,19 +564,50 @@ import { DatabaseService, Ebook, EbookPage, UserProfile, EbookHighlight } from '
                       }
                     </div>
 
-                    <!-- Bottom Page turn controls -->
-                    <div style="display:flex; justify-content:space-between; align-items:center" [style.color]="getThemeText()">
-                      <button [disabled]="activePageIndex() === 0" (click)="activePageIndex.set(activePageIndex() - 1)"
-                              style="background:none; border:1px solid currentColor; color:inherit; border-radius:6px; height:34px; padding:0 12px; font-size:11px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:6px"
-                              [style.opacity]="activePageIndex() === 0 ? '0.4' : '1'">
-                        ← {{ t('Précédent', 'Previous') }}
-                      </button>
-                      <span style="font-size:11px; font-weight:700">{{ activePageIndex() + 1 }} / {{ book.pages?.length || 1 }}</span>
-                      <button [disabled]="activePageIndex() >= (book.pages?.length || 1) - 1" (click)="activePageIndex.set(activePageIndex() + 1)"
-                              style="background:#4F46E5; border:1px solid #4F46E5; color:white; border-radius:6px; height:34px; padding:0 12px; font-size:11px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:6px"
-                              [style.opacity]="activePageIndex() >= (book.pages?.length || 1) - 1 ? '0.4' : '1'">
-                        {{ t('Suivant', 'Next') }} →
-                      </button>
+                    <!-- Bottom Page turn controls with Like button & Chapter selector -->
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid rgba(0,0,0,0.06); padding-top:16px; margin-top:24px" [style.color]="getThemeText()">
+                      <!-- Like & Comment buttons -->
+                      <div style="display:flex; align-items:center; gap:16px">
+                        <button (click)="toggleLike(book, $event)" 
+                                title="J'aime ce livre"
+                                style="background:none; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border-radius:20px; transition:transform 0.15s ease"
+                                onmouseover="this.style.transform='scale(1.1)'"
+                                onmouseout="this.style.transform='scale(1)'">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" 
+                               [attr.fill]="isBookLiked(book) ? '#EF4444' : 'none'" 
+                               [attr.stroke]="isBookLiked(book) ? '#EF4444' : '#DC2626'" 
+                               stroke-width="2.2">
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                          </svg>
+                          <span style="font-size:14px; font-weight:800; color:#DC2626">{{ getBookLikesCount(book) }}</span>
+                        </button>
+
+                        <div style="display:inline-flex; align-items:center; gap:6px; opacity:0.85">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                          <span style="font-size:14px; font-weight:800">{{ getMyHighlights().length || 1 }}</span>
+                        </div>
+                      </div>
+
+                      <!-- Chapter selector & navigation -->
+                      <div style="display:flex; align-items:center; gap:8px">
+                        <button [disabled]="activePageIndex() === 0" (click)="activePageIndex.set(activePageIndex() - 1)"
+                                title="Chapitre précédent"
+                                style="background:none; border:none; color:inherit; cursor:pointer; padding:6px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; transition:all 0.2s"
+                                [style.opacity]="activePageIndex() === 0 ? '0.3' : '1'">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                        </button>
+
+                        <span style="background:rgba(0,0,0,0.05); padding:5px 12px; border-radius:20px; font-size:11.5px; font-weight:800; display:inline-flex; align-items:center; gap:4px">
+                          Ch. {{ activePageIndex() + 1 }} / {{ book.pages?.length || 1 }}
+                        </span>
+
+                        <button [disabled]="activePageIndex() >= (book.pages?.length || 1) - 1" (click)="activePageIndex.set(activePageIndex() + 1)"
+                                title="Chapitre suivant"
+                                style="background:none; border:none; color:inherit; cursor:pointer; padding:6px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; transition:all 0.2s"
+                                [style.opacity]="activePageIndex() >= (book.pages?.length || 1) - 1 ? '0.3' : '1'">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1155,10 +1213,58 @@ export class StudentEbooksComponent {
   readerFontFamily = signal<'serif' | 'sans' | 'dyslexic'>('serif');
 
   constructor() {
-    this.db.observeEbooks().subscribe(list => this.ebooks.set(list.filter(b => b.status !== 'draft')));
+    this.db.observeEbooks().subscribe(list => {
+      const filtered = list.filter(b => b.status !== 'draft');
+      this.ebooks.set(filtered);
+      if (this.activeBook()) {
+        const updated = filtered.find(b => b.id === this.activeBook()?.id);
+        if (updated) {
+          this.activeBook.set(updated);
+        }
+      }
+    });
     this.db.observeCurrentUser().subscribe(u => this.currentUser.set(u));
     this.db.observeActiveHighlightSession().subscribe(session => this.activeSession.set(session));
     this.db.observeEbookHighlights().subscribe(list => this.highlights.set(list));
+  }
+
+  isBookLiked(book: Ebook | null): boolean {
+    if (!book) return false;
+    const userId = this.currentUser()?.id || 'student';
+    return Array.isArray(book.likedBy) && book.likedBy.includes(userId);
+  }
+
+  getBookLikesCount(book: Ebook | null): number {
+    if (!book) return 0;
+    return book.likes || (Array.isArray(book.likedBy) ? book.likedBy.length : 0);
+  }
+
+  async toggleLike(book: Ebook | null, event?: Event) {
+    if (event) event.stopPropagation();
+    if (!book) return;
+    const userId = this.currentUser()?.id || 'student';
+    const isNowLiked = await this.db.toggleLikeEbook(book.id, userId);
+
+    const current = this.activeBook();
+    if (current && current.id === book.id) {
+      const likedBy = Array.isArray(current.likedBy) ? [...current.likedBy] : [];
+      const uIdx = likedBy.indexOf(userId);
+      let newCount = current.likes || 0;
+
+      if (isNowLiked) {
+        if (uIdx === -1) likedBy.push(userId);
+        newCount = newCount + 1;
+      } else {
+        if (uIdx !== -1) likedBy.splice(uIdx, 1);
+        newCount = Math.max(0, newCount - 1);
+      }
+
+      this.activeBook.set({
+        ...current,
+        likes: newCount,
+        likedBy
+      });
+    }
   }
 
   t(fr: string, en: string): string {

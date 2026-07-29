@@ -1146,9 +1146,56 @@ export class TeacherEbooksComponent {
 
   constructor() {
     this.db.observeCurrentUser().subscribe(u => this.currentUser.set(u));
-    this.db.observeEbooks().subscribe(list => this.ebooks.set(list));
+    this.db.observeEbooks().subscribe(list => {
+      this.ebooks.set(list);
+      if (this.viewingBook()) {
+        const updated = list.find(b => b.id === this.viewingBook()?.id);
+        if (updated) {
+          this.viewingBook.set(updated);
+        }
+      }
+    });
     this.db.observeActiveHighlightSession().subscribe(s => this.activeSession.set(s));
     this.db.observeEbookHighlights().subscribe(list => this.highlights.set(list));
+  }
+
+  isBookLiked(book: Ebook | null): boolean {
+    if (!book) return false;
+    const userId = this.currentUser()?.id || 'teacher';
+    return Array.isArray(book.likedBy) && book.likedBy.includes(userId);
+  }
+
+  getBookLikesCount(book: Ebook | null): number {
+    if (!book) return 0;
+    return book.likes || (Array.isArray(book.likedBy) ? book.likedBy.length : 0);
+  }
+
+  async toggleLike(book: Ebook | null, event?: Event) {
+    if (event) event.stopPropagation();
+    if (!book) return;
+    const userId = this.currentUser()?.id || 'teacher';
+    const isNowLiked = await this.db.toggleLikeEbook(book.id, userId);
+
+    const current = this.viewingBook();
+    if (current && current.id === book.id) {
+      const likedBy = Array.isArray(current.likedBy) ? [...current.likedBy] : [];
+      const uIdx = likedBy.indexOf(userId);
+      let newCount = current.likes || 0;
+
+      if (isNowLiked) {
+        if (uIdx === -1) likedBy.push(userId);
+        newCount = newCount + 1;
+      } else {
+        if (uIdx !== -1) likedBy.splice(uIdx, 1);
+        newCount = Math.max(0, newCount - 1);
+      }
+
+      this.viewingBook.set({
+        ...current,
+        likes: newCount,
+        likedBy
+      });
+    }
   }
 
   t(fr: string, en: string): string {
