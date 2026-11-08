@@ -280,6 +280,8 @@ export interface Quiz {
   isOfficialExam?: boolean;
   isExamActive?: boolean;
   deadline?: string;
+  description?: string;
+  createdAt?: string;
   questions: {
     question: string;
     options: string[];
@@ -1495,6 +1497,28 @@ export class DatabaseService {
       });
       this.assessmentSubmissions$.next(realSubs);
       this.saveLocal('speak_assessment_submissions', realSubs);
+    });
+
+    // Subscribe to Official Assessment Questions in real-time
+    onSnapshot(doc(this.firestore, 'official_assessment', 'current'), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (data && Array.isArray(data['questions']) && data['questions'].length > 0) {
+          this.officialAssessmentQuestions$.next(data['questions']);
+          this.saveLocal('speak_official_assessment_questions', data['questions']);
+        }
+      }
+    });
+
+    // Subscribe to Official Assessment Session Config in real-time
+    onSnapshot(doc(this.firestore, 'settings', 'assessment_session'), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data() as AssessmentSessionConfig;
+        if (data) {
+          this.assessmentSessionConfig$.next(data);
+          this.saveLocal('speak_assessment_session_config', data);
+        }
+      }
     });
 
     // 5. Subscribe to Attendance
@@ -5339,13 +5363,53 @@ export class DatabaseService {
   async saveOfficialAssessmentQuestions(questions: DetQuestion[]): Promise<void> {
     this.officialAssessmentQuestions$.next(questions);
     this.saveLocal('speak_official_assessment_questions', questions);
+
+    // Create or update published official Quiz entry so it displays in student exams
+    const officialQuizId = 'official-set-exam-2026';
+    const currentQuizzes = this.quizzes$.value;
+    const existingIdx = currentQuizzes.findIndex(q => q.id === officialQuizId || q.isOfficialExam);
+
+    const officialQuiz: Quiz = {
+      id: officialQuizId,
+      title: 'SpeakUp English Assessment (SET) — Examen Officiel 2026',
+      type: 'Official Assessment',
+      description: 'Évaluation officielle de niveau CEFR A2-B2 basée sur les leçons du cours. Session active du 11/08/2026 au 18/08/2026.',
+      status: 'published',
+      isOfficialExam: true,
+      isExamActive: true,
+      timeLimit: '20 min',
+      level: 'A2-B2',
+      points: 160,
+      createdAt: new Date().toISOString(),
+      deadline: '2026-08-18T23:59:59Z',
+      questions: questions.map((q, idx) => ({
+        question: q.titleFr || q.titleEn || q.promptText || ('Épreuve ' + (idx + 1)),
+        options: ['A', 'B', 'C', 'D'],
+        correctOption: 'A',
+        explanation: 'Épreuve officielle évaluée par le professeur'
+      }))
+    };
+
+    let updatedQuizzes: Quiz[];
+    if (existingIdx !== -1) {
+      updatedQuizzes = [...currentQuizzes];
+      updatedQuizzes[existingIdx] = { ...updatedQuizzes[existingIdx], ...officialQuiz };
+    } else {
+      updatedQuizzes = [officialQuiz, ...currentQuizzes];
+    }
+
+    this.quizzes$.next(updatedQuizzes);
+    this.saveLocal('speak_quizzes', updatedQuizzes);
+
     if (this.useFirebase) {
       try {
         const { setDoc, doc } = await import('firebase/firestore');
         await setDoc(doc(this.firestore, 'official_assessment', 'current'), {
           questions,
+          quizTitle: officialQuiz.title,
           updatedAt: new Date().toISOString()
         });
+        await setDoc(doc(this.firestore, 'quizzes', officialQuiz.id), officialQuiz);
       } catch (e) {
         console.warn('Firebase official assessment sync error:', e);
       }

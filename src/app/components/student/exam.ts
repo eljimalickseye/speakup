@@ -878,10 +878,18 @@ export interface DetQuestion {
                       <button
                         type="button"
                         (click)="triggerGenerateAssessment(true, true)"
-                        [disabled]="isGenerating()"
+                        [disabled]="isGenerating() || isSavingOfficial()"
                         style="width:100%; padding:10px 18px; border:1.5px solid #10B981; border-radius:12px; background:#ECFDF5; color:#047857; font-size:12.5px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:7px; transition:all 0.15s ease;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                        <span>Générer & Activer comme Examen Officiel de la Classe</span>
+                        @if (isSavingOfficial()) {
+                          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="spin-icon"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                          <span>Activation en cours...</span>
+                        } @else if (isOfficialSaved() || officialAssessmentQuestions().length > 0) {
+                          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                          <span>Examen Officiel Actif (Régénérer & Réactiver)</span>
+                        } @else {
+                          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                          <span>Générer & Activer comme Examen Officiel de la Classe</span>
+                        }
                       </button>
                     </div>
 
@@ -937,9 +945,19 @@ export interface DetQuestion {
                         <button
                           type="button"
                           (click)="saveGeneratedAsOfficial()"
-                          style="padding:10px 18px; border:none; border-radius:10px; background:#10B981; color:white; font-size:13px; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:6px; box-shadow:0 3px 10px rgba(16,185,129,0.3);">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                          <span>Définir comme Évaluation Officielle de la Classe</span>
+                          [disabled]="isSavingOfficial()"
+                          [style.background]="isOfficialSaved() || officialAssessmentQuestions().length > 0 ? '#059669' : '#10B981'"
+                          style="padding:10px 18px; border:none; border-radius:10px; color:white; font-size:13px; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:6px; box-shadow:0 3px 10px rgba(16,185,129,0.3); transition:all 0.15s ease;">
+                          @if (isSavingOfficial()) {
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="spin-icon"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                            <span>Enregistrement en cours...</span>
+                          } @else if (isOfficialSaved() || officialAssessmentQuestions().length > 0) {
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                            <span>Examen Officiel Actif (Enregistrer à nouveau)</span>
+                          } @else {
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                            <span>Définir comme Évaluation Officielle de la Classe</span>
+                          }
                         </button>
 
                         <button
@@ -3497,6 +3515,8 @@ export class StudentExamComponent implements OnDestroy {
   isOfficialExam = signal<boolean>(false);
   tabSwitchViolations = signal<number>(0);
   showAntiCheatWarningModal = signal<boolean>(false);
+  isSavingOfficial = signal<boolean>(false);
+  isOfficialSaved = signal<boolean>(false);
   assessmentSessionConfig = signal<AssessmentSessionConfig>({
     startDate: '2026-11-08T00:00:00',
     endDate: '2026-11-15T23:59:59',
@@ -3748,6 +3768,9 @@ export class StudentExamComponent implements OnDestroy {
 
     this.db.observeOfficialAssessmentQuestions().subscribe(qList => {
       this.officialAssessmentQuestions.set(qList);
+      if (qList && qList.length > 0) {
+        this.isOfficialSaved.set(true);
+      }
     });
 
   }
@@ -4052,10 +4075,22 @@ export class StudentExamComponent implements OnDestroy {
       this.genAssessment.set(meta);
 
       if (autoSaveAsOfficial) {
-        await this.db.saveOfficialAssessmentQuestions(meta.questions);
-        this.saveSuccessNotification.set(
-          `Évaluation ${level} générée et activée avec succès comme Examen Officiel de la classe (${meta.questions.length} épreuves réelles) !`
-        );
+        this.isSavingOfficial.set(true);
+        try {
+          await this.db.saveOfficialAssessmentQuestions(meta.questions);
+          this.isOfficialSaved.set(true);
+          this.officialAssessmentQuestions.set(meta.questions);
+          this.saveSuccessNotification.set(
+            `Évaluation ${level} générée et activée avec succès comme Examen Officiel de la classe (${meta.questions.length} épreuves réelles) !`
+          );
+          this.dialogService.alert(
+            'Examen Officiel Activé avec Succès !',
+            `L'évaluation « ${meta.title} » (${meta.questions.length} épreuves réelles CEFR ${level}) a été générée et activée comme Examen Officiel de la classe pour la période du 11/08/2026 au 18/08/2026. Tous les élèves de la classe y ont désormais accès avec le protocole anti-triche sécurisé.`,
+            'success'
+          );
+        } finally {
+          this.isSavingOfficial.set(false);
+        }
       } else if (showAnimation) {
         this.saveSuccessNotification.set(
           `Nouvelle évaluation ${level} générée avec succès (${meta.questions.length} épreuves basées sur vos leçons) ! Vous pouvez la tester ci-dessous ou la publier.`
@@ -4083,13 +4118,40 @@ export class StudentExamComponent implements OnDestroy {
   }
 
   async saveGeneratedAsOfficial() {
-    const ga = this.genAssessment();
-    if (!ga || !ga.questions || ga.questions.length === 0) return;
-    await this.db.saveOfficialAssessmentQuestions(ga.questions);
-    this.saveSuccessNotification.set("L'évaluation a été enregistrée avec succès comme Examen Officiel de la classe ! Tous les élèves passeront désormais ce test basé sur les leçons.");
-    setTimeout(() => {
-      this.saveSuccessNotification.set(null);
-    }, 6000);
+    let ga = this.genAssessment();
+    if (!ga || !ga.questions || ga.questions.length === 0) {
+      await this.triggerGenerateAssessment(false, false);
+      ga = this.genAssessment();
+    }
+    if (!ga || !ga.questions || ga.questions.length === 0) {
+      this.dialogService.alert('Attention', 'Veuillez sélectionner au moins une leçon pour générer l\'évaluation.', 'info');
+      return;
+    }
+
+    this.isSavingOfficial.set(true);
+    try {
+      await this.db.saveOfficialAssessmentQuestions(ga.questions);
+      this.isOfficialSaved.set(true);
+      this.officialAssessmentQuestions.set(ga.questions);
+
+      const msg = "L'évaluation a été enregistrée avec succès comme Examen Officiel de la classe ! Tous les élèves passeront désormais ce test (11/08/2026 – 18/08/2026).";
+      this.saveSuccessNotification.set(msg);
+
+      this.dialogService.alert(
+        'Examen Officiel Activé avec Succès !',
+        `L'évaluation « ${ga.title} » (${ga.questions.length} épreuves réelles CEFR ${ga.targetLevel}) est désormais programmée comme Examen Officiel de la classe pour la période du 11/08/2026 au 18/08/2026. Tous les élèves y ont désormais accès avec le dispositif anti-triche activé.`,
+        'success'
+      );
+
+      setTimeout(() => {
+        this.saveSuccessNotification.set(null);
+      }, 7000);
+    } catch (e) {
+      console.error('Error saving official assessment:', e);
+      this.dialogService.alert('Erreur', 'Impossible d\'enregistrer l\'examen officiel. Veuillez réessayer.', 'info');
+    } finally {
+      this.isSavingOfficial.set(false);
+    }
   }
 
   previewGeneratedInSimulator() {
@@ -4711,6 +4773,10 @@ export class StudentExamComponent implements OnDestroy {
   // TEACHER EXAM METHODS (Backward Compatibility)
   // =========================================================
   startTeacherExam(quiz: Quiz) {
+    if (quiz.isOfficialExam || quiz.id === 'official-set-exam-2026') {
+      this.openPreExamBriefing();
+      return;
+    }
     const user = this.currentUser();
     if (!user) return;
     if (this.hasAttempted(quiz.id)) {
