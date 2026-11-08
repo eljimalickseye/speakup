@@ -394,9 +394,8 @@ export interface DetQuestion {
                         <div>
                           <div style="font-size:16px; font-weight:900; color:#1E1B4B; line-height:1.2;">Dossier de {{ curSub.studentName }}</div>
                           <div style="display:flex; align-items:center; gap:6px; margin-top:4px;">
-                            <button type="button" class="btn-s" style="font-size:11px; padding:3px 8px;" (click)="setAllQuestionsScore(100)">Tout noter à 100</button>
-                            <button type="button" class="btn-s" style="font-size:11px; padding:3px 8px; color:#4F46E5;" (click)="recalculateFromQuestions(curSub)">Recalculer</button>
-                            <button type="button" class="btn-s" style="font-size:11px; padding:3px 8px; color:#059669;" (click)="previewCertificateForActiveSubmission()">Aperçu Certificat</button>
+                            <button type="button" class="btn-s" style="font-size:11.5px; padding:4px 10px; color:#4F46E5; font-weight:700;" (click)="recalculateFromQuestions(curSub)">Calculer la moyenne</button>
+                            <button type="button" class="btn-s" style="font-size:11.5px; padding:4px 10px; color:#059669; font-weight:700;" (click)="previewCertificateForActiveSubmission()">Aperçu Certificat</button>
                           </div>
                           <div style="font-size:11.5px; color:#64748B;">Soumis le {{ formatSubmissionDate(curSub.submittedAt) }} • {{ curSub.questions.length }} épreuves complétées</div>
                         </div>
@@ -506,7 +505,7 @@ export interface DetQuestion {
                             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
                               <label style="font-size:12px; font-weight:800; color:#1E1B4B; display:flex; align-items:center; gap:6px;">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-                                Note attribuée (sur 100) :
+                                Note attribuée par l'enseignant (sur 100) :
                               </label>
 
                               <!-- Preset buttons for quick grading -->
@@ -523,6 +522,7 @@ export interface DetQuestion {
                                   type="number"
                                   min="0"
                                   max="100"
+                                  placeholder="—"
                                   [(ngModel)]="q.teacherScore"
                                   (ngModelChange)="onQuestionScoreChange()"
                                   style="width:68px; padding:6px 8px; border:1.5px solid #4F46E5; border-radius:8px; font-size:15px; font-weight:900; text-align:center; color:#4F46E5; background:white; outline:none;"
@@ -561,10 +561,24 @@ export interface DetQuestion {
                         <!-- Overall DET Scaled Score Display & Slider -->
                         <div style="text-align:center; background:#F8FAFC; border:1.5px solid #E2E8F0; border-radius:12px; padding:16px; margin-bottom:16px;">
                           <div style="font-size:11px; font-weight:800; color:#64748B; text-transform:uppercase; letter-spacing:0.8px;">Score Global (Échelle 10–160)</div>
-                          <div style="font-size:44px; font-weight:900; color:#4F46E5; line-height:1; margin:8px 0 4px 0; font-family:'Outfit', sans-serif;">
-                            {{ curSub.overallScore || 100 }}
-                            <span style="font-size:16px; font-weight:700; color:#94A3B8;">/ 160</span>
-                          </div>
+                          @if (curSub.overallScore && curSub.overallScore > 0) {
+                            <div style="font-size:44px; font-weight:900; color:#4F46E5; line-height:1; margin:8px 0 4px 0; font-family:'Outfit', sans-serif;">
+                              {{ curSub.overallScore }}
+                              <span style="font-size:16px; font-weight:700; color:#94A3B8;">/ 160</span>
+                            </div>
+                          } @else {
+                            <div style="font-size:18px; font-weight:900; color:#EA580C; margin:12px 0 4px 0;">
+                              En attente de notation
+                            </div>
+                            <div style="font-size:11px; color:#64748B; margin-bottom:8px;">
+                              Attribuez des notes aux questions ci-contre
+                            </div>
+                          }
+
+                          <button type="button" (click)="recalculateFromQuestions(curSub)" style="border:1px solid #C7D2FE; background:#EEF2FF; color:#4F46E5; font-size:11.5px; font-weight:800; padding:6px 12px; border-radius:8px; cursor:pointer; width:100%; margin-bottom:12px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" style="vertical-align:middle; margin-right:4px;"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                            Calculer la note à partir de mes notes
+                          </button>
 
                           <div style="margin-top:10px; text-align:left;">
                             <label style="font-size:11px; font-weight:800; color:#64748B; text-transform:uppercase; display:block; margin-bottom:4px;">Niveau CECRL accordé :</label>
@@ -2086,7 +2100,7 @@ export interface DetQuestion {
               </div>
               <h3 style="font-size:22px; font-weight:900; color:#9A3412; margin:0 0 8px 0;">{{ t('Évaluation Soumise avec Succès !', 'Assessment Submitted Successfully!') }}</h3>
               <p style="font-size:13.5px; color:#C2410C; max-width:540px; margin:0 auto; line-height:1.5;">
-                {{ t("Votre dossier a été transmis à votre professeur. Vos enregistrements oraux et vos rédactions écrites sont en cours d'évaluation pédagogique.", "Your assessment has been submitted to your instructor. Your oral recordings and written answers are currently being evaluated.") }}
+                {{ t("Votre dossier a été transmis à votre professeur. Les notes ne sont pas automatiques : vos enregistrements oraux et vos productions écrites sont examinés et notés individuellement par votre enseignant.", "Your assessment has been submitted to your instructor. Grades are not automatic: your oral recordings and written answers are personally reviewed and evaluated by your teacher.") }}
               </p>
             </div>
 
@@ -2097,14 +2111,14 @@ export interface DetQuestion {
                 <div style="text-align:center; position:relative; z-index:2;">
                   <div style="width:36px; height:36px; border-radius:50%; background:#10B981; color:white; display:flex; align-items:center; justify-content:center; margin:0 auto 6px auto;"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"><polyline points="20 6 9 17 4 12"/></svg></div>
                   <div style="font-size:12px; font-weight:800; color:#1E293B;">{{ t('Épreuve passée', 'Completed') }}</div>
-                  <div style="font-size:10.5px; color:#64748B;">7 questions</div>
+                  <div style="font-size:10.5px; color:#64748B;">20 épreuves</div>
                 </div>
 
                 <!-- Step 2 -->
                 <div style="text-align:center; position:relative; z-index:2;">
                   <div style="width:36px; height:36px; border-radius:50%; background:#EA580C; color:white; display:flex; align-items:center; justify-content:center; margin:0 auto 6px auto; font-weight:800; animation: pulse-live 1.5s infinite;">⏳</div>
-                  <div style="font-size:12px; font-weight:800; color:#EA580C;">{{ t('En correction', 'Under Review') }}</div>
-                  <div style="font-size:10.5px; color:#64748B;">{{ t('Professeur', 'Faculty Review') }}</div>
+                  <div style="font-size:12px; font-weight:800; color:#EA580C;">{{ t('Correction Manuelle', 'Teacher Review') }}</div>
+                  <div style="font-size:10.5px; color:#64748B;">{{ t('Évaluation du Professeur', 'Faculty Grading') }}</div>
                 </div>
 
                 <!-- Step 3 -->
@@ -2138,7 +2152,7 @@ export interface DetQuestion {
                 <div style="background:#EFF6FF; border:1px solid #BFDBFE; border-radius:10px; padding:14px; display:flex; align-items:center; gap:12px;">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                   <span style="font-size:12.5px; color:#1E40AF; line-height:1.4;">
-                    {{ t("Vous recevrez une notification instantanée dès que votre professeur aura attribué vos points et rédigé ses commentaires détaillés.", "You will be notified immediately once your instructor reviews your work, grades each module, and awards your official certificate.") }}
+                    {{ t("Notation Manuelle : Les notes ne sont pas générées automatiquement par un algorithme. Votre professeur attribue personnellement chacune des notes après écoute attentive de vos enregistrements et vous décernera votre Certificat Officiel.", "Manual Grading: Grades are not automatically generated by algorithms. Your instructor will personally evaluate your recordings and essays before awarding your official Certificate.") }}
                   </span>
                 </div>
               </div>
@@ -5450,109 +5464,81 @@ export class StudentExamComponent implements OnDestroy {
     }
   }
 
-    async finishDetTest() {
+  async finishDetTest() {
     this.clearDetTimer();
     this.stopAudioRecording();
+    this.stopAntiCheatMonitoring();
     const answersObj = this.detSessionAnswers();
-    const scores = Object.values(answersObj).map((a: any) => a.score);
-    const avgScore = scores.length > 0 ? Math.round(scores.reduce((a: number, b: number) => a + b, 0) / scores.length) : 75;
-
-    // Convert 0-100 to SpeakUp English Test Scale 10 - 160
-    const detScaledScore = Math.round(10 + (avgScore / 100) * 150);
-
-    const litScore = Math.min(160, Math.max(10, detScaledScore + Math.floor(Math.random() * 8 - 4)));
-    const compScore = Math.min(160, Math.max(10, detScaledScore + Math.floor(Math.random() * 8 - 4)));
-    const convScore = Math.min(160, Math.max(10, detScaledScore + Math.floor(Math.random() * 8 - 4)));
-    const prodScore = Math.min(160, Math.max(10, detScaledScore + Math.floor(Math.random() * 8 - 4)));
-
-    let cefr: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2' = 'B1';
-    if (detScaledScore >= 135) cefr = 'C1';
-    else if (detScaledScore >= 115) cefr = 'B2';
-    else if (detScaledScore >= 85) cefr = 'B1';
-    else if (detScaledScore >= 55) cefr = 'A2';
-    else cefr = 'A1';
-
-    const result = {
-      overallScore: detScaledScore,
-      cefrLevel: cefr,
-      subscores: {
-        literacy: litScore,
-        comprehension: compScore,
-        conversation: convScore,
-        production: prodScore
-      },
-      totalQuestions: this.detTestSequence().length
-    };
-    this.lastDetResult.set(result);
 
     const user = this.currentUser();
-    if (user) {
-      const isTeacherOrAdmin = user.role === 'teacher' || user.role === 'admin';
+    const isTeacher = user?.role === 'teacher' || user?.role === 'admin';
+    const studentName = isTeacher ? `${user?.name || 'Professeur'} (Test Simulateur)` : (user?.name || 'Élève SpeakUp');
+    const studentId = user?.id || 'candidate-' + Date.now();
+    const studentEmail = (user as any)?.email || '';
+    const studentAvatar = user?.avatar || studentName.slice(0, 2).toUpperCase();
 
-      if (!isTeacherOrAdmin) {
-        // Build AssessmentSubmission for Teacher Grading
-        const questionsData: AssessmentQuestionAnswer[] = this.detTestSequence().map(q => {
-          const ans: any = answersObj[q.id];
-          return {
-            questionId: q.id,
-            type: q.type,
-            title: q.titleFr || q.titleEn || q.type,
-            subscore: q.subscore,
-            prompt: q.promptText || q.audioText || q.titleFr,
-            imageUrl: q.imageUrl,
-            audioPromptText: q.audioText,
-            studentAnswerText: ans?.givenText || ans?.given || '',
-            studentAudioUrl: ans?.audioUrl || undefined,
-            timeSpentSec: ans?.timeSpentSec || 60,
-            wordCount: ans?.wordCount || 0,
-            autoScore: ans?.score || 80,
-            teacherScore: ans?.score || 80,
-            teacherComment: ''
-          };
-        });
+    // STRICT POLICY: "les notes ne doivent pas etre automatiques"
+    // NO automatic score assignment! All questions start unrated (teacherScore: undefined, autoScore: 0).
+    // The teacher manually grades each oral and written exercise in the correction workspace.
+    const questionsData: AssessmentQuestionAnswer[] = this.detTestSequence().map(q => {
+      const ans: any = answersObj[q.id];
+      return {
+        questionId: q.id,
+        type: q.type,
+        title: q.titleFr || q.titleEn || q.type,
+        subscore: q.subscore,
+        prompt: q.promptText || q.audioText || q.titleFr,
+        imageUrl: q.imageUrl,
+        audioPromptText: q.audioText,
+        studentAnswerText: ans?.givenText || ans?.given || '',
+        studentAudioUrl: ans?.audioUrl || undefined,
+        timeSpentSec: ans?.timeSpentSec || 60,
+        wordCount: ans?.wordCount || 0,
+        autoScore: 0,
+        teacherScore: undefined, // strictly manual grading by teacher
+        teacherComment: ''
+      };
+    });
 
-        this.stopAntiCheatMonitoring();
-        const newSub = await this.db.submitAssessment({
-          studentId: user.id,
-          studentName: user.name,
-          studentEmail: (user as any).email || '',
-          studentAvatar: user.avatar || user.name.slice(0, 2).toUpperCase(),
-          testTitle: 'SpeakUp English Assessment (SET)',
-          submittedAt: new Date().toISOString(),
-          durationSeconds: 900,
-          status: 'pending',
-          questions: questionsData,
-          antiCheatReport: {
-            tabSwitches: this.tabSwitchViolations(),
-            fullscreenExits: this.tabSwitchViolations(),
-            pasteAttempts: 0,
-            integrityScore: Math.max(0, 100 - this.tabSwitchViolations() * 25),
-            completedInSingleSession: true
-          }
-        });
-        this.isOfficialExam.set(false);
-
-        this.currentStudentPendingSubmission.set(newSub);
-        this.view.set('det-pending');
-        return;
-      }
-
-      // If teacher preview, record attempt
-      await this.db.submitExamAttempt({
-        studentId: user.id,
-        studentName: user.name,
-        quizId: 'det-' + Date.now(),
-        quizTitle: 'SpeakUp English Assessment (SET Preview)',
-        answers: Object.entries(answersObj).map(([k, v]: [string, any], idx) => ({ questionIdx: idx, answer: 'Answer ' + (idx + 1), correct: v.correct })),
-        score: avgScore,
-        percentage: avgScore,
-        timeTakenSeconds: 300,
-        completedAt: new Date().toISOString(),
-        passed: avgScore >= 60
+    try {
+      const newSub = await this.db.submitAssessment({
+        studentId,
+        studentName,
+        studentEmail,
+        studentAvatar,
+        testTitle: 'SpeakUp English Assessment (SET)',
+        submittedAt: new Date().toISOString(),
+        durationSeconds: 900,
+        status: 'pending',
+        questions: questionsData,
+        antiCheatReport: {
+          tabSwitches: this.tabSwitchViolations(),
+          fullscreenExits: this.tabSwitchViolations(),
+          pasteAttempts: 0,
+          integrityScore: Math.max(0, 100 - this.tabSwitchViolations() * 25),
+          completedInSingleSession: true
+        }
       });
-    }
 
-    this.view.set('det-result');
+      this.isOfficialExam.set(false);
+      this.currentStudentPendingSubmission.set(newSub);
+
+      if (isTeacher) {
+        this.dialogService.alert(
+          'Test Simulateur Enregistré',
+          'Votre test est terminé. Conformément aux consignes, les notes ne sont pas automatiques : votre dossier a été déposé dans votre Centre de Correction (« Dossiers Élèves ») pour notation manuelle de chaque épreuve et délivrance du certificat officiel.',
+          'success'
+        );
+        this.teacherModeTab.set('folders');
+        this.view.set('hub');
+        this.openSubmissionFolder(newSub);
+      } else {
+        this.view.set('det-pending');
+      }
+    } catch (e) {
+      console.error('Error submitting assessment:', e);
+      this.view.set('det-pending');
+    }
   }
 
   getCefrTitle(cefr: string): string {
@@ -5571,20 +5557,19 @@ export class StudentExamComponent implements OnDestroy {
   openSubmissionFolder(sub: AssessmentSubmission) {
     // Clone submission for live editing
     const clone: AssessmentSubmission = JSON.parse(JSON.stringify(sub));
-    // Ensure overallScore & subscores initialized
-    if (!clone.overallScore) {
-      clone.overallScore = this.calculateSuggestedScore(clone);
-    }
-    if (!clone.cefrLevel) {
-      clone.cefrLevel = this.getAutoCefr(clone.overallScore);
-    }
-    if (!clone.subscores) {
-      clone.subscores = {
-        literacy: clone.overallScore,
-        comprehension: clone.overallScore,
-        conversation: clone.overallScore,
-        production: clone.overallScore
-      };
+    // If the submission is already corrected, keep its scores
+    if (clone.status === 'corrected') {
+      if (!clone.overallScore) {
+        clone.overallScore = this.calculateSuggestedScore(clone);
+      }
+      if (!clone.cefrLevel && clone.overallScore) {
+        clone.cefrLevel = this.getAutoCefr(clone.overallScore);
+      }
+    } else {
+      // Pending: notes are strictly manual, do NOT prefill automatic grades!
+      if (!clone.subscores) {
+        clone.subscores = { literacy: 0, comprehension: 0, conversation: 0, production: 0 };
+      }
     }
     if (clone.certificateAwarded === undefined) {
       clone.certificateAwarded = true;
@@ -5600,44 +5585,63 @@ export class StudentExamComponent implements OnDestroy {
     q.teacherScore = score;
     const sub = this.activeSubmission();
     if (sub) {
-      sub.overallScore = this.calculateSuggestedScore(sub);
-      sub.cefrLevel = this.getAutoCefr(sub.overallScore);
-      this.recalculateSubscores(sub);
+      const computed = this.calculateSuggestedScore(sub);
+      if (computed > 0) {
+        sub.overallScore = computed;
+        sub.cefrLevel = this.getAutoCefr(computed);
+        this.recalculateSubscores(sub);
+      }
     }
   }
 
   onQuestionScoreChange() {
     const sub = this.activeSubmission();
     if (sub) {
-      sub.overallScore = this.calculateSuggestedScore(sub);
-      sub.cefrLevel = this.getAutoCefr(sub.overallScore);
-      this.recalculateSubscores(sub);
+      const computed = this.calculateSuggestedScore(sub);
+      if (computed > 0) {
+        sub.overallScore = computed;
+        sub.cefrLevel = this.getAutoCefr(computed);
+        this.recalculateSubscores(sub);
+      }
     }
   }
 
   calculateSuggestedScore(sub: AssessmentSubmission): number {
-    if (!sub.questions || sub.questions.length === 0) return 100;
-    const scores = sub.questions.map(q => q.teacherScore ?? q.autoScore ?? 75);
-    const avg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+    if (!sub.questions || sub.questions.length === 0) return 0;
+    const graded = sub.questions.filter(q => q.teacherScore !== undefined && q.teacherScore !== null && q.teacherScore > 0);
+    if (graded.length === 0) return 0;
+    const avg = Math.round(graded.reduce((a, q) => a + (q.teacherScore || 0), 0) / graded.length);
     // Convert 0-100 to scale 10 - 160
     return Math.min(160, Math.max(10, Math.round(10 + (avg / 100) * 150)));
   }
 
   recalculateSubscores(sub: AssessmentSubmission) {
     if (!sub.subscores) {
-      sub.subscores = { literacy: 100, comprehension: 100, conversation: 100, production: 100 };
+      sub.subscores = { literacy: 0, comprehension: 0, conversation: 0, production: 0 };
     }
     const categories: ('literacy' | 'comprehension' | 'conversation' | 'production')[] = ['literacy', 'comprehension', 'conversation', 'production'];
     categories.forEach(cat => {
-      const catQuestions = sub.questions.filter(q => q.subscore === cat);
+      const catQuestions = sub.questions.filter(q => q.subscore === cat && q.teacherScore !== undefined && q.teacherScore !== null && q.teacherScore > 0);
       if (catQuestions.length > 0) {
-        const catAvg = catQuestions.reduce((a, q) => a + (q.teacherScore ?? q.autoScore ?? 75), 0) / catQuestions.length;
+        const catAvg = catQuestions.reduce((a, q) => a + (q.teacherScore || 0), 0) / catQuestions.length;
         const scaled = Math.min(160, Math.max(10, Math.round(10 + (catAvg / 100) * 150)));
         sub.subscores![cat] = scaled;
       } else {
-        sub.subscores![cat] = sub.overallScore || 100;
+        sub.subscores![cat] = sub.overallScore || 0;
       }
     });
+  }
+
+  recalculateFromQuestions(sub: AssessmentSubmission) {
+    const computed = this.calculateSuggestedScore(sub);
+    if (computed > 0) {
+      sub.overallScore = computed;
+      sub.cefrLevel = this.getAutoCefr(computed);
+      this.recalculateSubscores(sub);
+      this.dialogService.alert('Note Calculée', `Moyenne calculée à partir des notes attribuées aux épreuves : ${computed}/160 (${sub.cefrLevel}).`, 'info');
+    } else {
+      this.dialogService.alert('Aucune note saisie', 'Veuillez d\'abord attribuer des notes sur les épreuves de l\'élève (ou entrer directement le score global souhaité).', 'info');
+    }
   }
 
   getAutoCefr(score: number): 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2' {
@@ -5773,12 +5777,6 @@ export class StudentExamComponent implements OnDestroy {
     sub.questions.forEach(q => {
       q.teacherScore = score;
     });
-    sub.overallScore = this.calculateSuggestedScore(sub);
-    sub.cefrLevel = this.getAutoCefr(sub.overallScore);
-    this.recalculateSubscores(sub);
-  }
-
-  recalculateFromQuestions(sub: AssessmentSubmission) {
     sub.overallScore = this.calculateSuggestedScore(sub);
     sub.cefrLevel = this.getAutoCefr(sub.overallScore);
     this.recalculateSubscores(sub);
