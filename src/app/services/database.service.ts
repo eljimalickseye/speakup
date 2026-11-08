@@ -5373,20 +5373,20 @@ export class DatabaseService {
       id: officialQuizId,
       title: 'SpeakUp English Assessment (SET) — Examen Officiel 2026',
       type: 'Official Assessment',
-      description: 'Évaluation officielle de niveau CEFR A2-B2 basée sur les leçons du cours. Session active du 11/08/2026 au 18/08/2026.',
+      description: 'Évaluation officielle de niveau CEFR A2-B2 basée sur les leçons du cours (20 épreuves réelles avec renforcement grammatical, chronomètre min. 3 min par question). Session active du 11/08/2026 au 18/08/2026.',
       status: 'published',
       isOfficialExam: true,
       isExamActive: true,
-      timeLimit: '20 min',
+      timeLimit: '60 min',
       level: 'A2-B2',
       points: 160,
       createdAt: new Date().toISOString(),
       deadline: '2026-08-18T23:59:59Z',
       questions: questions.map((q, idx) => ({
         question: q.titleFr || q.titleEn || q.promptText || ('Épreuve ' + (idx + 1)),
-        options: ['A', 'B', 'C', 'D'],
-        correctOption: 'A',
-        explanation: 'Épreuve officielle évaluée par le professeur'
+        options: q.options || ['A', 'B', 'C', 'D'],
+        correctOption: q.correctOption || 'A',
+        explanation: q.explanation || 'Épreuve officielle évaluée par le professeur'
       }))
     };
 

@@ -8,7 +8,7 @@ import { DialogService } from '../../services/dialog.service';
 
 export interface DetQuestion {
   id: string;
-  type: 'write-photo' | 'speak-photo' | 'read-complete' | 'read-select' | 'listen-type' | 'read-aloud' | 'read-write' | 'listen-speak';
+  type: 'write-photo' | 'speak-photo' | 'read-complete' | 'read-select' | 'listen-type' | 'read-aloud' | 'read-write' | 'listen-speak' | 'grammar-select';
   titleFr: string;
   titleEn: string;
   subscore: 'literacy' | 'comprehension' | 'production' | 'conversation';
@@ -19,7 +19,13 @@ export interface DetQuestion {
   audioText?: string;
   blanksData?: { prefix: string; missing: string }[];
   wordsList?: { word: string; isReal: boolean }[];
+  options?: string[];
+  correctOption?: string;
+  explanation?: string;
+  grammarTopic?: string;
   minWords?: number;
+  targetLevel?: 'A2' | 'B1' | 'B2' | 'A2-B2';
+  sourceLessonTitle?: string;
 }
 
 @Component({
@@ -669,7 +675,7 @@ export interface DetQuestion {
                       Créez l'Évaluation SpeakUp directement depuis vos Leçons
                     </h2>
                     <p style="font-size:13.5px; opacity:0.9; margin:0 0 20px 0; line-height:1.6;">
-                      Ce module analyse automatiquement les leçons enregistrées dans la plateforme, en extrait le vocabulaire authentique, les règles grammaticales et les thèmes clés, puis synthétise un examen complet SpeakUp English Assessment (7 épreuves réelles calibrées CEFR A2 à B2).
+                      Ce module analyse automatiquement les leçons enregistrées dans la plateforme, en extrait le vocabulaire authentique, les règles grammaticales et les thèmes clés, puis synthétise un examen complet SpeakUp English Assessment (20 épreuves réelles calibrées CEFR A2 à B2 avec renforcement grammatical intensif).
                     </p>
 
                     <!-- Quick Stats Chips -->
@@ -681,7 +687,7 @@ export interface DetQuestion {
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" style="vertical-align:middle; margin-right:4px;"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>Calibration : A2 • B1 • B2
                       </div>
                       <div style="background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); padding:6px 14px; border-radius:10px; font-size:12px; font-weight:700;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" style="vertical-align:middle; margin-right:4px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Format officiel : 7 épreuves (~15 min)
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" style="vertical-align:middle; margin-right:4px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Format officiel : 20 épreuves (~60 min • Chronos min. 3 min / question)
                       </div>
                       @if (officialAssessmentQuestions().length > 0) {
                         <div style="background:#10B981; color:white; padding:6px 14px; border-radius:10px; font-size:12px; font-weight:800; display:flex; align-items:center; gap:6px;">
@@ -1011,12 +1017,40 @@ export interface DetQuestion {
                           </div>
 
                           <!-- Question specifics preview -->
-                          @if (q.type === 'write-photo') {
+                          @if (q.type === 'grammar-select') {
+                            <div style="margin-top:8px; background:white; padding:12px; border-radius:8px; border:1px solid var(--border);">
+                              @if (q.grammarTopic) {
+                                <div style="display:inline-block; font-size:11px; font-weight:800; color:#4338CA; background:#EEF2FF; padding:2px 8px; border-radius:6px; margin-bottom:6px;">
+                                  {{ q.grammarTopic }}
+                                </div>
+                              }
+                              <div style="font-size:13.5px; font-weight:700; color:#1E293B; margin-bottom:8px;">{{ q.promptText }}</div>
+                              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:6px;">
+                                @for (opt of q.options; track opt) {
+                                  <div style="padding:6px 10px; border-radius:6px; font-size:12px; font-weight:600;"
+                                       [style.background]="opt === q.correctOption ? '#ECFDF5' : '#F8FAFC'"
+                                       [style.color]="opt === q.correctOption ? '#065F46' : '#64748B'"
+                                       [style.border]="opt === q.correctOption ? '1px solid #10B981' : '1px solid #E2E8F0'">
+                                    {{ opt === q.correctOption ? '✓ ' : '• ' }}{{ opt }}
+                                  </div>
+                                }
+                              </div>
+                            </div>
+                          } @else if (q.type === 'speak-photo') {
+                            <div style="display:flex; align-items:center; gap:14px; margin-top:8px;">
+                              <img [src]="q.imageUrl" style="width:110px; height:75px; object-fit:cover; border-radius:8px; border:1px solid var(--border);" alt="Scene preview" />
+                              <div style="font-size:12.5px; color:var(--text-secondary);">
+                                <div><strong>Description orale :</strong> {{ q.imageCredit }}</div>
+                                <div><strong>Objectif :</strong> Expression orale libre et continue en anglais pendant 3 minutes.</div>
+                                <div style="color:#4F46E5; font-size:11.5px; margin-top:2px;">Leçon associée : {{ q.sourceLessonTitle }}</div>
+                              </div>
+                            </div>
+                          } @else if (q.type === 'write-photo') {
                             <div style="display:flex; align-items:center; gap:14px; margin-top:8px;">
                               <img [src]="q.imageUrl" style="width:110px; height:75px; object-fit:cover; border-radius:8px; border:1px solid var(--border);" alt="Scene preview" />
                               <div style="font-size:12.5px; color:var(--text-secondary);">
                                 <div><strong>Image thématique :</strong> {{ q.imageCredit }}</div>
-                                <div><strong>Objectif :</strong> Rédiger au moins {{ q.minWords }} mots pour décrire les actions, personnes et le contexte en 1 minute.</div>
+                                <div><strong>Objectif :</strong> Rédiger au moins {{ q.minWords }} mots pour décrire les actions, personnes et le contexte en 3 minutes.</div>
                                 <div style="color:#4F46E5; font-size:11.5px; margin-top:2px;">Leçon associée : {{ q.sourceLessonTitle }}</div>
                               </div>
                             </div>
@@ -1169,7 +1203,7 @@ export interface DetQuestion {
                   <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:20px;">
                     <span class="session-chip">
                       <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                      Durée : ~15 min (7 épreuves)
+                      Durée : ~60 min (20 épreuves • Chronomètres min. 3 min / question)
                     </span>
                     <span class="session-chip">
                       <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
@@ -1493,9 +1527,51 @@ export interface DetQuestion {
 
 
             <!-- ====================================================== -->
-            <!-- QUESTION TYPE A: WRITE ABOUT THE PHOTO (EXACT IMAGE 1) -->
+            <!-- QUESTION TYPE 0: GRAMMAR MULTIPLE CHOICE (3 MIN TIMER) -->
             <!-- ====================================================== -->
-            @if (q.type === 'write-photo') {
+            @if (q.type === 'grammar-select') {
+              <div style="display:flex; flex-direction:column; gap:20px; max-width:680px; margin:0 auto; width:100%;">
+                @if (q.grammarTopic) {
+                  <div style="display:inline-flex; align-items:center; gap:6px; background:#EEF2FF; color:#4338CA; border:1px solid #C7D2FE; border-radius:8px; padding:4px 12px; font-size:12px; font-weight:800; align-self:flex-start;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                    <span>Grammaire CEFR {{ q.targetLevel || 'A2-B2' }} • {{ q.grammarTopic }}</span>
+                  </div>
+                }
+
+                <div style="background:#F8FAFC; border:1.5px solid #E2E8F0; border-radius:12px; padding:22px; font-size:17px; font-weight:700; color:#1E293B; line-height:1.6;">
+                  {{ q.promptText }}
+                </div>
+
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                  @for (opt of q.options; track opt; let optIdx = $index) {
+                    <button
+                      type="button"
+                      class="det-grammar-option"
+                      [class.selected]="currentTextAnswer === opt"
+                      (click)="currentTextAnswer = opt; onTextInputChange()"
+                      style="display:flex; align-items:center; gap:12px; padding:14px 18px; border-radius:10px; border:2px solid; text-align:left; font-size:14.5px; font-weight:700; cursor:pointer; transition:all 0.15s ease;"
+                      [style.border-color]="currentTextAnswer === opt ? '#4F46E5' : '#E2E8F0'"
+                      [style.background]="currentTextAnswer === opt ? '#EEF2FF' : 'white'"
+                      [style.color]="currentTextAnswer === opt ? '#312E81' : '#1E293B'">
+                      <span style="width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12.5px; font-weight:800;"
+                            [style.background]="currentTextAnswer === opt ? '#4F46E5' : '#F1F5F9'"
+                            [style.color]="currentTextAnswer === opt ? 'white' : '#64748B'">
+                        {{ ['A', 'B', 'C', 'D'][optIdx] || (optIdx + 1) }}
+                      </span>
+                      <span style="flex:1;">{{ opt }}</span>
+                      @if (currentTextAnswer === opt) {
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                      }
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- ====================================================== -->
+            <!-- QUESTION TYPE A: WRITE ABOUT THE PHOTO                 -->
+            <!-- ====================================================== -->
+            @else if (q.type === 'write-photo') {
               <div class="det-two-column-layout">
                 <!-- Left: Photo Image -->
                 <div class="det-photo-column">
@@ -1569,7 +1645,7 @@ export interface DetQuestion {
                   </button>
 
                   <div style="font-size:12px; font-weight:700; color:#475569; margin-top:10px;">
-                    {{ isRecording() ? (recordedSeconds() + 's / 90s') : (recordedAudioUrl ? t("Cliquez sur Suivant pour valider", "Click Submit to proceed") : t("Parlez pendant au moins 30 secondes", "Speak for at least 30 seconds")) }}
+                    {{ isRecording() ? (recordedSeconds() + 's / 180s') : (recordedAudioUrl ? t("Cliquez sur Suivant pour valider", "Click Submit to proceed") : t("Parlez pendant au moins 30 secondes", "Speak for at least 30 seconds")) }}
                   </div>
 
                   @if (recordedAudioUrl) {
@@ -1733,7 +1809,7 @@ export interface DetQuestion {
                 </div>
 
                 <div style="font-size:12.5px; font-weight:700; color:#475569;">
-                  {{ isRecording() ? (recordedSeconds() + 's / 90s') : (recordedAudioUrl ? t("Enregistrement validé", "Voice recorded") : t("Appuyez pour répondre oralement", "Press to speak your response")) }}
+                  {{ isRecording() ? (recordedSeconds() + 's / 180s') : (recordedAudioUrl ? t("Enregistrement validé", "Voice recorded") : t("Appuyez pour répondre oralement", "Press to speak your response")) }}
                 </div>
               </div>
             }
@@ -4188,7 +4264,9 @@ export class StudentExamComponent implements OnDestroy {
     this.recordedSeconds.set(0);
     this.recordedAudioUrl = null;
 
-    this.detTimeLeft.set(q.timeLimitSec);
+    // Ensure timer is at least 3 minutes (180 seconds)
+    const limit = Math.max(180, q.timeLimitSec || 180);
+    this.detTimeLeft.set(limit);
     this.startDetTimer();
 
     // Auto-play audio on listen questions if supported
@@ -4224,6 +4302,8 @@ export class StudentExamComponent implements OnDestroy {
     if (!q) return false;
 
     switch (q.type) {
+      case 'grammar-select':
+        return !!this.currentTextAnswer && this.currentTextAnswer.trim().length > 0;
       case 'write-photo':
       case 'listen-type':
         return this.currentTextAnswer.trim().length > 3;
@@ -4329,7 +4409,11 @@ export class StudentExamComponent implements OnDestroy {
           clearInterval(recTimer);
           return;
         }
-        this.recordedSeconds.set(this.recordedSeconds() + 1);
+        const s = this.recordedSeconds() + 1;
+        this.recordedSeconds.set(s);
+        if (s >= 180) { // 3 minutes limit
+          this.stopAudioRecording();
+        }
       }, 1000);
 
     } catch (err) {
@@ -4357,7 +4441,11 @@ export class StudentExamComponent implements OnDestroy {
 
     // Score the question
     let score = 0;
-    if (q.type === 'write-photo') {
+    if (q.type === 'grammar-select') {
+      const cleanGiven = (this.currentTextAnswer || '').trim().toLowerCase();
+      const cleanExpected = (q.correctOption || '').trim().toLowerCase();
+      score = cleanGiven === cleanExpected ? 100 : 0;
+    } else if (q.type === 'write-photo') {
       const words = this.getWordCount(this.currentTextAnswer);
       score = Math.min(100, Math.round((words / 20) * 80) + 20);
     } else if (q.type === 'read-complete' && q.blanksData) {
@@ -4386,7 +4474,9 @@ export class StudentExamComponent implements OnDestroy {
     }
 
     let answerText = this.currentTextAnswer;
-    if (q.type === 'read-complete' && q.blanksData) {
+    if (q.type === 'grammar-select') {
+      answerText = this.currentTextAnswer ? `Option choisie : ${this.currentTextAnswer}` : '(Aucune réponse)';
+    } else if (q.type === 'read-complete' && q.blanksData) {
       answerText = q.blanksData.map((b, i) => b.prefix + (this.blankInputs[i] || '')).join(' ');
     } else if (q.type === 'read-select') {
       answerText = 'Mots choisis : ' + Array.from(this.selectedWordSet).join(', ');
