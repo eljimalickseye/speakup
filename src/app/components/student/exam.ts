@@ -17,6 +17,7 @@ export interface DetQuestion {
   imageCredit?: string;
   promptText?: string;
   audioText?: string;
+  audioUrl?: string;
   blanksData?: { prefix: string; missing: string }[];
   wordsList?: { word: string; isReal: boolean }[];
   options?: string[];
@@ -975,6 +976,14 @@ export interface DetQuestion {
                       <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
                         <button
                           type="button"
+                          (click)="loadOfficialExamForEditing()"
+                          style="padding:10px 16px; border:1.5px solid #6366F1; border-radius:10px; background:#EEF2FF; color:#4338CA; font-size:13px; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:6px; transition:all 0.15s ease;">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                          <span>Modifier l'Examen Officiel Actuel</span>
+                        </button>
+
+                        <button
+                          type="button"
                           (click)="triggerGenerateAssessment(true)"
                           [disabled]="isGenerating()"
                           style="padding:10px 16px; border:1.5px solid #CBD5E1; border-radius:10px; background:white; color:#334155; font-size:13px; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:6px; transition:all 0.15s ease;">
@@ -993,7 +1002,7 @@ export interface DetQuestion {
                             <span>Enregistrement en cours...</span>
                           } @else if (isOfficialSaved() || officialAssessmentQuestions().length > 0) {
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                            <span>Examen Officiel Actif (Enregistrer à nouveau)</span>
+                            <span>Sauvegarder les Modifications (Officiel)</span>
                           } @else {
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                             <span>Définir comme Évaluation Officielle de la Classe</span>
@@ -1039,6 +1048,13 @@ export interface DetQuestion {
                               <span style="background:#FEF3C7; color:#B45309; font-size:11px; font-weight:800; padding:3px 8px; border-radius:6px;">
                                 {{ q.targetLevel }}
                               </span>
+                              <button
+                                type="button"
+                                (click)="toggleQuestionEdit(q.id)"
+                                style="border:none; background:rgba(79,70,229,0.12); color:#4F46E5; padding:4px 10px; border-radius:6px; font-size:11.5px; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; gap:5px; transition:all 0.15s ease;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                                <span>{{ editingQuestionId() === q.id ? 'Fermer Édition' : 'Modifier & Voix' }}</span>
+                              </button>
                               <button
                                 type="button"
                                 (click)="startSingleModulePractice(q)"
@@ -1104,7 +1120,7 @@ export interface DetQuestion {
                             </div>
                           } @else if (q.type === 'listen-type') {
                             <div style="margin-top:8px; display:flex; align-items:center; gap:10px;">
-                              <button type="button" (click)="playQuestionAudio(q.audioText || '')" style="border:none; background:#EEF2FF; color:#4F46E5; font-size:12px; font-weight:800; padding:6px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:6px;">
+                              <button type="button" (click)="playQuestionAudio(q.audioText || '', q.audioUrl)" style="border:none; background:#EEF2FF; color:#4F46E5; font-size:12px; font-weight:800; padding:6px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:6px;">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/></svg>
                                 Écouter la dictée audio
                               </button>
@@ -1121,11 +1137,163 @@ export interface DetQuestion {
                             </div>
                           } @else if (q.type === 'listen-speak') {
                             <div style="margin-top:8px; display:flex; align-items:center; gap:10px;">
-                              <button type="button" (click)="playQuestionAudio(q.audioText || '')" style="border:none; background:#EEF2FF; color:#4F46E5; font-size:12px; font-weight:800; padding:6px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:6px;">
+                              <button type="button" (click)="playQuestionAudio(q.audioText || '', q.audioUrl)" style="border:none; background:#EEF2FF; color:#4F46E5; font-size:12px; font-weight:800; padding:6px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:6px;">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/></svg>
                                 Écouter la question d'interview
                               </button>
                               <span style="font-size:12.5px; font-style:italic; color:var(--text-secondary);">"{{ q.audioText }}"</span>
+                            </div>
+                          }
+
+                          <!-- TEACHER QUESTION EDITING & AUDIO RECORDING DRAWER -->
+                          @if (editingQuestionId() === q.id) {
+                            <div style="margin-top:14px; padding:16px; background:#FFFFFF; border:2px solid #4F46E5; border-radius:12px; box-shadow:0 6px 18px rgba(79,70,229,0.08); animation:fadeIn 0.2s ease;">
+                              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; border-bottom:1px solid #E2E8F0; padding-bottom:10px;">
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                  <span style="background:#4F46E5; color:white; font-size:11px; font-weight:800; padding:3px 8px; border-radius:6px; text-transform:uppercase;">
+                                    Mode Personnalisation Enseignant
+                                  </span>
+                                  <span style="font-size:13px; font-weight:800; color:#1E1B4B;">Épreuve #{{ idx + 1 }} • {{ q.type }}</span>
+                                </div>
+                                <button type="button" (click)="toggleQuestionEdit(q.id)" style="border:none; background:transparent; color:#64748B; cursor:pointer; font-size:12px; font-weight:700;">
+                                  Fermer ✕
+                                </button>
+                              </div>
+
+                              <div style="display:flex; flex-direction:column; gap:12px;">
+                                <!-- Title FR / EN -->
+                                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                                  <div>
+                                    <label style="display:block; font-size:11px; font-weight:700; color:#475569; margin-bottom:4px;">Titre / Consigne (FR)</label>
+                                    <input type="text" [(ngModel)]="q.titleFr" style="width:100%; padding:8px 10px; font-size:12.5px; border:1px solid #CBD5E1; border-radius:8px; outline:none;" />
+                                  </div>
+                                  <div>
+                                    <label style="display:block; font-size:11px; font-weight:700; color:#475569; margin-bottom:4px;">Titre / Consigne (EN)</label>
+                                    <input type="text" [(ngModel)]="q.titleEn" style="width:100%; padding:8px 10px; font-size:12.5px; border:1px solid #CBD5E1; border-radius:8px; outline:none;" />
+                                  </div>
+                                </div>
+
+                                <!-- Time Limit -->
+                                <div style="display:flex; align-items:center; gap:12px;">
+                                  <label style="font-size:11.5px; font-weight:700; color:#475569;">Durée de l'épreuve (secondes) :</label>
+                                  <input type="number" [(ngModel)]="q.timeLimitSec" min="60" max="600" step="30" style="width:100px; padding:6px 10px; font-size:12.5px; border:1px solid #CBD5E1; border-radius:8px;" />
+                                  <span style="font-size:11px; color:#64748B;">Recommandé : min. 180s (3 minutes)</span>
+                                </div>
+
+                                <!-- Prompt Text if applicable -->
+                                @if (q.promptText !== undefined) {
+                                  <div>
+                                    <label style="display:block; font-size:11px; font-weight:700; color:#475569; margin-bottom:4px;">Texte ou Sujet de l'épreuve</label>
+                                    <textarea [(ngModel)]="q.promptText" rows="2" style="width:100%; padding:8px 10px; font-size:12.5px; border:1px solid #CBD5E1; border-radius:8px; outline:none; font-family:inherit;"></textarea>
+                                  </div>
+                                }
+
+                                <!-- Audio Text for Listen Questions -->
+                                @if (q.audioText !== undefined || q.type === 'listen-type' || q.type === 'listen-speak') {
+                                  <div>
+                                    <label style="display:block; font-size:11px; font-weight:700; color:#475569; margin-bottom:4px;">
+                                      Texte prononcé / dicté aux élèves (Audio)
+                                    </label>
+                                    <textarea [(ngModel)]="q.audioText" rows="2" placeholder="Ex: Good morning, could you explain the impact of renewable energy in your community?" style="width:100%; padding:8px 10px; font-size:12.5px; border:1px solid #CBD5E1; border-radius:8px; outline:none; font-family:inherit;"></textarea>
+                                  </div>
+                                }
+
+                                <!-- TEACHER VOICE RECORDING & AUDIO UPLOAD WIDGET -->
+                                <div style="background:#F8FAFC; border:1.5px dashed #C7D2FE; border-radius:10px; padding:14px; margin-top:4px;">
+                                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                                    <div style="font-size:12px; font-weight:800; color:#4338CA; display:flex; align-items:center; gap:6px;">
+                                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+                                      Enregistrement Vocal Réel du Professeur (Épreuve Audio)
+                                    </div>
+                                    @if (q.audioUrl) {
+                                      <span style="background:#ECFDF5; color:#047857; font-size:10.5px; font-weight:800; padding:2px 8px; border-radius:12px; border:1px solid #A7F3D0;">
+                                        ✓ Audio Professeur Actif
+                                      </span>
+                                    } @else {
+                                      <span style="font-size:10.5px; color:#64748B;">Synthèse vocale par défaut si aucun enregistrement</span>
+                                    }
+                                  </div>
+
+                                  <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                                    @if (isTeacherRecording() && teacherRecordingQuestionId() === q.id) {
+                                      <button
+                                        type="button"
+                                        (click)="stopTeacherAudioRecording(q)"
+                                        style="padding:8px 14px; border:none; border-radius:8px; background:#DC2626; color:white; font-size:12px; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:6px; animation:pulse-live 1s infinite;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="4" y="4" width="16" height="16" rx="2"/></svg>
+                                        <span>Arrêter le micro ({{ teacherRecordedSeconds() }}s)</span>
+                                      </button>
+                                    } @else {
+                                      <button
+                                        type="button"
+                                        (click)="startTeacherAudioRecording(q)"
+                                        style="padding:8px 14px; border:none; border-radius:8px; background:#4F46E5; color:white; font-size:12px; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:6px; box-shadow:0 2px 6px rgba(79,70,229,0.25);">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+                                        <span>Enregistrer ma voix avec le micro</span>
+                                      </button>
+
+                                      <label style="padding:8px 14px; border:1px solid #CBD5E1; border-radius:8px; background:white; color:#334155; font-size:12px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                                        <span>Importer un fichier audio</span>
+                                        <input type="file" accept="audio/*" (change)="onTeacherAudioUpload($event, q)" style="display:none;" />
+                                      </label>
+                                    }
+
+                                    @if (q.audioUrl) {
+                                      <button
+                                        type="button"
+                                        (click)="removeTeacherAudio(q)"
+                                        style="padding:8px 12px; border:1px solid #FECACA; border-radius:8px; background:#FEF2F2; color:#DC2626; font-size:12px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:5px;">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                        <span>Supprimer l'audio</span>
+                                      </button>
+                                    }
+                                  </div>
+
+                                  @if (q.audioUrl) {
+                                    <div style="margin-top:10px; display:flex; align-items:center; gap:10px;">
+                                      <audio controls [src]="q.audioUrl" style="width:100%; height:36px;"></audio>
+                                    </div>
+                                  }
+                                </div>
+
+                                <!-- Grammar Topic and Options if grammar-select -->
+                                @if (q.type === 'grammar-select' && q.options) {
+                                  <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:12px;">
+                                    <div style="font-size:12px; font-weight:800; color:#334155; margin-bottom:8px;">Options de réponse (Cochez la réponse correcte) :</div>
+                                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                                      @for (opt of q.options; track $index; let optIdx = $index) {
+                                        <div style="display:flex; align-items:center; gap:8px; background:white; padding:6px 10px; border-radius:8px; border:1px solid #CBD5E1;">
+                                          <input
+                                            type="radio"
+                                            [name]="'correct-' + q.id"
+                                            [checked]="q.correctOption === q.options[optIdx]"
+                                            (change)="q.correctOption = q.options[optIdx]"
+                                            style="accent-color:#10B981; cursor:pointer;"
+                                          />
+                                          <input
+                                            type="text"
+                                            [(ngModel)]="q.options[optIdx]"
+                                            style="flex:1; border:none; outline:none; font-size:12px; font-weight:600;"
+                                          />
+                                        </div>
+                                      }
+                                    </div>
+                                  </div>
+                                }
+
+                                <!-- Done Button -->
+                                <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:8px;">
+                                  <button
+                                    type="button"
+                                    (click)="toggleQuestionEdit(q.id)"
+                                    style="padding:8px 16px; border:none; border-radius:8px; background:#4F46E5; color:white; font-size:12px; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:6px;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                                    <span>Valider les modifications de cette question</span>
+                                  </button>
+                                </div>
+
+                              </div>
                             </div>
                           }
 
@@ -1296,7 +1464,7 @@ export interface DetQuestion {
                   {{ t("Familiarisez-vous avec les formats réels d'évaluation du SpeakUp English Assessment : description d'image en 1 minute, dictée, compréhension, et expression orale.", "Get familiar with the real SpeakUp English Assessment question formats: 1-minute photo description, listen & type, read & complete, and speaking fluency.") }}
                 </p>
                 <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-                  <button class="det-cta-btn" (click)="startFullDetSampleTest()">
+                  <button class="det-cta-btn" (click)="openPreExamBriefing()">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                     <span>{{ t("COMMENCER L'ÉVALUATION (15 MIN)", "START ASSESSMENT (15 MIN)") }}</span>
                   </button>
@@ -1753,7 +1921,7 @@ export interface DetQuestion {
             <!-- ====================================================== -->
             @else if (q.type === 'listen-type') {
               <div style="display:flex; flex-direction:column; align-items:center; gap:20px; padding:20px 0;">
-                <button class="det-audio-play-btn" [disabled]="audioPlayCount() >= 3" (click)="playQuestionAudio(q.audioText || '')">
+                <button class="det-audio-play-btn" [disabled]="audioPlayCount() >= 3" (click)="playQuestionAudio(q.audioText || '', q.audioUrl)">
                   <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
                 </button>
                 <div style="font-size:12px; font-weight:700; color:#4F46E5;">
@@ -1788,12 +1956,25 @@ export interface DetQuestion {
                   (click)="toggleAudioRecording()"
                   class="det-mic-record-btn"
                   [class.recording]="isRecording()">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+                  @if (isRecording()) {
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+                  } @else {
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+                  }
                 </button>
 
                 <div style="font-size:12.5px; font-weight:700; color:#475569;">
-                  {{ isRecording() ? t("Enregistrement en cours...", "Recording...") : (recordedAudioUrl ? t("Enregistré avec succès !", "Recorded!") : t("Appuyez sur le micro pour lire à haute voix", "Press to read aloud")) }}
+                  {{ isRecording() ? (recordedSeconds() + 's / 180s - ' + t("Enregistrement en cours...", "Recording...")) : (recordedAudioUrl ? t("Enregistré avec succès !", "Recorded!") : t("Appuyez sur le micro pour lire à haute voix", "Press to read aloud")) }}
                 </div>
+
+                @if (recordedAudioUrl) {
+                  <div style="margin-top:14px; width:100%; max-width:280px; display:flex; flex-direction:column; align-items:center; gap:6px;">
+                    <audio controls [src]="recordedAudioUrl" style="width:100%; height:36px;"></audio>
+                    <button type="button" (click)="reRecordAudio()" style="border:none; background:transparent; color:#6366F1; font-size:11.5px; font-weight:700; cursor:pointer; text-decoration:underline;">
+                      {{ t("Réenregistrer ma réponse", "Re-record audio") }}
+                    </button>
+                  </div>
+                }
               </div>
             }
 
@@ -1832,7 +2013,7 @@ export interface DetQuestion {
             <!-- ====================================================== -->
             @else if (q.type === 'listen-speak') {
               <div style="display:flex; flex-direction:column; align-items:center; gap:20px; padding:20px 0; text-align:center;">
-                <button class="det-audio-play-btn" [disabled]="audioPlayCount() >= 3" (click)="playQuestionAudio(q.audioText || '')">
+                <button class="det-audio-play-btn" [disabled]="audioPlayCount() >= 3" (click)="playQuestionAudio(q.audioText || '', q.audioUrl)">
                   <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
                 </button>
                 <div style="font-size:12px; font-weight:700; color:#4F46E5;">
@@ -1844,13 +2025,26 @@ export interface DetQuestion {
                     (click)="toggleAudioRecording()"
                     class="det-mic-record-btn"
                     [class.recording]="isRecording()">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+                    @if (isRecording()) {
+                      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+                    } @else {
+                      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+                    }
                   </button>
                 </div>
 
                 <div style="font-size:12.5px; font-weight:700; color:#475569;">
                   {{ isRecording() ? (recordedSeconds() + 's / 180s') : (recordedAudioUrl ? t("Enregistrement validé", "Voice recorded") : t("Appuyez pour répondre oralement", "Press to speak your response")) }}
                 </div>
+
+                @if (recordedAudioUrl) {
+                  <div style="margin-top:14px; width:100%; max-width:280px; display:flex; flex-direction:column; align-items:center; gap:6px;">
+                    <audio controls [src]="recordedAudioUrl" style="width:100%; height:36px;"></audio>
+                    <button type="button" (click)="reRecordAudio()" style="border:none; background:transparent; color:#6366F1; font-size:11.5px; font-weight:700; cursor:pointer; text-decoration:underline;">
+                      {{ t("Réenregistrer ma réponse", "Re-record audio") }}
+                    </button>
+                  </div>
+                }
               </div>
             }
 
@@ -1962,6 +2156,55 @@ export interface DetQuestion {
 
           </div>
 
+        </div>
+      }
+
+      
+      <!-- ======================================================== -->
+      <!-- VIEW: DET-DISQUALIFIED (ANTI-CHEAT TERMINATION)           -->
+      <!-- ======================================================== -->
+      @if (view() === 'det-disqualified') {
+        <div style="animation: fadeIn 0.3s ease; max-width:760px; margin:40px auto; padding:20px;">
+          <div style="background:white; border:3px solid #DC2626; border-radius:24px; box-shadow:0 25px 60px rgba(220, 38, 38, 0.2); overflow:hidden; text-align:center;">
+            
+            <div style="background:linear-gradient(135deg, #7F1D1D 0%, #991B1B 50%, #DC2626 100%); padding:32px 24px; color:white;">
+              <div style="width:72px; height:72px; border-radius:50%; background:rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; margin:0 auto 16px auto; backdrop-filter:blur(6px);">
+                <svg xmlns="http://www.w3.org/2000/svg" width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              </div>
+              <div style="display:inline-block; background:#FEF2F2; color:#991B1B; font-size:11px; font-weight:800; letter-spacing:1px; text-transform:uppercase; padding:4px 14px; border-radius:20px; margin-bottom:10px;">
+                INFRACTION AU RÈGLEMENT D'EXAMEN
+              </div>
+              <h2 style="font-family:'Outfit', sans-serif; font-size:24px; font-weight:900; margin:0 0 8px 0;">
+                Examen Officiel Interrompu Définitivement
+              </h2>
+              <p style="font-size:13.5px; opacity:0.95; max-width:540px; margin:0 auto; line-height:1.5;">
+                Vous avez quitté l'écran d'examen officiel à <strong>{{ tabSwitchViolations() }} reprises</strong> (changement d'onglet ou sortie du plein écran).
+              </p>
+            </div>
+
+            <div style="padding:28px 24px;">
+              <div style="background:#FEF2F2; border:1px solid #FECACA; border-radius:14px; padding:18px; margin-bottom:20px; text-align:left;">
+                <h4 style="font-size:14px; font-weight:800; color:#991B1B; margin:0 0 8px 0; display:flex; align-items:center; gap:8px;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  Conséquences Immédiates :
+                </h4>
+                <ul style="font-size:12.5px; color:#7F1D1D; margin:0; padding-left:20px; line-height:1.6;">
+                  <li>Votre session a été <strong>fermée et verrouillée</strong>. Vous ne pouvez plus recommencer cet examen.</li>
+                  <li>Vos réponses partielles ont été soumises d'office au professeur avec la mention <strong>« Incident d'intégrité académique avéré (3 infractions) »</strong>.</li>
+                  <li>L'attribution du certificat officiel est suspendue dans l'attente de la décision disciplinaire de votre enseignant.</li>
+                </ul>
+              </div>
+
+              <button
+                type="button"
+                (click)="view.set('hub')"
+                class="btn-p"
+                style="background:#991B1B; border-color:#991B1B; padding:12px 28px; font-size:14px; font-weight:800; border-radius:10px;">
+                Retourner à l'Accueil des Tests
+              </button>
+            </div>
+
+          </div>
         </div>
       }
 
@@ -3960,6 +4203,18 @@ export class StudentExamComponent implements OnDestroy {
   showAntiCheatWarningModal = signal<boolean>(false);
   isSavingOfficial = signal<boolean>(false);
   isOfficialSaved = signal<boolean>(false);
+
+  // Teacher Customization & Custom Audio Recording Signals
+  editingQuestionId = signal<string | null>(null);
+  isTeacherRecording = signal<boolean>(false);
+  teacherRecordingQuestionId = signal<string | null>(null);
+  teacherRecordedSeconds = signal<number>(0);
+  private teacherMediaRecorder: MediaRecorder | null = null;
+  private teacherAudioChunks: Blob[] = [];
+  private teacherTimerInterval: any = null;
+  private currentPlayingAudio: HTMLAudioElement | null = null;
+  private violationCooldown = false;
+  private boundFullscreenHandler: any = null;
   assessmentSessionConfig = signal<AssessmentSessionConfig>({
     startDate: '2026-11-08T00:00:00',
     endDate: '2026-11-15T23:59:59',
@@ -4025,7 +4280,7 @@ export class StudentExamComponent implements OnDestroy {
   }
 
   // Views: 'hub' (Image 2) | 'det-test' (Image 1) | 'det-result' | 'teacher-exam'
-  view = signal<'hub' | 'det-test' | 'det-result' | 'teacher-exam' | 'det-pending'>('hub');
+  view = signal<'hub' | 'det-test' | 'det-result' | 'teacher-exam' | 'det-pending' | 'det-disqualified'>('hub');
 
   // Subscore filter in hub
   activeSubscoreFilter = signal<'all' | 'literacy' | 'comprehension' | 'production' | 'conversation' | 'official'>('all');
@@ -4413,33 +4668,42 @@ export class StudentExamComponent implements OnDestroy {
     this.stopAntiCheatMonitoring();
 
     this.boundVisibilityHandler = () => {
-      if (document.hidden || document.visibilityState === 'hidden') {
+      if (this.view() === 'det-test' && (document.hidden || document.visibilityState === 'hidden')) {
         this.registerAntiCheatViolation('Changement d\'onglet ou minimisation de la fenêtre');
       }
     };
 
     this.boundBlurHandler = () => {
-      if (this.view() === 'det-test' && this.isOfficialExam()) {
+      if (this.view() === 'det-test') {
         this.registerAntiCheatViolation('Perte de focus fenêtre');
       }
     };
 
     this.boundBeforeUnloadHandler = (e: BeforeUnloadEvent) => {
-      if (this.view() === 'det-test' && this.isOfficialExam()) {
+      if (this.view() === 'det-test') {
         e.preventDefault();
         e.returnValue = 'Votre examen officiel SpeakUp est en cours. Si vous quittez, vos réponses incomplètes seront soumises.';
       }
     };
 
     this.boundBlockHandler = (e: Event) => {
-      if (this.view() === 'det-test' && this.isOfficialExam()) {
+      if (this.view() === 'det-test') {
         e.preventDefault();
+      }
+    };
+
+    this.boundFullscreenHandler = () => {
+      if (this.view() === 'det-test') {
+        if (!document.fullscreenElement) {
+          this.registerAntiCheatViolation("Sortie du mode plein écran détectée");
+        }
       }
     };
 
     document.addEventListener('visibilitychange', this.boundVisibilityHandler);
     window.addEventListener('blur', this.boundBlurHandler);
     window.addEventListener('beforeunload', this.boundBeforeUnloadHandler);
+    document.addEventListener('fullscreenchange', this.boundFullscreenHandler);
     document.addEventListener('copy', this.boundBlockHandler);
     document.addEventListener('paste', this.boundBlockHandler);
     document.addEventListener('cut', this.boundBlockHandler);
@@ -4459,6 +4723,10 @@ export class StudentExamComponent implements OnDestroy {
       window.removeEventListener('beforeunload', this.boundBeforeUnloadHandler);
       this.boundBeforeUnloadHandler = null;
     }
+    if (this.boundFullscreenHandler) {
+      document.removeEventListener('fullscreenchange', this.boundFullscreenHandler);
+      this.boundFullscreenHandler = null;
+    }
     if (this.boundBlockHandler) {
       document.removeEventListener('copy', this.boundBlockHandler);
       document.removeEventListener('paste', this.boundBlockHandler);
@@ -4474,11 +4742,99 @@ export class StudentExamComponent implements OnDestroy {
     } catch (e) {}
   }
 
-  registerAntiCheatViolation(reason: string) {
-    if (this.view() !== 'det-test' || !this.isOfficialExam()) return;
+  async registerAntiCheatViolation(reason: string) {
+    if (this.view() !== 'det-test' || this.violationCooldown) return;
+    this.violationCooldown = true;
+    setTimeout(() => { this.violationCooldown = false; }, 1000);
+
     const current = this.tabSwitchViolations() + 1;
     this.tabSwitchViolations.set(current);
+
+    // Strict threshold: On the 3rd infraction, EXPEL & TERMINATE immediately!
+    if (current >= 3) {
+      await this.terminateExamDueToCheating(reason);
+      return;
+    }
+
     this.showAntiCheatWarningModal.set(true);
+  }
+
+  async terminateExamDueToCheating(reason: string) {
+    this.showAntiCheatWarningModal.set(false);
+    this.stopAntiCheatMonitoring();
+    this.clearDetTimer();
+    await this.stopAudioRecording();
+
+    // Exit fullscreen
+    try {
+      if (document.fullscreenElement && document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      }
+    } catch (e) {}
+
+    const user = this.currentUser();
+    if (user) {
+      const q = this.currentDetQuestion();
+      const currentAnswers = { ...this.detSessionAnswers() };
+      if (q && !currentAnswers[q.id]) {
+        currentAnswers[q.id] = {
+          given: this.currentTextAnswer || '(Non complété - Interrompu)',
+          givenText: this.currentTextAnswer || '(Non complété - Interrompu)',
+          audioUrl: this.recordedAudioBase64 || this.recordedAudioUrl || undefined,
+          correct: false,
+          score: 0,
+          wordCount: this.getWordCount(this.currentTextAnswer)
+        };
+      }
+
+      const seq = this.detTestSequence();
+      const questionsData: AssessmentQuestionAnswer[] = seq.map((item) => {
+        const ans = currentAnswers[item.id];
+        return {
+          questionId: item.id,
+          type: item.type,
+          title: item.titleFr || item.titleEn,
+          subscore: item.subscore,
+          promptText: item.promptText,
+          audioPromptText: item.audioText,
+          studentAnswerText: ans?.givenText || ans?.given || '(Épreuve interrompue pour tricherie)',
+          studentAudioUrl: ans?.audioUrl || undefined,
+          timeSpentSec: ans?.timeSpentSec || 30,
+          wordCount: ans?.wordCount || 0,
+          autoScore: 0,
+          teacherScore: 0,
+          teacherComment: `Session invalidée : ${this.tabSwitchViolations()} sorties d'écran / changements d'onglets constatés. Motif: ${reason}`
+        };
+      });
+
+      try {
+        const disqualifiedSub = await this.db.submitAssessment({
+          studentId: user.id,
+          studentName: user.name,
+          studentEmail: (user as any).email || '',
+          studentAvatar: user.avatar || user.name.slice(0, 2).toUpperCase(),
+          testTitle: 'SpeakUp English Assessment (SET)',
+          submittedAt: new Date().toISOString(),
+          durationSeconds: 300,
+          status: 'pending',
+          questions: questionsData,
+          antiCheatReport: {
+            tabSwitches: this.tabSwitchViolations(),
+            fullscreenExits: this.tabSwitchViolations(),
+            pasteAttempts: 0,
+            integrityScore: 0,
+            completedInSingleSession: false
+          }
+        });
+
+        this.currentStudentPendingSubmission.set(disqualifiedSub);
+      } catch (e) {
+        console.error('Error submitting disqualified assessment:', e);
+      }
+    }
+
+    this.isOfficialExam.set(false);
+    this.view.set('det-disqualified');
   }
 
   dismissAntiCheatWarning() {
@@ -4493,6 +4849,8 @@ export class StudentExamComponent implements OnDestroy {
 
   startFullDetSampleTest() {
     this.isFullTestMode.set(true);
+    this.isOfficialExam.set(true);
+    this.tabSwitchViolations.set(0);
     // If official lesson-based assessment is defined by teacher, load it!
     const official = this.officialAssessmentQuestions();
     let seq: DetQuestion[];
@@ -4507,6 +4865,7 @@ export class StudentExamComponent implements OnDestroy {
     this.currentDetIndex.set(0);
     this.detSessionAnswers.set({});
     this.loadDetQuestion(0);
+    this.startAntiCheatMonitoring();
     this.view.set('det-test');
   }
 
@@ -4649,10 +5008,13 @@ export class StudentExamComponent implements OnDestroy {
     const ga = this.genAssessment();
     if (!ga) return;
     this.isFullTestMode.set(true);
+    this.isOfficialExam.set(true);
+    this.tabSwitchViolations.set(0);
     this.detTestSequence.set([...ga.questions]);
     this.currentDetIndex.set(0);
     this.detSessionAnswers.set({});
     this.loadDetQuestion(0);
+    this.startAntiCheatMonitoring();
     this.view.set('det-test');
   }
 
@@ -4678,6 +5040,7 @@ export class StudentExamComponent implements OnDestroy {
     this.audioPlayCount.set(0);
     this.recordedSeconds.set(0);
     this.recordedAudioUrl = null;
+    this.recordedAudioBase64 = null;
 
     // Ensure timer is at least 3 minutes (180 seconds)
     const limit = Math.max(180, q.timeLimitSec || 180);
@@ -4687,7 +5050,7 @@ export class StudentExamComponent implements OnDestroy {
     // Auto-play audio on listen questions if supported
     if (q.type === 'listen-type' || q.type === 'listen-speak') {
       setTimeout(() => {
-        this.playQuestionAudio(q.audioText || '');
+        this.playQuestionAudio(q.audioText || '', q.audioUrl);
       }, 500);
     }
   }
@@ -4758,16 +5121,154 @@ export class StudentExamComponent implements OnDestroy {
   }
 
   // Speech synthesis for listen questions
-  playQuestionAudio(text: string) {
-    if (!text || !('speechSynthesis' in window)) return;
+  playQuestionAudio(text: string, audioUrl?: string) {
     if (this.audioPlayCount() >= 3) return;
 
-    window.speechSynthesis.cancel();
+    // Stop current audio if playing
+    if (this.currentPlayingAudio) {
+      try {
+        this.currentPlayingAudio.pause();
+        this.currentPlayingAudio = null;
+      } catch (e) {}
+    }
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+
+    if (audioUrl) {
+      try {
+        const audio = new Audio(audioUrl);
+        this.currentPlayingAudio = audio;
+        audio.play().catch(err => {
+          console.warn('Audio play error, fallback to TTS:', err);
+          this.playTtsAudio(text);
+        });
+      } catch (e) {
+        this.playTtsAudio(text);
+      }
+    } else {
+      this.playTtsAudio(text);
+    }
+
+    this.audioPlayCount.set(this.audioPlayCount() + 1);
+  }
+
+  private playTtsAudio(text: string) {
+    if (!text || !('speechSynthesis' in window)) return;
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'en-US';
     utterance.rate = 0.95;
     window.speechSynthesis.speak(utterance);
-    this.audioPlayCount.set(this.audioPlayCount() + 1);
+  }
+
+  // --- TEACHER QUESTION CUSTOMIZATION & AUDIO RECORDING METHODS ---
+  toggleQuestionEdit(qId: string) {
+    if (this.editingQuestionId() === qId) {
+      this.editingQuestionId.set(null);
+    } else {
+      this.editingQuestionId.set(qId);
+    }
+  }
+
+  loadOfficialExamForEditing() {
+    const questions = this.officialAssessmentQuestions();
+    if (!questions || questions.length === 0) {
+      this.dialogService.alert('Aucun examen officiel', 'Aucun examen officiel n\'est encore enregistré. Vous pouvez en générer un ci-dessous.', 'info');
+      return;
+    }
+    this.genAssessment.set({
+      id: 'official-assessment-' + Date.now(),
+      title: 'Examen Officiel SpeakUp (Personnalisable)',
+      generatedAt: new Date().toISOString(),
+      targetLevel: this.targetGeneratorLevel(),
+      questions: JSON.parse(JSON.stringify(questions)),
+      sourceLessonCount: this.lessons().length,
+      sourceLessonTitles: this.lessons().map(l => l.title),
+      vocabularyTestedCount: 20,
+      estimatedDurationMin: 60
+    });
+    this.teacherModeTab.set('generator');
+    this.dialogService.alert('Examen Officiel Prêt à Modifier', 'Toutes les 20 épreuves actuelles sont chargées. Vous pouvez modifier les textes, enregistrer vos propres audios pour les dictées et interviews, puis cliquer sur « Sauvegarder les Modifications ».', 'success');
+  }
+
+  async startTeacherAudioRecording(q: DetQuestion) {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+      });
+      this.teacherAudioChunks = [];
+      const mimeType = this.getBestAudioMimeType();
+      const options: MediaRecorderOptions = { audioBitsPerSecond: 128000 };
+      if (mimeType) options.mimeType = mimeType;
+      this.teacherMediaRecorder = new MediaRecorder(stream, options);
+
+      this.teacherMediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) this.teacherAudioChunks.push(e.data);
+      };
+
+      this.teacherMediaRecorder.onstop = () => {
+        const audioBlob = new Blob(this.teacherAudioChunks, { type: this.teacherMediaRecorder?.mimeType || 'audio/webm' });
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          q.audioUrl = reader.result as string;
+          this.dialogService.alert('Audio Enregistré !', 'Votre enregistrement vocal a été associé à cette épreuve. Vous pouvez l\'écouter avec le bouton de lecture.', 'success');
+        };
+        reader.readAsDataURL(audioBlob);
+        stream.getTracks().forEach(t => t.stop());
+      };
+
+      this.teacherMediaRecorder.start(250);
+      this.isTeacherRecording.set(true);
+      this.teacherRecordingQuestionId.set(q.id);
+      this.teacherRecordedSeconds.set(0);
+
+      this.teacherTimerInterval = setInterval(() => {
+        this.teacherRecordedSeconds.update(s => s + 1);
+        if (this.teacherRecordedSeconds() >= 120) {
+          this.stopTeacherAudioRecording(q);
+        }
+      }, 1000);
+    } catch (e) {
+      console.error('Teacher audio record error:', e);
+      this.dialogService.alert('Microphone non disponible', 'Veuillez autoriser l\'accès au microphone dans votre navigateur.', 'info');
+    }
+  }
+
+  stopTeacherAudioRecording(q: DetQuestion) {
+    if (this.teacherTimerInterval) {
+      clearInterval(this.teacherTimerInterval);
+      this.teacherTimerInterval = null;
+    }
+    if (this.teacherMediaRecorder && this.teacherMediaRecorder.state !== 'inactive') {
+      this.teacherMediaRecorder.stop();
+    }
+    this.isTeacherRecording.set(false);
+    this.teacherRecordingQuestionId.set(null);
+  }
+
+  onTeacherAudioUpload(event: Event, q: DetQuestion) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+    const reader = new FileReader();
+    reader.onload = () => {
+      q.audioUrl = reader.result as string;
+      this.dialogService.alert('Audio Importé', `Le fichier « ${file.name} » a été associé avec succès à cette épreuve.`, 'success');
+    };
+    reader.readAsDataURL(file);
+  }
+
+  removeTeacherAudio(q: DetQuestion) {
+    q.audioUrl = undefined;
+  }
+
+  reRecordAudio() {
+    this.stopAudioRecording();
+    this.recordedAudioUrl = null;
+    this.recordedAudioBase64 = null;
+    this.recordedSeconds.set(0);
+    this.currentTextAnswer = '';
+    this.startAudioRecording();
   }
 
   // Audio recording
@@ -4779,21 +5280,49 @@ export class StudentExamComponent implements OnDestroy {
     }
   }
 
+  getBestAudioMimeType(): string {
+    const types = [
+      'audio/webm;codecs=opus',
+      'audio/webm',
+      'audio/mp4;codecs=mp4a.40.2',
+      'audio/mp4',
+      'audio/ogg;codecs=opus',
+      'audio/ogg'
+    ];
+    for (const t of types) {
+      if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)) {
+        return t;
+      }
+    }
+    return '';
+  }
+
   async startAudioRecording() {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, sampleRate: 44100 }
+      });
       this.audioChunks = [];
-      this.mediaRecorder = new MediaRecorder(stream);
+      const mimeType = this.getBestAudioMimeType();
+      const options: MediaRecorderOptions = { audioBitsPerSecond: 128000 };
+      if (mimeType) options.mimeType = mimeType;
+      this.mediaRecorder = new MediaRecorder(stream, options);
+      const recordedMimeType = this.mediaRecorder.mimeType || mimeType || 'audio/webm';
+
       this.mediaRecorder.ondataavailable = (e: any) => {
         if (e.data.size > 0) this.audioChunks.push(e.data);
       };
+
       this.mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
+        const audioBlob = new Blob(this.audioChunks, { type: recordedMimeType });
         this.recordedAudioUrl = URL.createObjectURL(audioBlob);
         try {
           const reader = new FileReader();
           reader.onloadend = () => {
             this.recordedAudioBase64 = reader.result as string;
+            if (!this.currentTextAnswer) {
+              this.currentTextAnswer = `[Réponse vocale enregistrée (${this.recordedSeconds()}s)]`;
+            }
           };
           reader.readAsDataURL(audioBlob);
         } catch(e) {
@@ -4802,7 +5331,7 @@ export class StudentExamComponent implements OnDestroy {
         stream.getTracks().forEach(t => t.stop());
       };
 
-      this.mediaRecorder.start();
+      this.mediaRecorder.start(250);
       this.isRecording.set(true);
       this.recordedSeconds.set(0);
 
@@ -4832,6 +5361,7 @@ export class StudentExamComponent implements OnDestroy {
       }, 1000);
 
     } catch (err) {
+      console.warn('Microphone error in student exam:', err);
       this.dialogService.alert('Microphone requis', 'Veuillez autoriser l\'accès au microphone pour cette épreuve.', 'info');
     }
   }

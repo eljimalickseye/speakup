@@ -12,6 +12,7 @@ export interface DetQuestion {
   imageCredit?: string;
   promptText?: string;
   audioText?: string;
+  audioUrl?: string;
   blanksData?: { prefix: string; missing: string }[];
   wordsList?: { word: string; isReal: boolean }[];
   options?: string[];
