@@ -534,7 +534,7 @@ import { DialogService } from '../../services/dialog.service';
                   <div style="background:white; border:1px solid var(--border-weak); border-radius:8px; padding:12px; display:flex; justify-content:space-between; align-items:center">
                     <div>
                       <div style="font-size:12px; font-weight:700; color:var(--text-primary); display:flex; align-items:center; gap:6px">
-                        <span><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg></span> <span>Examens & Tests DET</span>
+                        <span><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg></span> <span>Examens & Tests (SET)</span>
                       </div>
                       <div style="font-size:10px; color:var(--text-muted)">Score 10-160 & Certificats</div>
                     </div>
@@ -921,7 +921,7 @@ import { DialogService } from '../../services/dialog.service';
                 </label>
               </div>
 
-              <!-- 3. Tests DET -->
+              <!-- 3. Tests (SET) -->
               <div style="background:white; border:1px solid var(--border-weak); border-radius:10px; padding:12px 14px; display:flex; justify-content:space-between; align-items:center">
                 <div style="display:flex; align-items:center; gap:10px">
                   <div style="width:36px; height:36px; border-radius:8px; background:#FEF3C7; color:#B45309; display:flex; align-items:center; justify-content:center; flex-shrink:0"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg></div>
@@ -1207,7 +1207,7 @@ export class TeacherStudentsComponent {
     this.db.unlockAllAccessForStudent(student.id).then(() => {
       this.dialogService.alert(
         'Accès VIP Débloqués 🌟',
-        `Tous les accès (Cours, Live, Examen DET, Vocal, Coaching VIP) ont été débloqués pour ${student.name} !`,
+        `Tous les accès (Cours, Live, Évaluation SET, Vocal, Coaching VIP) ont été débloqués pour ${student.name} !`,
         'success'
       );
       const updated = {
@@ -1261,7 +1261,7 @@ export class TeacherStudentsComponent {
       const fieldNames: Record<string, string> = {
         hasFullAccess: 'Accès Cours & Ebooks',
         hasLiveAccess: 'Classes en Direct (Live)',
-        hasExamAccess: 'Mode Examen & Tests DET',
+        hasExamAccess: "Évaluation d'anglais (SET)",
         voiceChatAllowed: 'Chat Vocal (Audio)',
         isPrivateCoaching: 'Coaching Privé VIP'
       };

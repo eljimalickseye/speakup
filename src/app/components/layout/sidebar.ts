@@ -175,11 +175,11 @@ import { DatabaseService, UserProfile } from '../../services/database.service';
             }
           </button>
 
-          <!-- DUOLINGO ENGLISH TEST (OFFICIAL TESTS MODULE) -->
+          <!-- SPEAKUP ENGLISH ASSESSMENT (OFFICIAL TESTS MODULE) -->
           <div class="nav-section-title" style="color: #4F46E5; font-weight:800; display:flex; align-items:center; justify-content:space-between; letter-spacing:0.5px; margin-top:14px">
             <span style="display:flex; align-items:center; gap:5px">
               <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-              {{ t('Tests Duolingo', 'Duolingo Tests') }}
+              {{ t('Évaluation SpeakUp', 'SpeakUp Assessment') }}
             </span>
             <span class="sidebar-badge" style="background: linear-gradient(135deg, #4F46E5, #7C3AED); color:white; font-size:8.5px; font-weight:800; padding:1px 6px">10–160</span>
           </div>
@@ -196,7 +196,7 @@ import { DatabaseService, UserProfile } from '../../services/database.service';
               <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/>
             </svg>
             <span style="font-weight: 800; font-size: 12.5px" [style.color]="activeTab === 'exam' ? '#FFFFFF' : '#3730A3'">
-              {{ t("Test d'anglais (DET)", "English Test (DET)") }}
+              {{ t("Test d'aptitude (SET)", "Proficiency Test (SET)") }}
             </span>
             @if (currentUser?.hasExamAccess) {
               <span class="sidebar-badge" style="background:#10B981; color:white; font-size:9px; font-weight:800; margin-left:auto">PRO</span>
@@ -241,9 +241,9 @@ import { DatabaseService, UserProfile } from '../../services/database.service';
               <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/>
             </svg>
             <span style="font-weight: 800; font-size: 12.5px" [style.color]="activeTab === 'exam' ? '#FFFFFF' : '#3730A3'">
-              {{ t("Tests Duolingo (DET)", "Duolingo Tests (DET)") }}
+              {{ t("Évaluation SpeakUp (SET)", "SpeakUp Assessment (SET)") }}
             </span>
-            <span class="sidebar-badge" style="background:#4F46E5; color:white; font-size:9px; font-weight:800; margin-left:auto">DET</span>
+            <span class="sidebar-badge" style="background:#4F46E5; color:white; font-size:9px; font-weight:800; margin-left:auto">SET</span>
           </button>
           <button class="sidebar-item" [class.active]="activeTab === 'chat'" (click)="setTab('chat')">
             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -321,9 +321,9 @@ import { DatabaseService, UserProfile } from '../../services/database.service';
               <path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/>
             </svg>
             <span style="font-weight: 800; font-size: 12.5px" [style.color]="activeTab === 'exam' ? '#FFFFFF' : '#3730A3'">
-              {{ t("Aperçu Tests Duolingo", "Duolingo Tests Preview") }}
+              {{ t("Aperçu Évaluation SpeakUp", "SpeakUp Assessment Preview") }}
             </span>
-            <span class="sidebar-badge" style="background:#4F46E5; color:white; font-size:9px; font-weight:800; margin-left:auto">DET</span>
+            <span class="sidebar-badge" style="background:#4F46E5; color:white; font-size:9px; font-weight:800; margin-left:auto">SET</span>
           </button>
           <button class="sidebar-item" [class.active]="activeTab === 'results'" (click)="setTab('results')">
             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><path d="M12 11v6"/><path d="M8 14v3"/><path d="M16 12v5"/></svg>

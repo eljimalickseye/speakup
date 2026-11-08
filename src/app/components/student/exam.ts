@@ -29,7 +29,7 @@ export interface DetQuestion {
     <div class="page" style="padding-top: 10px;">
 
       <!-- ======================================================== -->
-      <!-- 1. DUOLINGO ENGLISH TEST HUB (IMAGE 2)                   -->
+      <!-- 1. SPEAKUP ASSESSMENT HUB                                -->
       <!-- ======================================================== -->
       @if (view() === 'hub') {
         <div style="animation: fadeIn 0.25s ease;">
@@ -41,7 +41,7 @@ export interface DetQuestion {
               <div>
                 <div style="font-family:'Outfit', sans-serif; font-size:20px; font-weight:800; color:var(--text-primary); line-height:1.2;">
                   Speak<span style="color:#4F46E5;">Up</span>
-                  <span style="font-size:14px; font-weight:600; color:var(--text-muted); margin-left:8px;">English Test</span>
+                  <span style="font-size:14px; font-weight:600; color:var(--text-muted); margin-left:8px;">English Assessment</span>
                 </div>
                 <p style="margin:2px 0 0 0; font-size:11.5px; color:var(--text-secondary);">
                   {{ t("Tests d'entraînement officiels & Évaluations par compétences", "Official Practice Tests & Subscore Evaluations") }}
@@ -52,7 +52,7 @@ export interface DetQuestion {
             <div style="display:flex; align-items:center; gap:8px;">
               <span class="det-pill-badge">
                 <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                <span>{{ t("Format Duolingo 10–160", "Duolingo Scale 10–160") }}</span>
+                <span>{{ t("Échelle SpeakUp 10–160", "SpeakUp Scale 10–160") }}</span>
               </span>
               <span class="det-pill-badge" style="background:#ECFDF5; color:#065F46; border-color:#A7F3D0;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
@@ -67,18 +67,18 @@ export interface DetQuestion {
               <div style="max-width:540px;">
                 <span class="det-badge-accent">
                   <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                  {{ t("TEST D'ENTRAÎNEMENT COMPLET", "FREE PRACTICE SAMPLE TEST") }}
+                  {{ t("ÉVALUATION D'ENTRAÎNEMENT", "FREE PRACTICE ASSESSMENT") }}
                 </span>
                 <h2 style="font-size:22px; font-weight:800; color:#1E1B4B; margin:10px 0 8px 0; line-height:1.25;">
                   {{ t("Pratiquez autant que vous le souhaitez avec notre test gratuit", "Practice as much as you like with our free sample test") }}
                 </h2>
                 <p style="font-size:13px; color:#475569; margin:0 0 18px 0; line-height:1.5;">
-                  {{ t("Familiarisez-vous avec les formats réels d'évaluation du Duolingo English Test : description d'image en 1 minute, dictée, compréhension, et expression orale.", "Get familiar with the real Duolingo English Test question formats: 1-minute photo description, listen & type, read & complete, and speaking.") }}
+                  {{ t("Familiarisez-vous avec les formats réels d'évaluation du SpeakUp English Assessment : description d'image en 1 minute, dictée, compréhension, et expression orale.", "Get familiar with the real SpeakUp English Assessment question formats: 1-minute photo description, listen & type, read & complete, and speaking fluency.") }}
                 </p>
                 <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
                   <button class="det-cta-btn" (click)="startFullDetSampleTest()">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                    <span>{{ t("COMMENCER LE TEST (15 MIN)", "PRACTICE FREE TEST (15 MIN)") }}</span>
+                    <span>{{ t("COMMENCER L'ÉVALUATION (15 MIN)", "START ASSESSMENT (15 MIN)") }}</span>
                   </button>
                   <span style="font-size:11.5px; color:#64748B; font-weight:600;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle; margin-right:4px"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg> {{ t("Questions aléatoires & illimitées", "Unlimited random questions") }}
@@ -302,7 +302,7 @@ export interface DetQuestion {
 
 
       <!-- ======================================================== -->
-      <!-- 2. DUOLINGO TEST ACTIVE INTERACTIVE SESSION (IMAGE 1)   -->
+      <!-- 2. SPEAKUP ASSESSMENT ACTIVE SESSION                     -->
       <!-- ======================================================== -->
       @if (view() === 'det-test' && currentDetQuestion(); as q) {
         <div class="det-test-container">
@@ -599,7 +599,7 @@ export interface DetQuestion {
 
 
       <!-- ======================================================== -->
-      <!-- 3. DET SCORE REPORT & CERTIFICATE (DUOLINGO STYLE)       -->
+      <!-- 3. SPEAKUP ASSESSMENT SCORE REPORT & CERTIFICATE         -->
       <!-- ======================================================== -->
       @if (view() === 'det-result' && lastDetResult(); as res) {
         <div style="animation: fadeIn 0.3s ease; max-width:840px; margin:0 auto;">
@@ -610,8 +610,8 @@ export interface DetQuestion {
               <div style="display:flex; align-items:center; gap:12px;">
                 <img src="logo.png" style="width:40px; height:40px; object-fit:contain;" alt="Logo" />
                 <div>
-                  <h3 style="font-size:18px; font-weight:900; color:#1E1B4B; margin:0;">SpeakUp English Test</h3>
-                  <div style="font-size:12px; color:#6B7280;">{{ t("Certificat d'évaluation des compétences", "Official Skills Evaluation Certificate") }}</div>
+                  <h3 style="font-size:18px; font-weight:900; color:#1E1B4B; margin:0;">SpeakUp English Assessment</h3>
+                  <div style="font-size:12px; color:#6B7280;">{{ t("Certificat officiel d'aptitude en anglais", "Official English Proficiency Certificate") }}</div>
                 </div>
               </div>
               <span class="badge" style="background:#ECFDF5; color:#065F46; font-size:11px; padding:4px 10px; border-radius:20px; font-weight:800;">
@@ -802,7 +802,7 @@ export interface DetQuestion {
     </div>
   `,
   styles: [`
-    /* Duolingo Test Hub & Card Styles */
+    /* SpeakUp Assessment Hub & Card Styles */
     .det-hero-card {
       background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 50%, #FAF5FF 100%);
       border: 1.5px solid #C7D2FE;
@@ -955,7 +955,7 @@ export interface DetQuestion {
     }
 
     /* ========================================================= */
-    /* ACTIVE QUESTION TEST MODAL (EXACT DUOLINGO STYLE IMAGE 1) */
+    /* ACTIVE QUESTION TEST MODAL (SPEAKUP ASSESSMENT) */
     /* ========================================================= */
     .det-test-container {
       min-height: calc(100vh - 160px);
@@ -1413,7 +1413,7 @@ export class StudentExamComponent implements OnDestroy {
   // Subscore filter in hub
   activeSubscoreFilter = signal<'all' | 'literacy' | 'comprehension' | 'production' | 'conversation' | 'official'>('all');
 
-  // Duolingo English Test Question Bank
+  // SpeakUp English Assessment Question Bank
   readonly detQuestionBank: DetQuestion[] = [
     {
       id: 'wp-1',
@@ -1897,7 +1897,7 @@ export class StudentExamComponent implements OnDestroy {
     const scores = Object.values(answersObj).map(a => a.score);
     const avgScore = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 75;
 
-    // Convert 0-100 to Duolingo English Test Scale 10 - 160
+    // Convert 0-100 to SpeakUp English Test Scale 10 - 160
     const detScaledScore = Math.round(10 + (avgScore / 100) * 150);
 
     // Calculate subscores

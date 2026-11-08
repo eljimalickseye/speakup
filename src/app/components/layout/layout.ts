@@ -1736,7 +1736,7 @@ export class LayoutComponent {
       dictionary: { fr: 'Dictionnaire', en: 'Dictionary' },
       ebooks: { fr: 'Bibliothèque (Ebooks)', en: 'Ebooks Library' },
       history: { fr: 'Mon Historique', en: 'My History' },
-      exam: { fr: "Tests d'anglais (Duolingo DET)", en: "English Tests (Duolingo DET)" },
+      exam: { fr: "Évaluation d'anglais (SpeakUp Assessment)", en: "SpeakUp English Assessment" },
       results: { fr: 'Résultats Élèves', en: 'Students Results' },
       coaching: { fr: 'Accompagnement Privé 🎯', en: 'Private Coaching 🎯' },
       'teacher-coaching': { fr: 'Coaching Privé 👑', en: 'Private Coaching 👑' },
