@@ -1179,12 +1179,12 @@ export interface DetQuestion {
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 </div>
                 <div>
-                  <div style="font-size:14.5px; font-weight:800; color:#9A3412;">Évaluation en attente de correction par votre professeur</div>
-                  <div style="font-size:12px; color:#C2410C;">Soumis le {{ formatSubmissionDate(myPending.submittedAt) }} • Vos vocaux et rédactions sont en cours d'analyse.</div>
+                  <div style="font-size:14.5px; font-weight:800; color:#9A3412;">{{ t('Évaluation en attente de correction par votre professeur', 'Assessment Submitted • Pending Teacher Review') }}</div>
+                  <div style="font-size:12px; color:#C2410C;">{{ t('Soumis le', 'Submitted on') }} {{ formatSubmissionDate(myPending.submittedAt) }} • {{ t("Vos vocaux et rédactions sont en cours d'analyse.", "Your oral and written responses are currently under evaluation.") }}</div>
                 </div>
               </div>
               <button type="button" (click)="view.set('det-pending')" class="btn-p" style="background:#EA580C; border-color:#EA580C; font-size:12.5px; padding:8px 16px;">
-                Consulter mon statut
+                {{ t('Consulter mon statut', 'View Status') }}
               </button>
             </div>
           }
@@ -1195,15 +1195,15 @@ export interface DetQuestion {
                 <img src="logo.png" style="width:48px; height:48px; object-fit:contain; border-radius:10px; background:white; padding:4px; box-shadow:0 2px 8px rgba(0,0,0,0.06);" alt="Logo SpeakUp" />
                 <div>
                   <div style="font-size:15px; font-weight:900; color:#065F46; display:flex; align-items:center; gap:6px;">
-                    <span>Félicitations ! Votre Certificat Officiel SpeakUp a été accordé</span>
+                    <span>{{ t('Félicitations ! Votre Certificat Officiel SpeakUp a été accordé', 'Congratulations! Your Official SpeakUp Certificate has been Awarded') }}</span>
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#059669"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                   </div>
-                  <div style="font-size:12.5px; color:#047857; margin-top:2px;">Score officiel : <strong>{{ myCorrected.overallScore }}/160</strong> • Niveau CECRL <strong>{{ myCorrected.cefrLevel }}</strong> • Accordé et signé par <strong>{{ myCorrected.gradedBy || 'votre professeur' }}</strong>.</div>
+                  <div style="font-size:12.5px; color:#047857; margin-top:2px;">{{ t('Score certifié', 'Certified Score') }} : <strong>{{ myCorrected.overallScore }}/160</strong> • {{ t('Niveau CECRL', 'CEFR Level') }} <strong>{{ myCorrected.cefrLevel }}</strong> • {{ t('Accordé et certifié par', 'Evaluated & Endorsed by') }} <strong>{{ myCorrected.gradedBy || 'SpeakUp Faculty' }}</strong>.</div>
                 </div>
               </div>
               <button type="button" (click)="viewMyCorrectedCertificate(myCorrected)" class="btn-p" style="background:linear-gradient(135deg, #059669 0%, #047857 100%); border:none; font-size:13px; font-weight:800; padding:10px 20px; display:flex; align-items:center; gap:8px; box-shadow:0 4px 12px rgba(5,150,105,0.25);">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
-                <span>Voir & Télécharger mon Certificat</span>
+                <span>{{ t('Voir & Télécharger mon Certificat', 'View & Download My Certificate') }}</span>
               </button>
             </div>
           }
@@ -1886,9 +1886,9 @@ export interface DetQuestion {
                   <polyline points="12 6 12 12 16 14"/>
                 </svg>
               </div>
-              <h3 style="font-size:22px; font-weight:900; color:#9A3412; margin:0 0 8px 0;">Évaluation Soumise avec Succès !</h3>
+              <h3 style="font-size:22px; font-weight:900; color:#9A3412; margin:0 0 8px 0;">{{ t('Évaluation Soumise avec Succès !', 'Assessment Submitted Successfully!') }}</h3>
               <p style="font-size:13.5px; color:#C2410C; max-width:540px; margin:0 auto; line-height:1.5;">
-                Votre dossier a été transmis à votre professeur. Vos enregistrements oraux et vos rédactions écrites sont en cours d'évaluation pédagogique.
+                {{ t("Votre dossier a été transmis à votre professeur. Vos enregistrements oraux et vos rédactions écrites sont en cours d'évaluation pédagogique.", "Your assessment has been submitted to your instructor. Your oral recordings and written answers are currently being evaluated.") }}
               </p>
             </div>
 
@@ -1898,21 +1898,21 @@ export interface DetQuestion {
                 <!-- Step 1 -->
                 <div style="text-align:center; position:relative; z-index:2;">
                   <div style="width:36px; height:36px; border-radius:50%; background:#10B981; color:white; display:flex; align-items:center; justify-content:center; margin:0 auto 6px auto;"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"><polyline points="20 6 9 17 4 12"/></svg></div>
-                  <div style="font-size:12px; font-weight:800; color:#1E293B;">Épreuve passée</div>
+                  <div style="font-size:12px; font-weight:800; color:#1E293B;">{{ t('Épreuve passée', 'Completed') }}</div>
                   <div style="font-size:10.5px; color:#64748B;">7 questions</div>
                 </div>
 
                 <!-- Step 2 -->
                 <div style="text-align:center; position:relative; z-index:2;">
                   <div style="width:36px; height:36px; border-radius:50%; background:#EA580C; color:white; display:flex; align-items:center; justify-content:center; margin:0 auto 6px auto; font-weight:800; animation: pulse-live 1.5s infinite;">⏳</div>
-                  <div style="font-size:12px; font-weight:800; color:#EA580C;">En correction</div>
-                  <div style="font-size:10.5px; color:#64748B;">Professeur</div>
+                  <div style="font-size:12px; font-weight:800; color:#EA580C;">{{ t('En correction', 'Under Review') }}</div>
+                  <div style="font-size:10.5px; color:#64748B;">{{ t('Professeur', 'Faculty Review') }}</div>
                 </div>
 
                 <!-- Step 3 -->
                 <div style="text-align:center; position:relative; z-index:2;">
                   <div style="width:36px; height:36px; border-radius:50%; background:#E2E8F0; color:#94A3B8; display:flex; align-items:center; justify-content:center; margin:0 auto 6px auto;"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></div>
-                  <div style="font-size:12px; font-weight:800; color:#64748B;">Certificat délivré</div>
+                  <div style="font-size:12px; font-weight:800; color:#64748B;">{{ t('Certificat délivré', 'Certificate Awarded') }}</div>
                   <div style="font-size:10.5px; color:#94A3B8;">10–160 SET</div>
                 </div>
               </div>
@@ -1921,18 +1921,18 @@ export interface DetQuestion {
             <!-- Dossier Summary Content -->
             @if (currentStudentPendingSubmission(); as mySub) {
               <div style="padding:24px;">
-                <h4 style="font-size:14px; font-weight:800; color:#1E1B4B; margin:0 0 14px 0;">Contenu de votre dossier transmis :</h4>
+                <h4 style="font-size:14px; font-weight:800; color:#1E1B4B; margin:0 0 14px 0;">{{ t('Contenu de votre dossier transmis :', 'Submitted Dossier Contents:') }}</h4>
                 <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-bottom:20px;">
                   <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:12px;">
-                    <div style="font-size:11px; font-weight:700; color:#64748B; text-transform:uppercase;">Date d'envoi</div>
+                    <div style="font-size:11px; font-weight:700; color:#64748B; text-transform:uppercase;">{{ t("Date d'envoi", "Submission Date") }}</div>
                     <div style="font-size:14px; font-weight:800; color:#1E1B4B; margin-top:2px;">{{ formatSubmissionDate(mySub.submittedAt) }}</div>
                   </div>
                   <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:12px;">
-                    <div style="font-size:11px; font-weight:700; color:#64748B; text-transform:uppercase;">Enregistrements oraux</div>
+                    <div style="font-size:11px; font-weight:700; color:#64748B; text-transform:uppercase;">{{ t('Enregistrements oraux', 'Oral Audio Recordings') }}</div>
                     <div style="font-size:14px; font-weight:800; color:#4F46E5; margin-top:2px; display:flex; align-items:center; gap:6px;"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg><span>{{ getAudioQuestionsCount(mySub) }} enregistrements</span></div>
                   </div>
                   <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:12px;">
-                    <div style="font-size:11px; font-weight:700; color:#64748B; text-transform:uppercase;">Écrits & Rédactions</div>
+                    <div style="font-size:11px; font-weight:700; color:#64748B; text-transform:uppercase;">{{ t('Écrits & Rédactions', 'Written Essays & Prompts') }}</div>
                     <div style="font-size:14px; font-weight:800; color:#059669; margin-top:2px; display:flex; align-items:center; gap:6px;"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg><span>{{ getWrittenQuestionsCount(mySub) }} rédactions</span></div>
                   </div>
                 </div>
@@ -1940,7 +1940,7 @@ export interface DetQuestion {
                 <div style="background:#EFF6FF; border:1px solid #BFDBFE; border-radius:10px; padding:14px; display:flex; align-items:center; gap:12px;">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                   <span style="font-size:12.5px; color:#1E40AF; line-height:1.4;">
-                    Vous recevrez une notification instantanée dès que votre professeur aura attribué vos points et rédigé ses commentaires détaillés.
+                    {{ t("Vous recevrez une notification instantanée dès que votre professeur aura attribué vos points et rédigé ses commentaires détaillés.", "You will be notified immediately once your instructor reviews your work, grades each module, and awards your official certificate.") }}
                   </span>
                 </div>
               </div>
@@ -1949,10 +1949,10 @@ export interface DetQuestion {
             <!-- Footer Action -->
             <div style="padding:16px 24px; background:#F8FAFC; border-top:1px solid #E2E8F0; display:flex; justify-content:space-between; align-items:center;">
               <button class="btn-s" (click)="view.set('hub')">
-                ← Retour au centre de tests
+                ← {{ t('Retour au centre de tests', 'Back to Tests Hub') }}
               </button>
               <button class="btn-p" style="background:#4F46E5; border-color:#4F46E5;" (click)="startFullDetSampleTest()">
-                S'entraîner sur un test blanc
+                {{ t("S'entraîner sur un test blanc", "Take a Practice Test") }}
               </button>
             </div>
 
@@ -1977,35 +1977,35 @@ export interface DetQuestion {
             <div style="text-align:center; margin-bottom:24px;">
               <img src="logo.png" style="width:75px; height:75px; object-fit:contain; border-radius:14px; margin-bottom:12px; filter: drop-shadow(0 4px 12px rgba(79,70,229,0.25));" alt="SpeakUp Official Logo" />
               <div style="font-size:12px; font-weight:800; color:#92400E; letter-spacing:2px; text-transform:uppercase;">
-                SPEAKUP LEARNING ACADEMY • COMMISSION PÉDAGOGIQUE
+                SPEAKUP LEARNING ACADEMY • ACADEMIC EVALUATION BOARD
               </div>
               <h1 style="font-size:26px; font-weight:900; color:#1E1B4B; margin:6px 0 2px 0; font-family:'Outfit', serif; letter-spacing:0.5px;">
-                CERTIFICAT OFFICIEL D'APTITUDE EN LANGUE ANGLAISE
+                OFFICIAL CERTIFICATE OF ENGLISH PROFICIENCY
               </h1>
               <div style="font-size:13.5px; font-weight:700; color:#6B7280; font-style:italic;">
-                SpeakUp English Assessment (SET) • Cadre Européen Commun de Référence (CECRL)
+                SpeakUp English Assessment (SET) • Common European Framework of Reference for Languages (CEFR)
               </div>
               <div style="display:inline-flex; align-items:center; gap:8px; margin-top:8px; background:#FEF3C7; color:#92400E; border:1px solid #FDE68A; padding:3px 12px; border-radius:20px; font-size:11.5px; font-weight:800;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                <span>Certificat Officiel Accordé • N° {{ res.certificateNumber || 'SET-2026-OFFICIAL' }}</span>
+                <span>Official Certificate Awarded • Certificate ID: {{ res.certificateNumber || 'SET-2026-OFFICIAL' }}</span>
               </div>
             </div>
 
             <!-- Recipient Citation -->
             <div style="text-align:center; padding:16px 20px; background:rgba(255,255,255,0.7); border-radius:14px; border:1px solid #F3E8FF; margin-bottom:24px;">
-              <div style="font-size:13px; font-style:italic; color:#64748B;">Ce certificat officiel atteste avec les félicitations du corps professoral que :</div>
+              <div style="font-size:13px; font-style:italic; color:#64748B;">This official certificate of English proficiency is proudly awarded to:</div>
               <div style="font-size:28px; font-weight:900; color:#1E1B4B; margin:8px 0; letter-spacing:0.5px; font-family:'Outfit', sans-serif;">
-                {{ res.studentName || currentUser()?.name || 'Étudiant SpeakUp' }}
+                {{ res.studentName || currentUser()?.name || 'SpeakUp Candidate' }}
               </div>
               <p style="font-size:13px; color:#475569; max-width:680px; margin:0 auto; line-height:1.5;">
-                a accompli avec succès l'évaluation officielle <strong>SpeakUp English Assessment (20 épreuves chronométrées)</strong>, démontrant une maîtrise des compétences linguistiques requises par les standards internationaux.
+                for successfully completing the official <strong>SpeakUp English Assessment (20 timed proficiency modules)</strong>, demonstrating mastery of language skills and communicative fluency in full accordance with international CEFR standards.
               </p>
             </div>
 
             <!-- Scaled Score & CEFR Level Badge -->
             <div style="display:flex; justify-content:center; align-items:center; gap:30px; flex-wrap:wrap; margin-bottom:28px; padding:20px; background:white; border-radius:14px; border:1px solid #E2E8F0; box-shadow:0 4px 14px rgba(0,0,0,0.03);">
               <div style="text-align:center;">
-                <div style="font-size:11px; font-weight:800; color:#6B7280; text-transform:uppercase; letter-spacing:1px;">Score Global Validé</div>
+                <div style="font-size:11px; font-weight:800; color:#6B7280; text-transform:uppercase; letter-spacing:1px;">Certified Overall Score</div>
                 <div style="font-size:52px; font-weight:900; color:#4F46E5; line-height:1; font-family:'Outfit', sans-serif;">
                   {{ res.overallScore }}
                   <span style="font-size:20px; font-weight:700; color:#94A3B8;">/ 160</span>
@@ -2015,10 +2015,10 @@ export interface DetQuestion {
               <div style="width:1.5px; height:60px; background:#E2E8F0;"></div>
 
               <div style="text-align:center;">
-                <div style="font-size:11px; font-weight:800; color:#6B7280; text-transform:uppercase; letter-spacing:1px;">Niveau CECRL Accordé</div>
+                <div style="font-size:11px; font-weight:800; color:#6B7280; text-transform:uppercase; letter-spacing:1px;">Certified CEFR Level</div>
                 <div style="margin-top:6px;">
                   <span style="background:linear-gradient(135deg, #4F46E5 0%, #4338CA 100%); color:white; font-size:16px; font-weight:900; padding:8px 20px; border-radius:24px; box-shadow:0 4px 12px rgba(79,70,229,0.3); display:inline-block;">
-                    Niveau {{ res.cefrLevel }} • {{ getCefrTitle(res.cefrLevel) }}
+                    Level {{ res.cefrLevel }} • {{ getCefrTitle(res.cefrLevel) }}
                   </span>
                 </div>
               </div>
@@ -2027,13 +2027,13 @@ export interface DetQuestion {
             <!-- 4 Subscores Breakdown -->
             <div style="margin-bottom:28px;">
               <h4 style="font-size:13px; font-weight:800; color:#1E1B4B; margin:0 0 14px 0; text-transform:uppercase; letter-spacing:0.5px; text-align:center;">
-                Grille Officielle des Sous-Scores de Compétence
+                Official Competency Subscores Breakdown
               </h4>
               <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px;">
                 <!-- Literacy -->
                 <div class="det-subscore-box" style="background:white;">
                   <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-                    <span style="font-size:12px; font-weight:700; color:#1E293B;">Literacy (Écrit & Lecture)</span>
+                    <span style="font-size:12px; font-weight:700; color:#1E293B;">Literacy (Reading & Writing)</span>
                     <span style="font-size:12px; font-weight:800; color:#4F46E5;">{{ res.subscores.literacy }} / 160</span>
                   </div>
                   <div class="det-progress-track">
@@ -2044,7 +2044,7 @@ export interface DetQuestion {
                 <!-- Comprehension -->
                 <div class="det-subscore-box" style="background:white;">
                   <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-                    <span style="font-size:12px; font-weight:700; color:#1E293B;">Comprehension (Audio & Sens)</span>
+                    <span style="font-size:12px; font-weight:700; color:#1E293B;">Comprehension (Reading & Listening)</span>
                     <span style="font-size:12px; font-weight:800; color:#0284C7;">{{ res.subscores.comprehension }} / 160</span>
                   </div>
                   <div class="det-progress-track">
@@ -2055,7 +2055,7 @@ export interface DetQuestion {
                 <!-- Conversation -->
                 <div class="det-subscore-box" style="background:white;">
                   <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-                    <span style="font-size:12px; font-weight:700; color:#1E293B;">Conversation (Oral & Écoute)</span>
+                    <span style="font-size:12px; font-weight:700; color:#1E293B;">Conversation (Listening & Speaking)</span>
                     <span style="font-size:12px; font-weight:800; color:#059669;">{{ res.subscores.conversation }} / 160</span>
                   </div>
                   <div class="det-progress-track">
@@ -2066,7 +2066,7 @@ export interface DetQuestion {
                 <!-- Production -->
                 <div class="det-subscore-box" style="background:white;">
                   <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-                    <span style="font-size:12px; font-weight:700; color:#1E293B;">Production (Expression & Fluence)</span>
+                    <span style="font-size:12px; font-weight:700; color:#1E293B;">Production (Writing & Speaking)</span>
                     <span style="font-size:12px; font-weight:800; color:#D97706;">{{ res.subscores.production }} / 160</span>
                   </div>
                   <div class="det-progress-track">
@@ -2080,15 +2080,15 @@ export interface DetQuestion {
             <div style="display:flex; justify-content:space-between; align-items:flex-end; padding-top:20px; border-top:1.5px solid #FDE68A; flex-wrap:wrap; gap:16px;">
               <!-- Left: Teacher Appreciation & Signature -->
               <div style="flex:1; min-width:260px;">
-                <div style="font-size:11.5px; font-weight:800; color:#78350F; text-transform:uppercase; margin-bottom:4px;">Appréciation Pédagogique du Professeur :</div>
+                <div style="font-size:11.5px; font-weight:800; color:#78350F; text-transform:uppercase; margin-bottom:4px;">Academic Faculty Evaluation & Endorsement:</div>
                 <div style="font-size:12.5px; font-style:italic; color:#334155; line-height:1.4; background:#FFFBEB; border:1px solid #FEF3C7; padding:10px 14px; border-radius:8px; margin-bottom:10px;">
-                  « {{ res.teacherGlobalComment || 'Excellente maîtrise des compétences de communication, vocabulaire riche et grammaire solide.' }} »
+                  « {{ res.teacherGlobalComment || 'Demonstrates exceptional command of the English language with rich vocabulary range, clear pronunciation, and accurate grammatical structures.' }} »
                 </div>
                 <div style="font-size:13px; font-weight:800; color:#1E1B4B;">
-                  Accordé et validé par : <span style="color:#4F46E5;">{{ res.gradedBy || 'Professeur SpeakUp' }}</span>
+                  Certified & Endorsed by: <span style="color:#4F46E5;">Prof. {{ res.gradedBy || 'SpeakUp Faculty' }}</span>
                 </div>
                 <div style="font-size:11.5px; color:#64748B;">
-                  Date de délivrance : {{ res.gradedAt ? formatSubmissionDate(res.gradedAt) : 'Session Officielle 2026' }}
+                  Date of Issuance: {{ res.gradedAt ? formatSubmissionDate(res.gradedAt) : 'Official 2026 Session' }}
                 </div>
               </div>
 
@@ -2102,14 +2102,14 @@ export interface DetQuestion {
                   <text x="50" y="70" font-size="7.5" font-weight="900" fill="#78350F" text-anchor="middle" font-family="'Segoe UI', sans-serif">SPEAKUP CERTIFIED</text>
                   <text x="50" y="79" font-size="6" font-weight="800" fill="#92400E" text-anchor="middle" font-family="'Segoe UI', sans-serif">★ 2026 OFFICIAL ★</text>
                 </svg>
-                <div style="font-size:10px; font-weight:800; color:#92400E; margin-top:2px;">SCEAU OFFICIEL</div>
+                <div style="font-size:10px; font-weight:800; color:#92400E; margin-top:2px;">OFFICIAL SEAL</div>
               </div>
             </div>
 
             <!-- Footer Security & Anti-Cheat Note -->
             <div style="margin-top:20px; padding-top:12px; border-top:1px dashed #E2E8F0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; font-size:10.5px; color:#94A3B8;">
-              <div>Document officiel certifié par la plateforme SpeakUp • ID #{{ res.certificateNumber || 'SET-2026-OFFICIAL' }}</div>
-              <div>Surveillance anti-triche activée • Session unique vérifiée</div>
+              <div>Official credential certified by SpeakUp Platform • ID #{{ res.certificateNumber || 'SET-2026-OFFICIAL' }}</div>
+              <div>Anti-Cheat Proctoring Enabled • Single Authenticated Session Verified</div>
             </div>
 
           </div>
@@ -2237,7 +2237,7 @@ export interface DetQuestion {
               <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
                 <div style="display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.18); backdrop-filter:blur(6px); padding:4px 12px; border-radius:20px; font-size:11px; font-weight:800; letter-spacing:0.5px; text-transform:uppercase; border:1px solid rgba(255,255,255,0.3);">
                   <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                  Consignes & Modalités Officielles
+                  {{ t('Consignes & Modalités Officielles', 'Official Examination Guidelines & Rules') }}
                 </div>
                 <button type="button" (click)="closePreExamBriefing()" style="border:none; background:rgba(255,255,255,0.15); color:white; width:30px; height:30px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center;">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -2248,7 +2248,11 @@ export interface DetQuestion {
                 SpeakUp English Assessment (SET)
               </h2>
               <div style="font-size:12.5px; opacity:0.92; line-height:1.4;">
-                Session officielle ouverte du <strong>11/08/2026 au 18/08/2026</strong> • Vous disposez d'une semaine pour participer au moment de votre choix.
+                @if (activeLang() === 'fr') {
+                  Session officielle ouverte du <strong>11/08/2026 au 18/08/2026</strong> • Vous disposez d'une semaine pour participer au moment de votre choix.
+                } @else {
+                  Official session active from <strong>11/08/2026 to 18/08/2026</strong> • You have 1 week to take your test at any convenient time.
+                }
               </div>
             </div>
 
@@ -2262,10 +2266,14 @@ export interface DetQuestion {
                 </div>
                 <div>
                   <div style="font-size:13.5px; font-weight:800; color:#92400E; margin-bottom:2px;">
-                    Obligation de Finalisation Immédiate
+                    {{ t('Obligation de Finalisation Immédiate', 'Mandatory Single-Sitting Completion') }}
                   </div>
                   <div style="font-size:12px; color:#B45309; line-height:1.5;">
-                    Une fois que vous appuyez sur « Démarrer », <strong>vous êtes obligé(e) de terminer le test d'une seule traite</strong> (~15 à 20 minutes). Aucune mise en pause, fermeture de fenêtre ou redémarrage ne sera possible.
+                    @if (activeLang() === 'fr') {
+                      Une fois que vous appuyez sur « Démarrer », <strong>vous êtes obligé(e) de terminer le test d'une seule traite</strong> (~60 minutes). Aucune mise en pause, fermeture de fenêtre ou redémarrage ne sera possible.
+                    } @else {
+                      Once you click "Start", <strong>you must complete the assessment in one sitting</strong> (~60 minutes). No pausing, tab switching, or restarts are allowed.
+                    }
                   </div>
                 </div>
               </div>
@@ -2278,12 +2286,12 @@ export interface DetQuestion {
                     <div class="briefing-icon-box" style="background:#FEE2E2; color:#DC2626;">
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                     </div>
-                    <h4 style="font-size:13px; font-weight:800; color:#1E293B; margin:0;">Surveillance Anti-Triche</h4>
+                    <h4 style="font-size:13px; font-weight:800; color:#1E293B; margin:0;">{{ t('Surveillance Anti-Triche', 'Anti-Cheat Proctoring') }}</h4>
                   </div>
                   <ul style="margin:0; padding-left:16px; font-size:11.5px; color:#475569; line-height:1.5;">
-                    <li><strong>Plein écran obligatoire</strong> pendant toute la durée du test.</li>
-                    <li><strong>Détection de changement d'onglet</strong> : interdiction de quitter la fenêtre. Tout écart est consigné dans votre dossier.</li>
-                    <li><strong>Copier-coller désactivé</strong> pour garantir un test équitable.</li>
+                    <li><strong>{{ t('Plein écran obligatoire', 'Mandatory Fullscreen') }}</strong> pendant toute la durée du test.</li>
+                    <li><strong>{{ t("Détection de changement d'onglet", "Tab-Switch Detection") }}</strong> : interdiction de quitter la fenêtre. Tout écart est consigné dans votre dossier.</li>
+                    <li><strong>{{ t('Copier-coller désactivé', 'Copy-Paste Disabled') }}</strong> pour garantir un test équitable.</li>
                   </ul>
                 </div>
 
@@ -2293,7 +2301,7 @@ export interface DetQuestion {
                     <div class="briefing-icon-box" style="background:#EFF6FF; color:#2563EB;">
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
                     </div>
-                    <h4 style="font-size:13px; font-weight:800; color:#1E293B; margin:0;">Microphone Requis</h4>
+                    <h4 style="font-size:13px; font-weight:800; color:#1E293B; margin:0;">{{ t('Microphone Requis', 'Microphone Required') }}</h4>
                   </div>
                   <p style="margin:0; font-size:11.5px; color:#475569; line-height:1.5;">
                     Vérifiez que votre microphone fonctionne et installez-vous dans un endroit silencieux. Vous aurez des épreuves orales enregistrées (lecture à voix haute, description d'image et entretien oral).
@@ -2319,7 +2327,7 @@ export interface DetQuestion {
                     <div class="briefing-icon-box" style="background:#ECFDF5; color:#059669;">
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><polyline points="20 6 9 17 4 12"/></svg>
                     </div>
-                    <h4 style="font-size:13px; font-weight:800; color:#1E293B; margin:0;">Correction Pédagogique</h4>
+                    <h4 style="font-size:13px; font-weight:800; color:#1E293B; margin:0;">{{ t('Correction Pédagogique', 'Faculty Evaluation & Scoring') }}</h4>
                   </div>
                   <p style="margin:0; font-size:11.5px; color:#475569; line-height:1.5;">
                     Vos vocaux et rédactions seront transmis sous forme de dossier à votre professeur qui écoutera chaque réponse, attribuera vos points et délivrera votre Certificat Officiel CEFR (A2 à B2).
@@ -2331,7 +2339,11 @@ export interface DetQuestion {
               <label class="briefing-checkbox-label" (click)="preExamAgreed.set(!preExamAgreed())">
                 <input type="checkbox" [checked]="preExamAgreed()" style="margin-top:2px; accent-color:#4F46E5; pointer-events:none;" />
                 <span style="font-size:12px; font-weight:700; color:#1E1B4B; line-height:1.5;">
+                  @if (activeLang() === 'fr') {
                   J'ai lu attentivement toutes les consignes. Je confirme être dans un environnement calme avec un microphone prêt, et je m'engage à compléter mon examen en une seule traite en respectant scrupuleusement les règles d'intégrité académique.
+                } @else {
+                  I have carefully read all examination rules. I confirm I am in a quiet room with a working microphone, and I pledge to complete the assessment in one continuous sitting respecting all academic integrity standards.
+                }
                 </span>
               </label>
 
@@ -2340,7 +2352,7 @@ export interface DetQuestion {
             <!-- Modal Footer -->
             <div class="briefing-footer">
               <button type="button" class="btn-cancel-briefing" (click)="closePreExamBriefing()">
-                Revenir plus tard
+                {{ t('Revenir plus tard', 'Take Later') }}
               </button>
               <button
                 type="button"
@@ -4724,11 +4736,13 @@ export class StudentExamComponent implements OnDestroy {
 
   getCefrTitle(cefr: string): string {
     switch (cefr) {
-      case 'C1': return 'Avancé / Advanced Fluency';
-      case 'B2': return 'Intermédiaire Supérieur / Upper Intermediate';
-      case 'B1': return 'Intermédiaire / Intermediate';
-      case 'A2': return 'Élémentaire / Elementary';
-      default: return 'Débutant / Beginner';
+      case 'C2': return 'Mastery / Proficient User';
+      case 'C1': return 'Effective Operational Proficiency / Advanced';
+      case 'B2': return 'Vantage / Upper Intermediate';
+      case 'B1': return 'Threshold / Intermediate';
+      case 'A2': return 'Waystage / Elementary';
+      case 'A1': return 'Breakthrough / Beginner';
+      default: return 'Proficient User';
     }
   }
 
@@ -4991,18 +5005,18 @@ export class StudentExamComponent implements OnDestroy {
     const win = window.open('', '_blank');
     if (!win) return;
     const origin = window.location.origin;
-    const studentName = res.studentName || this.currentUser()?.name || 'Étudiant SpeakUp';
-    const certNumber = res.certificateNumber || `SET-2026-${Math.abs(this.hashCode(studentName)).toString(16).toUpperCase()}`;
-    const gradedBy = res.gradedBy || 'Professeur de la Classe';
-    const gradedAt = res.gradedAt ? new Date(res.gradedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : new Date().toLocaleDateString('fr-FR');
-    const teacherComment = res.teacherGlobalComment || 'Excellente maîtrise des compétences linguistiques requises par les standards CECRL.';
+    const studentName = res.studentName || this.currentUser()?.name || 'SpeakUp Candidate';
+    const certNumber = res.certificateNumber || 'SET-2026-OFFICIAL';
+    const gradedBy = res.gradedBy ? (res.gradedBy.startsWith('Prof.') ? res.gradedBy : `Prof. ${res.gradedBy}`) : 'SpeakUp Academic Faculty';
+    const gradedAt = res.gradedAt ? new Date(res.gradedAt).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Official Session 2026';
+    const teacherComment = res.teacherGlobalComment || 'Demonstrates exceptional command of the English language with rich vocabulary range, clear pronunciation, and accurate grammatical structures.';
 
     win.document.write(`
       <!DOCTYPE html>
       <html>
       <head>
         <meta charset="utf-8">
-        <title>Certificat Officiel SpeakUp — ${studentName}</title>
+        <title>Official Certificate of English Proficiency — ${studentName}</title>
         <style>
           @page { size: landscape; margin: 8mm; }
           body {
@@ -5014,6 +5028,8 @@ export class StudentExamComponent implements OnDestroy {
             display: flex;
             justify-content: center;
             align-items: center;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
           }
           .certificate-container {
             width: 100%;
@@ -5025,6 +5041,7 @@ export class StudentExamComponent implements OnDestroy {
             box-sizing: border-box;
             position: relative;
             text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.06);
           }
           .logo {
             width: 78px;
@@ -5038,6 +5055,7 @@ export class StudentExamComponent implements OnDestroy {
             margin: 6px 0;
             letter-spacing: 0.5px;
             font-weight: 900;
+            font-family: 'Outfit', 'Georgia', serif;
           }
           .institution {
             color: #92400E;
@@ -5057,7 +5075,7 @@ export class StudentExamComponent implements OnDestroy {
             background: #FEF3C7;
             color: #92400E;
             border: 1px solid #FDE68A;
-            padding: 3px 12px;
+            padding: 3px 14px;
             border-radius: 20px;
             font-size: 11.5px;
             font-weight: 800;
@@ -5066,16 +5084,17 @@ export class StudentExamComponent implements OnDestroy {
           .student-box {
             background: rgba(255, 255, 255, 0.85);
             border-radius: 12px;
-            padding: 12px 20px;
+            padding: 14px 20px;
             margin: 0 auto 18px auto;
             max-width: 800px;
             border: 1px solid #F1F5F9;
           }
           .student-name {
-            font-size: 28px;
+            font-size: 30px;
             font-weight: 900;
             color: #1E1B4B;
             margin: 4px 0;
+            font-family: 'Outfit', sans-serif;
           }
           .scores-bar {
             display: flex;
@@ -5133,54 +5152,54 @@ export class StudentExamComponent implements OnDestroy {
       <body>
         <div class="certificate-container">
           <img src="${origin}/logo.png" class="logo" alt="SpeakUp Logo" />
-          <div class="institution">SPEAKUP LEARNING ACADEMY • COMMISSION PÉDAGOGIQUE</div>
-          <h1>CERTIFICAT OFFICIEL D'APTITUDE EN LANGUE ANGLAISE</h1>
-          <div class="subtitle">SpeakUp English Assessment (SET) • Cadre Européen Commun de Référence pour les Langues (CECRL)</div>
-          <div class="badge">N° ${certNumber} • Validé & Accordé par le Professeur</div>
+          <div class="institution">SPEAKUP LEARNING ACADEMY • ACADEMIC EVALUATION BOARD</div>
+          <h1>OFFICIAL CERTIFICATE OF ENGLISH PROFICIENCY</h1>
+          <div class="subtitle">SpeakUp English Assessment (SET) • Common European Framework of Reference for Languages (CEFR)</div>
+          <div class="badge">Certificate No. ${certNumber} • Validated & Awarded by Faculty</div>
 
           <div class="student-box">
-            <div style="font-size:12px; font-style:italic; color:#64748B;">Ce certificat officiel est décerné à :</div>
+            <div style="font-size:12px; font-style:italic; color:#64748B;">This official certificate of proficiency is proudly awarded to:</div>
             <div class="student-name">${studentName}</div>
-            <div style="font-size:12.5px; color:#475569;">Pour avoir accompli avec succès l'évaluation officielle SpeakUp (20 épreuves chronométrées) avec les résultats suivants :</div>
+            <div style="font-size:12.5px; color:#475569;">For successfully completing the official SpeakUp English Assessment (20 timed proficiency modules) with the following certified results:</div>
           </div>
 
           <div class="scores-bar">
             <div>
-              <div style="font-size:11px; font-weight:800; color:#64748B; text-transform:uppercase;">Score Global</div>
+              <div style="font-size:11px; font-weight:800; color:#64748B; text-transform:uppercase;">Certified Overall Score</div>
               <div class="score-val">${res.overallScore} <span style="font-size:18px; color:#94A3B8;">/ 160</span></div>
             </div>
             <div style="width:1.5px; height:45px; background:#E2E8F0;"></div>
             <div>
-              <div style="font-size:11px; font-weight:800; color:#64748B; text-transform:uppercase; margin-bottom:4px;">Niveau CECRL Accordé</div>
-              <div class="cefr-pill">Niveau ${res.cefrLevel} — ${this.getCefrTitle(res.cefrLevel)}</div>
+              <div style="font-size:11px; font-weight:800; color:#64748B; text-transform:uppercase; margin-bottom:4px;">CEFR Proficiency Level</div>
+              <div class="cefr-pill">Level ${res.cefrLevel} — ${this.getCefrTitle(res.cefrLevel)}</div>
             </div>
           </div>
 
           <div class="subscores-grid">
             <div class="subscore-card">
-              <div style="font-size:11px; color:#64748B; font-weight:700;">Literacy</div>
+              <div style="font-size:11px; color:#64748B; font-weight:700;">Literacy (Reading & Writing)</div>
               <div style="font-size:16px; font-weight:900; color:#4F46E5;">${res.subscores.literacy} / 160</div>
             </div>
             <div class="subscore-card">
-              <div style="font-size:11px; color:#64748B; font-weight:700;">Comprehension</div>
+              <div style="font-size:11px; color:#64748B; font-weight:700;">Comprehension (Reading & Listening)</div>
               <div style="font-size:16px; font-weight:900; color:#0284C7;">${res.subscores.comprehension} / 160</div>
             </div>
             <div class="subscore-card">
-              <div style="font-size:11px; color:#64748B; font-weight:700;">Conversation</div>
+              <div style="font-size:11px; color:#64748B; font-weight:700;">Conversation (Listening & Speaking)</div>
               <div style="font-size:16px; font-weight:900; color:#059669;">${res.subscores.conversation} / 160</div>
             </div>
             <div class="subscore-card">
-              <div style="font-size:11px; color:#64748B; font-weight:700;">Production</div>
+              <div style="font-size:11px; color:#64748B; font-weight:700;">Production (Writing & Speaking)</div>
               <div style="font-size:16px; font-weight:900; color:#D97706;">${res.subscores.production} / 160</div>
             </div>
           </div>
 
           <div class="footer-section">
             <div style="flex:1;">
-              <div style="font-size:11px; font-weight:800; color:#78350F; text-transform:uppercase;">Bilan Pédagogique du Professeur :</div>
+              <div style="font-size:11px; font-weight:800; color:#78350F; text-transform:uppercase;">Academic Faculty Evaluation & Endorsement:</div>
               <div style="font-size:12px; font-style:italic; color:#334155; margin:3px 0 8px 0;">« ${teacherComment} »</div>
-              <div style="font-size:12.5px; font-weight:800; color:#1E1B4B;">Accordé et certifié par : <span style="color:#4F46E5;">${gradedBy}</span></div>
-              <div style="font-size:11px; color:#64748B;">Délivré le ${gradedAt} · SpeakUp Learning Platform</div>
+              <div style="font-size:12.5px; font-weight:800; color:#1E1B4B;">Certified & Endorsed by: <span style="color:#4F46E5;">${gradedBy}</span></div>
+              <div style="font-size:11px; color:#64748B;">Issued on ${gradedAt} · SpeakUp Learning Platform</div>
             </div>
 
             <div style="text-align:center;">
@@ -5191,7 +5210,7 @@ export class StudentExamComponent implements OnDestroy {
                 <text x="50" y="70" font-size="7.5" font-weight="900" fill="#78350F" text-anchor="middle">SPEAKUP CERTIFIED</text>
                 <text x="50" y="79" font-size="6" font-weight="800" fill="#92400E" text-anchor="middle">★ 2026 OFFICIAL ★</text>
               </svg>
-              <div style="font-size:9.5px; font-weight:800; color:#92400E; margin-top:2px;">SCEAU OFFICIEL</div>
+              <div style="font-size:9.5px; font-weight:800; color:#92400E; margin-top:2px;">OFFICIAL SEAL</div>
             </div>
           </div>
         </div>
