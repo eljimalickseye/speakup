@@ -1734,7 +1734,7 @@ export class LayoutComponent {
       dictionary: { fr: 'Dictionnaire', en: 'Dictionary' },
       ebooks: { fr: 'Bibliothèque (Ebooks)', en: 'Ebooks Library' },
       history: { fr: 'Mon Historique', en: 'My History' },
-      exam: { fr: 'Mode Examen', en: 'Exam Mode' },
+      exam: { fr: "Tests d'anglais", en: "English Tests" },
       results: { fr: 'Résultats Élèves', en: 'Students Results' },
       coaching: { fr: 'Accompagnement Privé 🎯', en: 'Private Coaching 🎯' },
       'teacher-coaching': { fr: 'Coaching Privé 👑', en: 'Private Coaching 👑' },
