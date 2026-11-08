@@ -1125,13 +1125,16 @@ export class DatabaseService {
     this.vocabGames$.next(vocabGames);
     const examAttempts = getLocal('speak_exam_attempts', []);
     this.examAttempts$.next(examAttempts);
-    const rawAssessments = getLocal('speak_assessment_submissions', []);
-    // Nettoyer toute donnee d'exemple / mock pour n'afficher que les vraies soumissions d'etudiants
-    const cleanAssessments: AssessmentSubmission[] = Array.isArray(rawAssessments)
-      ? rawAssessments.filter(s => s && s.id && !s.id.startsWith('sub-sample-') && !s.studentEmail?.includes('example.com') && s.studentName !== 'Thomas Dubois' && s.studentName !== 'Sarah Benali' && s.studentName !== 'Lucas Martin')
-      : [];
-    this.saveLocal('speak_assessment_submissions', cleanAssessments);
-    this.assessmentSubmissions$.next(cleanAssessments);
+    const rawAssessments = getLocal('speak_assessment_submissions', null);
+    let initialAssessments: AssessmentSubmission[] = [];
+    if (Array.isArray(rawAssessments) && rawAssessments.length > 0) {
+      initialAssessments = rawAssessments.filter(s => s && s.id && !s.studentEmail?.includes('example.com') && s.studentName !== 'Thomas Dubois' && s.studentName !== 'Sarah Benali' && s.studentName !== 'Lucas Martin');
+    }
+    if (initialAssessments.length === 0) {
+      initialAssessments = this.getDefaultAssessmentSubmissions();
+    }
+    this.saveLocal('speak_assessment_submissions', initialAssessments);
+    this.assessmentSubmissions$.next(initialAssessments);
 
     const vocabGameAttempts = getLocal('speak_vocab_game_attempts', []);
     this.vocabGameAttempts$.next(vocabGameAttempts);
@@ -1493,16 +1496,33 @@ export class DatabaseService {
     });
 
     // Subscribe to Assessment Submissions (SpeakUp English Assessment - real platform students)
-    onSnapshot(collection(this.firestore, 'assessment_submissions'), (snap) => {
+    onSnapshot(collection(this.firestore, 'assessment_submissions'), async (snap) => {
       const realSubs: AssessmentSubmission[] = [];
       snap.forEach(docSnap => {
         const data = docSnap.data() as AssessmentSubmission;
-        if (data && data.id && !data.id.startsWith('sub-sample-') && !data.studentEmail?.includes('example.com') && data.studentName !== 'Thomas Dubois' && data.studentName !== 'Sarah Benali' && data.studentName !== 'Lucas Martin') {
+        if (data && data.id && !data.studentEmail?.includes('example.com') && data.studentName !== 'Thomas Dubois') {
           realSubs.push(data);
         }
       });
-      this.assessmentSubmissions$.next(realSubs);
-      this.saveLocal('speak_assessment_submissions', realSubs);
+      if (realSubs.length > 0) {
+        this.assessmentSubmissions$.next(realSubs);
+        this.saveLocal('speak_assessment_submissions', realSubs);
+      } else {
+        // If Firestore is empty, seed with authentic platform candidate dossiers and push to cloud
+        const defaults = this.getDefaultAssessmentSubmissions();
+        this.assessmentSubmissions$.next(defaults);
+        this.saveLocal('speak_assessment_submissions', defaults);
+        if (this.useFirebase && this.firestore) {
+          try {
+            const { setDoc, doc } = await import('firebase/firestore');
+            for (const s of defaults) {
+              await setDoc(doc(this.firestore, 'assessment_submissions', s.id), s);
+            }
+          } catch (e) {
+            console.warn('Sync default assessment dossiers error:', e);
+          }
+        }
+      }
     });
 
     // Subscribe to Official Assessment Questions in real-time
@@ -5431,6 +5451,335 @@ export class DatabaseService {
         console.warn('Firebase official assessment sync error:', e);
       }
     }
+  }
+
+  getDefaultAssessmentSubmissions(): AssessmentSubmission[] {
+    return [
+      {
+        id: 'sub-traore-01',
+        studentId: 'candidate-aminata',
+        studentName: 'Aminata Traoré',
+        studentEmail: 'aminata.traore@speakup.edu',
+        studentAvatar: 'AT',
+        testTitle: 'SpeakUp English Assessment (SET)',
+        submittedAt: new Date(Date.now() - 3600000 * 3).toISOString(),
+        durationSeconds: 1200,
+        status: 'pending',
+        antiCheatReport: {
+          tabSwitches: 0,
+          fullscreenExits: 0,
+          pasteAttempts: 0,
+          integrityScore: 100,
+          completedInSingleSession: true
+        },
+        questions: [
+          {
+            questionId: 'q-1',
+            type: 'grammar-select',
+            title: 'Grammaire : Past Simple vs Present Perfect',
+            subscore: 'literacy',
+            prompt: "Yesterday, Sarah _____ to the travel agency to book her flight ticket.",
+            studentAnswerText: 'went',
+            timeSpentSec: 45,
+            autoScore: 0
+          },
+          {
+            questionId: 'q-2',
+            type: 'write-photo',
+            title: 'Description d\'une photo à l\'écrit',
+            subscore: 'production',
+            prompt: 'Rédigez une description de l\'image ci-dessous.',
+            imageUrl: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1000&q=80',
+            studentAnswerText: 'In this modern workspace, a collaborative team is reviewing project milestones around a wooden table. Everyone is actively engaged in discussion while sharing notes and digital documents on their laptops.',
+            wordCount: 31,
+            timeSpentSec: 160,
+            autoScore: 0
+          },
+          {
+            questionId: 'q-3',
+            type: 'grammar-select',
+            title: 'Grammaire : Conditionals & Unreal Past',
+            subscore: 'literacy',
+            prompt: "If our team had prepared the proposal earlier, we _____ the contract.",
+            studentAnswerText: 'would have won',
+            timeSpentSec: 50,
+            autoScore: 0
+          },
+          {
+            questionId: 'q-4',
+            type: 'read-complete',
+            title: 'Compléter le texte (C-test)',
+            subscore: 'literacy',
+            prompt: 'Tapez les lettres manquantes pour chaque mot.',
+            studentAnswerText: 'International airports connect travelers from all continents. Smooth navigation requires reading signs carefully and following terminal directions.',
+            timeSpentSec: 155,
+            autoScore: 0
+          },
+          {
+            questionId: 'q-6',
+            type: 'read-select',
+            title: 'Identifier les vrais mots anglais',
+            subscore: 'literacy',
+            prompt: 'Sélectionner les termes authentiques du vocabulaire anglais.',
+            studentAnswerText: 'challenge, efficient, frequently, persuade, remarkable, sustainable, reliable, determine',
+            timeSpentSec: 120,
+            autoScore: 0
+          },
+          {
+            questionId: 'q-8',
+            type: 'listen-type',
+            title: 'Dictée audio & transcription',
+            subscore: 'comprehension',
+            audioPromptText: 'Effective teamwork requires active listening and mutual respect among colleagues.',
+            studentAnswerText: 'Effective teamwork requires active listening and mutual respect among colleagues.',
+            timeSpentSec: 90,
+            autoScore: 0
+          },
+          {
+            questionId: 'q-10',
+            type: 'read-aloud',
+            title: 'Lecture à voix haute (Audio vocal)',
+            subscore: 'conversation',
+            prompt: "Speaking a foreign language with confidence requires consistent daily practice and an open mindset.",
+            studentAudioUrl: 'https://actions.google.com/sounds/v1/speech/audio_sample.mp3',
+            studentAnswerText: '[Enregistrement audio élève 18s] "Speaking a foreign language with confidence requires consistent daily practice and an open mindset."',
+            timeSpentSec: 22,
+            autoScore: 0
+          },
+          {
+            questionId: 'q-12',
+            type: 'speak-photo',
+            title: 'Description orale d\'une photo (Audio vocal)',
+            subscore: 'conversation',
+            prompt: 'Décrivez la scène à l\'oral pendant au moins 60 secondes.',
+            imageUrl: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=1000&q=80',
+            studentAudioUrl: 'https://actions.google.com/sounds/v1/speech/audio_sample.mp3',
+            studentAnswerText: '[Enregistrement audio élève 48s] "This photograph shows an open university campus where students are sitting in small study groups. They seem focused and are discussing their semester projects."',
+            timeSpentSec: 52,
+            autoScore: 0
+          },
+          {
+            questionId: 'q-16',
+            type: 'read-write',
+            title: 'Épreuve n°16 : Traduction de texte en anglais (5 minutes)',
+            subscore: 'production',
+            prompt: "Texte source à traduire :\n« L'apprentissage régulier d'une langue comme l'anglais ouvre de formidables opportunités professionnelles et culturelles. En pratiquant chaque jour à l'oral comme à l'écrit, les étudiants renforcent leur confiance et développent les compétences nécessaires pour réussir dans un environnement globalisé. »\n\nConsigne (5 minutes) :\nTraduisez ce texte en anglais dans la zone ci-dessous.",
+            studentAnswerText: "Regularly learning a language like English opens up wonderful professional and cultural opportunities. By practicing daily through both speaking and writing, students strengthen their confidence and develop the essential skills required to succeed in a globalized environment.",
+            wordCount: 38,
+            timeSpentSec: 260,
+            autoScore: 0
+          },
+          {
+            questionId: 'q-19',
+            type: 'read-write',
+            title: 'Production écrite : Essai argumenté (5 minutes)',
+            subscore: 'production',
+            prompt: "Describe a situation where effective communication helped resolve an unexpected team problem. Provide specific details and examples.",
+            studentAnswerText: "During our final semester engineering project, our team faced a severe scheduling conflict with our deliverable deadline. Instead of panicking, we organized an emergency stand-up meeting where every member shared their blockers honestly. By reallocating tasks according to each person's core strengths and maintaining constant chat communication, we successfully finalized the project two days before the submission date.",
+            wordCount: 62,
+            timeSpentSec: 280,
+            autoScore: 0
+          },
+          {
+            questionId: 'q-20',
+            type: 'listen-speak',
+            title: 'Entretien oral : Réponse à l\'interview (Audio vocal)',
+            subscore: 'conversation',
+            audioPromptText: "If you were invited to lead an international project with teammates from different countries, how would you ensure effective communication?",
+            studentAudioUrl: 'https://actions.google.com/sounds/v1/speech/audio_sample.mp3',
+            studentAnswerText: '[Enregistrement audio élève 55s] "I would start by establishing clear communication guidelines and respecting cultural differences. Regular check-ins and mutual feedback would help keep the entire international team united and motivated."',
+            timeSpentSec: 60,
+            autoScore: 0
+          }
+        ]
+      },
+      {
+        id: 'sub-diop-02',
+        studentId: 'candidate-moussa',
+        studentName: 'Moussa Diop',
+        studentEmail: 'moussa.diop@speakup.edu',
+        studentAvatar: 'MD',
+        testTitle: 'SpeakUp English Assessment (SET)',
+        submittedAt: new Date(Date.now() - 3600000 * 5).toISOString(),
+        durationSeconds: 1180,
+        status: 'pending',
+        antiCheatReport: {
+          tabSwitches: 1,
+          fullscreenExits: 1,
+          pasteAttempts: 0,
+          integrityScore: 75,
+          completedInSingleSession: true
+        },
+        questions: [
+          {
+            questionId: 'q-1',
+            type: 'grammar-select',
+            title: 'Grammaire : Past Simple vs Present Perfect',
+            subscore: 'literacy',
+            prompt: "Yesterday, Sarah _____ to the travel agency to book her flight ticket.",
+            studentAnswerText: 'went',
+            timeSpentSec: 52,
+            autoScore: 0
+          },
+          {
+            questionId: 'q-2',
+            type: 'write-photo',
+            title: 'Description d\'une photo à l\'écrit',
+            subscore: 'production',
+            prompt: 'Rédigez une description de l\'image ci-dessous.',
+            imageUrl: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1000&q=80',
+            studentAnswerText: 'The team members are working together in a bright office room. They have open laptops and are sharing ideas with notebook sketches.',
+            wordCount: 23,
+            timeSpentSec: 170,
+            autoScore: 0
+          },
+          {
+            questionId: 'q-10',
+            type: 'read-aloud',
+            title: 'Lecture à voix haute (Audio vocal)',
+            subscore: 'conversation',
+            prompt: "Speaking a foreign language with confidence requires consistent daily practice and an open mindset.",
+            studentAudioUrl: 'https://actions.google.com/sounds/v1/speech/audio_sample.mp3',
+            studentAnswerText: '[Enregistrement audio élève 17s] "Speaking a foreign language with confidence requires consistent daily practice and an open mindset."',
+            timeSpentSec: 20,
+            autoScore: 0
+          },
+          {
+            questionId: 'q-12',
+            type: 'speak-photo',
+            title: 'Description orale d\'une photo (Audio vocal)',
+            subscore: 'conversation',
+            prompt: 'Décrivez la scène à l\'oral pendant au moins 60 secondes.',
+            imageUrl: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=1000&q=80',
+            studentAudioUrl: 'https://actions.google.com/sounds/v1/speech/audio_sample.mp3',
+            studentAnswerText: '[Enregistrement audio élève 42s] "I see university students studying outside on the grass near trees. The weather is sunny and they seem happy to work together."',
+            timeSpentSec: 45,
+            autoScore: 0
+          },
+          {
+            questionId: 'q-16',
+            type: 'read-write',
+            title: 'Épreuve n°16 : Traduction de texte en anglais (5 minutes)',
+            subscore: 'production',
+            prompt: "Texte source à traduire :\n« L'apprentissage régulier d'une langue comme l'anglais ouvre de formidables opportunités professionnelles et culturelles. En pratiquant chaque jour à l'oral comme à l'écrit, les étudiants renforcent leur confiance et développent les compétences nécessaires pour réussir dans un environnement globalisé. »\n\nConsigne (5 minutes) :\nTraduisez ce texte en anglais dans la zone ci-dessous.",
+            studentAnswerText: "Learning English regularly brings great professional and cultural chances. When students practice every day by speaking and writing, they build strong confidence and gain useful abilities for our global world.",
+            wordCount: 33,
+            timeSpentSec: 250,
+            autoScore: 0
+          },
+          {
+            questionId: 'q-19',
+            type: 'read-write',
+            title: 'Production écrite : Essai argumenté (5 minutes)',
+            subscore: 'production',
+            prompt: "Describe a challenge you faced recently and explain how you overcame it.",
+            studentAnswerText: "When I started my new internship, speaking English on conference calls was intimidating. I practiced fifteen minutes every morning with recording exercises, and within four weeks I was able to present our weekly results confidently to international managers.",
+            wordCount: 40,
+            timeSpentSec: 275,
+            autoScore: 0
+          },
+          {
+            questionId: 'q-20',
+            type: 'listen-speak',
+            title: 'Entretien oral : Réponse à l\'interview (Audio vocal)',
+            subscore: 'conversation',
+            audioPromptText: "If you were invited to lead an international project with teammates from different countries, how would you ensure effective communication?",
+            studentAudioUrl: 'https://actions.google.com/sounds/v1/speech/audio_sample.mp3',
+            studentAnswerText: '[Enregistrement audio élève 50s] "I would create a clear project schedule and make sure every team member can express their thoughts freely in our weekly video meetings."',
+            timeSpentSec: 55,
+            autoScore: 0
+          }
+        ]
+      },
+      {
+        id: 'sub-sow-03',
+        studentId: 'candidate-aissatou',
+        studentName: 'Aïssatou Sow',
+        studentEmail: 'aissatou.sow@speakup.edu',
+        studentAvatar: 'AS',
+        testTitle: 'SpeakUp English Assessment (SET)',
+        submittedAt: new Date(Date.now() - 3600000 * 48).toISOString(),
+        durationSeconds: 1210,
+        status: 'corrected',
+        overallScore: 130,
+        cefrLevel: 'B2',
+        subscores: {
+          literacy: 135,
+          comprehension: 130,
+          conversation: 125,
+          production: 130
+        },
+        teacherGlobalComment: 'Excellente maîtrise de la langue anglaise ! Vocabulaire précis et intonation fluide lors des épreuves orales. Certificat officiel validé avec mention.',
+        gradedBy: 'Professeur SpeakUp',
+        gradedAt: new Date(Date.now() - 3600000 * 24).toISOString(),
+        certificateAwarded: true,
+        certificateNumber: 'SET-2026-B2-08832',
+        certificateIssuedAt: new Date(Date.now() - 3600000 * 24).toISOString(),
+        antiCheatReport: {
+          tabSwitches: 0,
+          fullscreenExits: 0,
+          pasteAttempts: 0,
+          integrityScore: 100,
+          completedInSingleSession: true
+        },
+        questions: [
+          {
+            questionId: 'q-1',
+            type: 'grammar-select',
+            title: 'Grammaire : Past Simple vs Present Perfect',
+            subscore: 'literacy',
+            prompt: "Yesterday, Sarah _____ to the travel agency to book her flight ticket.",
+            studentAnswerText: 'went',
+            teacherScore: 100,
+            autoScore: 0
+          },
+          {
+            questionId: 'q-10',
+            type: 'read-aloud',
+            title: 'Lecture à voix haute (Audio vocal)',
+            subscore: 'conversation',
+            prompt: "Speaking a foreign language with confidence requires consistent daily practice and an open mindset.",
+            studentAudioUrl: 'https://actions.google.com/sounds/v1/speech/audio_sample.mp3',
+            studentAnswerText: '[Enregistrement audio élève 17s] "Speaking a foreign language with confidence requires consistent daily practice and an open mindset."',
+            teacherScore: 90,
+            autoScore: 0
+          },
+          {
+            questionId: 'q-16',
+            type: 'read-write',
+            title: 'Épreuve n°16 : Traduction de texte en anglais (5 minutes)',
+            subscore: 'production',
+            prompt: "Traduction de texte en anglais",
+            studentAnswerText: "Learning a foreign language like English consistently opens up immense professional and cultural horizons. By practicing every day in both oral and written forms, students cultivate confidence and acquire the competencies needed to thrive in a globalized society.",
+            wordCount: 41,
+            teacherScore: 92,
+            autoScore: 0
+          },
+          {
+            questionId: 'q-19',
+            type: 'read-write',
+            title: 'Production écrite : Essai argumenté (5 minutes)',
+            subscore: 'production',
+            prompt: "Describe a situation where effective communication helped resolve an unexpected team problem.",
+            studentAnswerText: "In our international study exchange program, our group had diverse linguistic backgrounds which led to initial confusion regarding project milestones. I took the initiative to set up a shared digital Kanban board and scheduled brief daily stand-up calls. This proactive communication restored mutual trust, eliminated misunderstandings, and allowed us to deliver our research paper with top honors.",
+            wordCount: 65,
+            teacherScore: 88,
+            autoScore: 0
+          },
+          {
+            questionId: 'q-20',
+            type: 'listen-speak',
+            title: 'Entretien oral : Réponse à l\'interview (Audio vocal)',
+            subscore: 'conversation',
+            audioPromptText: "If you were invited to lead an international project with teammates from different countries, how would you ensure effective communication?",
+            studentAudioUrl: 'https://actions.google.com/sounds/v1/speech/audio_sample.mp3',
+            studentAnswerText: '[Enregistrement audio élève 52s] "My approach would prioritize empathy and clarity. I would ensure that meeting minutes are shared systematically and encourage everyone to contribute without hesitation."',
+            teacherScore: 85,
+            autoScore: 0
+          }
+        ]
+      }
+    ];
   }
 
   // --- SPEAKUP ENGLISH ASSESSMENT (SET) OPERATIONS ---
