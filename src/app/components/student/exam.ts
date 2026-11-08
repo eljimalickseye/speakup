@@ -1146,8 +1146,13 @@ export interface DetQuestion {
                             </div>
                           } @else if (q.type === 'read-write') {
                             <div style="margin-top:8px; font-size:13px; color:var(--text-primary); background:white; padding:12px 14px; border-radius:8px; border:1px solid var(--border);">
-                              <div><strong>Sujet :</strong> {{ q.promptText }}</div>
-                              <div style="margin-top:4px; font-size:11.5px; color:#4F46E5; font-weight:700;">Longueur requise : au moins {{ q.minWords }} mots rédigés en 5 minutes.</div>
+                              <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                                <span style="font-size:11px; font-weight:800; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:6px;">
+                                  {{ isTranslationQuestion(q) ? 'Traduction de texte (5 min)' : 'Production Écrite (5 min)' }}
+                                </span>
+                                <span style="font-size:11.5px; color:#4F46E5; font-weight:700;">Longueur requise : au moins {{ q.minWords }} mots • 5 minutes</span>
+                              </div>
+                              <div style="white-space:pre-line; color:#334155; font-size:12.5px; line-height:1.4;">{{ q.promptText }}</div>
                             </div>
                           } @else if (q.type === 'listen-speak') {
                             <div style="margin-top:8px; display:flex; align-items:center; gap:10px;">
@@ -1998,8 +2003,14 @@ export interface DetQuestion {
             <!-- ====================================================== -->
             @else if (q.type === 'read-write') {
               <div style="display:flex; flex-direction:column; gap:16px;">
-                <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:12px; padding:18px;">
-                  <p style="font-size:15px; font-weight:700; color:#1E1B4B; line-height:1.5; margin:0;">
+                @if (isTranslationQuestion(q)) {
+                  <div style="display:inline-flex; align-items:center; gap:8px; background:#EFF6FF; color:#1D4ED8; border:1.5px solid #BFDBFE; border-radius:10px; padding:8px 14px; font-size:12.5px; font-weight:800; align-self:flex-start; box-shadow:0 2px 6px rgba(29,78,216,0.08);">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>
+                    <span>{{ t("Épreuve n°16 : Traduction de texte (Temps alloué : 5 minutes)", "Task #16: Text Translation Task (Time allowed: 5 minutes)") }}</span>
+                  </div>
+                }
+                <div style="background:#F8FAFC; border:1.5px solid #E2E8F0; border-radius:12px; padding:18px;">
+                  <p style="font-size:15px; font-weight:700; color:#1E1B4B; line-height:1.6; margin:0; white-space:pre-line;">
                     {{ q.promptText }}
                   </p>
                 </div>
@@ -2007,16 +2018,16 @@ export interface DetQuestion {
                 <textarea
                   [(ngModel)]="currentTextAnswer"
                   class="det-textarea"
-                  [placeholder]="t('Rédigez votre réponse détaillée ici...', 'Write your extended response here...')"
+                  [placeholder]="isTranslationQuestion(q) ? t('Saisissez ici votre traduction complète et soignée en anglais...', 'Type your complete, polished English translation here...') : t('Rédigez votre réponse détaillée ici...', 'Write your extended response here...')"
                   rows="7"
                   autofocus>
                 </textarea>
 
                 <div style="display:flex; justify-content:space-between; align-items:center; font-size:11.5px; color:#64748B;">
-                  <span [style.color]="getWordCount(currentTextAnswer) >= (q.minWords || 50) ? '#059669' : '#D97706'" style="font-weight:700;">
-                    {{ getWordCount(currentTextAnswer) }} / {{ q.minWords || 50 }} {{ t("mots requis", "words required") }}
+                  <span [style.color]="getWordCount(currentTextAnswer) >= (q.minWords || 35) ? '#059669' : '#D97706'" style="font-weight:700;">
+                    {{ getWordCount(currentTextAnswer) }} / {{ q.minWords || 35 }} {{ isTranslationQuestion(q) ? t("mots traduits", "words translated") : t("mots requis", "words required") }}
                   </span>
-                  <span>{{ t("Développez votre argumentation", "Provide detailed arguments") }}</span>
+                  <span>{{ isTranslationQuestion(q) ? t("Traduisez avec fidélité, grammaire et fluidité", "Translate with accuracy, grammar, and fluency") : t("Développez votre argumentation", "Provide detailed arguments") }}</span>
                 </div>
               </div>
             }
@@ -4587,6 +4598,12 @@ export class StudentExamComponent implements OnDestroy {
     }
   }
 
+  isTranslationQuestion(q?: DetQuestion | null): boolean {
+    if (!q) return false;
+    const combined = `${q.titleFr || ''} ${q.titleEn || ''} ${q.promptText || ''} ${q.id || ''}`.toLowerCase();
+    return combined.includes('traduction') || combined.includes('translation') || !!(q.id && q.id.startsWith('tr-'));
+  }
+
   getModuleDescription(module: DetQuestion): string {
     switch (module.type) {
       case 'write-photo': return this.t("Rédigez une ou plusieurs phrases décrivant l'image en 1 minute.", "Write one or more sentences describing the image in 1 minute.");
@@ -4595,7 +4612,11 @@ export class StudentExamComponent implements OnDestroy {
       case 'read-select': return this.t("Identifiez les vrais mots anglais parmi les néologismes.", "Select the real English words in the list within 60 seconds.");
       case 'listen-type': return this.t("Écoutez l'énoncé audio et tapez exactement ce que vous entendez.", "Type the statement that you hear with accurate spelling.");
       case 'read-aloud': return this.t("Lisez la phrase à haute voix avec le micro en 20 secondes.", "Read the sentence out loud into the microphone.");
-      case 'read-write': return this.t("Rédigez une réponse argumentée d'au moins 50 mots en 5 minutes.", "Respond to the prompt with at least 50 words in 5 minutes.");
+      case 'read-write': 
+        if (this.isTranslationQuestion(module)) {
+          return this.t("Traduisez fidèlement le texte proposé en anglais soigné en 5 minutes.", "Translate the given passage into polished, accurate English in 5 minutes.");
+        }
+        return this.t("Rédigez une réponse argumentée d'au moins 50 mots en 5 minutes.", "Respond to the prompt with at least 50 words in 5 minutes.");
       case 'listen-speak': return this.t("Écoutez la question et exprimez votre opinion oralement.", "Listen to the prompt and speak your opinion for 90 seconds.");
       default: return '';
     }
@@ -4874,6 +4895,10 @@ export class StudentExamComponent implements OnDestroy {
       // Fallback: generate dynamically from course lessons (A2-B2)
       const generated = this.assessmentGenerator.generateAssessmentFromLessons(this.lessons(), 'A2-B2');
       seq = generated.questions;
+    }
+    // Guarantee that Question 16 (index 15) is the 5-minute translation task
+    if (seq.length >= 16 && !this.isTranslationQuestion(seq[15])) {
+      seq[15] = this.assessmentGenerator.buildTranslationQuestion(this.targetGeneratorLevel(), this.lessons());
     }
     this.detTestSequence.set(seq);
     this.currentDetIndex.set(0);

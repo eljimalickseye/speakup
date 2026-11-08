@@ -162,8 +162,8 @@ export class AssessmentGeneratorService {
       // Q15: Grammar - Gerunds vs Infinitives (180s)
       this.buildGrammarSelectQuestion('gerunds', targetLevel, lessonTitles[0] || 'Gerunds & Infinitives', 15),
 
-      // Q16: Listen and Type - Dictation 2 (180s)
-      this.buildListenTypeQuestion(targetLevel, filteredLessons, combinedVocab, 2),
+      // Q16: Traduction de texte (300s = 5 minutes)
+      this.buildTranslationQuestion(targetLevel, filteredLessons, primaryTheme),
 
       // Q17: Grammar - Linking Words & Discourse Markers (180s)
       this.buildGrammarSelectQuestion('connectors', targetLevel, lessonTitles[0] || 'Discourse Connectors', 17),
@@ -788,6 +788,54 @@ export class AssessmentGeneratorService {
       minWords: chosen.minWords,
       targetLevel: level,
       sourceLessonTitle: lessons.map(l => l.title).join(' / ')
+    };
+  }
+
+  /**
+   * Question: Text Translation / Traduction de texte (300s / 5 minutes)
+   * Question #16: Students receive a passage and have 5 minutes to translate it into English.
+   */
+  public buildTranslationQuestion(
+    level: 'A2' | 'B1' | 'B2' | 'A2-B2' = 'A2-B2',
+    lessons: Lesson[] = [],
+    theme: string = 'general'
+  ): DetQuestion {
+    const translationPrompts = {
+      A2: {
+        fr: "Texte source à traduire :\n« Bienvenue sur la plateforme SpeakUp. Chaque jour, les élèves écoutent des dialogues en anglais, apprennent de nouveaux mots et s'entraînent à parler. Une pratique régulière permet de progresser rapidement et avec enthousiasme. »\n\nConsigne / Instructions (5 minutes) :\nTraduisez ce texte en anglais dans la zone ci-dessous en formant des phrases claires et correctes.\nTranslate this passage into simple, accurate English.",
+        en: "Source text to translate:\n« Bienvenue sur la plateforme SpeakUp. Chaque jour, les élèves écoutent des dialogues en anglais, apprennent de nouveaux mots et s'entraînent à parler. Une pratique régulière permet de progresser rapidement et avec enthousiasme. »\n\nInstructions (5 minutes):\nTranslate this text into English. Write your translation below using clear, accurate sentences (At least 25 words).",
+        minWords: 25
+      },
+      B1: {
+        fr: "Texte source à traduire :\n« De nos jours, maîtriser l'anglais est un atout indispensable pour voyager et développer sa carrière. Même si l'apprentissage d'une langue demande de la patience, communiquer régulièrement avec des professeurs et des collègues permet de surmonter ses hésitations et de gagner en fluidité. »\n\nConsigne / Instructions (5 minutes) :\nTraduisez ce texte en anglais dans la zone ci-dessous en soignant les temps verbaux et les connecteurs logiques.\nTranslate this passage into natural, accurate English.",
+        en: "Source text to translate:\n« De nos jours, maîtriser l'anglais est un atout indispensable pour voyager et développer sa carrière. Même si l'apprentissage d'une langue demande de la patience, communiquer régulièrement avec des professeurs et des collègues permet de surmonter ses hésitations et de gagner en fluidité. »\n\nInstructions (5 minutes):\nTranslate this text into English. Write your translation below with attention to tenses, vocabulary, and sentence flow (At least 35 words).",
+        minWords: 35
+      },
+      B2: {
+        fr: "Texte source à traduire :\n« L'intégration des technologies numériques et du travail collaboratif a profondément transformé le monde professionnel international. Désormais, les équipes mènent des projets à distance à travers différents pays, ce qui exige une solide maîtrise linguistique et une réelle ouverture interculturelle. »\n\nConsigne / Instructions (5 minutes) :\nTraduisez ce texte en anglais dans la zone ci-dessous en adoptant un registre soigné, un vocabulaire précis et une syntaxe élégante.\nTranslate this passage into advanced professional English.",
+        en: "Source text to translate:\n« L'intégration des technologies numériques et du travail collaboratif a profondément transformé le monde professionnel international. Désormais, les équipes mènent des projets à distance à travers différents pays, ce qui exige une solide maîtrise linguistique et une réelle ouverture interculturelle. »\n\nInstructions (5 minutes):\nTranslate this passage into polished, high-level English with rich vocabulary and sophisticated sentence structure (At least 45 words).",
+        minWords: 45
+      },
+      'A2-B2': {
+        fr: "Texte source à traduire :\n« L'apprentissage régulier d'une langue comme l'anglais ouvre de formidables opportunités professionnelles et culturelles. En pratiquant chaque jour à l'oral comme à l'écrit, les étudiants renforcent leur confiance et développent les compétences nécessaires pour réussir dans un environnement globalisé. »\n\nConsigne / Instructions (5 minutes) :\nTraduisez ce texte en anglais dans la zone ci-dessous en formant des phrases fluides, riches en vocabulaire et grammaticalement exactes.\nTranslate this passage into fluent, accurate English.",
+        en: "Source text to translate:\n« L'apprentissage régulier d'une langue comme l'anglais ouvre de formidables opportunités professionnelles et culturelles. En pratiquant chaque jour à l'oral comme à l'écrit, les étudiants renforcent leur confiance et développent les compétences nécessaires pour réussir dans un environnement globalisé. »\n\nInstructions (5 minutes):\nTranslate this text into English. Write your translation below with accurate grammar, rich vocabulary, and clear syntax (At least 35 words).",
+        minWords: 35
+      }
+    };
+
+    const chosen = translationPrompts[level] || translationPrompts['A2-B2'];
+
+    return {
+      id: `tr-${Date.now()}-16`,
+      type: 'read-write',
+      titleFr: "Épreuve n°16 : Traduction de texte en anglais (5 minutes)",
+      titleEn: "Task #16: Text Translation into English (5 minutes)",
+      subscore: 'production',
+      timeLimitSec: 300, // 5 minutes = 300 seconds
+      promptText: chosen.fr,
+      minWords: chosen.minWords,
+      targetLevel: level,
+      sourceLessonTitle: lessons[0]?.title || 'Translation Task'
     };
   }
 
