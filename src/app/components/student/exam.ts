@@ -697,7 +697,7 @@ export interface DetQuestion {
                         [style.border-color]="targetGeneratorLevel() === 'A2-B2' ? '#4F46E5' : 'var(--border)'"
                         [style.background]="targetGeneratorLevel() === 'A2-B2' ? '#EEF2FF' : 'transparent'"
                         style="display:flex; align-items:flex-start; gap:10px; padding:12px 14px; border-radius:12px; border:1.5px solid; cursor:pointer; transition:all 0.15s ease;">
-                        <input type="radio" name="level" [checked]="targetGeneratorLevel() === 'A2-B2'" style="margin-top:3px; accent-color:#4F46E5;" />
+                        <input type="radio" name="level" [checked]="targetGeneratorLevel() === 'A2-B2'" style="margin-top:3px; accent-color:#4F46E5; pointer-events:none;" />
                         <div>
                           <div style="font-size:13.5px; font-weight:800; color:#1E1B4B; display:flex; align-items:center; gap:6px;">
                             <span>Niveau Global A2–B2 (Équilibré)</span>
@@ -715,7 +715,7 @@ export interface DetQuestion {
                         [style.border-color]="targetGeneratorLevel() === 'A2' ? '#4F46E5' : 'var(--border)'"
                         [style.background]="targetGeneratorLevel() === 'A2' ? '#EEF2FF' : 'transparent'"
                         style="display:flex; align-items:flex-start; gap:10px; padding:12px 14px; border-radius:12px; border:1.5px solid; cursor:pointer; transition:all 0.15s ease;">
-                        <input type="radio" name="level" [checked]="targetGeneratorLevel() === 'A2'" style="margin-top:3px; accent-color:#4F46E5;" />
+                        <input type="radio" name="level" [checked]="targetGeneratorLevel() === 'A2'" style="margin-top:3px; accent-color:#4F46E5; pointer-events:none;" />
                         <div>
                           <div style="font-size:13.5px; font-weight:800; color:#1E1B4B;">Niveau A2 (Élémentaire / Waystage)</div>
                           <div style="font-size:11.5px; color:#475569; margin-top:2px;">
@@ -730,7 +730,7 @@ export interface DetQuestion {
                         [style.border-color]="targetGeneratorLevel() === 'B1' ? '#4F46E5' : 'var(--border)'"
                         [style.background]="targetGeneratorLevel() === 'B1' ? '#EEF2FF' : 'transparent'"
                         style="display:flex; align-items:flex-start; gap:10px; padding:12px 14px; border-radius:12px; border:1.5px solid; cursor:pointer; transition:all 0.15s ease;">
-                        <input type="radio" name="level" [checked]="targetGeneratorLevel() === 'B1'" style="margin-top:3px; accent-color:#4F46E5;" />
+                        <input type="radio" name="level" [checked]="targetGeneratorLevel() === 'B1'" style="margin-top:3px; accent-color:#4F46E5; pointer-events:none;" />
                         <div>
                           <div style="font-size:13.5px; font-weight:800; color:#1E1B4B;">Niveau B1 (Intermédiaire / Threshold)</div>
                           <div style="font-size:11.5px; color:#475569; margin-top:2px;">
@@ -745,7 +745,7 @@ export interface DetQuestion {
                         [style.border-color]="targetGeneratorLevel() === 'B2' ? '#4F46E5' : 'var(--border)'"
                         [style.background]="targetGeneratorLevel() === 'B2' ? '#EEF2FF' : 'transparent'"
                         style="display:flex; align-items:flex-start; gap:10px; padding:12px 14px; border-radius:12px; border:1.5px solid; cursor:pointer; transition:all 0.15s ease;">
-                        <input type="radio" name="level" [checked]="targetGeneratorLevel() === 'B2'" style="margin-top:3px; accent-color:#4F46E5;" />
+                        <input type="radio" name="level" [checked]="targetGeneratorLevel() === 'B2'" style="margin-top:3px; accent-color:#4F46E5; pointer-events:none;" />
                         <div>
                           <div style="font-size:13.5px; font-weight:800; color:#1E1B4B;">Niveau B2 (Intermédiaire Supérieur / Vantage)</div>
                           <div style="font-size:11.5px; color:#475569; margin-top:2px;">
@@ -824,7 +824,7 @@ export interface DetQuestion {
                           (click)="toggleLessonSelection(l.id)"
                           [style.background]="isLessonSelected(l.id) ? '#F8FAFC' : 'transparent'"
                           style="display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px; border:1px solid var(--border); cursor:pointer; transition:all 0.15s ease;">
-                          <input type="checkbox" [checked]="isLessonSelected(l.id)" style="accent-color:#4F46E5;" />
+                          <input type="checkbox" [checked]="isLessonSelected(l.id)" style="accent-color:#4F46E5; pointer-events:none;" />
                           <div style="flex:1; min-width:0;">
                             <div style="font-size:13px; font-weight:700; color:var(--text-primary); text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">
                               {{ l.title }}
@@ -840,13 +840,25 @@ export interface DetQuestion {
                     </div>
 
                     <!-- Action Button: Generate -->
-                    <div style="margin-top:16px;">
+                    <div style="margin-top:16px; display:flex; flex-direction:column; gap:8px;">
                       <button
                         type="button"
-                        (click)="triggerGenerateAssessment()"
-                        style="width:100%; padding:12px 18px; border:none; border-radius:12px; background:linear-gradient(135deg, #4F46E5 0%, #4338CA 100%); color:white; font-size:14px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 14px rgba(79,70,229,0.35); transition:all 0.15s ease;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                        <span>Générer l'Évaluation depuis ces Leçons</span>
+                        (click)="triggerGenerateAssessment(true, false)"
+                        [disabled]="isGenerating()"
+                        style="width:100%; padding:13px 18px; border:none; border-radius:12px; background:linear-gradient(135deg, #4F46E5 0%, #4338CA 100%); color:white; font-size:14px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 14px rgba(79,70,229,0.35); transition:all 0.15s ease;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" [class.spin-icon]="isGenerating()">
+                          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                        </svg>
+                        <span>{{ isGenerating() ? 'Génération en cours...' : 'Générer l\'Évaluation depuis ces Leçons' }}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        (click)="triggerGenerateAssessment(true, true)"
+                        [disabled]="isGenerating()"
+                        style="width:100%; padding:10px 18px; border:1.5px solid #10B981; border-radius:12px; background:#ECFDF5; color:#047857; font-size:12.5px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:7px; transition:all 0.15s ease;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                        <span>Générer & Activer comme Examen Officiel de la Classe</span>
                       </button>
                     </div>
 
@@ -867,7 +879,7 @@ export interface DetQuestion {
 
                 <!-- PREVIEW OF GENERATED ASSESSMENT -->
                 @if (genAssessment(); as ga) {
-                  <div style="background:var(--surface-1); border:1.5px solid var(--border); border-radius:18px; padding:24px; margin-bottom:30px;">
+                  <div id="generated-assessment-preview" style="background:var(--surface-1); border:1.5px solid var(--border); border-radius:18px; padding:24px; margin-bottom:30px; scroll-margin-top:30px;">
                     
                     <!-- Header of Preview -->
                     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; margin-bottom:20px; border-bottom:1px solid var(--border); padding-bottom:16px;">
@@ -3192,6 +3204,9 @@ export class StudentExamComponent implements OnDestroy {
       if (this.selectedLessonIds().length === 0 && list.length > 0) {
         this.selectedLessonIds.set(list.map(l => l.id));
       }
+      if (!this.genAssessment()) {
+        this.triggerGenerateAssessment(false);
+      }
     });
 
     this.db.observeOfficialAssessmentQuestions().subscribe(qList => {
@@ -3370,25 +3385,52 @@ export class StudentExamComponent implements OnDestroy {
     this.triggerGenerateAssessment(false);
   }
 
-  triggerGenerateAssessment(showAnimation: boolean = false) {
+  async triggerGenerateAssessment(showAnimation: boolean = true, autoSaveAsOfficial: boolean = false) {
     if (showAnimation) {
       this.isGenerating.set(true);
-      setTimeout(() => {
-        const meta = this.assessmentGenerator.generateAssessmentFromLessons(
-          this.lessons(),
-          this.targetGeneratorLevel(),
-          this.selectedLessonIds().length > 0 ? this.selectedLessonIds() : undefined
-        );
-        this.genAssessment.set(meta);
-        this.isGenerating.set(false);
-      }, 350);
-    } else {
+      await new Promise(r => setTimeout(r, 350));
+    }
+
+    try {
+      const lessonsList = this.lessons();
+      const level = this.targetGeneratorLevel();
+      const selectedIds = this.selectedLessonIds().length > 0 ? this.selectedLessonIds() : undefined;
+
       const meta = this.assessmentGenerator.generateAssessmentFromLessons(
-        this.lessons(),
-        this.targetGeneratorLevel(),
-        this.selectedLessonIds().length > 0 ? this.selectedLessonIds() : undefined
+        lessonsList,
+        level,
+        selectedIds
       );
       this.genAssessment.set(meta);
+
+      if (autoSaveAsOfficial) {
+        await this.db.saveOfficialAssessmentQuestions(meta.questions);
+        this.saveSuccessNotification.set(
+          `Évaluation ${level} générée et activée avec succès comme Examen Officiel de la classe (${meta.questions.length} épreuves réelles) !`
+        );
+      } else if (showAnimation) {
+        this.saveSuccessNotification.set(
+          `Nouvelle évaluation ${level} générée avec succès (${meta.questions.length} épreuves basées sur vos leçons) ! Vous pouvez la tester ci-dessous ou la publier.`
+        );
+      }
+
+      if (showAnimation) {
+        setTimeout(() => {
+          const previewEl = document.getElementById('generated-assessment-preview');
+          if (previewEl) {
+            previewEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 150);
+
+        setTimeout(() => {
+          this.saveSuccessNotification.set(null);
+        }, 6500);
+      }
+    } catch (e) {
+      console.error('Error generating assessment:', e);
+      this.dialogService.alert('Erreur', 'Impossible de générer l\'évaluation. Veuillez réessayer.', 'info');
+    } finally {
+      this.isGenerating.set(false);
     }
   }
 
