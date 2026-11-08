@@ -8,6 +8,7 @@ import {
 import { environment } from '../../environments/environment';
 import { BehaviorSubject, Observable, combineLatest } from 'rxjs';
 import { getAuth, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { DetQuestion } from './assessment-generator.service';
 
 export interface UserGarden {
   trees: number;
@@ -632,6 +633,7 @@ export class DatabaseService {
   private vocabGames$ = new BehaviorSubject<VocabGame[]>([]);
   private examAttempts$ = new BehaviorSubject<ExamAttempt[]>([]);
   private assessmentSubmissions$ = new BehaviorSubject<AssessmentSubmission[]>([]);
+  private officialAssessmentQuestions$ = new BehaviorSubject<DetQuestion[]>([]);
   private vocabGameAttempts$ = new BehaviorSubject<VocabGameAttempt[]>([]);
   private wordOfTheDay$ = new BehaviorSubject<WordOfTheDay>({
     word: 'Kitchen',
@@ -793,8 +795,61 @@ export class DatabaseService {
       { id: 'teacher', name: 'AT - Teacher', role: 'teacher', level: 'C2', xp: 0, streak: 0, lastActive: 'Today', avatar: 'AT', username: 'teacher', password: 'admin123', status: 'approved' }
     ];
 
-    // 2. Lessons (Empty by default)
-    const defaultLessons: Lesson[] = [];
+    // 2. Lessons (Default A2-B2 Curriculum)
+    const defaultLessons: Lesson[] = [
+      {
+        id: 'curric-a2-travel',
+        title: 'Travel Essentials & Airport Navigation',
+        level: 'A2',
+        type: 'Vocabulary',
+        content: '<p>Master essential airport navigation, check-in terminology, flight schedules, and polite inquiries when traveling abroad.</p>',
+        vocabulary: ['boarding pass', 'luggage', 'flight delay', 'departure gate', 'passport control', 'ticket counter', 'customs', 'passenger'],
+        homeworkInstruction: 'Practice asking for directions at an international airport terminal.',
+        dueDate: 'Next week',
+        createdAt: '2026-11-01T10:00:00.000Z',
+        status: 'published',
+        colorTheme: '#0EA5E9'
+      },
+      {
+        id: 'curric-b1-challenges',
+        title: 'Past Experiences & Overcoming Challenges',
+        level: 'B1',
+        type: 'Grammar',
+        content: '<p>Practice contrasting Past Simple and Present Perfect to articulate past achievements, professional hurdles, and overcoming obstacles.</p>',
+        vocabulary: ['accomplishment', 'obstacle', 'resilience', 'decision', 'unexpected', 'solution', 'confidence', 'milestone'],
+        homeworkInstruction: 'Write three structured paragraphs describing a challenge you overcame.',
+        dueDate: 'Next week',
+        createdAt: '2026-11-02T10:00:00.000Z',
+        status: 'published',
+        colorTheme: '#6366F1'
+      },
+      {
+        id: 'curric-b1-meetings',
+        title: 'Professional Communication & Team Meetings',
+        level: 'B1',
+        type: 'Vocabulary',
+        content: '<p>Learn professional expressions for team collaboration, establishing agendas, agreeing/disagreeing politely, and meeting deadlines.</p>',
+        vocabulary: ['collaboration', 'deadline', 'agenda', 'presentation', 'feedback', 'proposal', 'negotiation', 'schedule'],
+        homeworkInstruction: 'Draft an effective team meeting agenda with clear action items.',
+        dueDate: 'Next week',
+        createdAt: '2026-11-03T10:00:00.000Z',
+        status: 'published',
+        colorTheme: '#8B5CF6'
+      },
+      {
+        id: 'curric-b2-sustainability',
+        title: 'Environmental Innovation & Future Technology',
+        level: 'B2',
+        type: 'Reading',
+        content: '<p>Analyze complex texts on green technology, renewable resources, ecological policies, and artificial intelligence in environmental science.</p>',
+        vocabulary: ['sustainability', 'renewable energy', 'breakthrough', 'consequence', 'biodiversity', 'efficiency', 'infrastructure', 'perspective'],
+        homeworkInstruction: 'Synthesize the pros and cons of new renewable energy investments.',
+        dueDate: 'Next week',
+        createdAt: '2026-11-04T10:00:00.000Z',
+        status: 'published',
+        colorTheme: '#10B981'
+      }
+    ];
 
     // 3. Quizzes (Empty by default)
     const defaultQuizzes: Quiz[] = [];
@@ -865,7 +920,15 @@ export class DatabaseService {
         u.countryFlag = this.countryCodeToEmoji(u.countryFlag);
       }
     });
-    const lessons = getLocal('speak_lessons', defaultLessons);
+    let lessons = getLocal('speak_lessons', defaultLessons);
+    if (!lessons || lessons.length === 0) {
+      lessons = defaultLessons;
+      this.saveLocal('speak_lessons', lessons);
+    }
+    const savedAssessmentQuestions = getLocal('speak_official_assessment_questions', []);
+    if (savedAssessmentQuestions && Array.isArray(savedAssessmentQuestions) && savedAssessmentQuestions.length > 0) {
+      this.officialAssessmentQuestions$.next(savedAssessmentQuestions);
+    }
     const quizzes = getLocal('speak_quizzes', defaultQuizzes);
     // Pre-initialize Level Placement Tests for each category
     const placementCategories = [
@@ -2577,7 +2640,7 @@ export class DatabaseService {
       'speak_users', 'speak_lessons', 'speak_quizzes', 'speak_submissions',
       'speak_attendance', 'speak_schedules', 'speak_announcements',
       'speak_payments', 'speak_events', 'speak_current_user_id',
-      'speak_chat_general', 'speak_chat_group-a', 'speak_chat_travel', 'speak_chat_debate'
+      'speak_chat_general', 'speak_chat_group-a', 'speak_chat_travel', 'speak_chat_debate', 'speak_official_assessment_questions'
     ];
     keys.forEach(k => localStorage.removeItem(k));
 
@@ -5480,6 +5543,31 @@ export class DatabaseService {
 
   getStudentExamAttempts(studentId: string): ExamAttempt[] {
     return this.examAttempts$.value.filter(a => a.studentId === studentId);
+  }
+
+  // --- OFFICIAL SPEAKUP ASSESSMENT FROM LESSONS ---
+  observeOfficialAssessmentQuestions(): Observable<DetQuestion[]> {
+    return this.officialAssessmentQuestions$.asObservable();
+  }
+
+  getOfficialAssessmentQuestions(): DetQuestion[] {
+    return this.officialAssessmentQuestions$.value;
+  }
+
+  async saveOfficialAssessmentQuestions(questions: DetQuestion[]): Promise<void> {
+    this.officialAssessmentQuestions$.next(questions);
+    this.saveLocal('speak_official_assessment_questions', questions);
+    if (this.useFirebase) {
+      try {
+        const { setDoc, doc } = await import('firebase/firestore');
+        await setDoc(doc(this.firestore, 'official_assessment', 'current'), {
+          questions,
+          updatedAt: new Date().toISOString()
+        });
+      } catch (e) {
+        console.warn('Firebase official assessment sync error:', e);
+      }
+    }
   }
 
   // --- SPEAKUP ENGLISH ASSESSMENT (SET) OPERATIONS ---

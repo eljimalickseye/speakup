@@ -2,7 +2,8 @@ import { Component, inject, signal, computed, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { DatabaseService, Quiz, UserProfile, ExamAttempt, AssessmentSubmission, AssessmentQuestionAnswer } from '../../services/database.service';
+import { DatabaseService, Quiz, UserProfile, ExamAttempt, AssessmentSubmission, AssessmentQuestionAnswer, Lesson } from '../../services/database.service';
+import { AssessmentGeneratorService, GeneratedAssessmentMetadata } from '../../services/assessment-generator.service';
 import { DialogService } from '../../services/dialog.service';
 
 export interface DetQuestion {
@@ -72,6 +73,22 @@ export interface DetQuestion {
                   <span>Dossiers Élèves</span>
                   @if (pendingSubmissionsCount() > 0) {
                     <span style="background:#EF4444; color:white; font-size:10px; font-weight:800; padding:1px 6px; border-radius:10px;">{{ pendingSubmissionsCount() }}</span>
+                  }
+                </button>
+
+                <button
+                  type="button"
+                  (click)="openGeneratorTab()"
+                  [style.background]="teacherModeTab() === 'generator' ? 'white' : 'transparent'"
+                  [style.color]="teacherModeTab() === 'generator' ? '#4F46E5' : 'var(--text-secondary)'"
+                  [style.box-shadow]="teacherModeTab() === 'generator' ? '0 2px 6px rgba(0,0,0,0.08)' : 'none'"
+                  style="border:none; padding:8px 16px; border-radius:8px; font-weight:700; font-size:12.5px; cursor:pointer; display:flex; align-items:center; gap:6px; transition:all 0.15s ease;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                  </svg>
+                  <span>⚡ Générateur depuis les Leçons (A2–B2)</span>
+                  @if (officialAssessmentQuestions().length > 0) {
+                    <span style="background:#10B981; color:white; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:10px;">Actif</span>
                   }
                 </button>
 
@@ -594,6 +611,329 @@ export interface DetQuestion {
               }
 
             }
+            <!-- MODE 2: LESSONS ASSESSMENT GENERATOR (A2-B2) -->
+            @if (teacherModeTab() === 'generator') {
+              <div style="animation: fadeIn 0.25s ease;">
+
+                <!-- Hero Card: Assessment Generator -->
+                <div style="background:linear-gradient(135deg, #1E1B4B 0%, #312E81 50%, #4338CA 100%); border-radius:18px; padding:28px; color:white; margin-bottom:24px; box-shadow:0 10px 30px rgba(67, 56, 202, 0.25); position:relative; overflow:hidden;">
+                  <div style="position:relative; z-index:2; max-width:760px;">
+                    <div style="display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.15); backdrop-filter:blur(8px); padding:4px 12px; border-radius:20px; font-size:11px; font-weight:800; letter-spacing:0.5px; text-transform:uppercase; margin-bottom:12px; border:1px solid rgba(255,255,255,0.25);">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                      Générateur Pédagogique Intelligent A2–B2
+                    </div>
+                    <h2 style="font-family:'Outfit', sans-serif; font-size:26px; font-weight:800; margin:0 0 10px 0; line-height:1.2;">
+                      Créez l'Évaluation SpeakUp directement depuis vos Leçons
+                    </h2>
+                    <p style="font-size:13.5px; opacity:0.9; margin:0 0 20px 0; line-height:1.6;">
+                      Ce module analyse automatiquement les leçons enregistrées dans la plateforme, en extrait le vocabulaire authentique, les règles grammaticales et les thèmes clés, puis synthétise un examen complet SpeakUp English Assessment (7 épreuves réelles calibrées CEFR A2 à B2).
+                    </p>
+
+                    <!-- Quick Stats Chips -->
+                    <div style="display:flex; flex-wrap:wrap; gap:10px;">
+                      <div style="background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); padding:6px 14px; border-radius:10px; font-size:12px; font-weight:700;">
+                        📚 {{ lessons().length }} leçons actives
+                      </div>
+                      <div style="background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); padding:6px 14px; border-radius:10px; font-size:12px; font-weight:700;">
+                        🎯 Calibration : A2 • B1 • B2
+                      </div>
+                      <div style="background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); padding:6px 14px; border-radius:10px; font-size:12px; font-weight:700;">
+                        ⏱️ Format officiel : 7 épreuves (~15 min)
+                      </div>
+                      @if (officialAssessmentQuestions().length > 0) {
+                        <div style="background:#10B981; color:white; padding:6px 14px; border-radius:10px; font-size:12px; font-weight:800; display:flex; align-items:center; gap:6px;">
+                          ✓ Examen Officiel Actif en Classe
+                        </div>
+                      }
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Configuration Panel (Level Selection + Lesson Pickers) -->
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:20px; margin-bottom:24px;">
+
+                  <!-- Column 1: CEFR Target Level -->
+                  <div style="background:var(--surface-1); border:1.5px solid var(--border); border-radius:16px; padding:22px;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:14px;">
+                      <div style="width:32px; height:32px; border-radius:8px; background:#EEF2FF; color:#4F46E5; display:flex; align-items:center; justify-content:center;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8Z"/><polygon points="12 6 12 12 16 14"/></svg>
+                      </div>
+                      <h3 style="font-size:16px; font-weight:800; color:var(--text-primary); margin:0;">1. Niveau Cible CEFR</h3>
+                    </div>
+                    <p style="font-size:12.5px; color:var(--text-secondary); margin:0 0 14px 0;">
+                      Choisissez le calibrage de difficulté pour l'évaluation générée :
+                    </p>
+
+                    <div style="display:flex; flex-direction:column; gap:8px;">
+                      <!-- A2-B2 Global -->
+                      <label
+                        (click)="targetGeneratorLevel.set('A2-B2')"
+                        [style.border-color]="targetGeneratorLevel() === 'A2-B2' ? '#4F46E5' : 'var(--border)'"
+                        [style.background]="targetGeneratorLevel() === 'A2-B2' ? '#EEF2FF' : 'transparent'"
+                        style="display:flex; align-items:flex-start; gap:10px; padding:12px 14px; border-radius:12px; border:1.5px solid; cursor:pointer; transition:all 0.15s ease;">
+                        <input type="radio" name="level" [checked]="targetGeneratorLevel() === 'A2-B2'" style="margin-top:3px; accent-color:#4F46E5;" />
+                        <div>
+                          <div style="font-size:13.5px; font-weight:800; color:#1E1B4B; display:flex; align-items:center; gap:6px;">
+                            <span>Niveau Global A2–B2 (Équilibré)</span>
+                            <span style="background:#4F46E5; color:white; font-size:10px; font-weight:800; padding:2px 6px; border-radius:6px;">Recommandé</span>
+                          </div>
+                          <div style="font-size:11.5px; color:#475569; margin-top:2px;">
+                            Évalue le spectre complet de l'élémentaire à l'intermédiaire supérieur.
+                          </div>
+                        </div>
+                      </label>
+
+                      <!-- A2 -->
+                      <label
+                        (click)="targetGeneratorLevel.set('A2')"
+                        [style.border-color]="targetGeneratorLevel() === 'A2' ? '#4F46E5' : 'var(--border)'"
+                        [style.background]="targetGeneratorLevel() === 'A2' ? '#EEF2FF' : 'transparent'"
+                        style="display:flex; align-items:flex-start; gap:10px; padding:12px 14px; border-radius:12px; border:1.5px solid; cursor:pointer; transition:all 0.15s ease;">
+                        <input type="radio" name="level" [checked]="targetGeneratorLevel() === 'A2'" style="margin-top:3px; accent-color:#4F46E5;" />
+                        <div>
+                          <div style="font-size:13.5px; font-weight:800; color:#1E1B4B;">Niveau A2 (Élémentaire / Waystage)</div>
+                          <div style="font-size:11.5px; color:#475569; margin-top:2px;">
+                            Situations du quotidien, descriptions d'images simples, dictées 8-12 mots.
+                          </div>
+                        </div>
+                      </label>
+
+                      <!-- B1 -->
+                      <label
+                        (click)="targetGeneratorLevel.set('B1')"
+                        [style.border-color]="targetGeneratorLevel() === 'B1' ? '#4F46E5' : 'var(--border)'"
+                        [style.background]="targetGeneratorLevel() === 'B1' ? '#EEF2FF' : 'transparent'"
+                        style="display:flex; align-items:flex-start; gap:10px; padding:12px 14px; border-radius:12px; border:1.5px solid; cursor:pointer; transition:all 0.15s ease;">
+                        <input type="radio" name="level" [checked]="targetGeneratorLevel() === 'B1'" style="margin-top:3px; accent-color:#4F46E5;" />
+                        <div>
+                          <div style="font-size:13.5px; font-weight:800; color:#1E1B4B;">Niveau B1 (Intermédiaire / Threshold)</div>
+                          <div style="font-size:11.5px; color:#475569; margin-top:2px;">
+                            Événements passés, réunions d'équipe, rédaction argumentée de 50 mots.
+                          </div>
+                        </div>
+                      </label>
+
+                      <!-- B2 -->
+                      <label
+                        (click)="targetGeneratorLevel.set('B2')"
+                        [style.border-color]="targetGeneratorLevel() === 'B2' ? '#4F46E5' : 'var(--border)'"
+                        [style.background]="targetGeneratorLevel() === 'B2' ? '#EEF2FF' : 'transparent'"
+                        style="display:flex; align-items:flex-start; gap:10px; padding:12px 14px; border-radius:12px; border:1.5px solid; cursor:pointer; transition:all 0.15s ease;">
+                        <input type="radio" name="level" [checked]="targetGeneratorLevel() === 'B2'" style="margin-top:3px; accent-color:#4F46E5;" />
+                        <div>
+                          <div style="font-size:13.5px; font-weight:800; color:#1E1B4B;">Niveau B2 (Intermédiaire Supérieur / Vantage)</div>
+                          <div style="font-size:11.5px; color:#475569; margin-top:2px;">
+                            Nuances lexicales, vocabulaire technique, débat oral et rédaction de 65+ mots.
+                          </div>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+
+                  <!-- Column 2: Lessons Selection -->
+                  <div style="background:var(--surface-1); border:1.5px solid var(--border); border-radius:16px; padding:22px; display:flex; flex-direction:column;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                      <div style="display:flex; align-items:center; gap:8px;">
+                        <div style="width:32px; height:32px; border-radius:8px; background:#F0FDF4; color:#16A34A; display:flex; align-items:center; justify-content:center;">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/></svg>
+                        </div>
+                        <h3 style="font-size:16px; font-weight:800; color:var(--text-primary); margin:0;">2. Leçons Sources</h3>
+                      </div>
+                      <button
+                        type="button"
+                        (click)="toggleSelectAllLessons()"
+                        style="border:none; background:transparent; color:#4F46E5; font-size:12px; font-weight:700; cursor:pointer;">
+                        {{ selectedLessonIds().length === lessons().length ? 'Tout désélectionner' : 'Tout sélectionner' }}
+                      </button>
+                    </div>
+                    <p style="font-size:12.5px; color:var(--text-secondary); margin:0 0 12px 0;">
+                      Sélectionnez les leçons dont le vocabulaire et les notions doivent être évalués :
+                    </p>
+
+                    <!-- Lessons List -->
+                    <div style="flex:1; overflow-y:auto; max-height:230px; display:flex; flex-direction:column; gap:8px; padding-right:4px;">
+                      @for (l of lessons(); track l.id) {
+                        <label
+                          (click)="toggleLessonSelection(l.id)"
+                          [style.background]="isLessonSelected(l.id) ? '#F8FAFC' : 'transparent'"
+                          style="display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px; border:1px solid var(--border); cursor:pointer; transition:all 0.15s ease;">
+                          <input type="checkbox" [checked]="isLessonSelected(l.id)" style="accent-color:#4F46E5;" />
+                          <div style="flex:1; min-width:0;">
+                            <div style="font-size:13px; font-weight:700; color:var(--text-primary); text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">
+                              {{ l.title }}
+                            </div>
+                            <div style="display:flex; align-items:center; gap:8px; font-size:11px; color:var(--text-muted); margin-top:2px;">
+                              <span style="font-weight:700; color:#4F46E5;">{{ l.level || 'A2-B2' }}</span>
+                              <span>•</span>
+                              <span>{{ l.vocabulary?.length || 0 }} mots de vocabulaire</span>
+                            </div>
+                          </div>
+                        </label>
+                      }
+                    </div>
+
+                    <!-- Action Button: Generate -->
+                    <div style="margin-top:16px;">
+                      <button
+                        type="button"
+                        (click)="triggerGenerateAssessment()"
+                        style="width:100%; padding:12px 18px; border:none; border-radius:12px; background:linear-gradient(135deg, #4F46E5 0%, #4338CA 100%); color:white; font-size:14px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 14px rgba(79,70,229,0.35); transition:all 0.15s ease;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                        <span>⚡ Générer l'Évaluation depuis ces Leçons</span>
+                      </button>
+                    </div>
+
+                  </div>
+
+                </div>
+
+                <!-- Notification Alert Toast -->
+                @if (saveSuccessNotification()) {
+                  <div style="background:#ECFDF5; border:1.5px solid #10B981; border-radius:12px; padding:14px 18px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; animation:fadeIn 0.2s ease;">
+                    <div style="display:flex; align-items:center; gap:10px; color:#065F46; font-size:13.5px; font-weight:700;">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                      <span>{{ saveSuccessNotification() }}</span>
+                    </div>
+                    <button type="button" (click)="saveSuccessNotification.set(null)" style="border:none; background:transparent; color:#065F46; font-size:16px; cursor:pointer;">✕</button>
+                  </div>
+                }
+
+                <!-- PREVIEW OF GENERATED ASSESSMENT -->
+                @if (genAssessment(); as ga) {
+                  <div style="background:var(--surface-1); border:1.5px solid var(--border); border-radius:18px; padding:24px; margin-bottom:30px;">
+                    
+                    <!-- Header of Preview -->
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; margin-bottom:20px; border-bottom:1px solid var(--border); padding-bottom:16px;">
+                      <div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                          <span style="background:#EEF2FF; color:#4F46E5; font-size:11px; font-weight:800; padding:3px 8px; border-radius:6px; text-transform:uppercase;">
+                            Calibration CEFR {{ ga.targetLevel }}
+                          </span>
+                          <span style="font-size:12px; color:var(--text-muted);">
+                            Généré à {{ ga.generatedAt | date:'shortTime' }}
+                          </span>
+                        </div>
+                        <h3 style="font-size:20px; font-weight:800; color:var(--text-primary); margin:6px 0 2px 0;">
+                          {{ ga.title }}
+                        </h3>
+                        <div style="font-size:12.5px; color:var(--text-secondary);">
+                          Couvre {{ ga.sourceLessonCount }} leçon(s) • {{ ga.questions.length }} épreuves officielles • {{ ga.vocabularyTestedCount }} mots de vocabulaire évalués
+                        </div>
+                      </div>
+
+                      <!-- Action Buttons on Generated Test -->
+                      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                        <button
+                          type="button"
+                          (click)="saveGeneratedAsOfficial()"
+                          style="padding:10px 18px; border:none; border-radius:10px; background:#10B981; color:white; font-size:13px; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:6px; box-shadow:0 3px 10px rgba(16,185,129,0.3);">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                          <span>🌟 Définir comme Évaluation Officielle de la Classe</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          (click)="previewGeneratedInSimulator()"
+                          style="padding:10px 16px; border:1.5px solid #4F46E5; border-radius:10px; background:white; color:#4F46E5; font-size:13px; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:6px;">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+                          <span>Tester dans le Simulateur</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- 7 Questions Cards Accordion / Grid -->
+                    <div style="display:flex; flex-direction:column; gap:14px;">
+                      @for (q of ga.questions; track q.id; let idx = $index) {
+                        <div style="background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:16px;">
+                          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                              <span style="width:28px; height:28px; border-radius:50%; background:#4F46E5; color:white; font-size:12px; font-weight:800; display:flex; align-items:center; justify-content:center;">
+                                {{ idx + 1 }}
+                              </span>
+                              <div>
+                                <div style="font-size:14px; font-weight:800; color:var(--text-primary);">
+                                  {{ q.titleFr }}
+                                </div>
+                                <div style="font-size:11.5px; color:var(--text-secondary); margin-top:1px;">
+                                  {{ q.titleEn }}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div style="display:flex; align-items:center; gap:8px;">
+                              <span style="background:rgba(79,70,229,0.08); color:#4F46E5; font-size:11px; font-weight:800; padding:3px 8px; border-radius:6px;">
+                                {{ getSubscoreLabel(q.subscore) }}
+                              </span>
+                              <span style="background:rgba(0,0,0,0.05); color:var(--text-secondary); font-size:11px; font-weight:700; padding:3px 8px; border-radius:6px;">
+                                ⏱️ {{ q.timeLimitSec }}s
+                              </span>
+                              <span style="background:#FEF3C7; color:#B45309; font-size:11px; font-weight:800; padding:3px 8px; border-radius:6px;">
+                                {{ q.targetLevel }}
+                              </span>
+                            </div>
+                          </div>
+
+                          <!-- Question specifics preview -->
+                          @if (q.type === 'write-photo') {
+                            <div style="display:flex; align-items:center; gap:14px; margin-top:8px;">
+                              <img [src]="q.imageUrl" style="width:110px; height:75px; object-fit:cover; border-radius:8px; border:1px solid var(--border);" alt="Scene preview" />
+                              <div style="font-size:12.5px; color:var(--text-secondary);">
+                                <div><strong>Image thématique :</strong> {{ q.imageCredit }}</div>
+                                <div><strong>Objectif :</strong> Rédiger au moins {{ q.minWords }} mots pour décrire les actions, personnes et le contexte en 1 minute.</div>
+                                <div style="color:#4F46E5; font-size:11.5px; margin-top:2px;">Leçon associée : {{ q.sourceLessonTitle }}</div>
+                              </div>
+                            </div>
+                          } @else if (q.type === 'read-complete') {
+                            <div style="margin-top:8px; background:white; padding:12px; border-radius:8px; border:1px solid var(--border); font-size:13.5px; line-height:1.8;">
+                              @for (b of q.blanksData; track $index) {
+                                <span>{{ b.prefix }}</span><span style="color:#4F46E5; font-weight:800; border-bottom:2px solid #4F46E5; margin:0 2px;">[{{ b.missing }}]</span>
+                              }
+                            </div>
+                          } @else if (q.type === 'read-select') {
+                            <div style="margin-top:8px; display:flex; flex-wrap:wrap; gap:6px;">
+                              @for (w of q.wordsList; track w.word) {
+                                <span [style.background]="w.isReal ? '#ECFDF5' : '#FEF2F2'" [style.color]="w.isReal ? '#065F46' : '#991B1B'" [style.border-color]="w.isReal ? '#A7F3D0' : '#FECACA'" style="font-size:11.5px; font-weight:700; padding:4px 9px; border-radius:6px; border:1px solid;">
+                                  {{ w.word }} {{ w.isReal ? '✓ (vrai)' : '✗ (piège)' }}
+                                </span>
+                              }
+                            </div>
+                          } @else if (q.type === 'listen-type') {
+                            <div style="margin-top:8px; display:flex; align-items:center; gap:10px;">
+                              <button type="button" (click)="playQuestionAudio(q.audioText || '')" style="border:none; background:#EEF2FF; color:#4F46E5; font-size:12px; font-weight:800; padding:6px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:6px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/></svg>
+                                Écouter la dictée audio
+                              </button>
+                              <span style="font-size:12.5px; font-style:italic; color:var(--text-secondary);">"{{ q.audioText }}"</span>
+                            </div>
+                          } @else if (q.type === 'read-aloud') {
+                            <div style="margin-top:8px; font-size:13px; font-weight:600; color:var(--text-primary); background:white; padding:10px 14px; border-radius:8px; border:1px solid var(--border);">
+                              "{{ q.promptText }}"
+                            </div>
+                          } @else if (q.type === 'read-write') {
+                            <div style="margin-top:8px; font-size:13px; color:var(--text-primary); background:white; padding:12px 14px; border-radius:8px; border:1px solid var(--border);">
+                              <div><strong>Sujet :</strong> {{ q.promptText }}</div>
+                              <div style="margin-top:4px; font-size:11.5px; color:#4F46E5; font-weight:700;">Longueur requise : au moins {{ q.minWords }} mots rédigés en 5 minutes.</div>
+                            </div>
+                          } @else if (q.type === 'listen-speak') {
+                            <div style="margin-top:8px; display:flex; align-items:center; gap:10px;">
+                              <button type="button" (click)="playQuestionAudio(q.audioText || '')" style="border:none; background:#EEF2FF; color:#4F46E5; font-size:12px; font-weight:800; padding:6px 12px; border-radius:8px; cursor:pointer; display:flex; align-items:center; gap:6px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/></svg>
+                                Écouter la question d'interview
+                              </button>
+                              <span style="font-size:12.5px; font-style:italic; color:var(--text-secondary);">"{{ q.audioText }}"</span>
+                            </div>
+                          }
+
+                        </div>
+                      }
+                    </div>
+
+                  </div>
+                }
+
+              </div>
+            }
+
           </div>
         }
 
@@ -2270,6 +2610,7 @@ export class StudentExamComponent implements OnDestroy {
   private db = inject(DatabaseService);
   private dialogService = inject(DialogService);
   private sanitizer = inject(DomSanitizer);
+  private assessmentGenerator = inject(AssessmentGeneratorService);
 
   Math = Math;
   currentUser = signal<UserProfile | null>(null);
@@ -2279,7 +2620,15 @@ export class StudentExamComponent implements OnDestroy {
   activeSubmission = signal<AssessmentSubmission | null>(null);
   folderSearchQuery = signal<string>('');
   folderFilterStatus = signal<'all' | 'pending' | 'corrected'>('all');
-  teacherModeTab = signal<'folders' | 'preview'>('folders');
+  teacherModeTab = signal<'folders' | 'generator' | 'preview'>('folders');
+
+  // Lessons Assessment Generator signals (A2-B2)
+  lessons = signal<Lesson[]>([]);
+  officialAssessmentQuestions = signal<DetQuestion[]>([]);
+  targetGeneratorLevel = signal<'A2' | 'B1' | 'B2' | 'A2-B2'>('A2-B2');
+  selectedLessonIds = signal<string[]>([]);
+  genAssessment = signal<GeneratedAssessmentMetadata | null>(null);
+  saveSuccessNotification = signal<string | null>(null);
   currentStudentPendingSubmission = signal<AssessmentSubmission | null>(null);
   currentStudentCorrectedSubmission = signal<AssessmentSubmission | null>(null);
   recordedAudioBase64: string | null = null;
@@ -2465,6 +2814,17 @@ export class StudentExamComponent implements OnDestroy {
       }
     });
 
+    this.db.observeLessons().subscribe(list => {
+      this.lessons.set(list);
+      if (this.selectedLessonIds().length === 0 && list.length > 0) {
+        this.selectedLessonIds.set(list.map(l => l.id));
+      }
+    });
+
+    this.db.observeOfficialAssessmentQuestions().subscribe(qList => {
+      this.officialAssessmentQuestions.set(qList);
+    });
+
   }
 
   // Filter modules in Hub
@@ -2580,17 +2940,86 @@ export class StudentExamComponent implements OnDestroy {
     return text.trim().split(/\s+/).filter(w => w.length > 0).length;
   }
 
-  // STARTING TESTS
+  // STARTING TESTS (LESSON-BASED ASSESSMENT A2-B2)
   startFullDetSampleTest() {
     this.isFullTestMode.set(true);
-    // Shuffle question bank to provide randomized test
-    const seq = this.shuffleArray([...this.detQuestionBank]);
+    // If official lesson-based assessment is defined by teacher, load it!
+    const official = this.officialAssessmentQuestions();
+    let seq: DetQuestion[];
+    if (official && official.length > 0) {
+      seq = [...official];
+    } else {
+      // Fallback: generate dynamically from course lessons (A2-B2)
+      const generated = this.assessmentGenerator.generateAssessmentFromLessons(this.lessons(), 'A2-B2');
+      seq = generated.questions;
+    }
     this.detTestSequence.set(seq);
     this.currentDetIndex.set(0);
     this.detSessionAnswers.set({});
     this.loadDetQuestion(0);
     this.view.set('det-test');
   }
+
+  // --- GENERATOR CONTROLS ---
+  openGeneratorTab() {
+    this.teacherModeTab.set('generator');
+    this.closeSubmissionFolder();
+    if (!this.genAssessment()) {
+      this.triggerGenerateAssessment();
+    }
+  }
+
+  isLessonSelected(id: string): boolean {
+    return this.selectedLessonIds().includes(id);
+  }
+
+  toggleLessonSelection(id: string) {
+    const current = this.selectedLessonIds();
+    if (current.includes(id)) {
+      this.selectedLessonIds.set(current.filter(x => x !== id));
+    } else {
+      this.selectedLessonIds.set([...current, id]);
+    }
+  }
+
+  toggleSelectAllLessons() {
+    if (this.selectedLessonIds().length === this.lessons().length) {
+      this.selectedLessonIds.set([]);
+    } else {
+      this.selectedLessonIds.set(this.lessons().map(l => l.id));
+    }
+  }
+
+  triggerGenerateAssessment() {
+    const meta = this.assessmentGenerator.generateAssessmentFromLessons(
+      this.lessons(),
+      this.targetGeneratorLevel(),
+      this.selectedLessonIds().length > 0 ? this.selectedLessonIds() : undefined
+    );
+    this.genAssessment.set(meta);
+  }
+
+  async saveGeneratedAsOfficial() {
+    const ga = this.genAssessment();
+    if (!ga || !ga.questions || ga.questions.length === 0) return;
+    await this.db.saveOfficialAssessmentQuestions(ga.questions);
+    this.saveSuccessNotification.set("L'évaluation a été enregistrée avec succès comme Examen Officiel de la classe ! Tous les élèves passeront désormais ce test basé sur les leçons.");
+    setTimeout(() => {
+      this.saveSuccessNotification.set(null);
+    }, 6000);
+  }
+
+  previewGeneratedInSimulator() {
+    const ga = this.genAssessment();
+    if (!ga) return;
+    this.isFullTestMode.set(true);
+    this.detTestSequence.set([...ga.questions]);
+    this.currentDetIndex.set(0);
+    this.detSessionAnswers.set({});
+    this.loadDetQuestion(0);
+    this.view.set('det-test');
+  }
+
 
   startSingleModulePractice(module: DetQuestion) {
     this.isFullTestMode.set(false);
