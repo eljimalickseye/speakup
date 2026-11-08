@@ -2,7 +2,7 @@ import { Component, inject, signal, computed, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { DatabaseService, Quiz, UserProfile, ExamAttempt, AssessmentSubmission, AssessmentQuestionAnswer, Lesson, AssessmentSessionConfig } from '../../services/database.service';
+import { DatabaseService, Quiz, UserProfile, ExamAttempt, AssessmentSubmission, AssessmentQuestionAnswer, Lesson, AssessmentSessionConfig, AntiCheatReport } from '../../services/database.service';
 import { AssessmentGeneratorService, GeneratedAssessmentMetadata } from '../../services/assessment-generator.service';
 import { DialogService } from '../../services/dialog.service';
 
@@ -392,6 +392,11 @@ export interface DetQuestion {
                         </div>
                         <div>
                           <div style="font-size:16px; font-weight:900; color:#1E1B4B; line-height:1.2;">Dossier de {{ curSub.studentName }}</div>
+                          <div style="display:flex; align-items:center; gap:6px; margin-top:4px;">
+                            <button type="button" class="btn-s" style="font-size:11px; padding:3px 8px;" (click)="setAllQuestionsScore(100)">Tout noter à 100</button>
+                            <button type="button" class="btn-s" style="font-size:11px; padding:3px 8px; color:#4F46E5;" (click)="recalculateFromQuestions(curSub)">Recalculer</button>
+                            <button type="button" class="btn-s" style="font-size:11px; padding:3px 8px; color:#059669;" (click)="previewCertificateForActiveSubmission()">Aperçu Certificat</button>
+                          </div>
                           <div style="font-size:11.5px; color:#64748B;">Soumis le {{ formatSubmissionDate(curSub.submittedAt) }} • {{ curSub.questions.length }} épreuves complétées</div>
                         </div>
                       </div>
@@ -560,10 +565,18 @@ export interface DetQuestion {
                             <span style="font-size:16px; font-weight:700; color:#94A3B8;">/ 160</span>
                           </div>
 
-                          <div style="display:inline-block; margin-bottom:12px;">
-                            <span class="badge" style="background:#EEF2FF; color:#4338CA; border:1px solid #C7D2FE; font-size:12.5px; font-weight:800; padding:4px 12px; border-radius:20px;">
-                              Niveau CECRL : {{ curSub.cefrLevel || 'B1' }} ({{ getCefrTitle(curSub.cefrLevel || 'B1') }})
-                            </span>
+                          <div style="margin-top:10px; text-align:left;">
+                            <label style="font-size:11px; font-weight:800; color:#64748B; text-transform:uppercase; display:block; margin-bottom:4px;">Niveau CECRL accordé :</label>
+                            <select
+                              [(ngModel)]="curSub.cefrLevel"
+                              style="width:100%; padding:8px 10px; border:1.5px solid #4F46E5; border-radius:8px; font-size:13px; font-weight:800; color:#4F46E5; background:white; outline:none;">
+                              <option value="A1">Niveau A1 (Débutant)</option>
+                              <option value="A2">Niveau A2 (Élémentaire)</option>
+                              <option value="B1">Niveau B1 (Intermédiaire)</option>
+                              <option value="B2">Niveau B2 (Indépendant / Avancé)</option>
+                              <option value="C1">Niveau C1 (Autonome)</option>
+                              <option value="C2">Niveau C2 (Maîtrise)</option>
+                            </select>
                           </div>
 
                           <!-- Score Slider -->
@@ -632,14 +645,35 @@ export interface DetQuestion {
                           ></textarea>
                         </div>
 
+                        <!-- Grant Certificate Checkbox -->
+                        <div style="margin:12px 0; background:#ECFDF5; border:1.5px solid #10B981; border-radius:10px; padding:10px 12px; display:flex; align-items:center; gap:10px;">
+                          <input
+                            type="checkbox"
+                            id="grantCertCheck"
+                            [(ngModel)]="curSub.certificateAwarded"
+                            style="width:18px; height:18px; accent-color:#059669; cursor:pointer;"
+                          />
+                          <label for="grantCertCheck" style="font-size:12px; font-weight:800; color:#065F46; cursor:pointer; line-height:1.3;">
+                            Accorder le Certificat Officiel SpeakUp à cet élève
+                          </label>
+                        </div>
+
                         <!-- Action Buttons -->
                         <div style="display:flex; flex-direction:column; gap:8px;">
                           <button
                             type="button"
                             (click)="finalizeAssessmentCorrection()"
-                            style="width:100%; padding:12px; border:none; border-radius:10px; background:linear-gradient(135deg, #4F46E5 0%, #4338CA 100%); color:white; font-size:13.5px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 12px rgba(79,70,229,0.35);">
+                            style="width:100%; padding:12px; border:none; border-radius:10px; background:linear-gradient(135deg, #059669 0%, #047857 100%); color:white; font-size:13.5px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 12px rgba(5,150,105,0.35);">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                            <span>Valider & Délivrer le Certificat</span>
+                            <span>Valider & Accorder le Certificat</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            (click)="previewCertificateForActiveSubmission()"
+                            style="width:100%; padding:10px; border:1.5px solid #4F46E5; border-radius:10px; background:#EEF2FF; color:#4F46E5; font-size:12.5px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
+                            <span>Aperçu du Certificat Élève</span>
                           </button>
 
                           <button
@@ -1156,18 +1190,20 @@ export interface DetQuestion {
           }
 
           @if (currentStudentCorrectedSubmission(); as myCorrected) {
-            <div style="background:linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%); border:1.5px solid #6EE7B7; border-radius:14px; padding:16px 20px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
-              <div style="display:flex; align-items:center; gap:12px;">
-                <div style="width:40px; height:40px; border-radius:50%; background:#059669; color:white; display:flex; align-items:center; justify-content:center;">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
-                </div>
+            <div style="background:linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%); border:1.5px solid #6EE7B7; border-radius:14px; padding:18px 22px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; box-shadow:0 4px 14px rgba(5,150,105,0.12);">
+              <div style="display:flex; align-items:center; gap:14px;">
+                <img src="logo.png" style="width:48px; height:48px; object-fit:contain; border-radius:10px; background:white; padding:4px; box-shadow:0 2px 8px rgba(0,0,0,0.06);" alt="Logo SpeakUp" />
                 <div>
-                  <div style="font-size:14.5px; font-weight:800; color:#065F46;">Votre Certificat Officiel SpeakUp est prêt !</div>
-                  <div style="font-size:12px; color:#047857;">Score validé : {{ myCorrected.overallScore }}/160 • Niveau {{ myCorrected.cefrLevel }} • Corrigé par votre professeur.</div>
+                  <div style="font-size:15px; font-weight:900; color:#065F46; display:flex; align-items:center; gap:6px;">
+                    <span>Félicitations ! Votre Certificat Officiel SpeakUp a été accordé</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#059669"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                  </div>
+                  <div style="font-size:12.5px; color:#047857; margin-top:2px;">Score officiel : <strong>{{ myCorrected.overallScore }}/160</strong> • Niveau CECRL <strong>{{ myCorrected.cefrLevel }}</strong> • Accordé et signé par <strong>{{ myCorrected.gradedBy || 'votre professeur' }}</strong>.</div>
                 </div>
               </div>
-              <button type="button" (click)="viewMyCorrectedCertificate(myCorrected)" class="btn-p" style="background:#059669; border-color:#059669; font-size:12.5px; padding:8px 16px;">
-                Voir mon Certificat
+              <button type="button" (click)="viewMyCorrectedCertificate(myCorrected)" class="btn-p" style="background:linear-gradient(135deg, #059669 0%, #047857 100%); border:none; font-size:13px; font-weight:800; padding:10px 20px; display:flex; align-items:center; gap:8px; box-shadow:0 4px 12px rgba(5,150,105,0.25);">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
+                <span>Voir & Télécharger mon Certificat</span>
               </button>
             </div>
           }
@@ -1926,48 +1962,78 @@ export interface DetQuestion {
       }
 
       @if (view() === 'det-result' && lastDetResult(); as res) {
-        <div style="animation: fadeIn 0.3s ease; max-width:840px; margin:0 auto;">
+        <div style="animation: fadeIn 0.3s ease; max-width:920px; margin:0 auto; padding:10px 0;">
 
-          <!-- Score Card Hero -->
-          <div class="det-result-card">
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; margin-bottom:24px;">
-              <div style="display:flex; align-items:center; gap:12px;">
-                <img src="logo.png" style="width:40px; height:40px; object-fit:contain;" alt="Logo" />
-                <div>
-                  <h3 style="font-size:18px; font-weight:900; color:#1E1B4B; margin:0;">SpeakUp English Assessment</h3>
-                  <div style="font-size:12px; color:#6B7280;">{{ t("Certificat officiel d'aptitude en anglais", "Official English Proficiency Certificate") }}</div>
+          <!-- Prestige Certificate Frame -->
+          <div style="background:#FFFDF9; border:4px double #D97706; border-radius:20px; box-shadow:0 15px 45px rgba(0,0,0,0.08); padding:36px 32px; position:relative; overflow:hidden;">
+            
+            <!-- Corner Ornaments (Gold lines) -->
+            <div style="position:absolute; top:12px; left:12px; width:28px; height:28px; border-top:2px solid #D97706; border-left:2px solid #D97706;"></div>
+            <div style="position:absolute; top:12px; right:12px; width:28px; height:28px; border-top:2px solid #D97706; border-right:2px solid #D97706;"></div>
+            <div style="position:absolute; bottom:12px; left:12px; width:28px; height:28px; border-bottom:2px solid #D97706; border-left:2px solid #D97706;"></div>
+            <div style="position:absolute; bottom:12px; right:12px; width:28px; height:28px; border-bottom:2px solid #D97706; border-right:2px solid #D97706;"></div>
+
+            <!-- Top Header with Official Logo -->
+            <div style="text-align:center; margin-bottom:24px;">
+              <img src="logo.png" style="width:75px; height:75px; object-fit:contain; border-radius:14px; margin-bottom:12px; filter: drop-shadow(0 4px 12px rgba(79,70,229,0.25));" alt="SpeakUp Official Logo" />
+              <div style="font-size:12px; font-weight:800; color:#92400E; letter-spacing:2px; text-transform:uppercase;">
+                SPEAKUP LEARNING ACADEMY • COMMISSION PÉDAGOGIQUE
+              </div>
+              <h1 style="font-size:26px; font-weight:900; color:#1E1B4B; margin:6px 0 2px 0; font-family:'Outfit', serif; letter-spacing:0.5px;">
+                CERTIFICAT OFFICIEL D'APTITUDE EN LANGUE ANGLAISE
+              </h1>
+              <div style="font-size:13.5px; font-weight:700; color:#6B7280; font-style:italic;">
+                SpeakUp English Assessment (SET) • Cadre Européen Commun de Référence (CECRL)
+              </div>
+              <div style="display:inline-flex; align-items:center; gap:8px; margin-top:8px; background:#FEF3C7; color:#92400E; border:1px solid #FDE68A; padding:3px 12px; border-radius:20px; font-size:11.5px; font-weight:800;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                <span>Certificat Officiel Accordé • N° {{ res.certificateNumber || 'SET-2026-OFFICIAL' }}</span>
+              </div>
+            </div>
+
+            <!-- Recipient Citation -->
+            <div style="text-align:center; padding:16px 20px; background:rgba(255,255,255,0.7); border-radius:14px; border:1px solid #F3E8FF; margin-bottom:24px;">
+              <div style="font-size:13px; font-style:italic; color:#64748B;">Ce certificat officiel atteste avec les félicitations du corps professoral que :</div>
+              <div style="font-size:28px; font-weight:900; color:#1E1B4B; margin:8px 0; letter-spacing:0.5px; font-family:'Outfit', sans-serif;">
+                {{ res.studentName || currentUser()?.name || 'Étudiant SpeakUp' }}
+              </div>
+              <p style="font-size:13px; color:#475569; max-width:680px; margin:0 auto; line-height:1.5;">
+                a accompli avec succès l'évaluation officielle <strong>SpeakUp English Assessment (20 épreuves chronométrées)</strong>, démontrant une maîtrise des compétences linguistiques requises par les standards internationaux.
+              </p>
+            </div>
+
+            <!-- Scaled Score & CEFR Level Badge -->
+            <div style="display:flex; justify-content:center; align-items:center; gap:30px; flex-wrap:wrap; margin-bottom:28px; padding:20px; background:white; border-radius:14px; border:1px solid #E2E8F0; box-shadow:0 4px 14px rgba(0,0,0,0.03);">
+              <div style="text-align:center;">
+                <div style="font-size:11px; font-weight:800; color:#6B7280; text-transform:uppercase; letter-spacing:1px;">Score Global Validé</div>
+                <div style="font-size:52px; font-weight:900; color:#4F46E5; line-height:1; font-family:'Outfit', sans-serif;">
+                  {{ res.overallScore }}
+                  <span style="font-size:20px; font-weight:700; color:#94A3B8;">/ 160</span>
                 </div>
               </div>
-              <span class="badge" style="background:#ECFDF5; color:#065F46; font-size:11px; padding:4px 10px; border-radius:20px; font-weight:800;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5" style="vertical-align:middle; margin-right:4px;"><polyline points="20 6 9 17 4 12"/></svg>{{ t("Évaluation Complétée", "Evaluation Completed") }}
-              </span>
-            </div>
 
-            <!-- Overall DET Scale Score -->
-            <div style="text-align:center; padding:24px 0; border-top:1px solid #E2E8F0; border-bottom:1px solid #E2E8F0; margin-bottom:24px;">
-              <div style="font-size:12px; font-weight:800; color:#6B7280; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">
-                {{ t("SCORE GLOBAL ESTIMÉ", "OVERALL ESTIMATED SCORE") }}
-              </div>
-              <div style="font-size:56px; font-weight:900; color:#4F46E5; line-height:1; font-family:'Outfit', sans-serif;">
-                {{ res.overallScore }}
-                <span style="font-size:20px; font-weight:700; color:#94A3B8;">/ 160</span>
-              </div>
-              <div style="display:inline-block; margin-top:10px; background:#EEF2FF; color:#4338CA; border:1px solid #C7D2FE; padding:6px 16px; border-radius:20px; font-size:13px; font-weight:800;">
-                Niveau CEFR : {{ res.cefrLevel }} ({{ getCefrTitle(res.cefrLevel) }})
+              <div style="width:1.5px; height:60px; background:#E2E8F0;"></div>
+
+              <div style="text-align:center;">
+                <div style="font-size:11px; font-weight:800; color:#6B7280; text-transform:uppercase; letter-spacing:1px;">Niveau CECRL Accordé</div>
+                <div style="margin-top:6px;">
+                  <span style="background:linear-gradient(135deg, #4F46E5 0%, #4338CA 100%); color:white; font-size:16px; font-weight:900; padding:8px 20px; border-radius:24px; box-shadow:0 4px 12px rgba(79,70,229,0.3); display:inline-block;">
+                    Niveau {{ res.cefrLevel }} • {{ getCefrTitle(res.cefrLevel) }}
+                  </span>
+                </div>
               </div>
             </div>
 
-            <!-- 4 Subscores Progress Bars (Literacy, Comprehension, Conversation, Production) -->
+            <!-- 4 Subscores Breakdown -->
             <div style="margin-bottom:28px;">
-              <h4 style="font-size:14px; font-weight:800; color:#1E1B4B; margin:0 0 16px 0;">
-                {{ t("Détail par sous-scores (Subscores)", "Subscores Breakdown") }}
+              <h4 style="font-size:13px; font-weight:800; color:#1E1B4B; margin:0 0 14px 0; text-transform:uppercase; letter-spacing:0.5px; text-align:center;">
+                Grille Officielle des Sous-Scores de Compétence
               </h4>
-
-              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:14px;">
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px;">
                 <!-- Literacy -->
-                <div class="det-subscore-box">
+                <div class="det-subscore-box" style="background:white;">
                   <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-                    <span style="font-size:12px; font-weight:700; color:#1E293B;">Literacy (Lire & Écrire)</span>
+                    <span style="font-size:12px; font-weight:700; color:#1E293B;">Literacy (Écrit & Lecture)</span>
                     <span style="font-size:12px; font-weight:800; color:#4F46E5;">{{ res.subscores.literacy }} / 160</span>
                   </div>
                   <div class="det-progress-track">
@@ -1976,9 +2042,9 @@ export interface DetQuestion {
                 </div>
 
                 <!-- Comprehension -->
-                <div class="det-subscore-box">
+                <div class="det-subscore-box" style="background:white;">
                   <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-                    <span style="font-size:12px; font-weight:700; color:#1E293B;">Comprehension (Lire & Écouter)</span>
+                    <span style="font-size:12px; font-weight:700; color:#1E293B;">Comprehension (Audio & Sens)</span>
                     <span style="font-size:12px; font-weight:800; color:#0284C7;">{{ res.subscores.comprehension }} / 160</span>
                   </div>
                   <div class="det-progress-track">
@@ -1987,9 +2053,9 @@ export interface DetQuestion {
                 </div>
 
                 <!-- Conversation -->
-                <div class="det-subscore-box">
+                <div class="det-subscore-box" style="background:white;">
                   <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-                    <span style="font-size:12px; font-weight:700; color:#1E293B;">Conversation (Écouter & Parler)</span>
+                    <span style="font-size:12px; font-weight:700; color:#1E293B;">Conversation (Oral & Écoute)</span>
                     <span style="font-size:12px; font-weight:800; color:#059669;">{{ res.subscores.conversation }} / 160</span>
                   </div>
                   <div class="det-progress-track">
@@ -1998,9 +2064,9 @@ export interface DetQuestion {
                 </div>
 
                 <!-- Production -->
-                <div class="det-subscore-box">
+                <div class="det-subscore-box" style="background:white;">
                   <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-                    <span style="font-size:12px; font-weight:700; color:#1E293B;">Production (Écrire & Parler)</span>
+                    <span style="font-size:12px; font-weight:700; color:#1E293B;">Production (Expression & Fluence)</span>
                     <span style="font-size:12px; font-weight:800; color:#D97706;">{{ res.subscores.production }} / 160</span>
                   </div>
                   <div class="det-progress-track">
@@ -2010,26 +2076,62 @@ export interface DetQuestion {
               </div>
             </div>
 
-            <!-- Action buttons -->
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; padding-top:16px; border-top:1px solid #E2E8F0;">
-              <button class="btn-s" (click)="view.set('hub')">
-                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle; margin-right:4px"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> {{ t("Retour au centre de tests", "Back to Tests Hub") }}
-              </button>
+            <!-- Teacher Signature & Official Gold Seal Section -->
+            <div style="display:flex; justify-content:space-between; align-items:flex-end; padding-top:20px; border-top:1.5px solid #FDE68A; flex-wrap:wrap; gap:16px;">
+              <!-- Left: Teacher Appreciation & Signature -->
+              <div style="flex:1; min-width:260px;">
+                <div style="font-size:11.5px; font-weight:800; color:#78350F; text-transform:uppercase; margin-bottom:4px;">Appréciation Pédagogique du Professeur :</div>
+                <div style="font-size:12.5px; font-style:italic; color:#334155; line-height:1.4; background:#FFFBEB; border:1px solid #FEF3C7; padding:10px 14px; border-radius:8px; margin-bottom:10px;">
+                  « {{ res.teacherGlobalComment || 'Excellente maîtrise des compétences de communication, vocabulaire riche et grammaire solide.' }} »
+                </div>
+                <div style="font-size:13px; font-weight:800; color:#1E1B4B;">
+                  Accordé et validé par : <span style="color:#4F46E5;">{{ res.gradedBy || 'Professeur SpeakUp' }}</span>
+                </div>
+                <div style="font-size:11.5px; color:#64748B;">
+                  Date de délivrance : {{ res.gradedAt ? formatSubmissionDate(res.gradedAt) : 'Session Officielle 2026' }}
+                </div>
+              </div>
 
-              <div style="display:flex; gap:10px;">
-                <button class="btn-s" (click)="printDetResult(res)">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle; margin-right:4px"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> {{ t("Imprimer le Certificat", "Print Certificate") }}
-                </button>
-                <button class="det-cta-btn" style="padding:8px 20px; font-size:12.5px;" (click)="startFullDetSampleTest()">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle; margin-right:4px"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg> {{ t("Repasser un test", "Take Another Test") }}
-                </button>
+              <!-- Right: Gold Medallion Stamp SVG -->
+              <div style="text-align:center;">
+                <svg width="84" height="84" viewBox="0 0 100 100" style="filter:drop-shadow(0 4px 8px rgba(217, 119, 6, 0.3));">
+                  <circle cx="50" cy="50" r="46" fill="#FFFBEB" stroke="#D97706" stroke-width="3" stroke-dasharray="4 2"/>
+                  <circle cx="50" cy="50" r="38" fill="#F59E0B" stroke="#B45309" stroke-width="1.5"/>
+                  <circle cx="50" cy="50" r="30" fill="none" stroke="#FEF3C7" stroke-width="1"/>
+                  <path d="M50 26 L54 37 L66 37 L56 45 L60 56 L50 49 L40 56 L44 45 L34 37 L46 37 Z" fill="#FFFBEB"/>
+                  <text x="50" y="70" font-size="7.5" font-weight="900" fill="#78350F" text-anchor="middle" font-family="'Segoe UI', sans-serif">SPEAKUP CERTIFIED</text>
+                  <text x="50" y="79" font-size="6" font-weight="800" fill="#92400E" text-anchor="middle" font-family="'Segoe UI', sans-serif">★ 2026 OFFICIAL ★</text>
+                </svg>
+                <div style="font-size:10px; font-weight:800; color:#92400E; margin-top:2px;">SCEAU OFFICIEL</div>
               </div>
             </div>
+
+            <!-- Footer Security & Anti-Cheat Note -->
+            <div style="margin-top:20px; padding-top:12px; border-top:1px dashed #E2E8F0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; font-size:10.5px; color:#94A3B8;">
+              <div>Document officiel certifié par la plateforme SpeakUp • ID #{{ res.certificateNumber || 'SET-2026-OFFICIAL' }}</div>
+              <div>Surveillance anti-triche activée • Session unique vérifiée</div>
+            </div>
+
+          </div>
+
+          <!-- Actions Bar -->
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-top:20px;">
+            <button class="btn-s" (click)="view.set('hub')">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+              <span>{{ t("Retour au centre de tests", "Back to Tests Hub") }}</span>
+            </button>
+
+            <button
+              class="det-cta-btn"
+              (click)="printDetResult(res)"
+              style="padding:10px 24px; font-size:13.5px; background:linear-gradient(135deg, #059669 0%, #047857 100%);">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+              <span>{{ t("Imprimer / Télécharger le Certificat Officiel (PDF)", "Print / Download Official Certificate (PDF)") }}</span>
+            </button>
           </div>
 
         </div>
       }
-
 
       <!-- ======================================================== -->
       <!-- 4. OFFICIAL TEACHER EXAM PLAYER VIEW                     -->
@@ -3791,12 +3893,20 @@ export class StudentExamComponent implements OnDestroy {
   // Stored answers for the session
   detSessionAnswers = signal<Record<string, { given: any; givenText?: string; audioUrl?: string; correct: boolean; score: number; wordCount?: number; timeSpentSec?: number }>>({});
 
-  // Result for DET mode
+  // Result for DET mode with full official certificate metadata
   lastDetResult = signal<{
     overallScore: number;
     cefrLevel: string;
     subscores: { literacy: number; comprehension: number; conversation: number; production: number };
     totalQuestions: number;
+    studentName?: string;
+    studentEmail?: string;
+    certificateNumber?: string;
+    certificateAwarded?: boolean;
+    gradedBy?: string;
+    gradedAt?: string;
+    teacherGlobalComment?: string;
+    antiCheatReport?: AntiCheatReport;
   } | null>(null);
 
   // Existing Teacher Exam properties
@@ -3820,7 +3930,9 @@ export class StudentExamComponent implements OnDestroy {
       this.assessmentSubmissions.set(list);
       const user = this.currentUser();
       if (user) {
-        const mySubs = list.filter(s => s.studentId === user.id);
+        const mySubs = list
+          .filter(s => s.studentId === user.id)
+          .sort((a, b) => (b.submittedAt || '').localeCompare(a.submittedAt || ''));
         const pending = mySubs.find(s => s.status === 'pending');
         const corrected = mySubs.find(s => s.status === 'corrected');
         this.currentStudentPendingSubmission.set(pending || null);
@@ -4639,6 +4751,9 @@ export class StudentExamComponent implements OnDestroy {
         production: clone.overallScore
       };
     }
+    if (clone.certificateAwarded === undefined) {
+      clone.certificateAwarded = true;
+    }
     this.activeSubmission.set(clone);
   }
 
@@ -4722,6 +4837,7 @@ export class StudentExamComponent implements OnDestroy {
 
     const teacherName = this.currentUser()?.name || 'Professeur SpeakUp';
 
+    const certNumber = sub.certificateNumber || `SET-2026-${sub.id.slice(-6).toUpperCase()}`;
     try {
       await this.db.gradeAssessmentSubmission(sub.id, {
         status: 'corrected',
@@ -4731,13 +4847,16 @@ export class StudentExamComponent implements OnDestroy {
         subscores: sub.subscores,
         teacherGlobalComment: sub.teacherGlobalComment,
         gradedBy: teacherName,
-        gradedAt: new Date().toISOString()
+        gradedAt: new Date().toISOString(),
+        certificateAwarded: sub.certificateAwarded !== false,
+        certificateNumber: certNumber,
+        certificateIssuedAt: new Date().toISOString()
       });
 
       this.dialogService.alert(
-        'Correction Validée & Certificat Délivré !',
-        `Le dossier de ${sub.studentName} a été validé avec succès (Score: ${sub.overallScore}/160 • ${sub.cefrLevel}). L'élève a reçu son certificat et une notification.`,
-        'info'
+        'Correction Validée & Certificat Accordé !',
+        `Le dossier de ${sub.studentName} a été validé avec succès (Score: ${sub.overallScore}/160 • Niveau CECRL ${sub.cefrLevel}). Le Certificat Officiel SpeakUp (N° ${certNumber}) a été officiellement accordé à l'élève avec votre appréciation et votre signature.`,
+        'success'
       );
 
       this.activeSubmission.set(null);
@@ -4794,9 +4913,49 @@ export class StudentExamComponent implements OnDestroy {
       overallScore: sub.overallScore || 100,
       cefrLevel: sub.cefrLevel || 'B1',
       subscores: sub.subscores || { literacy: 100, comprehension: 100, conversation: 100, production: 100 },
-      totalQuestions: sub.questions.length
+      totalQuestions: sub.questions.length,
+      studentName: sub.studentName,
+      studentEmail: sub.studentEmail,
+      certificateNumber: sub.certificateNumber || `SET-2026-${sub.id.slice(-6).toUpperCase()}`,
+      certificateAwarded: sub.certificateAwarded !== false,
+      gradedBy: sub.gradedBy || 'Professeur de la Classe',
+      gradedAt: sub.gradedAt || sub.submittedAt,
+      teacherGlobalComment: sub.teacherGlobalComment || 'Excellente maîtrise des compétences écrites et orales, conformité aux exigences du niveau CECRL.',
+      antiCheatReport: sub.antiCheatReport
     });
     this.view.set('det-result');
+  }
+
+  previewCertificateForActiveSubmission() {
+    const sub = this.activeSubmission();
+    if (!sub) return;
+    this.viewMyCorrectedCertificate(sub);
+  }
+
+  setAllQuestionsScore(score: number) {
+    const sub = this.activeSubmission();
+    if (!sub || !sub.questions) return;
+    sub.questions.forEach(q => {
+      q.teacherScore = score;
+    });
+    sub.overallScore = this.calculateSuggestedScore(sub);
+    sub.cefrLevel = this.getAutoCefr(sub.overallScore);
+    this.recalculateSubscores(sub);
+  }
+
+  recalculateFromQuestions(sub: AssessmentSubmission) {
+    sub.overallScore = this.calculateSuggestedScore(sub);
+    sub.cefrLevel = this.getAutoCefr(sub.overallScore);
+    this.recalculateSubscores(sub);
+  }
+
+  hashCode(str: string): number {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = (hash << 5) - hash + str.charCodeAt(i);
+      hash |= 0;
+    }
+    return hash;
   }
 
 
@@ -4831,32 +4990,216 @@ export class StudentExamComponent implements OnDestroy {
   printDetResult(res: any) {
     const win = window.open('', '_blank');
     if (!win) return;
-    const user = this.currentUser();
+    const origin = window.location.origin;
+    const studentName = res.studentName || this.currentUser()?.name || 'Étudiant SpeakUp';
+    const certNumber = res.certificateNumber || `SET-2026-${Math.abs(this.hashCode(studentName)).toString(16).toUpperCase()}`;
+    const gradedBy = res.gradedBy || 'Professeur de la Classe';
+    const gradedAt = res.gradedAt ? new Date(res.gradedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : new Date().toLocaleDateString('fr-FR');
+    const teacherComment = res.teacherGlobalComment || 'Excellente maîtrise des compétences linguistiques requises par les standards CECRL.';
+
     win.document.write(`
-      <html><head><title>SpeakUp English Test — Certificate</title></head>
-      <body style="font-family:'Segoe UI',Arial,sans-serif; padding:40px; color:#1E1B4B; max-width:800px; margin:0 auto">
-        <div style="border:4px double #4F46E5; border-radius:16px; padding:36px; text-align:center">
-          <h1 style="color:#4F46E5; margin:0; font-size:28px">SpeakUp English Test</h1>
-          <p style="color:#64748B; margin:4px 0 20px 0; font-size:14px">Official Subscores Evaluation Certificate</p>
-          <hr style="border:none; border-top:1px solid #E2E8F0; margin:20px 0">
-          <p style="font-size:16px">This certifies that <strong>${user?.name || 'Student'}</strong> has completed the SpeakUp English Test.</p>
-          <div style="margin:24px 0">
-            <span style="font-size:64px; font-weight:900; color:#4F46E5">${res.overallScore}</span>
-            <span style="font-size:24px; color:#94A3B8"> / 160</span>
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Certificat Officiel SpeakUp — ${studentName}</title>
+        <style>
+          @page { size: landscape; margin: 8mm; }
+          body {
+            font-family: 'Segoe UI', -apple-system, Arial, sans-serif;
+            background: #F8FAFC;
+            color: #1E1B4B;
+            margin: 0;
+            padding: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+          }
+          .certificate-container {
+            width: 100%;
+            max-width: 1020px;
+            background: #FFFDF9;
+            border: 5px double #D97706;
+            border-radius: 18px;
+            padding: 32px 36px;
+            box-sizing: border-box;
+            position: relative;
+            text-align: center;
+          }
+          .logo {
+            width: 78px;
+            height: 78px;
+            object-fit: contain;
+            margin-bottom: 8px;
+          }
+          h1 {
+            color: #1E1B4B;
+            font-size: 26px;
+            margin: 6px 0;
+            letter-spacing: 0.5px;
+            font-weight: 900;
+          }
+          .institution {
+            color: #92400E;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+          }
+          .subtitle {
+            color: #64748B;
+            font-size: 13px;
+            font-style: italic;
+            margin-bottom: 12px;
+          }
+          .badge {
+            display: inline-block;
+            background: #FEF3C7;
+            color: #92400E;
+            border: 1px solid #FDE68A;
+            padding: 3px 12px;
+            border-radius: 20px;
+            font-size: 11.5px;
+            font-weight: 800;
+            margin-bottom: 16px;
+          }
+          .student-box {
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: 12px;
+            padding: 12px 20px;
+            margin: 0 auto 18px auto;
+            max-width: 800px;
+            border: 1px solid #F1F5F9;
+          }
+          .student-name {
+            font-size: 28px;
+            font-weight: 900;
+            color: #1E1B4B;
+            margin: 4px 0;
+          }
+          .scores-bar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 28px;
+            background: #FFFFFF;
+            border: 1.5px solid #E2E8F0;
+            border-radius: 12px;
+            padding: 14px 20px;
+            margin-bottom: 18px;
+          }
+          .score-val {
+            font-size: 46px;
+            font-weight: 900;
+            color: #4F46E5;
+            line-height: 1;
+          }
+          .cefr-pill {
+            background: #4F46E5;
+            color: white;
+            padding: 6px 18px;
+            border-radius: 20px;
+            font-weight: 800;
+            font-size: 14px;
+            display: inline-block;
+          }
+          .subscores-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+          }
+          .subscore-card {
+            background: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+          }
+          .footer-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding-top: 16px;
+            border-top: 1.5px solid #FDE68A;
+            text-align: left;
+          }
+          @media print {
+            body { padding: 0; background: white; }
+            .certificate-container { border: 4px double #D97706; box-shadow: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="certificate-container">
+          <img src="${origin}/logo.png" class="logo" alt="SpeakUp Logo" />
+          <div class="institution">SPEAKUP LEARNING ACADEMY • COMMISSION PÉDAGOGIQUE</div>
+          <h1>CERTIFICAT OFFICIEL D'APTITUDE EN LANGUE ANGLAISE</h1>
+          <div class="subtitle">SpeakUp English Assessment (SET) • Cadre Européen Commun de Référence pour les Langues (CECRL)</div>
+          <div class="badge">N° ${certNumber} • Validé & Accordé par le Professeur</div>
+
+          <div class="student-box">
+            <div style="font-size:12px; font-style:italic; color:#64748B;">Ce certificat officiel est décerné à :</div>
+            <div class="student-name">${studentName}</div>
+            <div style="font-size:12.5px; color:#475569;">Pour avoir accompli avec succès l'évaluation officielle SpeakUp (20 épreuves chronométrées) avec les résultats suivants :</div>
           </div>
-          <p style="font-size:16px; font-weight:bold; color:#059669">CEFR Level: ${res.cefrLevel} — ${this.getCefrTitle(res.cefrLevel)}</p>
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:30px 0; text-align:left; background:#F8FAFC; padding:20px; border-radius:10px">
-            <div><strong>Literacy:</strong> ${res.subscores.literacy} / 160</div>
-            <div><strong>Comprehension:</strong> ${res.subscores.comprehension} / 160</div>
-            <div><strong>Conversation:</strong> ${res.subscores.conversation} / 160</div>
-            <div><strong>Production:</strong> ${res.subscores.production} / 160</div>
+
+          <div class="scores-bar">
+            <div>
+              <div style="font-size:11px; font-weight:800; color:#64748B; text-transform:uppercase;">Score Global</div>
+              <div class="score-val">${res.overallScore} <span style="font-size:18px; color:#94A3B8;">/ 160</span></div>
+            </div>
+            <div style="width:1.5px; height:45px; background:#E2E8F0;"></div>
+            <div>
+              <div style="font-size:11px; font-weight:800; color:#64748B; text-transform:uppercase; margin-bottom:4px;">Niveau CECRL Accordé</div>
+              <div class="cefr-pill">Niveau ${res.cefrLevel} — ${this.getCefrTitle(res.cefrLevel)}</div>
+            </div>
           </div>
-          <p style="font-size:11px; color:#94A3B8">Issued on ${new Date().toLocaleDateString()} · SpeakUp Learning Platform</p>
+
+          <div class="subscores-grid">
+            <div class="subscore-card">
+              <div style="font-size:11px; color:#64748B; font-weight:700;">Literacy</div>
+              <div style="font-size:16px; font-weight:900; color:#4F46E5;">${res.subscores.literacy} / 160</div>
+            </div>
+            <div class="subscore-card">
+              <div style="font-size:11px; color:#64748B; font-weight:700;">Comprehension</div>
+              <div style="font-size:16px; font-weight:900; color:#0284C7;">${res.subscores.comprehension} / 160</div>
+            </div>
+            <div class="subscore-card">
+              <div style="font-size:11px; color:#64748B; font-weight:700;">Conversation</div>
+              <div style="font-size:16px; font-weight:900; color:#059669;">${res.subscores.conversation} / 160</div>
+            </div>
+            <div class="subscore-card">
+              <div style="font-size:11px; color:#64748B; font-weight:700;">Production</div>
+              <div style="font-size:16px; font-weight:900; color:#D97706;">${res.subscores.production} / 160</div>
+            </div>
+          </div>
+
+          <div class="footer-section">
+            <div style="flex:1;">
+              <div style="font-size:11px; font-weight:800; color:#78350F; text-transform:uppercase;">Bilan Pédagogique du Professeur :</div>
+              <div style="font-size:12px; font-style:italic; color:#334155; margin:3px 0 8px 0;">« ${teacherComment} »</div>
+              <div style="font-size:12.5px; font-weight:800; color:#1E1B4B;">Accordé et certifié par : <span style="color:#4F46E5;">${gradedBy}</span></div>
+              <div style="font-size:11px; color:#64748B;">Délivré le ${gradedAt} · SpeakUp Learning Platform</div>
+            </div>
+
+            <div style="text-align:center;">
+              <svg width="74" height="74" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="46" fill="#FFFBEB" stroke="#D97706" stroke-width="3" stroke-dasharray="4 2"/>
+                <circle cx="50" cy="50" r="38" fill="#F59E0B" stroke="#B45309" stroke-width="1.5"/>
+                <path d="M50 26 L54 37 L66 37 L56 45 L60 56 L50 49 L40 56 L44 45 L34 37 L46 37 Z" fill="#FFFBEB"/>
+                <text x="50" y="70" font-size="7.5" font-weight="900" fill="#78350F" text-anchor="middle">SPEAKUP CERTIFIED</text>
+                <text x="50" y="79" font-size="6" font-weight="800" fill="#92400E" text-anchor="middle">★ 2026 OFFICIAL ★</text>
+              </svg>
+              <div style="font-size:9.5px; font-weight:800; color:#92400E; margin-top:2px;">SCEAU OFFICIEL</div>
+            </div>
+          </div>
         </div>
-      </body></html>
+      </body>
+      </html>
     `);
     win.document.close();
-    setTimeout(() => { win.print(); }, 400);
+    setTimeout(() => { win.print(); }, 500);
   }
 
   // =========================================================

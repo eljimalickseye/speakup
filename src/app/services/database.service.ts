@@ -562,6 +562,9 @@ export interface AssessmentSubmission {
   teacherGlobalComment?: string;
   gradedBy?: string;
   gradedAt?: string;
+  certificateAwarded?: boolean;
+  certificateNumber?: string;
+  certificateIssuedAt?: string;
   antiCheatReport?: AntiCheatReport;
 }
 
