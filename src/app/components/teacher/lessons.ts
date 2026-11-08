@@ -1,7 +1,7 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { DatabaseService, Lesson } from '../../services/database.service';
+import { DatabaseService, Lesson, UserProfile } from '../../services/database.service';
 import { DialogService } from '../../services/dialog.service';
 
 @Component({
@@ -432,20 +432,44 @@ import { DialogService } from '../../services/dialog.service';
       <!-- Published Lessons List (Visible first by default) -->
       <div class="card">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
-          <h3 class="st" style="font-size:16px; margin:0">{{ t('Cours publiés', 'Published Lessons') }}</h3>
+          <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap">
+            <h3 class="st" style="font-size:16px; margin:0">{{ t('Cours publiés', 'Published Lessons') }}</h3>
+            <!-- Filter: All vs Mine -->
+            <div style="display:inline-flex; background:var(--surface-2); padding:2px; border-radius:8px; border:1px solid var(--border-weak)">
+              <button 
+                type="button"
+                (click)="authorFilter.set('all')"
+                [style.background]="authorFilter() === 'all' ? 'var(--surface-1)' : 'transparent'"
+                [style.color]="authorFilter() === 'all' ? 'var(--text-primary)' : 'var(--text-secondary)'"
+                [style.box-shadow]="authorFilter() === 'all' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none'"
+                style="border:none; padding:4px 10px; border-radius:6px; font-size:11.5px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:5px">
+                {{ t('Tous', 'All') }} ({{ lessons().length }})
+              </button>
+              <button 
+                type="button"
+                (click)="authorFilter.set('mine')"
+                [style.background]="authorFilter() === 'mine' ? '#10B981' : 'transparent'"
+                [style.color]="authorFilter() === 'mine' ? '#FFFFFF' : 'var(--text-secondary)'"
+                [style.box-shadow]="authorFilter() === 'mine' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none'"
+                style="border:none; padding:4px 10px; border-radius:6px; font-size:11.5px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:5px">
+                {{ t('Mes cours', 'My Lessons') }} ({{ myLessonsCount() }})
+              </button>
+            </div>
+          </div>
           <button class="btn-s" style="font-size:12px" (click)="showDrafts.set(!showDrafts())">
             {{ showDrafts() ? t('Masquer les brouillons', 'Hide Drafts') : t('Afficher les brouillons', 'Show Drafts') }} ({{ drafts().length }})
           </button>
         </div>
-        @if (lessons().length === 0) {
+        @if (filteredLessons().length === 0) {
           <div style="font-size:13px; color:var(--text-secondary); text-align:center; padding:16px 0">
-            {{ t('Aucun cours publié pour le moment.', 'No lessons published yet.') }}
+            {{ authorFilter() === 'mine' ? t('Vous n’avez publié aucun cours pour le moment.', 'You have not published any lessons yet.') : t('Aucun cours publié pour le moment.', 'No lessons published yet.') }}
           </div>
         } @else {
           <table style="width:100%; border-collapse:collapse; font-size:12px">
             <thead>
               <tr style="text-align:left; border-bottom:2px solid var(--border-weak); color:var(--text-muted)">
                 <th style="padding:8px">{{ t('Titre', 'Title') }}</th>
+                <th style="padding:8px">{{ t('Auteur', 'Author') }}</th>
                 <th style="padding:8px">{{ t('Niveau', 'Level') }}</th>
                 <th style="padding:8px">{{ t('Type', 'Type') }}</th>
                 <th style="padding:8px">{{ t('Thème', 'Theme') }}</th>
@@ -454,9 +478,20 @@ import { DialogService } from '../../services/dialog.service';
               </tr>
             </thead>
             <tbody>
-              @for (lesson of lessons(); track lesson.id) {
+              @for (lesson of filteredLessons(); track lesson.id) {
                 <tr style="border-bottom:1px solid var(--border-weak)">
                   <td style="padding:8px; font-weight:600; color:var(--text-primary)">{{ lesson.title }}</td>
+                  <td style="padding:8px">
+                    <span style="font-size:11px; font-weight:600; color:var(--text-secondary); display:inline-flex; align-items:center; gap:4px">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                      {{ lesson.authorName || t('Professeur', 'Teacher') }}
+                      @if (lesson.authorId && lesson.authorId === currentUser()?.id) {
+                        <span class="badge" style="background:#ECFDF5; color:#047857; font-size:9px; padding:1px 5px">
+                          {{ t('Moi', 'Me') }}
+                        </span>
+                      }
+                    </span>
+                  </td>
                   <td style="padding:8px"><span class="badge" style="background:#E0E7FF; color:#3730A3">{{ lesson.level }}</span></td>
                   <td style="padding:8px">{{ lesson.type === 'Grammar' ? t('Grammaire', 'Grammar') : (lesson.type === 'Listening' ? t('Compréhension', 'Listening') : t('Vocabulaire', 'Vocabulary')) }}</td>
                   <td style="padding:8px">
@@ -469,14 +504,21 @@ import { DialogService } from '../../services/dialog.service';
                   </td>
                   <td style="padding:8px">{{ lesson.vocabulary.length }} items</td>
                   <td style="padding:8px; text-align:right; display:flex; gap:4px; justify-content:flex-end">
-                    <button class="btn-s" style="padding:5px 9px; font-size:11px; display:inline-flex; align-items:center; gap:4px" (click)="editLesson(lesson)">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-                      {{ t('Modifier', 'Edit') }}
-                    </button>
-                    <button class="btn-s" style="padding:5px 9px; font-size:11px; border-color:#EF4444; color:#EF4444; display:inline-flex; align-items:center; gap:4px" (click)="deleteLesson(lesson)">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
-                      {{ t('Supprimer', 'Delete') }}
-                    </button>
+                    @if (canEditLesson(lesson)) {
+                      <button class="btn-s" style="padding:5px 9px; font-size:11px; display:inline-flex; align-items:center; gap:4px" (click)="editLesson(lesson)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                        {{ t('Modifier', 'Edit') }}
+                      </button>
+                      <button class="btn-s" style="padding:5px 9px; font-size:11px; border-color:#EF4444; color:#EF4444; display:inline-flex; align-items:center; gap:4px" (click)="deleteLesson(lesson)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                        {{ t('Supprimer', 'Delete') }}
+                      </button>
+                    } @else {
+                      <span style="font-size:11px; color:var(--text-muted); font-style:italic; display:inline-flex; align-items:center; gap:4px; padding:4px 6px">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        {{ t('Lecture seule', 'Read-only') }}
+                      </span>
+                    }
                   </td>
                 </tr>
               }
@@ -488,7 +530,7 @@ import { DialogService } from '../../services/dialog.service';
       @if (showDrafts()) {
         <div class="card" style="margin-top:16px; border-left: 4px solid #F59E0B">
           <h3 class="st" style="font-size:16px; margin-bottom:12px; color:#F59E0B">{{ t('Brouillons', 'Drafts') }}</h3>
-          @if (drafts().length === 0) {
+          @if (filteredDrafts().length === 0) {
             <div style="font-size:13px; color:var(--text-secondary); text-align:center; padding:16px 0">
               {{ t('Aucun brouillon enregistré.', 'No drafts saved.') }}
             </div>
@@ -497,6 +539,7 @@ import { DialogService } from '../../services/dialog.service';
               <thead>
                 <tr style="text-align:left; border-bottom:2px solid var(--border-weak); color:var(--text-muted)">
                   <th style="padding:8px">{{ t('Titre', 'Title') }}</th>
+                <th style="padding:8px">{{ t('Auteur', 'Author') }}</th>
                   <th style="padding:8px">{{ t('Niveau', 'Level') }}</th>
                   <th style="padding:8px">{{ t('Type', 'Type') }}</th>
                   <th style="padding:8px">{{ t('Créé le', 'Created') }}</th>
@@ -504,25 +547,43 @@ import { DialogService } from '../../services/dialog.service';
                 </tr>
               </thead>
               <tbody>
-                @for (draft of drafts(); track draft.id) {
+                @for (draft of filteredDrafts(); track draft.id) {
                   <tr style="border-bottom:1px solid var(--border-weak)">
                     <td style="padding:8px; font-weight:600; color:var(--text-primary)">{{ draft.title }}</td>
+                    <td style="padding:8px">
+                      <span style="font-size:11px; font-weight:600; color:var(--text-secondary); display:inline-flex; align-items:center; gap:4px">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                        {{ draft.authorName || t('Professeur', 'Teacher') }}
+                        @if (draft.authorId && draft.authorId === currentUser()?.id) {
+                          <span class="badge" style="background:#FEF3C7; color:#92400E; font-size:9px; padding:1px 5px">
+                            {{ t('Moi', 'Me') }}
+                          </span>
+                        }
+                      </span>
+                    </td>
                     <td style="padding:8px"><span class="badge" style="background:#FEF3C7; color:#92400E">{{ draft.level }}</span></td>
                     <td style="padding:8px">{{ draft.type === 'Grammar' ? t('Grammaire', 'Grammar') : (draft.type === 'Listening' ? t('Compréhension', 'Listening') : t('Vocabulaire', 'Vocabulary')) }}</td>
                     <td style="padding:8px; font-size:11px; color:var(--text-muted)">{{ draft.createdAt | date:'short' }}</td>
                     <td style="padding:8px; text-align:right; display:flex; gap:4px; justify-content:flex-end">
-                      <button class="btn-s" style="padding:5px 9px; font-size:11px; display:inline-flex; align-items:center; gap:4px" (click)="editLesson(draft)">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-                        {{ t('Modifier', 'Edit') }}
-                      </button>
-                      <button class="btn-p" style="padding:5px 9px; font-size:11px; background:#10B981; border-color:#10B981; display:inline-flex; align-items:center; gap:4px" (click)="publishDraft(draft.id)">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                        {{ t('Publier', 'Publish') }}
-                      </button>
-                      <button class="btn-s" style="padding:5px 9px; font-size:11px; border-color:#EF4444; color:#EF4444; display:inline-flex; align-items:center; gap:4px" (click)="deleteLesson(draft)">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
-                        {{ t('Supprimer', 'Delete') }}
-                      </button>
+                      @if (canEditLesson(draft)) {
+                        <button class="btn-s" style="padding:5px 9px; font-size:11px; display:inline-flex; align-items:center; gap:4px" (click)="editLesson(draft)">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                          {{ t('Modifier', 'Edit') }}
+                        </button>
+                        <button class="btn-p" style="padding:5px 9px; font-size:11px; background:#10B981; border-color:#10B981; display:inline-flex; align-items:center; gap:4px" (click)="publishDraft(draft.id)">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                          {{ t('Publier', 'Publish') }}
+                        </button>
+                        <button class="btn-s" style="padding:5px 9px; font-size:11px; border-color:#EF4444; color:#EF4444; display:inline-flex; align-items:center; gap:4px" (click)="deleteLesson(draft)">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                          {{ t('Supprimer', 'Delete') }}
+                        </button>
+                      } @else {
+                        <span style="font-size:11px; color:var(--text-muted); font-style:italic; display:inline-flex; align-items:center; gap:4px; padding:4px 6px">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                          {{ t('Lecture seule', 'Read-only') }}
+                        </span>
+                      }
                     </td>
                   </tr>
                 }
@@ -702,6 +763,42 @@ export class TeacherLessonsComponent {
   lessons = signal<Lesson[]>([]);
   drafts = signal<Lesson[]>([]);
   showDrafts = signal(false);
+  currentUser = signal<UserProfile | null>(null);
+  authorFilter = signal<'all' | 'mine'>('all');
+
+  myLessonsCount = computed(() => {
+    const user = this.currentUser();
+    if (!user) return 0;
+    return this.lessons().filter(l => l.authorId === user.id).length;
+  });
+
+  filteredLessons = computed(() => {
+    const list = this.lessons();
+    const filter = this.authorFilter();
+    const user = this.currentUser();
+    if (filter === 'mine' && user) {
+      return list.filter(l => l.authorId === user.id);
+    }
+    return list;
+  });
+
+  filteredDrafts = computed(() => {
+    const list = this.drafts();
+    const filter = this.authorFilter();
+    const user = this.currentUser();
+    if (filter === 'mine' && user) {
+      return list.filter(d => d.authorId === user.id);
+    }
+    return list;
+  });
+
+  canEditLesson(lesson: Lesson): boolean {
+    const user = this.currentUser();
+    if (!user) return false;
+    if (user.role === 'admin') return true;
+    if (!lesson.authorId) return true; // Legacy/unassigned lesson
+    return lesson.authorId === user.id;
+  }
   isFormOpen = signal<boolean>(false);
   activePanel = signal<'none' | 'theme' | 'youtube' | 'attachments' | 'config'>('none');
   showVocabInput = signal<boolean>(true);
@@ -746,6 +843,7 @@ export class TeacherLessonsComponent {
   }
 
   constructor() {
+    this.db.observeCurrentUser().subscribe(user => this.currentUser.set(user));
     this.db.observeLessons().subscribe(list => {
       const sorted = [...list].sort((a, b) => {
         const timeA = a.createdAt ? new Date(a.createdAt).getTime() : (parseInt(a.id.replace(/\D/g, '')) || 0);
@@ -758,6 +856,14 @@ export class TeacherLessonsComponent {
   }
 
   deleteLesson(lesson: Lesson) {
+    if (!this.canEditLesson(lesson)) {
+      this.dialogService.alert(
+        this.t('Accès refusé', 'Access Denied'),
+        this.t('Seul le professeur ayant créé ce cours peut le supprimer.', 'Only the teacher who created this lesson can delete it.'),
+        'info'
+      );
+      return;
+    }
     this.dialogService.confirm(
       this.t('Supprimer le cours', 'Delete Lesson'),
       this.t('Êtes-vous sûr de vouloir supprimer ce cours ?', 'Are you sure you want to delete this lesson?'),
@@ -838,12 +944,26 @@ export class TeacherLessonsComponent {
   saveAsDraft() {
     if (!this.title.trim()) return;
 
+    const id = this.selectedLessonId();
+    const existing = id ? (this.lessons().find(l => l.id === id) || this.drafts().find(d => d.id === id)) : null;
+
+    if (id && existing && !this.canEditLesson(existing)) {
+      this.dialogService.alert(
+        this.t('Accès refusé', 'Access Denied'),
+        this.t('Vous n’avez pas l’autorisation de modifier ce cours.', 'You do not have permission to modify this lesson.'),
+        'info'
+      );
+      return;
+    }
+
     const vocabulary = this.vocabText
       .split('\n')
       .map(line => line.trim())
       .filter(line => line.length > 0);
 
-    const currentUser = this.db['currentUser$'].value;
+    const currentUser = this.currentUser() || this.db['currentUser$'].value;
+    const authorId = existing?.authorId || currentUser?.id || 'teacher';
+    const authorName = existing?.authorName || currentUser?.name || 'Professeur';
     const lessonData = {
       title: this.title,
       level: this.level,
@@ -853,8 +973,8 @@ export class TeacherLessonsComponent {
       homeworkInstruction: this.homeworkInstruction,
       dueDate: this.dueDate,
       status: 'draft' as const,
-      authorId: currentUser?.id,
-      authorName: currentUser?.name,
+      authorId,
+      authorName,
       youtubeUrl: this.youtubeUrl,
       youtubeDescription: this.youtubeDescription,
       points: this.points,
@@ -863,7 +983,6 @@ export class TeacherLessonsComponent {
       coverImage: this.coverImage
     };
 
-    const id = this.selectedLessonId();
     if (id) {
       this.db.updateLesson(id, lessonData);
       this.dialogService.alert(
@@ -884,6 +1003,14 @@ export class TeacherLessonsComponent {
 
   publishDraft(draftId: string) {
     const draft = this.drafts().find(d => d.id === draftId);
+    if (draft && !this.canEditLesson(draft)) {
+      this.dialogService.alert(
+        this.t('Accès refusé', 'Access Denied'),
+        this.t('Seul le professeur ayant créé ce brouillon peut le publier.', 'Only the teacher who created this draft can publish it.'),
+        'info'
+      );
+      return;
+    }
     this.db.updateLesson(draftId, { status: 'published' });
 
     this.db.sendNotification({
@@ -903,6 +1030,14 @@ export class TeacherLessonsComponent {
   }
 
   editLesson(lesson: Lesson) {
+    if (!this.canEditLesson(lesson)) {
+      this.dialogService.alert(
+        this.t('Accès refusé', 'Access Denied'),
+        this.t('Seul le professeur ayant créé ce cours peut le modifier.', 'Only the teacher who created this lesson can edit it.'),
+        'info'
+      );
+      return;
+    }
     this.selectedLessonId.set(lesson.id);
     this.title = lesson.title;
     this.level = lesson.level;
@@ -930,13 +1065,27 @@ export class TeacherLessonsComponent {
   publishLesson() {
     if (!this.isValid()) return;
 
+    const id = this.selectedLessonId();
+    const existing = id ? (this.lessons().find(l => l.id === id) || this.drafts().find(d => d.id === id)) : null;
+
+    if (id && existing && !this.canEditLesson(existing)) {
+      this.dialogService.alert(
+        this.t('Accès refusé', 'Access Denied'),
+        this.t('Vous n’avez pas l’autorisation de modifier ce cours.', 'You do not have permission to modify this lesson.'),
+        'info'
+      );
+      return;
+    }
+
     // Parse vocabulary
     const vocabulary = this.vocabText
       .split('\n')
       .map(line => line.trim())
       .filter(line => line.length > 0);
 
-    const currentUser = this.db['currentUser$'].value;
+    const currentUser = this.currentUser() || this.db['currentUser$'].value;
+    const authorId = existing?.authorId || currentUser?.id || 'teacher';
+    const authorName = existing?.authorName || currentUser?.name || 'Professeur';
     const lessonData = {
       title: this.title,
       level: this.level,
@@ -946,8 +1095,8 @@ export class TeacherLessonsComponent {
       homeworkInstruction: this.homeworkInstruction,
       dueDate: this.dueDate,
       status: 'published' as const,
-      authorId: currentUser?.id,
-      authorName: currentUser?.name,
+      authorId,
+      authorName,
       youtubeUrl: this.youtubeUrl,
       youtubeDescription: this.youtubeDescription,
       points: this.points,
@@ -956,7 +1105,6 @@ export class TeacherLessonsComponent {
       coverImage: this.coverImage
     };
 
-    const id = this.selectedLessonId();
     if (id) {
       this.db.updateLesson(id, lessonData);
 
