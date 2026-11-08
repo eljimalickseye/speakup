@@ -168,6 +168,28 @@ import { DialogService } from '../../services/dialog.service';
                       <label style="font-size:11.5px; font-weight:700; color:var(--text-secondary)">{{ t('Description ou consignes vidéo', 'Video Description') }}</label>
                       <input type="text" [(ngModel)]="youtubeDescription" (ngModelChange)="onFieldChange()" [placeholder]="t('ex. Regardez cette vidéo avant de faire les exercices...', 'e.g., Watch this video before doing the tasks...')" style="width:100%; padding:9px" />
                     </div>
+                  
+                    @if (getYouTubeThumbnail(youtubeUrl); as thumb) {
+                      <div style="grid-column: 1 / -1; margin-top: 10px; display: flex; align-items: center; gap: 14px; background: #0F172A; padding: 12px 16px; border-radius: 12px; border: 1.5px solid rgba(99, 102, 241, 0.35); box-shadow: 0 4px 14px rgba(0,0,0,0.25)">
+                        <div style="width: 220px; height: 125px; border-radius: 8px; overflow: hidden; position: relative; flex-shrink: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.5)">
+                          <img [src]="thumb" style="width:100%; height:100%; object-fit:cover" alt="Video thumbnail" />
+                          <div style="position:absolute; inset:0; background:rgba(0,0,0,0.3); display:flex; align-items:center; justify-content:center">
+                            <div style="width:38px; height:38px; border-radius:50%; background:#EF4444; color:white; display:flex; align-items:center; justify-content:center; box-shadow:0 0 16px rgba(239,68,68,0.7)">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                            </div>
+                          </div>
+                        </div>
+                        <div style="flex: 1; color: white">
+                          <div style="font-size: 13px; font-weight: 800; color: #A5B4FC; margin-bottom: 4px; display:flex; align-items:center; gap:6px">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                            <span>{{ t('Aperçu de la leçon vidéo (Grand Format)', 'Video Lesson Preview (Widescreen)') }}</span>
+                          </div>
+                          <div style="font-size: 12px; color: #E2E8F0; line-height: 1.4">
+                            {{ youtubeDescription || t('Cette vidéo sera affichée en immersion cinéma (hauteur augmentée) pour les élèves.', 'This video will be displayed in cinema mode with enhanced height for students.') }}
+                          </div>
+                        </div>
+                      </div>
+                    }
                   </div>
                 </div>
               }
@@ -842,6 +864,23 @@ export class TeacherLessonsComponent {
   toggleThemePanel() {
     this.activePanel.set(this.activePanel() === 'theme' ? 'none' : 'theme');
   }
+  
+  getYouTubeThumbnail(url: string | undefined): string | null {
+    if (!url) return null;
+    let videoId = '';
+    try {
+      if (url.includes('youtu.be/')) {
+        videoId = url.split('youtu.be/')[1].split(/[?#]/)[0];
+      } else if (url.includes('youtube.com/watch')) {
+        const urlParams = new URLSearchParams(url.split('?')[1]);
+        videoId = urlParams.get('v') || '';
+      } else if (url.includes('youtube.com/embed/')) {
+        videoId = url.split('youtube.com/embed/')[1].split(/[?#]/)[0];
+      }
+    } catch (e) { return null; }
+    return videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : null;
+  }
+
   toggleYoutubePanel() {
     this.activePanel.set(this.activePanel() === 'youtube' ? 'none' : 'youtube');
   }

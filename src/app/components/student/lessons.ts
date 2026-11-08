@@ -59,14 +59,14 @@ import { DialogService } from '../../services/dialog.service';
             @if (featuredLesson(); as feat) {
               @if (getYouTubeThumbnail(feat.youtubeUrl); as thumb) {
                 <div (click)="selectLesson(feat)" 
-                     style="width:240px; height:135px; border-radius:14px; overflow:hidden; position:relative; cursor:pointer; box-shadow:0 12px 28px rgba(0,0,0,0.5); border:2px solid rgba(255,255,255,0.25); flex-shrink:0; transition:transform 0.3s ease"
+                     style="width:340px; height:195px; min-height:195px; border-radius:16px; overflow:hidden; position:relative; cursor:pointer; box-shadow:0 16px 36px rgba(0,0,0,0.6); border:2px solid rgba(255,255,255,0.3); flex-shrink:0; transition:transform 0.3s ease"
                      onmouseover="this.style.transform='scale(1.05)'"
                      onmouseout="this.style.transform='scale(1)'">
                   <img [src]="thumb" style="width:100%; height:100%; object-fit:cover" />
                   
                   <!-- Smart Animated Glowing Play Button -->
                   <div style="position:absolute; inset:0; background:rgba(15,23,42,0.4); display:flex; align-items:center; justify-content:center; backdrop-filter:blur(1px)">
-                    <div style="width:50px; height:50px; border-radius:50%; background:#EF4444; color:white; display:flex; align-items:center; justify-content:center; box-shadow:0 0 20px rgba(239,68,68,0.7)">
+                    <div style="width:58px; height:58px; border-radius:50%; background:#EF4444; color:white; display:flex; align-items:center; justify-content:center; box-shadow:0 0 24px rgba(239,68,68,0.85)">
                       <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                     </div>
                   </div>
@@ -168,12 +168,12 @@ import { DialogService } from '../../services/dialog.service';
                 
                 <!-- CARD COVER BANNER -->
                 <div [style.background]="(lesson.coverImage || getYouTubeThumbnail(lesson.youtubeUrl)) ? 'none' : getGradient(lesson.colorTheme)"
-                     style="height:140px; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center">
+                     style="height:185px; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center">
                   @if (lesson.coverImage || getYouTubeThumbnail(lesson.youtubeUrl)) {
                     <img [src]="lesson.coverImage || getYouTubeThumbnail(lesson.youtubeUrl)!" style="width:100%; height:100%; object-fit:cover" />
                     @if (lesson.youtubeUrl) {
                       <div style="position:absolute; inset:0; background:rgba(15,23,42,0.3); display:flex; align-items:center; justify-content:center">
-                        <div style="width:38px; height:38px; border-radius:50%; background:#EF4444; color:white; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(239,68,68,0.5)">
+                        <div style="width:44px; height:44px; border-radius:50%; background:#EF4444; color:white; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 18px rgba(239,68,68,0.65)">
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                         </div>
                       </div>
@@ -250,13 +250,13 @@ import { DialogService } from '../../services/dialog.service';
                 
                 <!-- COMPACT COVER BANNER -->
                 <div [style.background]="(lesson.coverImage || getYouTubeThumbnail(lesson.youtubeUrl)) ? 'none' : getGradient(lesson.colorTheme)"
-                     style="height:102px; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center">
+                     style="height:175px; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center">
                   @if (lesson.coverImage || getYouTubeThumbnail(lesson.youtubeUrl)) {
                     <img [src]="lesson.coverImage || getYouTubeThumbnail(lesson.youtubeUrl)!" style="width:100%; height:100%; object-fit:cover" />
                     @if (lesson.youtubeUrl) {
                       <div style="position:absolute; inset:0; background:rgba(15,23,42,0.3); display:flex; align-items:center; justify-content:center">
-                        <div style="width:28px; height:28px; border-radius:50%; background:#EF4444; color:white; display:flex; align-items:center; justify-content:center">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                        <div style="width:40px; height:40px; border-radius:50%; background:#EF4444; color:white; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(239,68,68,0.6)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                         </div>
                       </div>
                     }
@@ -350,10 +350,11 @@ import { DialogService } from '../../services/dialog.service';
           <!-- Tab Contents -->
           @if (detailTab() === 'content') {
             @if (selectedLesson()?.youtubeUrl) {
-              <div class="card" style="padding:14px; margin: 0 auto 16px auto; max-width: 680px; width: 100%; background:#000; border-radius:10px; overflow:hidden">
-                <div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden">
+              <!-- CINEMATIC HIGH-IMPACT VIDEO LESSON PLAYER -->
+              <div class="card video-cinema-card" style="padding:16px; margin: 0 auto 24px auto; max-width: 980px; width: 100%; background: linear-gradient(180deg, #0F172A 0%, #020617 100%); border-radius:18px; border: 1.5px solid rgba(99, 102, 241, 0.35); box-shadow: 0 20px 50px rgba(0,0,0,0.45); overflow:hidden">
+                <div class="video-cinema-frame" style="position: relative; width: 100%; height: 520px; min-height: 480px; border-radius:14px; overflow: hidden; background:#000; box-shadow: inset 0 0 30px rgba(0,0,0,0.85)">
                   <iframe 
-                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0"
+                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; border-radius:14px"
                     [src]="getYouTubeEmbedUrl(selectedLesson()?.youtubeUrl)"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                     allowfullscreen>
@@ -686,6 +687,27 @@ import { DialogService } from '../../services/dialog.service';
     </div>
   `,
   styles: [`
+    .video-cinema-card {
+      transition: box-shadow 0.3s ease, border-color 0.3s ease;
+    }
+    .video-cinema-card:hover {
+      border-color: rgba(99, 102, 241, 0.6);
+      box-shadow: 0 24px 60px rgba(79, 70, 229, 0.25);
+    }
+    @media (max-width: 900px) {
+      .video-cinema-frame {
+        height: 420px !important;
+        min-height: 380px !important;
+      }
+    }
+    @media (max-width: 640px) {
+      .video-cinema-frame {
+        height: auto !important;
+        aspect-ratio: 16/9 !important;
+        min-height: 220px !important;
+      }
+    }
+
     .recording-pulse {
       width: 10px;
       height: 10px;
