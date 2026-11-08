@@ -39,6 +39,28 @@ import { DialogService } from '../../services/dialog.service';
                   {{ selectedLessonId() ? t('Éditeur de Cours', 'Lesson Editor') : t('Créateur de Cours', 'Lesson Creator') }}
                 </span>
                 <h2 style="font-size:15px; font-weight:800; color:var(--text-primary); margin:0">{{ title || t('Sans titre', 'Untitled') }}</h2>
+              <!-- AUTO-SAVE STATUS BADGE -->
+              <div style="display:flex; align-items:center; margin-top:3px">
+                @if (autoSaveStatus() === 'saving') {
+                  <span style="font-size:11px; font-weight:700; color:#4F46E5; background:#EEF2FF; padding:3px 9px; border-radius:20px; display:inline-flex; align-items:center; gap:5px; border:1px solid #C7D2FE">
+                    <svg style="animation: spin 1s linear infinite;" xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                    {{ t('Sauvegarde auto...', 'Auto-saving...') }}
+                  </span>
+                } @else if (autoSaveStatus() === 'saved') {
+                  <span style="font-size:11px; font-weight:700; color:#059669; background:#ECFDF5; padding:3px 9px; border-radius:20px; display:inline-flex; align-items:center; gap:5px; border:1px solid #A7F3D0">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                    {{ t('Brouillon auto-enregistré', 'Draft auto-saved') }}
+                    @if (lastAutoSaveTime()) {
+                      <span style="font-size:10px; opacity:0.8">({{ lastAutoSaveTime() }})</span>
+                    }
+                  </span>
+                } @else if (autoSaveStatus() === 'offline') {
+                  <span style="font-size:11px; font-weight:700; color:#D97706; background:#FEF3C7; padding:3px 9px; border-radius:20px; display:inline-flex; align-items:center; gap:5px; border:1px solid #FDE68A" [title]="t('Sauvegardé sur cet appareil en attendant le retour de connexion', 'Saved locally until reconnected')">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+                    {{ t('Hors-ligne (Sauvegardé localement 💾)', 'Offline (Saved locally 💾)') }}
+                  </span>
+                }
+              </div>
               </div>
             </div>
 
@@ -75,8 +97,9 @@ import { DialogService } from '../../services/dialog.service';
               <button class="btn-s" (click)="saveAsDraft()">
                 {{ t('Brouillon', 'Draft') }}
               </button>
-              <button class="btn-p" [disabled]="!isValid()" (click)="publishLesson()" style="background:#10B981; border-color:#10B981">
-                {{ selectedLessonId() ? t('Mettre à jour', 'Update') : t('Publier', 'Publish') }}
+              <button class="btn-p" (click)="publishLesson()" style="background:#10B981; border-color:#10B981; font-weight:800; display:inline-flex; align-items:center; gap:5px">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                {{ (selectedLessonId() && isSelectedLessonPublished()) ? t('Mettre à jour', 'Update') : t('Publier le cours', 'Publish Lesson') }}
               </button>
             </div>
           </div>
@@ -101,7 +124,7 @@ import { DialogService } from '../../services/dialog.service';
                           { id: 'purple', name: 'Deep Amethyst', primary: '#8B5CF6', sec: '#F5F3FF' }
                         ]; track themeOpt.id) {
                           <button type="button"
-                                  (click)="colorTheme = themeOpt.id"
+                                  (click)="colorTheme = themeOpt.id; onFieldChange()"
                                   [style.background]="'linear-gradient(135deg, ' + themeOpt.primary + ' 0%, ' + themeOpt.sec + ' 100%)'"
                                   [title]="themeOpt.name"
                                   style="width:34px; height:34px; border-radius:50%; border:2px solid; cursor:pointer; transition:transform 0.15s; box-shadow:0 2px 4px rgba(0,0,0,0.1)"
@@ -123,7 +146,7 @@ import { DialogService } from '../../services/dialog.service';
                         @if (coverImage) {
                           <div style="position:relative; width:90px; height:50px; border-radius:6px; overflow:hidden; border:1.5px solid var(--border-weak)">
                             <img [src]="coverImage" style="width:100%; height:100%; object-fit:cover" />
-                            <button type="button" (click)="coverImage = ''" style="position:absolute; top:2px; right:2px; background:#EF4444; color:white; border:none; width:16px; height:16px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:bold; cursor:pointer">×</button>
+                            <button type="button" (click)="coverImage = ''; onFieldChange()" style="position:absolute; top:2px; right:2px; background:#EF4444; color:white; border:none; width:16px; height:16px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:bold; cursor:pointer">×</button>
                           </div>
                         }
                       </div>
@@ -139,11 +162,11 @@ import { DialogService } from '../../services/dialog.service';
                   <div style="display:grid; grid-template-columns: 1.5fr 1fr; gap:16px">
                     <div class="input-row" style="margin-bottom:0">
                       <label style="font-size:11.5px; font-weight:700; color:var(--text-secondary)">{{ t('URL de la vidéo YouTube intégrée', 'YouTube Video URL') }}</label>
-                      <input type="text" [(ngModel)]="youtubeUrl" placeholder="https://www.youtube.com/watch?v=..." style="width:100%; padding:9px" />
+                      <input type="text" [(ngModel)]="youtubeUrl" (ngModelChange)="onFieldChange()" placeholder="https://www.youtube.com/watch?v=..." style="width:100%; padding:9px" />
                     </div>
                     <div class="input-row" style="margin-bottom:0">
                       <label style="font-size:11.5px; font-weight:700; color:var(--text-secondary)">{{ t('Description ou consignes vidéo', 'Video Description') }}</label>
-                      <input type="text" [(ngModel)]="youtubeDescription" [placeholder]="t('ex. Regardez cette vidéo avant de faire les exercices...', 'e.g., Watch this video before doing the tasks...')" style="width:100%; padding:9px" />
+                      <input type="text" [(ngModel)]="youtubeDescription" (ngModelChange)="onFieldChange()" [placeholder]="t('ex. Regardez cette vidéo avant de faire les exercices...', 'e.g., Watch this video before doing the tasks...')" style="width:100%; padding:9px" />
                     </div>
                   </div>
                 </div>
@@ -182,7 +205,7 @@ import { DialogService } from '../../services/dialog.service';
                   <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:16px">
                     <div class="input-row" style="margin-bottom:0">
                       <label style="font-size:11.5px; font-weight:700; color:var(--text-secondary)">{{ t('Niveau CEFR requis', 'Target CEFR Level') }}</label>
-                      <select [(ngModel)]="level" style="width:100%; padding:8px">
+                      <select [(ngModel)]="level" (ngModelChange)="onFieldChange()" style="width:100%; padding:8px">
                         <option value="A1">A1 — Beginner</option>
                         <option value="A2">A2 — Elementary</option>
                         <option value="B1">B1 — Intermediate</option>
@@ -191,7 +214,7 @@ import { DialogService } from '../../services/dialog.service';
                     </div>
                     <div class="input-row" style="margin-bottom:0">
                       <label style="font-size:11.5px; font-weight:700; color:var(--text-secondary)">{{ t('Catégorie du cours', 'Lesson Category') }}</label>
-                      <select [(ngModel)]="type" style="width:100%; padding:8px">
+                      <select [(ngModel)]="type" (ngModelChange)="onFieldChange()" style="width:100%; padding:8px">
                         <option value="Grammar">Grammar / Conjugation</option>
                         <option value="Vocabulary">Vocabulary List</option>
                         <option value="Reading">Reading / Comprehension</option>
@@ -199,7 +222,7 @@ import { DialogService } from '../../services/dialog.service';
                     </div>
                     <div class="input-row" style="margin-bottom:0">
                       <label style="font-size:11.5px; font-weight:700; color:var(--text-secondary)">{{ t('Points XP à remporter', 'XP Points to Award') }}</label>
-                      <input type="number" [(ngModel)]="points" style="width:100%; padding:8px" />
+                      <input type="number" [(ngModel)]="points" (ngModelChange)="onFieldChange()" style="width:100%; padding:8px" />
                     </div>
                   </div>
                 </div>
@@ -214,7 +237,7 @@ import { DialogService } from '../../services/dialog.service';
             <!-- EDITOR CANVAS HEADER: BORDERLESS TITLE INPUT -->
             <div style="padding:40px 40px 10px 40px">
               <input type="text" 
-                     [(ngModel)]="title" 
+                     [(ngModel)]="title" (ngModelChange)="onFieldChange()" 
                      [placeholder]="t('Entrez le titre de la leçon ici...', 'Enter lesson title here...')" 
                      style="font-size: 26px; font-weight: 850; border: none; border-bottom: 2px solid transparent; width: 100%; outline: none; margin-bottom: 8px; padding: 4px 0; color:var(--text-primary); transition: border-color 0.2s" 
                      onfocus="this.style.borderColor='#4F46E5'" 
@@ -375,7 +398,7 @@ import { DialogService } from '../../services/dialog.service';
                     <label style="font-size:11px; color:var(--text-muted); display:block; margin-bottom:6px">
                       {{ t('Entrez les termes sous la forme : mot - traduction (un terme par ligne)', 'Enter terms in the format: word - translation (one term per line)') }}
                     </label>
-                    <textarea [(ngModel)]="vocabText" rows="4" placeholder="e.g. apple - pomme" style="width:100%; font-family:monospace; font-size:12.5px; padding:10px; border-radius:8px; border:1px solid var(--border); outline:none"></textarea>
+                    <textarea [(ngModel)]="vocabText" (ngModelChange)="onFieldChange()" rows="4" placeholder="e.g. apple - pomme" style="width:100%; font-family:monospace; font-size:12.5px; padding:10px; border-radius:8px; border:1px solid var(--border); outline:none"></textarea>
                   </div>
                 }
               </div>
@@ -416,7 +439,7 @@ import { DialogService } from '../../services/dialog.service';
                     </div>
                     <div class="input-row" style="margin-bottom:0">
                       <label style="font-size:11px; color:var(--text-muted)">{{ t('Date limite de rendu', 'Due Date') }}</label>
-                      <input type="date" [(ngModel)]="dueDate" style="width:100%; padding:8px; border-radius:8px; border:1px solid var(--border); outline:none" />
+                      <input type="date" [(ngModel)]="dueDate" (ngModelChange)="onFieldChange()" style="width:100%; padding:8px; border-radius:8px; border:1px solid var(--border); outline:none" />
                     </div>
                   </div>
                 }
@@ -793,12 +816,24 @@ export class TeacherLessonsComponent {
   });
 
   canEditLesson(lesson: Lesson): boolean {
-    const user = this.currentUser();
-    if (!user) return false;
+    const user = this.currentUser() || this.db.getCurrentUser() || (this.db as any)['currentUser$']?.value;
+    if (!user) return true;
     if (user.role === 'admin') return true;
-    if (!lesson.authorId) return true; // Legacy/unassigned lesson
+    if (!lesson.authorId || lesson.authorId === 'teacher') return true;
     return lesson.authorId === user.id;
   }
+
+  isSelectedLessonPublished(): boolean {
+    const id = this.selectedLessonId();
+    if (!id) return false;
+    const l = this.lessons().find(item => item.id === id);
+    return Boolean(l && l.status === 'published');
+  }
+
+  autoSaveStatus = signal<'saved' | 'saving' | 'offline' | 'idle'>('idle');
+  lastAutoSaveTime = signal<string>('');
+  private autoSaveTimer: any = null;
+  private readonly LOCAL_DRAFT_KEY = 'speakup_teacher_active_lesson_draft';
   isFormOpen = signal<boolean>(false);
   activePanel = signal<'none' | 'theme' | 'youtube' | 'attachments' | 'config'>('none');
   showVocabInput = signal<boolean>(true);
@@ -837,6 +872,7 @@ export class TeacherLessonsComponent {
       const reader = new FileReader();
       reader.onload = (e: any) => {
         this.coverImage = e.target.result;
+        this.onFieldChange();
       };
       reader.readAsDataURL(file);
     }
@@ -844,6 +880,13 @@ export class TeacherLessonsComponent {
 
   constructor() {
     this.db.observeCurrentUser().subscribe(user => this.currentUser.set(user));
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', () => {
+        if (this.autoSaveStatus() === 'offline' && this.isFormOpen()) {
+          this.performAutoSave();
+        }
+      });
+    }
     this.db.observeLessons().subscribe(list => {
       const sorted = [...list].sort((a, b) => {
         const timeA = a.createdAt ? new Date(a.createdAt).getTime() : (parseInt(a.id.replace(/\D/g, '')) || 0);
@@ -881,9 +924,182 @@ export class TeacherLessonsComponent {
     );
   }
 
+  getLocalActiveDraft(): any {
+    try {
+      const raw = localStorage.getItem(this.LOCAL_DRAFT_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  saveActiveDraftToLocal() {
+    try {
+      const data = {
+        selectedLessonId: this.selectedLessonId(),
+        title: this.title,
+        level: this.level,
+        type: this.type,
+        content: this.content,
+        vocabText: this.vocabText,
+        homeworkInstruction: this.homeworkInstruction,
+        dueDate: this.dueDate,
+        youtubeUrl: this.youtubeUrl,
+        youtubeDescription: this.youtubeDescription,
+        points: this.points,
+        attachments: this.attachments,
+        colorTheme: this.colorTheme,
+        coverImage: this.coverImage,
+        savedAt: new Date().toISOString()
+      };
+      localStorage.setItem(this.LOCAL_DRAFT_KEY, JSON.stringify(data));
+    } catch (e) {
+      console.warn('LocalStorage error saving draft:', e);
+    }
+  }
+
+  clearLocalActiveDraft() {
+    try {
+      localStorage.removeItem(this.LOCAL_DRAFT_KEY);
+    } catch {}
+  }
+
+  restoreFromDraftData(data: any) {
+    this.selectedLessonId.set(data.selectedLessonId || null);
+    this.title = data.title || '';
+    this.level = data.level || 'B1';
+    this.type = data.type || 'Grammar';
+    this.content = data.content || '';
+    this.vocabText = data.vocabText || '';
+    this.homeworkInstruction = data.homeworkInstruction || '';
+    this.dueDate = data.dueDate || '';
+    this.youtubeUrl = data.youtubeUrl || '';
+    this.youtubeDescription = data.youtubeDescription || '';
+    this.points = data.points || 50;
+    this.attachments = data.attachments || [];
+    this.colorTheme = data.colorTheme || 'indigo';
+    this.coverImage = data.coverImage || '';
+    this.isFormOpen.set(true);
+    this.autoSaveStatus.set('saved');
+
+    setTimeout(() => {
+      const el = document.getElementById('richEditor');
+      if (el) el.innerHTML = this.content;
+      const hEl = document.getElementById('homeworkEditor');
+      if (hEl) hEl.innerHTML = this.homeworkInstruction;
+    }, 50);
+  }
+
+  onFieldChange() {
+    if (!this.isFormOpen()) return;
+    this.autoSaveStatus.set('saving');
+    this.saveActiveDraftToLocal();
+
+    if (this.autoSaveTimer) {
+      clearTimeout(this.autoSaveTimer);
+    }
+    this.autoSaveTimer = setTimeout(() => {
+      this.performAutoSave();
+    }, 1200);
+  }
+
+  async performAutoSave(): Promise<void> {
+    if (!this.title.trim() && !this.content.trim()) {
+      this.saveActiveDraftToLocal();
+      this.autoSaveStatus.set('saved');
+      return;
+    }
+
+    const vocabulary = this.vocabText
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0);
+
+    const currentUser = this.currentUser() || this.db.getCurrentUser() || (this.db as any)['currentUser$']?.value;
+    const id = this.selectedLessonId();
+    const existing = id ? (this.lessons().find(l => l.id === id) || this.drafts().find(d => d.id === id)) : null;
+
+    if (id && existing && !this.canEditLesson(existing)) {
+      return;
+    }
+
+    const authorId = existing?.authorId || currentUser?.id || 'teacher';
+    const authorName = existing?.authorName || currentUser?.name || 'Professeur';
+
+    const lessonData = {
+      title: this.title.trim() || this.t('Brouillon sans titre', 'Untitled Draft'),
+      level: this.level,
+      type: this.type,
+      content: this.content,
+      vocabulary,
+      homeworkInstruction: this.homeworkInstruction,
+      dueDate: this.dueDate || '',
+      status: (existing?.status === 'published' ? 'published' : 'draft') as 'draft' | 'published',
+      authorId,
+      authorName,
+      youtubeUrl: this.youtubeUrl,
+      youtubeDescription: this.youtubeDescription,
+      points: this.points,
+      attachments: this.attachments,
+      colorTheme: this.colorTheme,
+      coverImage: this.coverImage
+    };
+
+    this.saveActiveDraftToLocal();
+
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      this.autoSaveStatus.set('offline');
+      return;
+    }
+
+    try {
+      if (id) {
+        await this.db.updateLesson(id, lessonData);
+      } else {
+        const created: any = await this.db.addLesson(lessonData);
+        if (created && created.id) {
+          this.selectedLessonId.set(created.id);
+          this.saveActiveDraftToLocal();
+        }
+      }
+      this.autoSaveStatus.set('saved');
+      const now = new Date();
+      this.lastAutoSaveTime.set(
+        now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0') + ':' + now.getSeconds().toString().padStart(2, '0')
+      );
+    } catch (e) {
+      console.warn('Auto-save network error, saved to local cache:', e);
+      this.autoSaveStatus.set('offline');
+    }
+  }
+
   startNewLesson() {
+    const cached = this.getLocalActiveDraft();
+    if (cached && (cached.title || cached.content)) {
+      this.dialogService.confirm(
+        this.t('Brouillon récupéré 📝', 'Recovered Draft 📝'),
+        this.t(
+          `Un brouillon en cours ("${cached.title || 'Sans titre'}") a été sauvegardé automatiquement lors d'une session précédente. Souhaitez-vous le restaurer ?`,
+          `An in-progress draft ("${cached.title || 'Untitled'}") was auto-saved from a previous session. Would you like to restore it?`
+        ),
+        () => {
+          this.restoreFromDraftData(cached);
+        },
+        () => {
+          this.clearLocalActiveDraft();
+          this.initNewBlankLesson();
+        }
+      );
+    } else {
+      this.initNewBlankLesson();
+    }
+  }
+
+  initNewBlankLesson() {
     this.resetForm();
     this.isFormOpen.set(true);
+    this.autoSaveStatus.set('saved');
+    this.saveActiveDraftToLocal();
     setTimeout(() => {
       const el = document.getElementById('richEditor');
       if (el) el.innerHTML = '';
@@ -925,6 +1141,7 @@ export class TeacherLessonsComponent {
         base64: base64String
       });
       event.target.value = '';
+      this.onFieldChange();
     };
     reader.readAsDataURL(file);
   }
@@ -935,70 +1152,25 @@ export class TeacherLessonsComponent {
 
   removeAttachment(index: number) {
     this.attachments.splice(index, 1);
+    this.onFieldChange();
   }
 
   isValid() {
-    return this.title.trim() && this.content.trim() && this.homeworkInstruction.trim() && this.dueDate;
+    const hasDomContent = typeof document !== 'undefined' && Boolean(document.getElementById('richEditor')?.innerText?.trim());
+    return Boolean(this.title.trim() && (this.content.trim() || hasDomContent));
   }
 
   saveAsDraft() {
-    if (!this.title.trim()) return;
+    if (!this.title.trim() && !this.content.trim()) return;
 
-    const id = this.selectedLessonId();
-    const existing = id ? (this.lessons().find(l => l.id === id) || this.drafts().find(d => d.id === id)) : null;
-
-    if (id && existing && !this.canEditLesson(existing)) {
-      this.dialogService.alert(
-        this.t('Accès refusé', 'Access Denied'),
-        this.t('Vous n’avez pas l’autorisation de modifier ce cours.', 'You do not have permission to modify this lesson.'),
-        'info'
-      );
-      return;
-    }
-
-    const vocabulary = this.vocabText
-      .split('\n')
-      .map(line => line.trim())
-      .filter(line => line.length > 0);
-
-    const currentUser = this.currentUser() || this.db['currentUser$'].value;
-    const authorId = existing?.authorId || currentUser?.id || 'teacher';
-    const authorName = existing?.authorName || currentUser?.name || 'Professeur';
-    const lessonData = {
-      title: this.title,
-      level: this.level,
-      type: this.type,
-      content: this.content,
-      vocabulary,
-      homeworkInstruction: this.homeworkInstruction,
-      dueDate: this.dueDate,
-      status: 'draft' as const,
-      authorId,
-      authorName,
-      youtubeUrl: this.youtubeUrl,
-      youtubeDescription: this.youtubeDescription,
-      points: this.points,
-      attachments: this.attachments,
-      colorTheme: this.colorTheme,
-      coverImage: this.coverImage
-    };
-
-    if (id) {
-      this.db.updateLesson(id, lessonData);
-      this.dialogService.alert(
-        this.t('Succès', 'Success'),
-        this.t('Brouillon mis à jour avec succès !', 'Draft updated successfully!'),
-        'success'
-      );
-    } else {
-      this.db.addLesson(lessonData);
+    this.performAutoSave().then(() => {
       this.dialogService.alert(
         this.t('Succès', 'Success'),
         this.t('Brouillon enregistré avec succès !', 'Draft saved successfully!'),
         'success'
       );
-    }
-    this.resetForm();
+      this.resetForm();
+    });
   }
 
   publishDraft(draftId: string) {
@@ -1062,8 +1234,18 @@ export class TeacherLessonsComponent {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  publishLesson() {
-    if (!this.isValid()) return;
+  async publishLesson() {
+    this.syncContentFromDOM();
+    this.syncHomeworkFromDOM();
+
+    if (!this.title.trim()) {
+      this.dialogService.alert(
+        this.t('Titre requis', 'Title Required'),
+        this.t('Veuillez renseigner un titre pour votre cours avant de publier.', 'Please enter a lesson title before publishing.'),
+        'info'
+      );
+      return;
+    }
 
     const id = this.selectedLessonId();
     const existing = id ? (this.lessons().find(l => l.id === id) || this.drafts().find(d => d.id === id)) : null;
@@ -1083,67 +1265,68 @@ export class TeacherLessonsComponent {
       .map(line => line.trim())
       .filter(line => line.length > 0);
 
-    const currentUser = this.currentUser() || this.db['currentUser$'].value;
+    const currentUser = this.currentUser() || this.db.getCurrentUser() || (this.db as any)['currentUser$']?.value;
     const authorId = existing?.authorId || currentUser?.id || 'teacher';
     const authorName = existing?.authorName || currentUser?.name || 'Professeur';
+
+    const effectiveDueDate = this.dueDate || new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
+    const effectiveHomework = this.homeworkInstruction.trim() || this.t('Consultez les notes de cours et appliquez les notions.', 'Review lecture notes and complete practice.');
+
     const lessonData = {
-      title: this.title,
+      title: this.title.trim(),
       level: this.level,
       type: this.type,
       content: this.content,
       vocabulary,
-      homeworkInstruction: this.homeworkInstruction,
-      dueDate: this.dueDate,
+      homeworkInstruction: effectiveHomework,
+      dueDate: effectiveDueDate,
       status: 'published' as const,
       authorId,
       authorName,
       youtubeUrl: this.youtubeUrl,
       youtubeDescription: this.youtubeDescription,
-      points: this.points,
+      points: this.points || 50,
       attachments: this.attachments,
       colorTheme: this.colorTheme,
       coverImage: this.coverImage
     };
 
     if (id) {
-      this.db.updateLesson(id, lessonData);
-
-      this.db.sendNotification({
-        recipientId: 'all',
-        recipientRole: 'student',
-        type: 'exercise_assigned',
-        title: '✏️ Cours d’anglais mis à jour',
-        message: `Le cours "${this.title}" a été mis à jour par votre professeur.`,
-        link: 'lessons'
-      });
-
-      this.dialogService.alert(
-        this.t('Succès', 'Success'),
-        this.t("Cours d'anglais mis à jour avec succès !", 'English Lesson updated successfully!'),
-        'success'
-      );
+      await this.db.updateLesson(id, lessonData);
     } else {
-      this.db.addLesson(lessonData);
-
-      this.db.sendNotification({
-        recipientId: 'all',
-        recipientRole: 'student',
-        type: 'exercise_assigned',
-        title: '📖 Nouveau cours disponible',
-        message: `Le cours "${this.title}" a été publié par ${currentUser?.name || 'votre professeur'}. Date limite : ${this.dueDate}.`,
-        link: 'lessons'
-      });
-
-      this.dialogService.alert(
-        this.t('Succès', 'Success'),
-        this.t("Cours d'anglais publié avec succès !", 'English Lesson published successfully!'),
-        'success'
-      );
+      await this.db.addLesson(lessonData);
     }
+
+    this.clearLocalActiveDraft();
+    if (this.autoSaveTimer) {
+      clearTimeout(this.autoSaveTimer);
+      this.autoSaveTimer = null;
+    }
+
+    this.db.sendNotification({
+      recipientId: 'all',
+      recipientRole: 'student',
+      type: 'exercise_assigned',
+      title: '📖 Nouveau cours disponible',
+      message: `Le cours "${this.title.trim()}" a été publié. Date limite : ${effectiveDueDate}.`,
+      link: 'lessons'
+    });
+
+    this.dialogService.alert(
+      this.t('Succès 🎉', 'Success 🎉'),
+      this.t("Cours d'anglais publié avec succès !", 'English Lesson published successfully!'),
+      'success'
+    );
+
     this.resetForm();
   }
 
   resetForm() {
+    if (this.autoSaveTimer) {
+      clearTimeout(this.autoSaveTimer);
+      this.autoSaveTimer = null;
+    }
+    this.clearLocalActiveDraft();
     this.selectedLessonId.set(null);
     this.title = '';
     this.level = 'B1';
@@ -1162,6 +1345,7 @@ export class TeacherLessonsComponent {
     this.activePanel.set('none');
     this.showVocabInput.set(true);
     this.showHomeworkInput.set(true);
+    this.autoSaveStatus.set('idle');
     const el = document.getElementById('richEditor');
     if (el) el.innerHTML = '';
     const hEl = document.getElementById('homeworkEditor');

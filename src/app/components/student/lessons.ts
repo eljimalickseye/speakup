@@ -556,7 +556,7 @@ import { DialogService } from '../../services/dialog.service';
                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
                       {{ t('1. Votre réponse écrite ou remarques (optionnel) :', '1. Your Written Answer or Remarks (Optional):') }}
                     </label>
-                    <textarea [(ngModel)]="homeworkContent" 
+                    <textarea [(ngModel)]="homeworkContent" (ngModelChange)="saveStudentHomeworkDraft()" 
                               [placeholder]="t('Saisissez vos explications ou réponses écrites ici...', 'Type your written answers or notes here...')" 
                               rows="4"
                               class="homework-textarea"></textarea>
@@ -937,6 +937,14 @@ export class StudentLessonsComponent {
   currentUser = signal<UserProfile | null>(null);
   
   selectedLesson = signal<Lesson | null>(null);
+
+  saveStudentHomeworkDraft() {
+    const lesson = this.selectedLesson();
+    if (!lesson) return;
+    try {
+      localStorage.setItem('speakup_student_hw_draft_' + lesson.id, this.homeworkContent);
+    } catch {}
+  }
   homeworkContent = '';
   searchQuery = '';
 
@@ -1331,6 +1339,7 @@ export class StudentLessonsComponent {
     this.recordedAudios.set([]);
     this.resetVideoRecording();
 
+    try { localStorage.removeItem('speakup_student_hw_draft_' + lesson.id); } catch {}
     this.dialogService.alert('Succès 🎉', `Votre devoir a été soumis avec succès ! Vous gagnerez ${xpReward} XP après correction.`, 'success');
   }
 

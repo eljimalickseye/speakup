@@ -148,6 +148,7 @@ import { SidebarComponent } from './sidebar';
         [pendingPlacementCount]="pendingPlacementCount()"
         [pendingCoachingCount]="pendingCoachingCount()"
         [pendingHomeworkCount]="pendingHomeworkCount()"
+        [pendingAssessmentsCount]="pendingAssessmentsCount()"
         [showBoutique]="showBoutique()"
         [showGarden]="showGarden()"
         [showJourney]="showJourney()"
@@ -428,6 +429,8 @@ import { SidebarComponent } from './sidebar';
               <app-teacher-payments></app-teacher-payments>
             } @else if (activeTab === 'teacher-events') {
               <app-teacher-events></app-teacher-events>
+            } @else if (activeTab === 'exam') {
+              <app-student-exam></app-student-exam>
             } @else if (activeTab === 'chat') {
               <app-student-chat></app-student-chat>
             } @else if (activeTab === 'leaderboard') {
@@ -1168,6 +1171,7 @@ export class LayoutComponent {
   // Badges stats
   lessonsCount = signal<number>(0);
   pendingHomeworkCount = signal<number>(0);
+  pendingAssessmentsCount = signal<number>(0);
   activeClassAvailable = signal<boolean>(false);
   unreadAnnouncementsCount = signal<number>(0);
   chatUnreadCount = signal<number>(0);
@@ -1277,11 +1281,11 @@ export class LayoutComponent {
           this.setTab('exercises');
         }
         // Sync active tab for roles
-        if (user.role === 'teacher' && ['dashboard', 'lessons', 'speaking', 'exercises', 'quizzes', 'events', 'live-classes', 'admin-management', 'history', 'exam'].includes(this.activeTab)) {
+        if (user.role === 'teacher' && ['dashboard', 'lessons', 'speaking', 'exercises', 'quizzes', 'events', 'live-classes', 'admin-management', 'history'].includes(this.activeTab)) {
           this.setTab('overview');
         } else if ((user.role === 'student' || user.role === 'guest') && ['overview', 'students', 'create-lesson', 'create-quiz', 'exercises-manager', 'grade-homework', 'attendance', 'schedule-class', 'payments', 'teacher-events', 'user-management', 'admin-management', 'results'].includes(this.activeTab)) {
           this.setTab('dashboard');
-        } else if (user.role === 'admin' && ['dashboard', 'lessons', 'speaking', 'exercises', 'quizzes', 'events', 'live-classes', 'overview', 'students', 'create-lesson', 'create-quiz', 'exercises-manager', 'grade-homework', 'attendance', 'schedule-class', 'payments', 'teacher-events', 'user-management', 'history', 'exam', 'results'].includes(this.activeTab)) {
+        } else if (user.role === 'admin' && ['dashboard', 'lessons', 'speaking', 'exercises', 'quizzes', 'events', 'live-classes', 'overview', 'students', 'create-lesson', 'create-quiz', 'exercises-manager', 'grade-homework', 'attendance', 'schedule-class', 'payments', 'teacher-events', 'user-management', 'history', 'results'].includes(this.activeTab)) {
           this.setTab('admin-management');
         }
       }

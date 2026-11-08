@@ -2,7 +2,7 @@ import { Component, inject, signal, computed, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { DatabaseService, Quiz, UserProfile, ExamAttempt } from '../../services/database.service';
+import { DatabaseService, Quiz, UserProfile, ExamAttempt, AssessmentSubmission, AssessmentQuestionAnswer } from '../../services/database.service';
 import { DialogService } from '../../services/dialog.service';
 
 export interface DetQuestion {
@@ -33,7 +33,572 @@ export interface DetQuestion {
       <!-- ======================================================== -->
       @if (view() === 'hub') {
         <div style="animation: fadeIn 0.25s ease;">
+          
+        <!-- TEACHER & ADMIN CORRECTION DESK -->
+        @if (currentUser()?.role === 'teacher' || currentUser()?.role === 'admin') {
+          <div style="animation: fadeIn 0.25s ease;">
+            
+            <!-- Top Teacher Navigation Bar -->
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:14px; background:var(--surface-1); padding:16px 20px; border-radius:14px; border:1px solid var(--border);">
+              <div style="display:flex; align-items:center; gap:12px;">
+                <div style="width:42px; height:42px; border-radius:10px; background:linear-gradient(135deg, #4F46E5, #7C3AED); display:flex; align-items:center; justify-content:center; color:white;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                  </svg>
+                </div>
+                <div>
+                  <div style="font-family:'Outfit', sans-serif; font-size:18px; font-weight:800; color:var(--text-primary); line-height:1.2;">
+                    Centre de Correction SpeakUp English Assessment
+                  </div>
+                  <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">
+                    Dossiers des élèves, écoute des réponses orales, notation & délivrance des certificats
+                  </div>
+                </div>
+              </div>
 
+              <!-- Switcher Tabs (Dossiers vs Preview) -->
+              <div style="display:flex; background:rgba(0,0,0,0.05); padding:3px; border-radius:10px; gap:4px;">
+                <button
+                  type="button"
+                  (click)="teacherModeTab.set('folders'); closeSubmissionFolder();"
+                  [style.background]="teacherModeTab() === 'folders' ? 'white' : 'transparent'"
+                  [style.color]="teacherModeTab() === 'folders' ? '#4F46E5' : 'var(--text-secondary)'"
+                  [style.box-shadow]="teacherModeTab() === 'folders' ? '0 2px 6px rgba(0,0,0,0.08)' : 'none'"
+                  style="border:none; padding:8px 16px; border-radius:8px; font-weight:700; font-size:12.5px; cursor:pointer; display:flex; align-items:center; gap:6px; transition:all 0.15s ease;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                  </svg>
+                  <span>Dossiers Élèves</span>
+                  @if (pendingSubmissionsCount() > 0) {
+                    <span style="background:#EF4444; color:white; font-size:10px; font-weight:800; padding:1px 6px; border-radius:10px;">{{ pendingSubmissionsCount() }}</span>
+                  }
+                </button>
+
+                <button
+                  type="button"
+                  (click)="teacherModeTab.set('preview'); closeSubmissionFolder();"
+                  [style.background]="teacherModeTab() === 'preview' ? 'white' : 'transparent'"
+                  [style.color]="teacherModeTab() === 'preview' ? '#4F46E5' : 'var(--text-secondary)'"
+                  [style.box-shadow]="teacherModeTab() === 'preview' ? '0 2px 6px rgba(0,0,0,0.08)' : 'none'"
+                  style="border:none; padding:8px 16px; border-radius:8px; font-weight:700; font-size:12.5px; cursor:pointer; display:flex; align-items:center; gap:6px; transition:all 0.15s ease;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <polygon points="10 8 16 12 10 16 10 8"/>
+                  </svg>
+                  <span>Aperçu Simulateur Test</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- MODE 1: FOLDERS VIEW OR ACTIVE DOSSIER CORRECTION -->
+            @if (teacherModeTab() === 'folders') {
+
+              <!-- SUB-VIEW A: ALL FOLDERS GRID -->
+              @if (!activeSubmission()) {
+                <div style="animation: fadeIn 0.2s ease;">
+
+                  <!-- Top Metrics Overview -->
+                  <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:14px; margin-bottom:20px;">
+                    <!-- Metric 1: Total -->
+                    <div class="metric-card">
+                      <div>
+                        <div style="font-size:11.5px; color:var(--text-secondary); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Total Dossiers</div>
+                        <div style="font-size:26px; font-weight:900; color:var(--text-primary); margin-top:2px;">{{ assessmentSubmissions().length }}</div>
+                      </div>
+                      <div style="width:40px; height:40px; border-radius:10px; background:#EEF2FF; color:#4F46E5; display:flex; align-items:center; justify-content:center;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                      </div>
+                    </div>
+
+                    <!-- Metric 2: Pending -->
+                    <div class="metric-card" style="border-color:#FED7AA; background:linear-gradient(135deg, rgba(254, 243, 199, 0.3) 0%, rgba(255, 237, 213, 0.4) 100%);">
+                      <div>
+                        <div style="font-size:11.5px; color:#C2410C; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">En attente de correction</div>
+                        <div style="font-size:26px; font-weight:900; color:#EA580C; margin-top:2px;">{{ pendingSubmissionsCount() }}</div>
+                      </div>
+                      <div style="width:40px; height:40px; border-radius:10px; background:#FFEDD5; color:#EA580C; display:flex; align-items:center; justify-content:center;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                      </div>
+                    </div>
+
+                    <!-- Metric 3: Corrected -->
+                    <div class="metric-card" style="border-color:#A7F3D0; background:linear-gradient(135deg, rgba(209, 250, 229, 0.3) 0%, rgba(236, 253, 245, 0.4) 100%);">
+                      <div>
+                        <div style="font-size:11.5px; color:#047857; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Dossiers Corrigés</div>
+                        <div style="font-size:26px; font-weight:900; color:#059669; margin-top:2px;">{{ correctedSubmissionsCount() }}</div>
+                      </div>
+                      <div style="width:40px; height:40px; border-radius:10px; background:#D1FAE5; color:#059669; display:flex; align-items:center; justify-content:center;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      </div>
+                    </div>
+
+                    <!-- Metric 4: Average Score -->
+                    <div class="metric-card">
+                      <div>
+                        <div style="font-size:11.5px; color:var(--text-secondary); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Moyenne (Échelle SET)</div>
+                        <div style="font-size:26px; font-weight:900; color:#4F46E5; margin-top:2px;">
+                          {{ averageOverallScore() > 0 ? averageOverallScore() + ' / 160' : '—' }}
+                        </div>
+                      </div>
+                      <div style="width:40px; height:40px; border-radius:10px; background:#F3E8FF; color:#7C3AED; display:flex; align-items:center; justify-content:center;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Filter & Search Toolbar -->
+                  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:20px;">
+                    <div style="display:flex; align-items:center; gap:8px; flex:1; max-width:400px; background:var(--surface-1); border:1px solid var(--border); border-radius:10px; padding:0 12px;">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                      <input
+                        type="text"
+                        [ngModel]="folderSearchQuery()"
+                        (ngModelChange)="folderSearchQuery.set($event)"
+                        placeholder="Rechercher un dossier élève ou email..."
+                        style="border:none; outline:none; background:transparent; padding:10px 0; font-size:13px; color:var(--text-primary); width:100%;"
+                      />
+                      @if (folderSearchQuery()) {
+                        <button type="button" (click)="folderSearchQuery.set('')" style="border:none; background:transparent; color:var(--text-muted); cursor:pointer;">✕</button>
+                      }
+                    </div>
+
+                    <!-- Filter pills -->
+                    <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                      <button
+                        type="button"
+                        (click)="folderFilterStatus.set('all')"
+                        [class.active-pill]="folderFilterStatus() === 'all'"
+                        class="filter-pill">
+                        Tous ({{ assessmentSubmissions().length }})
+                      </button>
+                      <button
+                        type="button"
+                        (click)="folderFilterStatus.set('pending')"
+                        [class.active-pill]="folderFilterStatus() === 'pending'"
+                        class="filter-pill"
+                        style="color:#C2410C;">
+                        ⏳ En attente ({{ pendingSubmissionsCount() }})
+                      </button>
+                      <button
+                        type="button"
+                        (click)="folderFilterStatus.set('corrected')"
+                        [class.active-pill]="folderFilterStatus() === 'corrected'"
+                        class="filter-pill"
+                        style="color:#047857;">
+                        ✓ Corrigés ({{ correctedSubmissionsCount() }})
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Folders Grid -->
+                  @if (filteredFolders().length === 0) {
+                    <div style="text-align:center; padding:60px 20px; background:var(--surface-1); border-radius:16px; border:1px dashed var(--border);">
+                      <div style="width:60px; height:60px; margin:0 auto 14px auto; border-radius:50%; background:#F1F5F9; display:flex; align-items:center; justify-content:center; color:#94A3B8;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                      </div>
+                      <h4 style="font-size:16px; font-weight:800; color:var(--text-primary); margin:0 0 6px 0;">Aucun dossier trouvé</h4>
+                      <p style="font-size:13px; color:var(--text-secondary); margin:0;">Modifiez votre recherche ou vos filtres pour afficher des dossiers d'évaluation.</p>
+                    </div>
+                  } @else {
+                    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:20px;">
+                      @for (sub of filteredFolders(); track sub.id) {
+                        <div class="folder-card" [class.folder-pending]="sub.status === 'pending'" [class.folder-corrected]="sub.status === 'corrected'">
+                          
+                          <!-- Physical Folder Tab on Top -->
+                          <div class="folder-top-tab">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                            </svg>
+                            <span>Dossier Élève #{{ sub.id.slice(-6).toUpperCase() }}</span>
+                          </div>
+
+                          <!-- Folder Body -->
+                          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px;">
+                            <div style="display:flex; align-items:center; gap:12px;">
+                              <div style="width:44px; height:44px; border-radius:50%; background:linear-gradient(135deg, #4F46E5, #06B6D4); color:white; font-size:15px; font-weight:800; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 8px rgba(79,70,229,0.25);">
+                                {{ sub.studentAvatar || sub.studentName.slice(0, 2).toUpperCase() }}
+                              </div>
+                              <div>
+                                <h4 style="font-size:15px; font-weight:800; color:var(--text-primary); margin:0; line-height:1.2;">{{ sub.studentName }}</h4>
+                                <div style="font-size:11.5px; color:var(--text-secondary); margin-top:2px;">{{ sub.studentEmail || 'Élève inscrit' }}</div>
+                              </div>
+                            </div>
+
+                            <!-- Status Badge -->
+                            @if (sub.status === 'pending') {
+                              <span class="badge" style="background:#FFF7ED; color:#C2410C; border:1px solid #FFEDD5; font-size:10.5px; font-weight:800; padding:4px 9px; border-radius:20px; display:inline-flex; align-items:center; gap:4px;">
+                                <span style="width:7px; height:7px; border-radius:50%; background:#EA580C; animation: pulse-live 1.5s infinite"></span>
+                                En attente
+                              </span>
+                            } @else {
+                              <span class="badge" style="background:#ECFDF5; color:#047857; border:1px solid #A7F3D0; font-size:10.5px; font-weight:800; padding:4px 9px; border-radius:20px;">
+                                ✓ Corrigé
+                              </span>
+                            }
+                          </div>
+
+                          <!-- Submission Date & Test Title -->
+                          <div style="font-size:11.5px; color:var(--text-muted); margin-bottom:14px; display:flex; align-items:center; gap:6px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            <span>Soumis le {{ formatSubmissionDate(sub.submittedAt) }}</span>
+                          </div>
+
+                          <!-- Inside Dossier Content Chips (Audios, Written, Time) -->
+                          <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px;">
+                            <span class="dossier-pill" style="background:#EFF6FF; color:#1D4ED8;">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
+                              <span>{{ getAudioQuestionsCount(sub) }} audios vocaux</span>
+                            </span>
+                            <span class="dossier-pill" style="background:#F0FDF4; color:#15803D;">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                              <span>{{ getWrittenQuestionsCount(sub) }} rédactions</span>
+                            </span>
+                            <span class="dossier-pill" style="background:#FDF4FF; color:#A21CAF;">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                              <span>{{ Math.round(sub.durationSeconds / 60) }} min</span>
+                            </span>
+                          </div>
+
+                          <!-- Corrected Info Snippet -->
+                          @if (sub.status === 'corrected' && sub.overallScore) {
+                            <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:10px 12px; margin-bottom:16px;">
+                              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                                <span style="font-size:11px; font-weight:700; color:#64748B; text-transform:uppercase;">Score Validé</span>
+                                <span style="font-size:13px; font-weight:900; color:#4F46E5;">{{ sub.overallScore }} / 160 • Niveau {{ sub.cefrLevel }}</span>
+                              </div>
+                              @if (sub.teacherGlobalComment) {
+                                <p style="font-size:11.5px; color:#475569; margin:0; font-style:italic; line-height:1.4;">
+                                  « {{ sub.teacherGlobalComment.slice(0, 75) }}{{ sub.teacherGlobalComment.length > 75 ? '...' : '' }} »
+                                </p>
+                              }
+                            </div>
+                          }
+
+                          <!-- Folder Actions Footer -->
+                          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; border-top:1px solid var(--border); padding-top:14px; margin-top:auto;">
+                            <button
+                              type="button"
+                              (click)="openSubmissionFolder(sub)"
+                              class="folder-action-btn"
+                              [style.background]="sub.status === 'pending' ? 'linear-gradient(135deg, #4F46E5 0%, #4338CA 100%)' : '#F1F5F9'"
+                              [style.color]="sub.status === 'pending' ? 'white' : '#334155'"
+                              [style.border]="sub.status === 'pending' ? 'none' : '1px solid #CBD5E1'">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+                              </svg>
+                              <span>{{ sub.status === 'pending' ? 'Corriger le dossier ✏️' : 'Consulter / Modifier 📂' }}</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              (click)="deleteSubmission(sub.id, sub.studentName)"
+                              title="Supprimer ce dossier"
+                              style="width:34px; height:34px; border-radius:8px; border:1px solid #E2E8F0; background:white; color:#94A3B8; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.15s ease;"
+                              onmouseover="this.style.borderColor='#EF4444'; this.style.color='#EF4444';"
+                              onmouseout="this.style.borderColor='#E2E8F0'; this.style.color='#94A3B8';">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                            </button>
+                          </div>
+
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+
+              <!-- SUB-VIEW B: ACTIVE DOSSIER CORRECTION WORKSPACE -->
+              @if (activeSubmission(); as curSub) {
+                <div style="animation: fadeIn 0.25s ease;">
+                  
+                  <!-- Workspace Header Bar -->
+                  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:20px; background:white; padding:16px 20px; border-radius:14px; border:1.5px solid #C7D2FE; box-shadow:0 4px 14px rgba(79,70,229,0.06);">
+                    <div style="display:flex; align-items:center; gap:14px;">
+                      <button
+                        type="button"
+                        (click)="closeSubmissionFolder()"
+                        style="border:1px solid #CBD5E1; background:#F8FAFC; padding:8px 14px; border-radius:8px; font-weight:700; font-size:12px; color:#475569; cursor:pointer; display:flex; align-items:center; gap:6px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                        <span>Tous les dossiers</span>
+                      </button>
+
+                      <div style="display:flex; align-items:center; gap:10px;">
+                        <div style="width:38px; height:38px; border-radius:50%; background:#4F46E5; color:white; font-size:14px; font-weight:800; display:flex; align-items:center; justify-content:center;">
+                          {{ curSub.studentAvatar || curSub.studentName.slice(0, 2).toUpperCase() }}
+                        </div>
+                        <div>
+                          <div style="font-size:16px; font-weight:900; color:#1E1B4B; line-height:1.2;">Dossier de {{ curSub.studentName }}</div>
+                          <div style="font-size:11.5px; color:#64748B;">Soumis le {{ formatSubmissionDate(curSub.submittedAt) }} • {{ curSub.questions.length }} épreuves complétées</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style="display:flex; align-items:center; gap:10px;">
+                      @if (curSub.status === 'pending') {
+                        <span class="badge" style="background:#FFF7ED; color:#C2410C; border:1px solid #FFEDD5; font-size:12px; font-weight:800; padding:5px 12px; border-radius:20px;">
+                          ⏳ En attente de correction
+                        </span>
+                      } @else {
+                        <span class="badge" style="background:#ECFDF5; color:#047857; border:1px solid #A7F3D0; font-size:12px; font-weight:800; padding:5px 12px; border-radius:20px;">
+                          ✓ Corrigé • Score: {{ curSub.overallScore }}/160 ({{ curSub.cefrLevel }})
+                        </span>
+                      }
+                    </div>
+                  </div>
+
+                  <!-- 2-Columns Correction Workspace -->
+                  <div class="correction-grid">
+                    
+                    <!-- Left Column: Student's Answers & Per-Question Grading (70%) -->
+                    <div style="display:flex; flex-direction:column; gap:20px;">
+                      @for (q of curSub.questions; track q.questionId; let qIdx = $index) {
+                        <div class="q-correction-card">
+                          
+                          <!-- Question Header -->
+                          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; border-bottom:1px solid #F1F5F9; padding-bottom:10px;">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                              <span style="width:24px; height:24px; border-radius:6px; background:#4F46E5; color:white; font-size:12px; font-weight:800; display:flex; align-items:center; justify-content:center;">
+                                {{ qIdx + 1 }}
+                              </span>
+                              <h5 style="font-size:14.5px; font-weight:800; color:#1E1B4B; margin:0;">{{ q.title }}</h5>
+                            </div>
+                            
+                            <span class="subscore-tag" [class]="'subscore-' + q.subscore">
+                              {{ q.subscore | uppercase }}
+                            </span>
+                          </div>
+
+                          <!-- Original Question Prompt -->
+                          <div style="background:#F8FAFC; border-radius:10px; padding:12px; margin-bottom:14px; font-size:13px; color:#334155; border:1px solid #E2E8F0;">
+                            @if (q.imageUrl) {
+                              <div style="text-align:center; margin-bottom:10px;">
+                                <img [src]="q.imageUrl" style="max-height:180px; max-width:100%; border-radius:8px; object-fit:cover; box-shadow:0 2px 8px rgba(0,0,0,0.1);" alt="Image prompt" />
+                              </div>
+                            }
+                            @if (q.prompt) {
+                              <div style="font-weight:600; line-height:1.4;">{{ q.prompt }}</div>
+                            }
+                            @if (q.audioPromptText && !q.prompt) {
+                              <div style="font-weight:600; color:#0369A1;">🎧 Énoncé audio : « {{ q.audioPromptText }} »</div>
+                            }
+                          </div>
+
+                          <!-- Student's Work / Response Box -->
+                          <div style="margin-bottom:16px;">
+                            <div style="font-size:11.5px; font-weight:800; color:#475569; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+                              <span>Réponse de l'élève :</span>
+                              @if (q.wordCount && q.wordCount > 0) {
+                                <span style="font-size:11px; font-weight:700; color:#6366F1; background:#EEF2FF; padding:1px 6px; border-radius:4px;">{{ q.wordCount }} mots</span>
+                              }
+                            </div>
+
+                            <!-- AUDIO QUESTION: Voice Player for Teacher -->
+                            @if (q.studentAudioUrl || q.type === 'speak-photo' || q.type === 'read-aloud' || q.type === 'listen-speak') {
+                              <div class="teacher-audio-player-box">
+                                <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+                                  <div style="width:34px; height:34px; border-radius:50%; background:#4F46E5; color:white; display:flex; align-items:center; justify-content:center;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
+                                  </div>
+                                  <div>
+                                    <div style="font-size:13px; font-weight:800; color:#1E1B4B;">Enregistrement vocal de l'élève</div>
+                                    <div style="font-size:11px; color:#64748B;">Écoutez l'audio pour évaluer l'accent, l'intonation et la fluidité</div>
+                                  </div>
+                                </div>
+
+                                <!-- Standard HTML Audio Player (works with mp3, wav, webm, and base64) -->
+                                @if (q.studentAudioUrl) {
+                                  <audio controls [src]="q.studentAudioUrl" style="width:100%; border-radius:8px; outline:none; margin-bottom:8px;"></audio>
+                                } @else {
+                                  <div style="background:#FEF2F2; color:#991B1B; padding:8px 12px; border-radius:6px; font-size:12px; margin-bottom:8px;">
+                                    (Fichier audio transmis ou simulé pour ce dossier d'essai)
+                                  </div>
+                                }
+
+                                @if (q.studentAnswerText) {
+                                  <div style="font-size:12.5px; color:#334155; font-style:italic; background:white; padding:8px 12px; border-radius:6px; border:1px solid #E2E8F0;">
+                                    {{ q.studentAnswerText }}
+                                  </div>
+                                }
+                              </div>
+                            } @else {
+                              <!-- WRITTEN QUESTION: Text block -->
+                              <div style="background:white; border:1.5px solid #E2E8F0; border-radius:10px; padding:14px; font-size:13.5px; color:#1E293B; line-height:1.5;">
+                                {{ q.studentAnswerText || '(Aucune réponse fournie)' }}
+                              </div>
+                            }
+                          </div>
+
+                          <!-- Teacher Grading & Feedback Inputs per Question -->
+                          <div style="background:#F8FAFC; border:1.5px solid #C7D2FE; border-radius:10px; padding:14px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
+                              <label style="font-size:12px; font-weight:800; color:#1E1B4B; display:flex; align-items:center; gap:6px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                                Note attribuée (sur 100) :
+                              </label>
+
+                              <!-- Preset buttons for quick grading -->
+                              <div style="display:flex; gap:5px; flex-wrap:wrap;">
+                                <button type="button" class="preset-score-btn" (click)="setQuestionScorePreset(q, 100)">100 (Parfait)</button>
+                                <button type="button" class="preset-score-btn" (click)="setQuestionScorePreset(q, 85)">85 (Très bien)</button>
+                                <button type="button" class="preset-score-btn" (click)="setQuestionScorePreset(q, 70)">70 (Bien)</button>
+                                <button type="button" class="preset-score-btn" (click)="setQuestionScorePreset(q, 50)">50 (Moyen)</button>
+                                <button type="button" class="preset-score-btn" (click)="setQuestionScorePreset(q, 30)">30 (Insuffisant)</button>
+                              </div>
+
+                              <div style="display:flex; align-items:center; gap:6px;">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  max="100"
+                                  [(ngModel)]="q.teacherScore"
+                                  (ngModelChange)="onQuestionScoreChange()"
+                                  style="width:68px; padding:6px 8px; border:1.5px solid #4F46E5; border-radius:8px; font-size:15px; font-weight:900; text-align:center; color:#4F46E5; background:white; outline:none;"
+                                />
+                                <span style="font-size:13px; font-weight:800; color:#64748B;">/ 100</span>
+                              </div>
+                            </div>
+
+                            <!-- Comment Input for this Question -->
+                            <input
+                              type="text"
+                              [(ngModel)]="q.teacherComment"
+                              placeholder="Remarque pour l'élève sur cette épreuve (prononciation, vocabulaire, grammaire...)"
+                              style="width:100%; box-sizing:border-box; padding:8px 12px; border:1px solid #CBD5E1; border-radius:8px; font-size:12.5px; outline:none; background:white;"
+                            />
+                          </div>
+
+                        </div>
+                      }
+                    </div>
+
+                    <!-- Right Column: Sticky Global Certificate Validation & Overall Score (30%) -->
+                    <div class="sticky-correction-sidebar">
+                      <div class="certificate-grading-card">
+                        
+                        <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+                          <div style="width:36px; height:36px; border-radius:8px; background:linear-gradient(135deg, #4F46E5, #7C3AED); color:white; display:flex; align-items:center; justify-content:center;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
+                          </div>
+                          <div>
+                            <h4 style="font-size:15px; font-weight:900; color:#1E1B4B; margin:0;">Certificat SpeakUp</h4>
+                            <div style="font-size:11.5px; color:#64748B;">Validation officielle du niveau</div>
+                          </div>
+                        </div>
+
+                        <!-- Overall DET Scaled Score Display & Slider -->
+                        <div style="text-align:center; background:#F8FAFC; border:1.5px solid #E2E8F0; border-radius:12px; padding:16px; margin-bottom:16px;">
+                          <div style="font-size:11px; font-weight:800; color:#64748B; text-transform:uppercase; letter-spacing:0.8px;">Score Global (Échelle 10–160)</div>
+                          <div style="font-size:44px; font-weight:900; color:#4F46E5; line-height:1; margin:8px 0 4px 0; font-family:'Outfit', sans-serif;">
+                            {{ curSub.overallScore || 100 }}
+                            <span style="font-size:16px; font-weight:700; color:#94A3B8;">/ 160</span>
+                          </div>
+
+                          <div style="display:inline-block; margin-bottom:12px;">
+                            <span class="badge" style="background:#EEF2FF; color:#4338CA; border:1px solid #C7D2FE; font-size:12.5px; font-weight:800; padding:4px 12px; border-radius:20px;">
+                              Niveau CECRL : {{ curSub.cefrLevel || 'B1' }} ({{ getCefrTitle(curSub.cefrLevel || 'B1') }})
+                            </span>
+                          </div>
+
+                          <!-- Score Slider -->
+                          <input
+                            type="range"
+                            min="10"
+                            max="160"
+                            step="5"
+                            [(ngModel)]="curSub.overallScore"
+                            (ngModelChange)="curSub.cefrLevel = getAutoCefr(curSub.overallScore || 100); recalculateSubscores(curSub);"
+                            style="width:100%; accent-color:#4F46E5; cursor:pointer;"
+                          />
+                        </div>
+
+                        <!-- 4 Subscores Breakdown -->
+                        <div style="margin-bottom:16px;">
+                          <div style="font-size:12px; font-weight:800; color:#1E1B4B; margin-bottom:8px;">Sous-scores de compétence (10–160)</div>
+                          
+                          <!-- Literacy -->
+                          <div style="margin-bottom:8px;">
+                            <div style="display:flex; justify-content:space-between; font-size:11.5px; font-weight:700; margin-bottom:2px;">
+                              <span style="color:#4F46E5;">Literacy (Lire & Écrire)</span>
+                              <span>{{ curSub.subscores?.literacy || 100 }}</span>
+                            </div>
+                            <input type="range" min="10" max="160" step="5" [(ngModel)]="curSub.subscores!.literacy" style="width:100%; accent-color:#4F46E5;" />
+                          </div>
+
+                          <!-- Comprehension -->
+                          <div style="margin-bottom:8px;">
+                            <div style="display:flex; justify-content:space-between; font-size:11.5px; font-weight:700; margin-bottom:2px;">
+                              <span style="color:#0284C7;">Comprehension (Lire & Écouter)</span>
+                              <span>{{ curSub.subscores?.comprehension || 100 }}</span>
+                            </div>
+                            <input type="range" min="10" max="160" step="5" [(ngModel)]="curSub.subscores!.comprehension" style="width:100%; accent-color:#0284C7;" />
+                          </div>
+
+                          <!-- Conversation -->
+                          <div style="margin-bottom:8px;">
+                            <div style="display:flex; justify-content:space-between; font-size:11.5px; font-weight:700; margin-bottom:2px;">
+                              <span style="color:#059669;">Conversation (Écouter & Parler)</span>
+                              <span>{{ curSub.subscores?.conversation || 100 }}</span>
+                            </div>
+                            <input type="range" min="10" max="160" step="5" [(ngModel)]="curSub.subscores!.conversation" style="width:100%; accent-color:#059669;" />
+                          </div>
+
+                          <!-- Production -->
+                          <div style="margin-bottom:8px;">
+                            <div style="display:flex; justify-content:space-between; font-size:11.5px; font-weight:700; margin-bottom:2px;">
+                              <span style="color:#D97706;">Production (Écrire & Parler)</span>
+                              <span>{{ curSub.subscores?.production || 100 }}</span>
+                            </div>
+                            <input type="range" min="10" max="160" step="5" [(ngModel)]="curSub.subscores!.production" style="width:100%; accent-color:#D97706;" />
+                          </div>
+                        </div>
+
+                        <!-- Teacher Global Pedagogical Comment -->
+                        <div style="margin-bottom:18px;">
+                          <label style="font-size:12px; font-weight:800; color:#1E1B4B; display:block; margin-bottom:6px;">
+                            Bilan global & Conseils du Professeur :
+                          </label>
+                          <textarea
+                            rows="4"
+                            [(ngModel)]="curSub.teacherGlobalComment"
+                            placeholder="Écrivez une appréciation générale, points forts de l'élève et conseils d'amélioration..."
+                            style="width:100%; box-sizing:border-box; padding:10px; border:1px solid #CBD5E1; border-radius:8px; font-size:12.5px; outline:none; resize:vertical; font-family:inherit;"
+                          ></textarea>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div style="display:flex; flex-direction:column; gap:8px;">
+                          <button
+                            type="button"
+                            (click)="finalizeAssessmentCorrection()"
+                            style="width:100%; padding:12px; border:none; border-radius:10px; background:linear-gradient(135deg, #4F46E5 0%, #4338CA 100%); color:white; font-size:13.5px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 12px rgba(79,70,229,0.35);">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                            <span>Valider & Délivrer le Certificat 🎓</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            (click)="saveAssessmentDraft()"
+                            style="width:100%; padding:10px; border:1.5px solid #CBD5E1; border-radius:10px; background:white; color:#334155; font-size:12.5px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                            <span>Sauvegarder en brouillon 💾</span>
+                          </button>
+                        </div>
+
+                      </div>
+                    </div>
+
+                  </div>
+
+                </div>
+              }
+
+            }
+          </div>
+        }
+
+        <!-- STUDENT / GUEST TOP BAR & BANNERS -->
+        @if (currentUser()?.role !== 'teacher' && currentUser()?.role !== 'admin') {
           <!-- Top Brand Header -->
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
             <div style="display:flex; align-items:center; gap:12px;">
@@ -61,6 +626,44 @@ export interface DetQuestion {
             </div>
           </div>
 
+          <!-- Pending & Corrected Banners for Student -->
+          @if (currentStudentPendingSubmission(); as myPending) {
+            <div style="background:linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%); border:1.5px solid #FDBA74; border-radius:14px; padding:16px 20px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+              <div style="display:flex; align-items:center; gap:12px;">
+                <div style="width:40px; height:40px; border-radius:50%; background:#EA580C; color:white; display:flex; align-items:center; justify-content:center;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                </div>
+                <div>
+                  <div style="font-size:14.5px; font-weight:800; color:#9A3412;">Évaluation en attente de correction par votre professeur</div>
+                  <div style="font-size:12px; color:#C2410C;">Soumis le {{ formatSubmissionDate(myPending.submittedAt) }} • Vos vocaux et rédactions sont en cours d'analyse.</div>
+                </div>
+              </div>
+              <button type="button" (click)="view.set('det-pending')" class="btn-p" style="background:#EA580C; border-color:#EA580C; font-size:12.5px; padding:8px 16px;">
+                Consulter mon statut ⏳
+              </button>
+            </div>
+          }
+
+          @if (currentStudentCorrectedSubmission(); as myCorrected) {
+            <div style="background:linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%); border:1.5px solid #6EE7B7; border-radius:14px; padding:16px 20px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+              <div style="display:flex; align-items:center; gap:12px;">
+                <div style="width:40px; height:40px; border-radius:50%; background:#059669; color:white; display:flex; align-items:center; justify-content:center;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
+                </div>
+                <div>
+                  <div style="font-size:14.5px; font-weight:800; color:#065F46;">Votre Certificat Officiel SpeakUp est prêt ! 🎓</div>
+                  <div style="font-size:12px; color:#047857;">Score validé : {{ myCorrected.overallScore }}/160 • Niveau {{ myCorrected.cefrLevel }} • Corrigé par votre professeur.</div>
+                </div>
+              </div>
+              <button type="button" (click)="viewMyCorrectedCertificate(myCorrected)" class="btn-p" style="background:#059669; border-color:#059669; font-size:12.5px; padding:8px 16px;">
+                Voir mon Certificat 📜
+              </button>
+            </div>
+          }
+        }
+
+        <!-- PRACTICE MODULES & TEST SIMULATOR (VISIBLE FOR STUDENTS, AND FOR TEACHERS IN PREVIEW MODE) -->
+        @if ((currentUser()?.role !== 'teacher' && currentUser()?.role !== 'admin') || teacherModeTab() === 'preview') {
           <!-- Hero Practice Banner (Image 2 Top) -->
           <div class="det-hero-card">
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:20px;">
@@ -287,7 +890,7 @@ export interface DetQuestion {
                       </span>
                     </div>
 
-                    <button class="btn-s" style="font-size:11px; padding:5px 12px; display:inline-flex; align-items:center; gap:4px;" (click)="printResult(att)">
+                                        <button class="btn-s" style="font-size:11px; padding:5px 12px; display:inline-flex; align-items:center; gap:4px;" (click)="printResult(att)">
                       <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                       PDF
                     </button>
@@ -296,6 +899,7 @@ export interface DetQuestion {
               </div>
             </div>
           }
+        } <!-- End of Practice Simulator -->
 
         </div>
       }
@@ -601,6 +1205,98 @@ export interface DetQuestion {
       <!-- ======================================================== -->
       <!-- 3. SPEAKUP ASSESSMENT SCORE REPORT & CERTIFICATE         -->
       <!-- ======================================================== -->
+      
+      <!-- ======================================================== -->
+      <!-- 2.5 STUDENT PENDING CORRECTION SCREEN                    -->
+      <!-- ======================================================== -->
+      @if (view() === 'det-pending') {
+        <div style="animation: fadeIn 0.3s ease; max-width:800px; margin:0 auto; padding:20px 0;">
+          
+          <div style="background:white; border-radius:18px; border:1.5px solid #FED7AA; box-shadow:0 10px 30px rgba(234, 88, 12, 0.08); overflow:hidden;">
+            
+            <!-- Banner Header -->
+            <div style="background:linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%); padding:28px 24px; text-align:center; border-bottom:1px solid #FED7AA;">
+              <div style="width:68px; height:68px; border-radius:50%; background:#EA580C; color:white; display:flex; align-items:center; justify-content:center; margin:0 auto 16px auto; box-shadow:0 6px 18px rgba(234, 88, 12, 0.35);">
+                <svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="12 6 12 12 16 14"/>
+                </svg>
+              </div>
+              <h3 style="font-size:22px; font-weight:900; color:#9A3412; margin:0 0 8px 0;">Évaluation Soumise avec Succès !</h3>
+              <p style="font-size:13.5px; color:#C2410C; max-width:540px; margin:0 auto; line-height:1.5;">
+                Votre dossier a été transmis à votre professeur. Vos enregistrements oraux et vos rédactions écrites sont en cours d'évaluation pédagogique.
+              </p>
+            </div>
+
+            <!-- Steps Progress Tracker -->
+            <div style="padding:24px; border-bottom:1px solid #F1F5F9;">
+              <div style="display:flex; justify-content:space-between; position:relative; max-width:550px; margin:0 auto;">
+                <!-- Step 1 -->
+                <div style="text-align:center; position:relative; z-index:2;">
+                  <div style="width:36px; height:36px; border-radius:50%; background:#10B981; color:white; display:flex; align-items:center; justify-content:center; margin:0 auto 6px auto; font-weight:800;">✓</div>
+                  <div style="font-size:12px; font-weight:800; color:#1E293B;">Épreuve passée</div>
+                  <div style="font-size:10.5px; color:#64748B;">7 questions</div>
+                </div>
+
+                <!-- Step 2 -->
+                <div style="text-align:center; position:relative; z-index:2;">
+                  <div style="width:36px; height:36px; border-radius:50%; background:#EA580C; color:white; display:flex; align-items:center; justify-content:center; margin:0 auto 6px auto; font-weight:800; animation: pulse-live 1.5s infinite;">⏳</div>
+                  <div style="font-size:12px; font-weight:800; color:#EA580C;">En correction</div>
+                  <div style="font-size:10.5px; color:#64748B;">Professeur</div>
+                </div>
+
+                <!-- Step 3 -->
+                <div style="text-align:center; position:relative; z-index:2;">
+                  <div style="width:36px; height:36px; border-radius:50%; background:#E2E8F0; color:#94A3B8; display:flex; align-items:center; justify-content:center; margin:0 auto 6px auto; font-weight:800;">🎓</div>
+                  <div style="font-size:12px; font-weight:800; color:#64748B;">Certificat délivré</div>
+                  <div style="font-size:10.5px; color:#94A3B8;">10–160 SET</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Dossier Summary Content -->
+            @if (currentStudentPendingSubmission(); as mySub) {
+              <div style="padding:24px;">
+                <h4 style="font-size:14px; font-weight:800; color:#1E1B4B; margin:0 0 14px 0;">Contenu de votre dossier transmis :</h4>
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:12px; margin-bottom:20px;">
+                  <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:12px;">
+                    <div style="font-size:11px; font-weight:700; color:#64748B; text-transform:uppercase;">Date d'envoi</div>
+                    <div style="font-size:14px; font-weight:800; color:#1E1B4B; margin-top:2px;">{{ formatSubmissionDate(mySub.submittedAt) }}</div>
+                  </div>
+                  <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:12px;">
+                    <div style="font-size:11px; font-weight:700; color:#64748B; text-transform:uppercase;">Enregistrements oraux</div>
+                    <div style="font-size:14px; font-weight:800; color:#4F46E5; margin-top:2px;">🎙️ {{ getAudioQuestionsCount(mySub) }} enregistrements</div>
+                  </div>
+                  <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:12px;">
+                    <div style="font-size:11px; font-weight:700; color:#64748B; text-transform:uppercase;">Écrits & Rédactions</div>
+                    <div style="font-size:14px; font-weight:800; color:#059669; margin-top:2px;">✍️ {{ getWrittenQuestionsCount(mySub) }} rédactions</div>
+                  </div>
+                </div>
+
+                <div style="background:#EFF6FF; border:1px solid #BFDBFE; border-radius:10px; padding:14px; display:flex; align-items:center; gap:12px;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                  <span style="font-size:12.5px; color:#1E40AF; line-height:1.4;">
+                    Vous recevrez une notification instantanée dès que votre professeur aura attribué vos points et rédigé ses commentaires détaillés.
+                  </span>
+                </div>
+              </div>
+            }
+
+            <!-- Footer Action -->
+            <div style="padding:16px 24px; background:#F8FAFC; border-top:1px solid #E2E8F0; display:flex; justify-content:space-between; align-items:center;">
+              <button class="btn-s" (click)="view.set('hub')">
+                ← Retour au centre de tests
+              </button>
+              <button class="btn-p" style="background:#4F46E5; border-color:#4F46E5;" (click)="startFullDetSampleTest()">
+                S'entraîner sur un test blanc 🚀
+              </button>
+            </div>
+
+          </div>
+
+        </div>
+      }
+
       @if (view() === 'det-result' && lastDetResult(); as res) {
         <div style="animation: fadeIn 0.3s ease; max-width:840px; margin:0 auto;">
 
@@ -802,6 +1498,184 @@ export interface DetQuestion {
     </div>
   `,
   styles: [`
+    /* Teacher Folders & Correction Hub Styles */
+    .metric-card {
+      background: white;
+      border: 1px solid #E2E8F0;
+      border-radius: 14px;
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    }
+
+    .filter-pill {
+      border: 1px solid #E2E8F0;
+      background: white;
+      color: var(--text-secondary);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .filter-pill.active-pill {
+      background: #4F46E5;
+      color: white !important;
+      border-color: #4F46E5;
+      box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
+    }
+
+    .folder-card {
+      position: relative;
+      background: white;
+      border: 1.5px solid #E2E8F0;
+      border-radius: 16px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+      margin-top: 10px;
+    }
+
+    .folder-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 25px rgba(79,70,229,0.12);
+      border-color: #A5B4FC;
+    }
+
+    .folder-pending {
+      border-color: #FED7AA;
+    }
+
+    .folder-corrected {
+      border-color: #A7F3D0;
+    }
+
+    .folder-top-tab {
+      position: absolute;
+      top: -12px;
+      left: 18px;
+      background: #EEF2FF;
+      color: #4338CA;
+      border: 1px solid #C7D2FE;
+      font-size: 10.5px;
+      font-weight: 800;
+      padding: 2px 10px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .dossier-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 9px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .folder-action-btn {
+      flex: 1;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    .folder-action-btn:hover {
+      opacity: 0.92;
+      transform: scale(0.99);
+    }
+
+    .correction-grid {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 24px;
+      align-items: start;
+    }
+
+    @media (max-width: 960px) {
+      .correction-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .q-correction-card {
+      background: white;
+      border: 1.5px solid #E2E8F0;
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.03);
+    }
+
+    .teacher-audio-player-box {
+      background: #F8FAFC;
+      border: 1.5px solid #E2E8F0;
+      border-radius: 12px;
+      padding: 14px;
+    }
+
+    .preset-score-btn {
+      border: 1px solid #CBD5E1;
+      background: white;
+      color: #475569;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.12s ease;
+    }
+
+    .preset-score-btn:hover {
+      border-color: #4F46E5;
+      color: #4F46E5;
+      background: #EEF2FF;
+    }
+
+    .sticky-correction-sidebar {
+      position: sticky;
+      top: 16px;
+    }
+
+    .certificate-grading-card {
+      background: white;
+      border: 1.5px solid #C7D2FE;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 6px 20px rgba(79,70,229,0.08);
+    }
+
+    .subscore-tag {
+      font-size: 10px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .subscore-tag.subscore-literacy { background: #EEF2FF; color: #4F46E5; }
+    .subscore-tag.subscore-comprehension { background: #E0F2FE; color: #0369A1; }
+    .subscore-tag.subscore-conversation { background: #ECFDF5; color: #047857; }
+    .subscore-tag.subscore-production { background: #FEF3C7; color: #B45309; }
+
     /* SpeakUp Assessment Hub & Card Styles */
     .det-hero-card {
       background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 50%, #FAF5FF 100%);
@@ -1399,6 +2273,19 @@ export class StudentExamComponent implements OnDestroy {
 
   Math = Math;
   currentUser = signal<UserProfile | null>(null);
+
+  // Assessment Submissions & Teacher Hub signals
+  assessmentSubmissions = signal<AssessmentSubmission[]>([]);
+  activeSubmission = signal<AssessmentSubmission | null>(null);
+  folderSearchQuery = signal<string>('');
+  folderFilterStatus = signal<'all' | 'pending' | 'corrected'>('all');
+  teacherModeTab = signal<'folders' | 'preview'>('folders');
+  currentStudentPendingSubmission = signal<AssessmentSubmission | null>(null);
+  currentStudentCorrectedSubmission = signal<AssessmentSubmission | null>(null);
+  recordedAudioBase64: string | null = null;
+  selectedAudioPlayQuestionId = signal<string | null>(null);
+  showFolderDetailExpanded = signal<boolean>(false);
+
   quizzes = signal<Quiz[]>([]);
   examAttempts = signal<ExamAttempt[]>([]);
   activeLang = this.db.activeLang;
@@ -1408,7 +2295,7 @@ export class StudentExamComponent implements OnDestroy {
   }
 
   // Views: 'hub' (Image 2) | 'det-test' (Image 1) | 'det-result' | 'teacher-exam'
-  view = signal<'hub' | 'det-test' | 'det-result' | 'teacher-exam'>('hub');
+  view = signal<'hub' | 'det-test' | 'det-result' | 'teacher-exam' | 'det-pending'>('hub');
 
   // Subscore filter in hub
   activeSubscoreFilter = signal<'all' | 'literacy' | 'comprehension' | 'production' | 'conversation' | 'official'>('all');
@@ -1539,7 +2426,7 @@ export class StudentExamComponent implements OnDestroy {
   private detTimerInterval: any = null;
 
   // Stored answers for the session
-  detSessionAnswers = signal<Record<string, { given: any; correct: boolean; score: number }>>({});
+  detSessionAnswers = signal<Record<string, { given: any; givenText?: string; audioUrl?: string; correct: boolean; score: number; wordCount?: number; timeSpentSec?: number }>>({});
 
   // Result for DET mode
   lastDetResult = signal<{
@@ -1565,9 +2452,48 @@ export class StudentExamComponent implements OnDestroy {
       const user = this.currentUser();
       if (user) this.examAttempts.set(this.db.getStudentExamAttempts(user.id));
     });
+
+    this.db.observeAssessmentSubmissions().subscribe(list => {
+      this.assessmentSubmissions.set(list);
+      const user = this.currentUser();
+      if (user) {
+        const mySubs = list.filter(s => s.studentId === user.id);
+        const pending = mySubs.find(s => s.status === 'pending');
+        const corrected = mySubs.find(s => s.status === 'corrected');
+        this.currentStudentPendingSubmission.set(pending || null);
+        this.currentStudentCorrectedSubmission.set(corrected || null);
+      }
+    });
+
   }
 
   // Filter modules in Hub
+  
+  pendingSubmissionsCount = computed(() =>
+    this.assessmentSubmissions().filter(s => s.status === 'pending').length
+  );
+
+  correctedSubmissionsCount = computed(() =>
+    this.assessmentSubmissions().filter(s => s.status === 'corrected').length
+  );
+
+  averageOverallScore = computed(() => {
+    const list = this.assessmentSubmissions().filter(s => s.status === 'corrected' && s.overallScore);
+    if (list.length === 0) return 0;
+    const sum = list.reduce((acc, s) => acc + (s.overallScore || 0), 0);
+    return Math.round(sum / list.length);
+  });
+
+  filteredFolders = computed(() => {
+    const q = this.folderSearchQuery().trim().toLowerCase();
+    const filter = this.folderFilterStatus();
+    return this.assessmentSubmissions().filter(s => {
+      const matchQuery = !q || s.studentName.toLowerCase().includes(q) || (s.studentEmail && s.studentEmail.toLowerCase().includes(q));
+      const matchStatus = filter === 'all' || s.status === filter;
+      return matchQuery && matchStatus;
+    });
+  });
+
   filteredModules = computed(() => {
     const f = this.activeSubscoreFilter();
     if (f === 'all') return this.detQuestionBank;
@@ -1795,6 +2721,15 @@ export class StudentExamComponent implements OnDestroy {
       this.mediaRecorder.onstop = () => {
         const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
         this.recordedAudioUrl = URL.createObjectURL(audioBlob);
+        try {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            this.recordedAudioBase64 = reader.result as string;
+          };
+          reader.readAsDataURL(audioBlob);
+        } catch(e) {
+          console.warn('Audio base64 error', e);
+        }
         stream.getTracks().forEach(t => t.stop());
       };
 
@@ -1876,8 +2811,24 @@ export class StudentExamComponent implements OnDestroy {
       score = 85; // speaking & essays baseline score
     }
 
+    let answerText = this.currentTextAnswer;
+    if (q.type === 'read-complete' && q.blanksData) {
+      answerText = q.blanksData.map((b, i) => b.prefix + (this.blankInputs[i] || '')).join(' ');
+    } else if (q.type === 'read-select') {
+      answerText = 'Mots choisis : ' + Array.from(this.selectedWordSet).join(', ');
+    } else if (q.type === 'speak-photo' || q.type === 'read-aloud' || q.type === 'listen-speak') {
+      answerText = this.currentTextAnswer || (this.recordedAudioUrl ? `[Enregistrement vocal ${this.recordedSeconds()}s]` : '[Réponse vocale]');
+    }
+
     const currentAnswers = { ...this.detSessionAnswers() };
-    currentAnswers[q.id] = { given: this.currentTextAnswer, correct: score >= 60, score };
+    currentAnswers[q.id] = {
+      given: answerText,
+      givenText: answerText,
+      audioUrl: this.recordedAudioBase64 || this.recordedAudioUrl || undefined,
+      correct: score >= 60,
+      score,
+      wordCount: this.getWordCount(answerText)
+    };
     this.detSessionAnswers.set(currentAnswers);
 
     // Proceed to next or finish
@@ -1890,23 +2841,22 @@ export class StudentExamComponent implements OnDestroy {
     }
   }
 
-  async finishDetTest() {
+    async finishDetTest() {
     this.clearDetTimer();
     this.stopAudioRecording();
     const answersObj = this.detSessionAnswers();
-    const scores = Object.values(answersObj).map(a => a.score);
-    const avgScore = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 75;
+    const scores = Object.values(answersObj).map((a: any) => a.score);
+    const avgScore = scores.length > 0 ? Math.round(scores.reduce((a: number, b: number) => a + b, 0) / scores.length) : 75;
 
     // Convert 0-100 to SpeakUp English Test Scale 10 - 160
     const detScaledScore = Math.round(10 + (avgScore / 100) * 150);
 
-    // Calculate subscores
     const litScore = Math.min(160, Math.max(10, detScaledScore + Math.floor(Math.random() * 8 - 4)));
     const compScore = Math.min(160, Math.max(10, detScaledScore + Math.floor(Math.random() * 8 - 4)));
     const convScore = Math.min(160, Math.max(10, detScaledScore + Math.floor(Math.random() * 8 - 4)));
     const prodScore = Math.min(160, Math.max(10, detScaledScore + Math.floor(Math.random() * 8 - 4)));
 
-    let cefr = 'B1';
+    let cefr: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2' = 'B1';
     if (detScaledScore >= 135) cefr = 'C1';
     else if (detScaledScore >= 115) cefr = 'B2';
     else if (detScaledScore >= 85) cefr = 'B1';
@@ -1926,23 +2876,62 @@ export class StudentExamComponent implements OnDestroy {
     };
     this.lastDetResult.set(result);
 
-    // Record attempt in database
     const user = this.currentUser();
     if (user) {
+      const isTeacherOrAdmin = user.role === 'teacher' || user.role === 'admin';
+
+      if (!isTeacherOrAdmin) {
+        // Build AssessmentSubmission for Teacher Grading
+        const questionsData: AssessmentQuestionAnswer[] = this.detTestSequence().map(q => {
+          const ans: any = answersObj[q.id];
+          return {
+            questionId: q.id,
+            type: q.type,
+            title: q.titleFr || q.titleEn || q.type,
+            subscore: q.subscore,
+            prompt: q.promptText || q.audioText || q.titleFr,
+            imageUrl: q.imageUrl,
+            audioPromptText: q.audioText,
+            studentAnswerText: ans?.givenText || ans?.given || '',
+            studentAudioUrl: ans?.audioUrl || undefined,
+            timeSpentSec: ans?.timeSpentSec || 60,
+            wordCount: ans?.wordCount || 0,
+            autoScore: ans?.score || 80,
+            teacherScore: ans?.score || 80,
+            teacherComment: ''
+          };
+        });
+
+        const newSub = await this.db.submitAssessment({
+          studentId: user.id,
+          studentName: user.name,
+          studentEmail: (user as any).email || '',
+          studentAvatar: user.avatar || user.name.slice(0, 2).toUpperCase(),
+          testTitle: 'SpeakUp English Assessment (SET)',
+          submittedAt: new Date().toISOString(),
+          durationSeconds: 900,
+          status: 'pending',
+          questions: questionsData
+        });
+
+        this.currentStudentPendingSubmission.set(newSub);
+        this.view.set('det-pending');
+        return;
+      }
+
+      // If teacher preview, record attempt
       await this.db.submitExamAttempt({
         studentId: user.id,
         studentName: user.name,
         quizId: 'det-' + Date.now(),
-        quizTitle: 'SpeakUp English Test (DET Scale)',
-        answers: Object.entries(answersObj).map(([k, v], idx) => ({ questionIdx: idx, answer: 'Answer ' + (idx + 1), correct: v.correct })),
+        quizTitle: 'SpeakUp English Assessment (SET Preview)',
+        answers: Object.entries(answersObj).map(([k, v]: [string, any], idx) => ({ questionIdx: idx, answer: 'Answer ' + (idx + 1), correct: v.correct })),
         score: avgScore,
         percentage: avgScore,
         timeTakenSeconds: 300,
         completedAt: new Date().toISOString(),
         passed: avgScore >= 60
       });
-
-      this.db.updateUserXP(user.id, 80, true);
     }
 
     this.view.set('det-result');
@@ -1957,6 +2946,171 @@ export class StudentExamComponent implements OnDestroy {
       default: return 'Débutant / Beginner';
     }
   }
+
+  // --- TEACHER FOLDERS & GRADING METHODS ---
+  openSubmissionFolder(sub: AssessmentSubmission) {
+    // Clone submission for live editing
+    const clone: AssessmentSubmission = JSON.parse(JSON.stringify(sub));
+    // Ensure overallScore & subscores initialized
+    if (!clone.overallScore) {
+      clone.overallScore = this.calculateSuggestedScore(clone);
+    }
+    if (!clone.cefrLevel) {
+      clone.cefrLevel = this.getAutoCefr(clone.overallScore);
+    }
+    if (!clone.subscores) {
+      clone.subscores = {
+        literacy: clone.overallScore,
+        comprehension: clone.overallScore,
+        conversation: clone.overallScore,
+        production: clone.overallScore
+      };
+    }
+    this.activeSubmission.set(clone);
+  }
+
+  closeSubmissionFolder() {
+    this.activeSubmission.set(null);
+  }
+
+  setQuestionScorePreset(q: AssessmentQuestionAnswer, score: number) {
+    q.teacherScore = score;
+    const sub = this.activeSubmission();
+    if (sub) {
+      sub.overallScore = this.calculateSuggestedScore(sub);
+      sub.cefrLevel = this.getAutoCefr(sub.overallScore);
+      this.recalculateSubscores(sub);
+    }
+  }
+
+  onQuestionScoreChange() {
+    const sub = this.activeSubmission();
+    if (sub) {
+      sub.overallScore = this.calculateSuggestedScore(sub);
+      sub.cefrLevel = this.getAutoCefr(sub.overallScore);
+      this.recalculateSubscores(sub);
+    }
+  }
+
+  calculateSuggestedScore(sub: AssessmentSubmission): number {
+    if (!sub.questions || sub.questions.length === 0) return 100;
+    const scores = sub.questions.map(q => q.teacherScore ?? q.autoScore ?? 75);
+    const avg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+    // Convert 0-100 to scale 10 - 160
+    return Math.min(160, Math.max(10, Math.round(10 + (avg / 100) * 150)));
+  }
+
+  recalculateSubscores(sub: AssessmentSubmission) {
+    if (!sub.subscores) {
+      sub.subscores = { literacy: 100, comprehension: 100, conversation: 100, production: 100 };
+    }
+    const categories: ('literacy' | 'comprehension' | 'conversation' | 'production')[] = ['literacy', 'comprehension', 'conversation', 'production'];
+    categories.forEach(cat => {
+      const catQuestions = sub.questions.filter(q => q.subscore === cat);
+      if (catQuestions.length > 0) {
+        const catAvg = catQuestions.reduce((a, q) => a + (q.teacherScore ?? q.autoScore ?? 75), 0) / catQuestions.length;
+        const scaled = Math.min(160, Math.max(10, Math.round(10 + (catAvg / 100) * 150)));
+        sub.subscores![cat] = scaled;
+      } else {
+        sub.subscores![cat] = sub.overallScore || 100;
+      }
+    });
+  }
+
+  getAutoCefr(score: number): 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2' {
+    if (score >= 135) return 'C1';
+    if (score >= 115) return 'B2';
+    if (score >= 85) return 'B1';
+    if (score >= 55) return 'A2';
+    return 'A1';
+  }
+
+  async saveAssessmentDraft() {
+    const sub = this.activeSubmission();
+    if (!sub) return;
+    try {
+      await this.db.gradeAssessmentSubmission(sub.id, {
+        questions: sub.questions,
+        overallScore: sub.overallScore,
+        cefrLevel: sub.cefrLevel,
+        subscores: sub.subscores,
+        teacherGlobalComment: sub.teacherGlobalComment
+      });
+      this.dialogService.alert('Brouillon enregistré 💾', 'Toutes vos corrections ont été sauvegardées. Le dossier reste en attente jusqu\'à validation finale.', 'info');
+    } catch (e) {
+      console.error(e);
+      this.dialogService.alert('Erreur', 'Impossible de sauvegarder le brouillon.', 'info');
+    }
+  }
+
+  async finalizeAssessmentCorrection() {
+    const sub = this.activeSubmission();
+    if (!sub) return;
+
+    const teacherName = this.currentUser()?.name || 'Professeur SpeakUp';
+
+    try {
+      await this.db.gradeAssessmentSubmission(sub.id, {
+        status: 'corrected',
+        questions: sub.questions,
+        overallScore: sub.overallScore,
+        cefrLevel: sub.cefrLevel,
+        subscores: sub.subscores,
+        teacherGlobalComment: sub.teacherGlobalComment,
+        gradedBy: teacherName,
+        gradedAt: new Date().toISOString()
+      });
+
+      this.dialogService.alert(
+        'Correction Validée & Certificat Délivré ! 🎓',
+        `Le dossier de ${sub.studentName} a été validé avec succès (Score: ${sub.overallScore}/160 • ${sub.cefrLevel}). L'élève a reçu son certificat et une notification.`,
+        'info'
+      );
+
+      this.activeSubmission.set(null);
+    } catch (e) {
+      console.error(e);
+      this.dialogService.alert('Erreur', 'Impossible de valider la correction.', 'info');
+    }
+  }
+
+  deleteSubmission(subId: string, studentName: string) {
+    this.dialogService.confirm(
+      'Supprimer ce dossier ?',
+      `Êtes-vous sûr de vouloir supprimer l'évaluation de ${studentName} ? Cette action est irréversible.`,
+      async () => {
+        await this.db.deleteAssessmentSubmission(subId);
+        if (this.activeSubmission()?.id === subId) {
+          this.activeSubmission.set(null);
+        }
+      }
+    );
+  }
+
+  getAudioQuestionsCount(sub: AssessmentSubmission): number {
+    return sub.questions.filter(q => q.studentAudioUrl || q.type === 'speak-photo' || q.type === 'read-aloud' || q.type === 'listen-speak').length;
+  }
+
+  getWrittenQuestionsCount(sub: AssessmentSubmission): number {
+    return sub.questions.filter(q => q.studentAnswerText && !q.studentAudioUrl).length;
+  }
+
+  formatSubmissionDate(isoDate: string): string {
+    if (!isoDate) return '';
+    const d = new Date(isoDate);
+    return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  }
+
+  viewMyCorrectedCertificate(sub: AssessmentSubmission) {
+    this.lastDetResult.set({
+      overallScore: sub.overallScore || 100,
+      cefrLevel: sub.cefrLevel || 'B1',
+      subscores: sub.subscores || { literacy: 100, comprehension: 100, conversation: 100, production: 100 },
+      totalQuestions: sub.questions.length
+    });
+    this.view.set('det-result');
+  }
+
 
   confirmExitTest() {
     this.dialogService.confirm(
