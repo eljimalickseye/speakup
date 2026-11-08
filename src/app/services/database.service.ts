@@ -1084,298 +1084,13 @@ export class DatabaseService {
     this.vocabGames$.next(vocabGames);
     const examAttempts = getLocal('speak_exam_attempts', []);
     this.examAttempts$.next(examAttempts);
-    const savedAssessments = getLocal('speak_assessment_submissions', null);
-    if (savedAssessments && Array.isArray(savedAssessments)) {
-      this.assessmentSubmissions$.next(savedAssessments);
-    } else {
-      const defaultAssessments: AssessmentSubmission[] = [
-        {
-          id: 'sub-sample-01',
-          studentId: 'student-thomas',
-          studentName: 'Thomas Dubois',
-          studentEmail: 'thomas.dubois@example.com',
-          studentAvatar: 'TD',
-          testTitle: 'SpeakUp English Assessment (SET)',
-          submittedAt: new Date(Date.now() - 3600000 * 2).toISOString(),
-          durationSeconds: 1140,
-          status: 'pending',
-          questions: [
-            {
-              questionId: 'wp-1',
-              type: 'write-photo',
-              title: 'Décrire une photo à l\'écrit',
-              subscore: 'production',
-              prompt: 'Rédigez une ou plusieurs phrases décrivant cette scène de marché animé.',
-              imageUrl: 'https://images.unsplash.com/photo-1533900298318-6b8da08a523e?auto=format&fit=crop&w=800&q=80',
-              studentAnswerText: 'The bustling open-air market was filled with vibrant colors and lively merchants selling fresh organic fruits, handmade pottery, and fragrant herbs. Shoppers from diverse backgrounds gathered to enjoy the festive and authentic atmosphere.',
-              wordCount: 33,
-              autoScore: 88,
-              teacherScore: 85,
-              teacherComment: ''
-            },
-            {
-              questionId: 'rc-1',
-              type: 'read-complete',
-              title: 'Compléter les mots manquants',
-              subscore: 'literacy',
-              prompt: 'Remplir les lettres manquantes dans le texte sur Londres.',
-              studentAnswerText: 'London is the capital and largest city of England. Every year, millions of people visit its famous museums and historic monuments. The river Thames flows through the heart of the capital.',
-              autoScore: 100,
-              teacherScore: 100,
-              teacherComment: ''
-            },
-            {
-              questionId: 'rs-1',
-              type: 'read-select',
-              title: 'Identifier les vrais mots d\'anglais',
-              subscore: 'literacy',
-              prompt: 'Sélectionner uniquement les termes authentiques du vocabulaire anglais.',
-              studentAnswerText: 'Mots choisis : challenge, efficient, frequently, persuade, remarkable, sustainable, reliable, determine.',
-              autoScore: 92,
-              teacherScore: 90,
-              teacherComment: ''
-            },
-            {
-              questionId: 'lt-1',
-              type: 'listen-type',
-              title: 'Dictée audio & transcription',
-              subscore: 'comprehension',
-              audioPromptText: 'She decided to study abroad to improve her communication skills and discover new cultures.',
-              studentAnswerText: 'She decided to study abroad to improve her communication skills and discover new cultures.',
-              autoScore: 100,
-              teacherScore: 100,
-              teacherComment: ''
-            },
-            {
-              questionId: 'ra-1',
-              type: 'read-aloud',
-              title: 'Lecture à haute voix (Audio)',
-              subscore: 'conversation',
-              prompt: 'Effective communication is the cornerstone of successful international collaboration.',
-              studentAudioUrl: 'https://actions.google.com/sounds/v1/speech/audio_sample.mp3',
-              studentAnswerText: '[Enregistrement audio élève 16s] "Effective communication is the cornerstone of successful international collaboration."',
-              timeSpentSec: 16,
-              autoScore: 85,
-              teacherScore: 85,
-              teacherComment: ''
-            },
-            {
-              questionId: 'rw-1',
-              type: 'read-write',
-              title: 'Essai rédactionnel (min 50 mots)',
-              subscore: 'production',
-              prompt: 'Describe a challenge you faced recently and explain how you overcame it.',
-              studentAnswerText: 'Last semester, I had to give a presentation entirely in English before a large audience. I felt nervous about making grammar errors. To overcome my anxiety, I practiced every morning in front of a mirror, recorded my speeches to correct my pronunciation, and concentrated on communicating my ideas clearly. The presentation went smoothly and boosted my self-confidence.',
-              wordCount: 62,
-              autoScore: 90,
-              teacherScore: 90,
-              teacherComment: ''
-            },
-            {
-              questionId: 'ls-1',
-              type: 'listen-speak',
-              title: 'Entretien oral & expression spontanée (90s)',
-              subscore: 'conversation',
-              audioPromptText: 'Tell me about a memorable trip you have taken. Why was this place so special to you?',
-              studentAudioUrl: 'https://actions.google.com/sounds/v1/speech/audio_sample.mp3',
-              studentAnswerText: '[Enregistrement audio élève 68s] Élève raconte son voyage à Édimbourg, la visite des châteaux et son interaction en anglais avec les habitants.',
-              timeSpentSec: 68,
-              autoScore: 85,
-              teacherScore: 85,
-              teacherComment: ''
-            }
-          ]
-        },
-        {
-          id: 'sub-sample-02',
-          studentId: 'student-sarah',
-          studentName: 'Sarah Benali',
-          studentEmail: 'sarah.benali@example.com',
-          studentAvatar: 'SB',
-          testTitle: 'SpeakUp English Assessment (SET)',
-          submittedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-          durationSeconds: 1220,
-          status: 'corrected',
-          overallScore: 130,
-          cefrLevel: 'B2',
-          subscores: {
-            literacy: 135,
-            comprehension: 130,
-            conversation: 125,
-            production: 130
-          },
-          teacherGlobalComment: 'Remarquable maîtrise de la langue ! Vocabulaire riche et précis, intonation naturelle sur les épreuves orales. Travaillez encore les verbes prépositionnels pour atteindre le niveau C1.',
-          gradedBy: 'Professeur SpeakUp',
-          gradedAt: new Date(Date.now() - 86400000).toISOString(),
-          questions: [
-            {
-              questionId: 'wp-1',
-              type: 'write-photo',
-              title: 'Décrire une photo à l\'écrit',
-              subscore: 'production',
-              prompt: 'Rédigez une ou plusieurs phrases décrivant cette scène de marché animé.',
-              imageUrl: 'https://images.unsplash.com/photo-1533900298318-6b8da08a523e?auto=format&fit=crop&w=800&q=80',
-              studentAnswerText: 'The vibrant farmers market was bustling with patrons browsing freshly picked organic vegetables, exotic fruits, and local artisan delicacies in a lively morning atmosphere.',
-              wordCount: 26,
-              teacherScore: 92,
-              teacherComment: 'Très bonne utilisation d\'adjectifs évocateurs (vibrant, bustling, exotic).'
-            },
-            {
-              questionId: 'rc-1',
-              type: 'read-complete',
-              title: 'Compléter les mots manquants',
-              subscore: 'literacy',
-              studentAnswerText: 'London is the capital and largest city of England. Every year, millions of people visit its famous museums and historic monuments. The river Thames flows through the heart of the capital.',
-              teacherScore: 100,
-              teacherComment: 'Sans faute.'
-            },
-            {
-              questionId: 'rs-1',
-              type: 'read-select',
-              title: 'Identifier les vrais mots d\'anglais',
-              subscore: 'literacy',
-              studentAnswerText: 'challenge, efficient, frequently, persuade, remarkable, sustainable, reliable, determine.',
-              teacherScore: 95,
-              teacherComment: 'Excellente sélection des termes corrects.'
-            },
-            {
-              questionId: 'lt-1',
-              type: 'listen-type',
-              title: 'Dictée audio & transcription',
-              subscore: 'comprehension',
-              audioPromptText: 'She decided to study abroad to improve her communication skills and discover new cultures.',
-              studentAnswerText: 'She decided to study abroad to improve her communication skills and discover new cultures.',
-              teacherScore: 100,
-              teacherComment: 'Orthographe et ponctuation parfaites.'
-            },
-            {
-              questionId: 'ra-1',
-              type: 'read-aloud',
-              title: 'Lecture à haute voix (Audio)',
-              subscore: 'conversation',
-              prompt: 'Effective communication is the cornerstone of successful international collaboration.',
-              studentAudioUrl: 'https://actions.google.com/sounds/v1/speech/audio_sample.mp3',
-              studentAnswerText: '[Enregistrement audio élève 15s]',
-              timeSpentSec: 15,
-              teacherScore: 88,
-              teacherComment: 'Bonne accentuation tonique sur "collaboration" et "cornerstone".'
-            },
-            {
-              questionId: 'rw-1',
-              type: 'read-write',
-              title: 'Essai rédactionnel (min 50 mots)',
-              subscore: 'production',
-              prompt: 'Describe a challenge you faced recently and explain how you overcame it.',
-              studentAnswerText: 'Starting my internship at an international tech startup was quite intimidating because all meetings were conducted exclusively in English. I initially struggled with spontaneous speaking. I resolved to prepare key notes before every conference call and ask questions whenever clarifications were needed. Through consistent daily effort, I became fully at ease contributing to team discussions.',
-              wordCount: 59,
-              teacherScore: 90,
-              teacherComment: 'Structure argumentative claire, excellente fluidité syntaxique.'
-            },
-            {
-              questionId: 'ls-1',
-              type: 'listen-speak',
-              title: 'Entretien oral & expression spontanée (90s)',
-              subscore: 'conversation',
-              audioPromptText: 'Tell me about a memorable trip you have taken. Why was this place so special to you?',
-              studentAudioUrl: 'https://actions.google.com/sounds/v1/speech/audio_sample.mp3',
-              studentAnswerText: '[Enregistrement audio élève 75s]',
-              timeSpentSec: 75,
-              teacherScore: 86,
-              teacherComment: 'Très bon débit et spontanéité. Pensez à varier les connecteurs oraux.'
-            }
-          ]
-        },
-        {
-          id: 'sub-sample-03',
-          studentId: 'student-lucas',
-          studentName: 'Lucas Martin',
-          studentEmail: 'lucas.martin@example.com',
-          studentAvatar: 'LM',
-          testTitle: 'SpeakUp English Assessment (SET)',
-          submittedAt: new Date(Date.now() - 86400000 * 3).toISOString(),
-          durationSeconds: 980,
-          status: 'pending',
-          questions: [
-            {
-              questionId: 'wp-1',
-              type: 'write-photo',
-              title: 'Décrire une photo à l\'écrit',
-              subscore: 'production',
-              imageUrl: 'https://images.unsplash.com/photo-1533900298318-6b8da08a523e?auto=format&fit=crop&w=800&q=80',
-              studentAnswerText: 'People are walking in an outdoor street market buying fresh fruits and bread on a sunny day.',
-              wordCount: 18,
-              autoScore: 72,
-              teacherScore: 70
-            },
-            {
-              questionId: 'rc-1',
-              type: 'read-complete',
-              title: 'Compléter les mots manquants',
-              subscore: 'literacy',
-              studentAnswerText: 'London is the capital and largest city of England. Every year, millions of peo... visit its fam...',
-              autoScore: 80,
-              teacherScore: 80
-            },
-            {
-              questionId: 'rs-1',
-              type: 'read-select',
-              title: 'Identifier les vrais mots d\'anglais',
-              subscore: 'literacy',
-              studentAnswerText: 'challenge, efficient, frequently, tracely, reliable',
-              autoScore: 68,
-              teacherScore: 68
-            },
-            {
-              questionId: 'lt-1',
-              type: 'listen-type',
-              title: 'Dictée audio & transcription',
-              subscore: 'comprehension',
-              audioPromptText: 'She decided to study abroad to improve her communication skills and discover new cultures.',
-              studentAnswerText: 'She decided to study aboard to improve her comunication skills.',
-              autoScore: 75,
-              teacherScore: 75
-            },
-            {
-              questionId: 'ra-1',
-              type: 'read-aloud',
-              title: 'Lecture à haute voix (Audio)',
-              subscore: 'conversation',
-              prompt: 'Effective communication is the cornerstone of successful international collaboration.',
-              studentAudioUrl: 'https://actions.google.com/sounds/v1/speech/audio_sample.mp3',
-              studentAnswerText: '[Enregistrement audio élève 14s]',
-              timeSpentSec: 14,
-              autoScore: 75,
-              teacherScore: 75
-            },
-            {
-              questionId: 'rw-1',
-              type: 'read-write',
-              title: 'Essai rédactionnel (min 50 mots)',
-              subscore: 'production',
-              prompt: 'Describe a challenge you faced recently and explain how you overcame it.',
-              studentAnswerText: 'I had to learn how to drive a manual car last month. It was difficult at first because I stalled the engine several times. My father helped me practice every weekend in an empty parking lot. After three weeks of patient practice, I passed my driving test successfully.',
-              wordCount: 51,
-              autoScore: 82,
-              teacherScore: 80
-            },
-            {
-              questionId: 'ls-1',
-              type: 'listen-speak',
-              title: 'Entretien oral & expression spontanée (90s)',
-              subscore: 'conversation',
-              audioPromptText: 'Tell me about a memorable trip you have taken. Why was this place so special to you?',
-              studentAudioUrl: 'https://actions.google.com/sounds/v1/speech/audio_sample.mp3',
-              studentAnswerText: '[Enregistrement audio élève 52s] Lucas parle de son voyage en Italie à Rome.',
-              timeSpentSec: 52,
-              autoScore: 70,
-              teacherScore: 70
-            }
-          ]
-        }
-      ];
-      this.assessmentSubmissions$.next(defaultAssessments);
-      this.saveLocal('speak_assessment_submissions', defaultAssessments);
-    }
+    const rawAssessments = getLocal('speak_assessment_submissions', []);
+    // Nettoyer toute donnee d'exemple / mock pour n'afficher que les vraies soumissions d'etudiants
+    const cleanAssessments: AssessmentSubmission[] = Array.isArray(rawAssessments)
+      ? rawAssessments.filter(s => s && s.id && !s.id.startsWith('sub-sample-') && !s.studentEmail?.includes('example.com') && s.studentName !== 'Thomas Dubois' && s.studentName !== 'Sarah Benali' && s.studentName !== 'Lucas Martin')
+      : [];
+    this.saveLocal('speak_assessment_submissions', cleanAssessments);
+    this.assessmentSubmissions$.next(cleanAssessments);
 
     const vocabGameAttempts = getLocal('speak_vocab_game_attempts', []);
     this.vocabGameAttempts$.next(vocabGameAttempts);
@@ -1734,6 +1449,19 @@ export class DatabaseService {
       const submissions = this.sanitizeQuizSubmissions(rawSubmissions);
       this.submissions$.next(submissions);
       this.saveLocal('speak_submissions', submissions);
+    });
+
+    // Subscribe to Assessment Submissions (SpeakUp English Assessment - real platform students)
+    onSnapshot(collection(this.firestore, 'assessment_submissions'), (snap) => {
+      const realSubs: AssessmentSubmission[] = [];
+      snap.forEach(docSnap => {
+        const data = docSnap.data() as AssessmentSubmission;
+        if (data && data.id && !data.id.startsWith('sub-sample-') && !data.studentEmail?.includes('example.com') && data.studentName !== 'Thomas Dubois' && data.studentName !== 'Sarah Benali' && data.studentName !== 'Lucas Martin') {
+          realSubs.push(data);
+        }
+      });
+      this.assessmentSubmissions$.next(realSubs);
+      this.saveLocal('speak_assessment_submissions', realSubs);
     });
 
     // 5. Subscribe to Attendance

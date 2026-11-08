@@ -187,7 +187,8 @@ export interface DetQuestion {
                         (click)="folderFilterStatus.set('all')"
                         [class.active-pill]="folderFilterStatus() === 'all'"
                         class="filter-pill">
-                        Tous ({{ assessmentSubmissions().length }})
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:middle; margin-right:4px;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                        <span>Tous ({{ assessmentSubmissions().length }})</span>
                       </button>
                       <button
                         type="button"
@@ -195,7 +196,8 @@ export interface DetQuestion {
                         [class.active-pill]="folderFilterStatus() === 'pending'"
                         class="filter-pill"
                         style="color:#C2410C;">
-                        ⏳ En attente ({{ pendingSubmissionsCount() }})
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:middle; margin-right:4px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        <span>En attente ({{ pendingSubmissionsCount() }})</span>
                       </button>
                       <button
                         type="button"
@@ -203,125 +205,139 @@ export interface DetQuestion {
                         [class.active-pill]="folderFilterStatus() === 'corrected'"
                         class="filter-pill"
                         style="color:#047857;">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:middle; margin-right:3px;"><polyline points="20 6 9 17 4 12"/></svg><span>Corrigés ({{ correctedSubmissionsCount() }})</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:middle; margin-right:4px;"><polyline points="20 6 9 17 4 12"/></svg>
+                        <span>Corrigés ({{ correctedSubmissionsCount() }})</span>
                       </button>
                     </div>
                   </div>
 
-                  <!-- Folders Grid -->
+                  <!-- Dossiers List (Ligne par Ligne) -->
                   @if (filteredFolders().length === 0) {
-                    <div style="text-align:center; padding:60px 20px; background:var(--surface-1); border-radius:16px; border:1px dashed var(--border);">
-                      <div style="width:60px; height:60px; margin:0 auto 14px auto; border-radius:50%; background:#F1F5F9; display:flex; align-items:center; justify-content:center; color:#94A3B8;">
+                    <div style="text-align:center; padding:55px 24px; background:white; border-radius:16px; border:1.5px dashed #CBD5E1; box-shadow:0 2px 8px rgba(0,0,0,0.02);">
+                      <div style="width:60px; height:60px; margin:0 auto 16px auto; border-radius:50%; background:#EEF2FF; display:flex; align-items:center; justify-content:center; color:#4F46E5;">
                         <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
                       </div>
-                      <h4 style="font-size:16px; font-weight:800; color:var(--text-primary); margin:0 0 6px 0;">Aucun dossier trouvé</h4>
-                      <p style="font-size:13px; color:var(--text-secondary); margin:0;">Modifiez votre recherche ou vos filtres pour afficher des dossiers d'évaluation.</p>
+                      @if (assessmentSubmissions().length === 0) {
+                        <h4 style="font-size:17px; font-weight:800; color:var(--text-primary); margin:0 0 8px 0;">Aucun dossier d'évaluation soumis pour le moment</h4>
+                        <p style="font-size:13.5px; color:var(--text-secondary); max-width:560px; margin:0 auto 18px auto; line-height:1.5;">
+                          Les dossiers des vrais étudiants de la plateforme apparaîtront ici <strong>ligne par ligne</strong> dès qu'ils auront passé leur test SpeakUp English Assessment (réponses écrites, vocaux enregistrés, notes automatiques).
+                        </p>
+                        <div style="display:flex; justify-content:center; gap:10px;">
+                          <button type="button" (click)="openGeneratorTab()" class="det-action-btn" style="font-size:13px; padding:8px 16px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                            <span>Générateur depuis les Leçons</span>
+                          </button>
+                        </div>
+                      } @else {
+                        <h4 style="font-size:16px; font-weight:800; color:var(--text-primary); margin:0 0 6px 0;">Aucun dossier trouvé</h4>
+                        <p style="font-size:13px; color:var(--text-secondary); margin:0;">Modifiez votre recherche ou vos filtres pour afficher des dossiers d'évaluation.</p>
+                      }
                     </div>
                   } @else {
-                    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:20px;">
+                    <div class="submissions-list-rows">
+                      <!-- Table Header Bar -->
+                      <div class="dossier-row-header">
+                        <div>Élève & Candidat</div>
+                        <div>Date de soumission</div>
+                        <div>Contenu évalué</div>
+                        <div>Statut / Note</div>
+                        <div style="text-align:right;">Actions</div>
+                      </div>
+
+                      <!-- Submissions Rows (Ligne par Ligne) -->
                       @for (sub of filteredFolders(); track sub.id) {
-                        <div class="folder-card" [class.folder-pending]="sub.status === 'pending'" [class.folder-corrected]="sub.status === 'corrected'">
+                        <div class="dossier-row" [class.row-pending]="sub.status === 'pending'" [class.row-corrected]="sub.status === 'corrected'">
                           
-                          <!-- Physical Folder Tab on Top -->
-                          <div class="folder-top-tab">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-                              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-                            </svg>
-                            <span>Dossier Élève #{{ sub.id.slice(-6).toUpperCase() }}</span>
+                          <!-- Column 1: Student Avatar & Info -->
+                          <div class="dossier-col-student">
+                            <div class="student-avatar-circle" [style.background]="getAvatarGradient(sub.studentName)">
+                              {{ sub.studentAvatar || sub.studentName.slice(0, 2).toUpperCase() }}
+                            </div>
+                            <div style="min-width:0;">
+                              <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                                <h4 class="student-name" [title]="sub.studentName">{{ sub.studentName }}</h4>
+                                <span class="dossier-id-tag">#SET-{{ sub.id.slice(-6).toUpperCase() }}</span>
+                              </div>
+                              <div class="student-email" [title]="sub.studentEmail">{{ sub.studentEmail || 'Élève inscrit' }}</div>
+                            </div>
                           </div>
 
-                          <!-- Folder Body -->
-                          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px;">
-                            <div style="display:flex; align-items:center; gap:12px;">
-                              <div style="width:44px; height:44px; border-radius:50%; background:linear-gradient(135deg, #4F46E5, #06B6D4); color:white; font-size:15px; font-weight:800; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 8px rgba(79,70,229,0.25);">
-                                {{ sub.studentAvatar || sub.studentName.slice(0, 2).toUpperCase() }}
-                              </div>
-                              <div>
-                                <h4 style="font-size:15px; font-weight:800; color:var(--text-primary); margin:0; line-height:1.2;">{{ sub.studentName }}</h4>
-                                <div style="font-size:11.5px; color:var(--text-secondary); margin-top:2px;">{{ sub.studentEmail || 'Élève inscrit' }}</div>
-                              </div>
+                          <!-- Column 2: Date de soumission -->
+                          <div class="dossier-col-date">
+                            <div class="col-value">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                              <span>{{ formatSubmissionDate(sub.submittedAt) }}</span>
                             </div>
+                          </div>
 
-                            <!-- Status Badge -->
+                          <!-- Column 3: Contenu évalué -->
+                          <div class="dossier-col-content">
+                            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                              <span class="dossier-chip-sm chip-blue" title="Enregistrements vocaux à écouter">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
+                                <span>{{ getAudioQuestionsCount(sub) }} vocaux</span>
+                              </span>
+                              <span class="dossier-chip-sm chip-green" title="Réponses écrites">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                                <span>{{ getWrittenQuestionsCount(sub) }} rédactions</span>
+                              </span>
+                              <span class="dossier-chip-sm chip-purple" title="Durée totale">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                <span>{{ Math.round(sub.durationSeconds / 60) }} min</span>
+                              </span>
+                            </div>
+                          </div>
+
+                          <!-- Column 4: Statut & Note -->
+                          <div class="dossier-col-status">
                             @if (sub.status === 'pending') {
-                              <span class="badge" style="background:#FFF7ED; color:#C2410C; border:1px solid #FFEDD5; font-size:10.5px; font-weight:800; padding:4px 9px; border-radius:20px; display:inline-flex; align-items:center; gap:4px;">
+                              <span class="badge-status-pending">
                                 <span style="width:7px; height:7px; border-radius:50%; background:#EA580C; animation: pulse-live 1.5s infinite"></span>
-                                En attente
+                                <span>En attente</span>
                               </span>
                             } @else {
-                              <span class="badge" style="background:#ECFDF5; color:#047857; border:1px solid #A7F3D0; font-size:10.5px; font-weight:800; padding:4px 9px; border-radius:20px; display:inline-flex; align-items:center; gap:4px;">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                                Corrigé
-                              </span>
-                            }
-                          </div>
-
-                          <!-- Submission Date & Test Title -->
-                          <div style="font-size:11.5px; color:var(--text-muted); margin-bottom:14px; display:flex; align-items:center; gap:6px;">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                            <span>Soumis le {{ formatSubmissionDate(sub.submittedAt) }}</span>
-                          </div>
-
-                          <!-- Inside Dossier Content Chips (Audios, Written, Time) -->
-                          <div style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px;">
-                            <span class="dossier-pill" style="background:#EFF6FF; color:#1D4ED8;">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
-                              <span>{{ getAudioQuestionsCount(sub) }} audios vocaux</span>
-                            </span>
-                            <span class="dossier-pill" style="background:#F0FDF4; color:#15803D;">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                              <span>{{ getWrittenQuestionsCount(sub) }} rédactions</span>
-                            </span>
-                            <span class="dossier-pill" style="background:#FDF4FF; color:#A21CAF;">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                              <span>{{ Math.round(sub.durationSeconds / 60) }} min</span>
-                            </span>
-                          </div>
-
-                          <!-- Corrected Info Snippet -->
-                          @if (sub.status === 'corrected' && sub.overallScore) {
-                            <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:10px 12px; margin-bottom:16px;">
-                              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                                <span style="font-size:11px; font-weight:700; color:#64748B; text-transform:uppercase;">Score Validé</span>
-                                <span style="font-size:13px; font-weight:900; color:#4F46E5;">{{ sub.overallScore }} / 160 • Niveau {{ sub.cefrLevel }}</span>
+                              <div style="display:flex; align-items:center; gap:8px;">
+                                <span class="badge-status-corrected">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                                  <span>Corrigé</span>
+                                </span>
+                                @if (sub.overallScore) {
+                                  <span class="score-badge">
+                                    {{ sub.overallScore }}/160 • {{ sub.cefrLevel || 'B2' }}
+                                  </span>
+                                }
                               </div>
-                              @if (sub.teacherGlobalComment) {
-                                <p style="font-size:11.5px; color:#475569; margin:0; font-style:italic; line-height:1.4;">
-                                  « {{ sub.teacherGlobalComment.slice(0, 75) }}{{ sub.teacherGlobalComment.length > 75 ? '...' : '' }} »
-                                </p>
-                              }
-                            </div>
-                          }
-
-                          <!-- Folder Actions Footer -->
-                          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; border-top:1px solid var(--border); padding-top:14px; margin-top:auto;">
-                            <button
-                              type="button"
-                              (click)="openSubmissionFolder(sub)"
-                              class="folder-action-btn"
-                              [style.background]="sub.status === 'pending' ? 'linear-gradient(135deg, #4F46E5 0%, #4338CA 100%)' : '#F1F5F9'"
-                              [style.color]="sub.status === 'pending' ? 'white' : '#334155'"
-                              [style.border]="sub.status === 'pending' ? 'none' : '1px solid #CBD5E1'">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-                              </svg>
-                              @if (sub.status === 'pending') {
-                              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
-                              <span>Corriger le dossier</span>
-                            } @else {
-                              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-                              <span>Consulter / Modifier</span>
                             }
-                            </button>
+                          </div>
+
+                          <!-- Column 5: Actions (Single SVG icon per button) -->
+                          <div class="dossier-col-actions">
+                            @if (sub.status === 'pending') {
+                              <button
+                                type="button"
+                                (click)="openSubmissionFolder(sub)"
+                                class="btn-dossier-action btn-pending-action"
+                                title="Ouvrir le dossier pour écouter les vocaux et corriger">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+                                <span>Corriger</span>
+                              </button>
+                            } @else {
+                              <button
+                                type="button"
+                                (click)="openSubmissionFolder(sub)"
+                                class="btn-dossier-action btn-corrected-action"
+                                title="Consulter et ajuster la correction de l'élève">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                <span>Consulter</span>
+                              </button>
+                            }
 
                             <button
                               type="button"
                               (click)="deleteSubmission(sub.id, sub.studentName)"
-                              title="Supprimer ce dossier"
-                              style="width:34px; height:34px; border-radius:8px; border:1px solid #E2E8F0; background:white; color:#94A3B8; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.15s ease;"
-                              onmouseover="this.style.borderColor='#EF4444'; this.style.color='#EF4444';"
-                              onmouseout="this.style.borderColor='#E2E8F0'; this.style.color='#94A3B8';">
-                              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                              class="btn-dossier-delete"
+                              title="Supprimer ce dossier">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                             </button>
                           </div>
 
@@ -1935,6 +1951,259 @@ export interface DetQuestion {
       color: white !important;
       border-color: #4F46E5;
       box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
+    }
+
+    .submissions-list-rows {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .dossier-row-header {
+      display: grid;
+      grid-template-columns: 280px 170px 240px 170px 1fr;
+      align-items: center;
+      gap: 16px;
+      padding: 0 18px 4px 18px;
+      font-size: 11px;
+      font-weight: 800;
+      color: #64748B;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .dossier-row {
+      background: white;
+      border: 1.5px solid #E2E8F0;
+      border-radius: 12px;
+      padding: 12px 18px;
+      display: grid;
+      grid-template-columns: 280px 170px 240px 170px 1fr;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+      transition: all 0.2s ease;
+    }
+
+    .dossier-row:hover {
+      box-shadow: 0 6px 16px rgba(79, 70, 229, 0.08);
+      border-color: #C7D2FE;
+    }
+
+    .row-pending {
+      border-left: 4px solid #F97316;
+    }
+
+    .row-corrected {
+      border-left: 4px solid #10B981;
+    }
+
+    .dossier-col-student {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .student-avatar-circle {
+      width: 40px;
+      height: 40px;
+      min-width: 40px;
+      border-radius: 50%;
+      color: white;
+      font-size: 13.5px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    }
+
+    .student-name {
+      font-size: 14.5px;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .dossier-id-tag {
+      font-size: 10px;
+      font-weight: 800;
+      background: #EEF2FF;
+      color: #4338CA;
+      border: 1px solid #C7D2FE;
+      padding: 1px 6px;
+      border-radius: 4px;
+      letter-spacing: 0.3px;
+    }
+
+    .student-email {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 1px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .dossier-col-date .col-value {
+      font-size: 12.5px;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+    }
+
+    .dossier-chip-sm {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .chip-blue {
+      background: #EFF6FF;
+      color: #1D4ED8;
+      border: 1px solid #DBEAFE;
+    }
+
+    .chip-green {
+      background: #F0FDF4;
+      color: #15803D;
+      border: 1px solid #DCFCE7;
+    }
+
+    .chip-purple {
+      background: #FAF5FF;
+      color: #7E22CE;
+      border: 1px solid #F3E8FF;
+    }
+
+    .badge-status-pending {
+      background: #FFF7ED;
+      color: #C2410C;
+      border: 1px solid #FFEDD5;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      width: fit-content;
+    }
+
+    .badge-status-corrected {
+      background: #ECFDF5;
+      color: #047857;
+      border: 1px solid #A7F3D0;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      width: fit-content;
+    }
+
+    .score-badge {
+      font-size: 11.5px;
+      font-weight: 800;
+      color: #4F46E5;
+    }
+
+    .dossier-col-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .btn-dossier-action {
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .btn-pending-action {
+      background: linear-gradient(135deg, #4F46E5 0%, #4338CA 100%);
+      color: white;
+      border: none;
+      box-shadow: 0 2px 6px rgba(79, 70, 229, 0.25);
+    }
+
+    .btn-pending-action:hover {
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+      transform: translateY(-1px);
+    }
+
+    .btn-corrected-action {
+      background: #F8FAFC;
+      color: #334155;
+      border: 1.5px solid #CBD5E1;
+    }
+
+    .btn-corrected-action:hover {
+      background: #EEF2FF;
+      color: #4338CA;
+      border-color: #A5B4FC;
+    }
+
+    .btn-dossier-delete {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      border: 1px solid #E2E8F0;
+      background: white;
+      color: #94A3B8;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+    }
+
+    .btn-dossier-delete:hover {
+      border-color: #EF4444;
+      color: #EF4444;
+      background: #FEF2F2;
+    }
+
+    @media (max-width: 1100px) {
+      .dossier-row-header {
+        display: none;
+      }
+      .dossier-row {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .dossier-col-actions {
+        grid-column: 1 / -1;
+        justify-content: flex-start;
+      }
+    }
+
+    @media (max-width: 680px) {
+      .dossier-row {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
     }
 
     .folder-card {
@@ -3625,6 +3894,21 @@ export class StudentExamComponent implements OnDestroy {
       console.error(e);
       this.dialogService.alert('Erreur', 'Impossible de valider la correction.', 'info');
     }
+  }
+
+  getAvatarGradient(name: string): string {
+    const gradients = [
+      'linear-gradient(135deg, #4F46E5 0%, #06B6D4 100%)',
+      'linear-gradient(135deg, #7C3AED 0%, #EC4899 100%)',
+      'linear-gradient(135deg, #2563EB 0%, #38BDF8 100%)',
+      'linear-gradient(135deg, #059669 0%, #10B981 100%)',
+      'linear-gradient(135deg, #D97706 0%, #F59E0B 100%)'
+    ];
+    let hash = 0;
+    for (let i = 0; i < (name || '').length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return gradients[Math.abs(hash) % gradients.length];
   }
 
   deleteSubmission(subId: string, studentName: string) {
