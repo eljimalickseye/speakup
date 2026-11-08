@@ -113,6 +113,10 @@ export interface UserProfile {
   privateCoachingRoadmap?: { id: string; text: string; done: boolean }[];
   privateCoachingRequested?: boolean;
   privateCoachingNotes?: string;
+  hasFullAccess?: boolean;
+  hasLiveAccess?: boolean;
+  hasExamAccess?: boolean;
+  accessGrantedAt?: string;
 }
 
 export interface SystemLog {
@@ -579,9 +583,9 @@ export class DatabaseService {
   private exercises$ = new BehaviorSubject<Exercise[]>([]);
   private activityLogs$ = new BehaviorSubject<ActivityLog[]>([]);
   private systemLogs$ = new BehaviorSubject<SystemLog[]>([]);
-  autoApproveRegistrations = signal<boolean>(false);
-  autoApproveStudents = signal<boolean>(false);
-  autoApproveTeachers = signal<boolean>(false);
+  autoApproveRegistrations = signal<boolean>(true);
+  autoApproveStudents = signal<boolean>(true);
+  autoApproveTeachers = signal<boolean>(true);
 
   private notifications$ = new BehaviorSubject<AppNotification[]>([]);
   private vocabGames$ = new BehaviorSubject<VocabGame[]>([]);
@@ -667,10 +671,12 @@ export class DatabaseService {
     const boutiqueLocal = localStorage.getItem('speak_settings_show_boutique') === 'true';
     this.showBoutique$.next(boutiqueLocal);
 
-    const autoApproveLocal = localStorage.getItem('speak_settings_auto_approve_registrations') === 'true';
-    this.autoApproveRegistrations.set(autoApproveLocal);
-    this.autoApproveStudents.set(localStorage.getItem('speak_settings_auto_approve_students') === 'true');
-    this.autoApproveTeachers.set(localStorage.getItem('speak_settings_auto_approve_teachers') === 'true');
+    const autoApproveLocal = localStorage.getItem('speak_settings_auto_approve_registrations');
+    this.autoApproveRegistrations.set(autoApproveLocal === null ? true : autoApproveLocal === 'true');
+    const autoApproveStud = localStorage.getItem('speak_settings_auto_approve_students');
+    this.autoApproveStudents.set(autoApproveStud === null ? true : autoApproveStud === 'true');
+    const autoApproveTeach = localStorage.getItem('speak_settings_auto_approve_teachers');
+    this.autoApproveTeachers.set(autoApproveTeach === null ? true : autoApproveTeach === 'true');
 
     const gardenLocal = localStorage.getItem('speak_settings_show_garden') === 'true';
     this.showGarden$.next(gardenLocal);
@@ -1116,7 +1122,11 @@ export class DatabaseService {
     // Require authentication on startup instead of auto-logging in as teacher
     const savedUserId = localStorage.getItem('speak_current_user_id') || null;
     let foundUser = savedUserId ? (users.find((u: UserProfile) => u.id === savedUserId) || null) : null;
-    if (foundUser && (foundUser.status === 'pending' || foundUser.status === 'rejected' || foundUser.status === 'suspended' || (foundUser.blocked && foundUser.role !== 'student'))) {
+    if (foundUser && foundUser.status === 'pending') {
+      foundUser.status = 'approved';
+      this.updateUserProfile(foundUser.id, { status: 'approved' });
+    }
+    if (foundUser && (foundUser.status === 'rejected' || foundUser.status === 'suspended' || (foundUser.blocked && foundUser.role !== 'student'))) {
       foundUser = null;
       localStorage.removeItem('speak_current_user_id');
     }
@@ -1240,7 +1250,11 @@ export class DatabaseService {
       if (active) {
         const fresh = users.find(u => u.id === active.id);
         if (fresh) {
-          if (fresh.status === 'pending' || fresh.status === 'rejected' || fresh.status === 'suspended' || (fresh.blocked && fresh.role !== 'student')) {
+          if (fresh.status === 'pending') {
+            fresh.status = 'approved';
+            this.updateUserProfile(fresh.id, { status: 'approved' });
+          }
+          if (fresh.status === 'rejected' || fresh.status === 'suspended' || (fresh.blocked && fresh.role !== 'student')) {
             this.currentUser$.next(null);
             localStorage.removeItem('speak_current_user_id');
           } else {
@@ -1737,7 +1751,8 @@ export class DatabaseService {
           throw new Error('Votre compte est suspendu. Veuillez contacter un professeur.');
         }
         if (existingUser.status === 'pending') {
-          throw new Error('Votre demande d\'inscription est en cours de validation.');
+          existingUser.status = 'approved';
+          this.updateUserProfile(existingUser.id, { status: 'approved' });
         }
         if (existingUser.status === 'rejected') {
           throw new Error('Votre demande d\'inscription a été refusée.');
@@ -1747,8 +1762,7 @@ export class DatabaseService {
       }
       
       const avatar = name.slice(0,2).toUpperCase();
-      const autoApprove = (desiredRole === 'student' ? this.autoApproveStudents() : this.autoApproveTeachers());
-      const status = autoApprove ? 'approved' : 'pending';
+      const status = 'approved';
       const newProfile: UserProfile = {
         id: uid,
         name: name.charAt(0).toUpperCase() + name.slice(1),
@@ -1796,7 +1810,8 @@ export class DatabaseService {
         throw new Error('Votre compte est suspendu. Veuillez contacter un professeur.');
       }
       if (existingUser.status === 'pending') {
-        throw new Error('Votre demande d\'inscription est en cours de validation.');
+        existingUser.status = 'approved';
+        this.updateUserProfile(existingUser.id, { status: 'approved' });
       }
       if (existingUser.status === 'rejected') {
         throw new Error('Votre demande d\'inscription a été refusée.');
@@ -1808,8 +1823,7 @@ export class DatabaseService {
       const name = googleUser.displayName || 'Google User';
       const avatar = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'G';
       
-      const autoApprove = (desiredRole === 'student' ? this.autoApproveStudents() : this.autoApproveTeachers());
-      const status = autoApprove ? 'approved' : 'pending';
+      const status = 'approved';
       const newProfile: UserProfile = {
         id,
         name,
@@ -1906,7 +1920,7 @@ export class DatabaseService {
     const active = this.currentUser$.value;
     if (active && active.id === userId) {
       const currentFresh = updated || active;
-      if (currentFresh.status === 'pending' || currentFresh.status === 'rejected' || currentFresh.status === 'suspended' || (currentFresh.blocked && currentFresh.role !== 'student')) {
+      if (currentFresh.status === 'rejected' || currentFresh.status === 'suspended' || (currentFresh.blocked && currentFresh.role !== 'student')) {
         this.currentUser$.next(null);
         localStorage.removeItem('speak_current_user_id');
       } else {
@@ -2155,10 +2169,16 @@ export class DatabaseService {
       level,
       countryFlag: country,
       role,
-      status: (role === 'student' ? this.autoApproveStudents() : this.autoApproveTeachers()) ? 'approved' : 'pending',
+      status: 'approved',
+      hasFullAccess: false,
+      hasLiveAccess: true,
+      hasExamAccess: true,
+      voiceChatAllowed: false,
+      isPaid: false,
+      isPrivateCoaching: false,
       xp: 0,
       streak: 0,
-      lastActive: 'Never',
+      lastActive: new Date().toISOString(),
       lastPracticeDate: '',
       avatar,
       blocked: false,
@@ -2184,6 +2204,36 @@ export class DatabaseService {
     }
     
     return newProfile;
+  }
+
+  async unlockStudentAccess(studentId: string, updates: Partial<UserProfile>) {
+    await this.updateUserProfile(studentId, { ...updates, accessGrantedAt: new Date().toISOString() });
+  }
+
+  async unlockAllAccessForStudent(studentId: string) {
+    const updates: Partial<UserProfile> = {
+      isPaid: true,
+      hasFullAccess: true,
+      hasLiveAccess: true,
+      hasExamAccess: true,
+      voiceChatAllowed: true,
+      isPrivateCoaching: true,
+      paymentRemindersActive: false,
+      accessGrantedAt: new Date().toISOString()
+    };
+    await this.updateUserProfile(studentId, updates);
+  }
+
+  async revokeAllAccessForStudent(studentId: string) {
+    const updates: Partial<UserProfile> = {
+      isPaid: false,
+      hasFullAccess: false,
+      hasLiveAccess: false,
+      hasExamAccess: false,
+      voiceChatAllowed: false,
+      isPrivateCoaching: false
+    };
+    await this.updateUserProfile(studentId, updates);
   }
 
   async resetDatabase() {

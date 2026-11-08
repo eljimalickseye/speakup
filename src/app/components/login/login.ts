@@ -91,7 +91,7 @@ import { DialogService } from '../../services/dialog.service';
           <!-- Username field -->
           <div class="warm-field">
             <label class="warm-label">
-              <i class="ti ti-user"></i> Nom d'utilisateur
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle; margin-right:4px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Nom d'utilisateur
             </label>
             <div class="warm-input-wrap">
               <input
@@ -108,7 +108,7 @@ import { DialogService } from '../../services/dialog.service';
           <!-- Password field -->
           <div class="warm-field">
             <label class="warm-label">
-              <i class="ti ti-lock"></i> Code d'accès (PIN)
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle; margin-right:4px"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Code d'accès (PIN)
             </label>
             <div class="warm-input-wrap" style="position:relative">
               <input
@@ -140,7 +140,7 @@ import { DialogService } from '../../services/dialog.service';
               <span class="spin-ring"></span>
               Connexion en cours...
             } @else {
-              <i class="ti ti-login"></i> Se connecter
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle; margin-right:6px"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg> Se connecter
             }
           </button>
 
@@ -153,25 +153,22 @@ import { DialogService } from '../../services/dialog.service';
 
           <!-- Google button -->
           <button class="warm-btn-google" (click)="signInWithGoogle()">
-            <i class="ti ti-brand-google" style="font-size:17px;color:#EA4335"></i>
-            Connexion avec Google
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" style="vertical-align:middle; margin-right:6px"><path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z"/><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"/><path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12.3 0 15.1s.7 5.4 1.9 7.8l3.7-2.9c-.2-.7-.4-1.5-.4-2.3z"/><path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2-6.4-4.8L1.9 16.4C3.7 20.1 7.5 23 12 23z"/></svg> Connexion avec Google
           </button>
 
           <!-- Guest & Register buttons -->
           <div class="warm-actions-row">
             <button class="warm-btn-outline teal" (click)="guestLogin()">
-              <i class="ti ti-user" style="font-size:14px"></i>
-              Accès Invité
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle; margin-right:4px"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Accès Invité
             </button>
             <button class="warm-btn-outline coral" (click)="isRequestModalOpen.set(true)">
-              <i class="ti ti-user-plus" style="font-size:14px"></i>
-              S'inscrire
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle; margin-right:4px"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg> S'inscrire
             </button>
           </div>
 
           <!-- Footer note -->
           <p class="form-footer-note">
-            <i class="ti ti-info-circle" style="font-size:12px;color:#D97706"></i>
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle; margin-right:2px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
             Vos identifiants vous ont été remis par votre professeur.<br>
             Pour récupérer vos accès, contactez l'équipe SpeakUp.
           </p>
@@ -186,36 +183,36 @@ import { DialogService } from '../../services/dialog.service';
 
             <div class="modal-header">
               <div class="modal-icon-wrap">
-                <i class="ti ti-user-plus" style="font-size:20px;color:#D97706"></i>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
               </div>
               <div style="flex:1">
-                <h3 class="modal-title">Demande d'inscription</h3>
-                <p class="modal-sub">Remplissez ce formulaire pour rejoindre SpeakUp</p>
+                <h3 class="modal-title">Créer mon compte SpeakUp 🚀</h3>
+                <p class="modal-sub">Accès instantané & gratuit · Aucune attente de validation</p>
               </div>
-              <button class="modal-close-btn" (click)="closeRequestModal()">
-                <i class="ti ti-x"></i>
+              <button class="modal-close-btn" (click)="closeRequestModal()" aria-label="Fermer la fenêtre">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             </div>
 
             <div class="modal-body">
               <div class="warm-field">
-                <label class="warm-label">Nom complet</label>
-                <input type="text" [(ngModel)]="requestName" placeholder="Ex: Awa Ndiaye" class="warm-input" />
+                <label class="warm-label" for="req-name">Nom complet</label>
+                <input id="req-name" type="text" [(ngModel)]="requestName" placeholder="Ex: Awa Ndiaye" class="warm-input" />
               </div>
 
               <div class="warm-field">
-                <label class="warm-label">Nom d'utilisateur</label>
-                <input type="text" [(ngModel)]="requestUsername" placeholder="Ex: awandiaye" class="warm-input" style="text-transform: lowercase" />
+                <label class="warm-label" for="req-user">Nom d'utilisateur</label>
+                <input id="req-user" type="text" [(ngModel)]="requestUsername" placeholder="Ex: awandiaye" class="warm-input" style="text-transform: lowercase" />
               </div>
 
               <div class="warm-field">
-                <label class="warm-label">Code d'accès / Mot de passe</label>
-                <input type="password" [(ngModel)]="requestPassword" placeholder="Minimum 6 caractères" class="warm-input" />
+                <label class="warm-label" for="req-pass">Code d'accès / Mot de passe</label>
+                <input id="req-pass" type="password" [(ngModel)]="requestPassword" placeholder="Minimum 6 caractères" class="warm-input" />
               </div>
 
               <div class="warm-field">
-                <label class="warm-label">Niveau d'anglais / Rôle</label>
-                <select [(ngModel)]="requestLevel" class="warm-input">
+                <label class="warm-label" for="req-level">Niveau d'anglais / Rôle</label>
+                <select id="req-level" [(ngModel)]="requestLevel" class="warm-input">
                   <option value="A1">A1 — Débutant</option>
                   <option value="A2">A2 — Élémentaire</option>
                   <option value="B1">B1 — Intermédiaire</option>
@@ -227,14 +224,14 @@ import { DialogService } from '../../services/dialog.service';
 
               <div class="warm-field">
                 <label class="warm-label">
-                  <i class="ti ti-brand-whatsapp"></i> Numéro WhatsApp / Téléphone
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#25D366" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle; margin-right:4px"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg> Numéro WhatsApp / Téléphone
                 </label>
-                <input type="tel" [(ngModel)]="requestPhone" placeholder="Ex: +221 77 123 45 67" class="warm-input" />
+                <input id="req-phone" type="tel" [(ngModel)]="requestPhone" placeholder="Ex: +221 77 123 45 67" class="warm-input" />
               </div>
 
               <div class="warm-field">
-                <label class="warm-label">Pays d'origine</label>
-                <select [(ngModel)]="requestCountry" class="warm-input">
+                <label class="warm-label" for="req-country">Pays d'origine</label>
+                <select id="req-country" [(ngModel)]="requestCountry" class="warm-input">
                   <option value="🇸🇳">Sénégal 🇸🇳</option>
                   <option value="🇳🇬">Nigeria 🇳🇬</option>
                   <option value="🇷🇼">Rwanda 🇷🇼</option>
@@ -253,7 +250,7 @@ import { DialogService } from '../../services/dialog.service';
 
             <div class="modal-footer">
               <button class="warm-btn-primary" style="flex:1" (click)="submitRequest()">
-                <i class="ti ti-send"></i> Envoyer
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle; margin-right:6px"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg> Créer mon compte & Commencer
               </button>
               <button class="warm-btn-outline coral" style="flex:1" (click)="closeRequestModal()">
                 Annuler
@@ -384,11 +381,10 @@ export class LoginComponent {
       return;
     }
 
-    // Check validation status
+    // Instant active access
     if (match.status === 'pending') {
-      this.isSuccessModalOpen.set(true);
-      this.isLoading.set(false);
-      return;
+      match.status = 'approved';
+      this.db.updateUserProfile(match.id, { status: 'approved' });
     }
 
     if (match.status === 'rejected') {
@@ -460,16 +456,12 @@ export class LoginComponent {
     this.db.registerUserProfile(name, username, password, level, country, role, phone)
       .then((newProfile) => {
         this.closeRequestModal();
-        if (newProfile.status === 'approved') {
-          this.db.setCurrentUser(newProfile.id);
-          this.dialogService.alert(
-            "Inscription Réussie 🎉",
-            "Bienvenue ! Votre compte a été créé et activé automatiquement. Vous êtes maintenant connecté.",
-            "success"
-          );
-        } else {
-          this.isSuccessModalOpen.set(true);
-        }
+        this.db.setCurrentUser(newProfile.id);
+        this.dialogService.alert(
+          "Bienvenue sur SpeakUp 🎉",
+          `Votre compte a été créé avec succès ! Bienvenue ${newProfile.name}, vous êtes maintenant connecté.`,
+          "success"
+        );
       })
       .catch((err: any) => {
         this.dialogService.alert('Erreur', err.message || "Impossible de créer le compte.", 'info');

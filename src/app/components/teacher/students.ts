@@ -74,7 +74,7 @@ import { DialogService } from '../../services/dialog.service';
         <button class="tab" [class.active]="activeTab() === 'all'" (click)="activeTab.set('all')">All students</button>
         <button class="tab" [class.active]="activeTab() === 'progress'" (click)="activeTab.set('progress')">Skill Progress</button>
         <button class="tab" [class.active]="activeTab() === 'requests'" (click)="activeTab.set('requests')">
-          Demandes d'inscription
+          Inscriptions & Déblocages
           @if (pendingRequestsCount() > 0) {
             <span class="badge" style="background:#EF4444; color:white; padding:2px 8px; border-radius:12px; font-size:10px; margin-left:4px">{{ pendingRequestsCount() }}</span>
           }
@@ -96,16 +96,17 @@ import { DialogService } from '../../services/dialog.service';
             {{ t('Ajouter un Étudiant', 'Add New Student') }}
           </button>
         </div>
-        <div style="display:flex; flex-direction:column; gap:4px; overflow-x:auto">
+        <div class="table-scroll-container">
+          <div class="table-min-width" style="display:flex; flex-direction:column; gap:4px; padding:6px">
           <!-- Table Header -->
           <div class="row" style="background:var(--surface-2); font-size:11px; color:var(--text-muted); font-weight:600; border-radius:var(--radius)">
             <div style="width:160px">Name</div>
-            <div style="width:60px">Level</div>
-            <div style="width:80px; text-align:center">Attendance</div>
-            <div style="width:80px; text-align:center">XP</div>
-            <div style="flex:1">Last active</div>
-            <div style="width:80px">Status</div>
-            <div style="width:100px; text-align:right">Action</div>
+            <div style="width:50px">Level</div>
+            <div style="flex:1">Accès Débloqués</div>
+            <div style="width:70px; text-align:center">XP</div>
+            <div style="width:90px">Last active</div>
+            <div style="width:70px">Status</div>
+            <div style="width:160px; text-align:right">Action</div>
           </div>
           
           <!-- Table Rows -->
@@ -120,34 +121,61 @@ import { DialogService } from '../../services/dialog.service';
                     <span style="position:absolute; bottom:-2px; right:-2px; width:8px; height:8px; border-radius:50%; background:#10B981; border:2.5px solid white"></span>
                   }
                 </div>
-                <span style="font-size:12px; font-weight:600; color:var(--text-primary)">{{ student.name }}</span>
-                <div style="margin-left:4px; display:inline-flex; gap:2px; align-items:center; vertical-align:middle">
-                  @if (student.isPaid) {
-                    <span style="font-size:8px; font-weight:800; background:#E6F4EA; color:#137333; padding:1px 4px; border-radius:3px" title="En règle (Payé)">💳 En règle</span>
-                  } @else {
-                    <span style="font-size:8px; font-weight:800; background:#FCE8E6; color:#C5221F; padding:1px 4px; border-radius:3px" title="Non réglé">⚠️ Impayé</span>
-                    @if (student.paymentRemindersActive) {
-                      <span style="font-size:8px; font-weight:800; background:#FEF7E0; color:#B06000; padding:1px 4px; border-radius:3px; animation: pulse-live 2s infinite" title="Rappels de paiement activés">🔔 Rappel</span>
-                    }
+                <div style="display:flex; flex-direction:column; overflow:hidden">
+                  <span style="font-size:12px; font-weight:700; color:var(--text-primary); text-overflow:ellipsis; overflow:hidden; white-space:nowrap">{{ student.name }}</span>
+                  @if (student.phone) {
+                    <span style="font-size:9.5px; color:var(--text-muted)">{{ student.phone }}</span>
                   }
                 </div>
               </div>
-              <div style="width:60px; font-size:12px">{{ student.level }}</div>
-              <div style="width:80px; text-align:center; font-size:12px">{{ getAttendancePercentage(student.id) }}%</div>
-              <div style="width:80px; text-align:center; font-size:12px; font-weight:700; color:#4F46E5">{{ student.xp }} XP</div>
-              <div style="flex:1; font-size:11px; color:var(--text-secondary)">{{ db.formatLastActive(student.lastActive) }}</div>
-              <div style="width:80px">
+              <div style="width:50px; font-size:12px; font-weight:600">{{ student.level }}</div>
+              
+              <!-- ACCÈS DÉBLOQUÉS PILLS -->
+              <div style="flex:1; display:flex; flex-wrap:wrap; gap:4px; align-items:center">
+                @if (student.isPaid) {
+                  <span style="font-size:9px; font-weight:800; background:linear-gradient(135deg, #10B981, #059669); color:white; padding:2px 8px; border-radius:12px; display:inline-flex; align-items:center; gap:3px" title="Pass VIP Illimité : Tous les accès sont débloqués">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> VIP Tout Accès
+                  </span>
+                } @else {
+                  @if (student.hasFullAccess) {
+                    <span style="font-size:8.5px; font-weight:700; background:#E0E7FF; color:#3730A3; padding:2px 6px; border-radius:4px" title="Accès Cours et Ebooks débloqué" style="display:inline-flex; align-items:center; gap:3px"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5v-15z"/></svg> Cours</span>
+                  }
+                  @if (student.hasLiveAccess) {
+                    <span style="font-size:8.5px; font-weight:700; background:#EEF2FF; color:#4F46E5; padding:2px 6px; border-radius:4px" title="Classes en Direct débloqué" style="display:inline-flex; align-items:center; gap:3px"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg> Live</span>
+                  }
+                  @if (student.hasExamAccess) {
+                    <span style="font-size:8.5px; font-weight:700; background:#FEF3C7; color:#B45309; padding:2px 6px; border-radius:4px" title="Mode Examen & Tests débloqué" style="display:inline-flex; align-items:center; gap:3px"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg> Tests</span>
+                  }
+                  @if (student.voiceChatAllowed) {
+                    <span style="font-size:8.5px; font-weight:700; background:#CCFBF1; color:#0F766E; padding:2px 6px; border-radius:4px" title="Chat vocal autorisé" style="display:inline-flex; align-items:center; gap:3px"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg> Vocal</span>
+                  }
+                  @if (student.isPrivateCoaching) {
+                    <span style="font-size:8.5px; font-weight:700; background:#FCE7F3; color:#9D174D; padding:2px 6px; border-radius:4px" title="Coaching Privé VIP débloqué" style="display:inline-flex; align-items:center; gap:3px"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg> VIP</span>
+                  }
+                  @if (!student.hasFullAccess && !student.hasLiveAccess && !student.hasExamAccess && !student.voiceChatAllowed && !student.isPrivateCoaching) {
+                    <span style="font-size:8.5px; font-weight:600; background:#F1F5F9; color:#64748B; padding:2px 6px; border-radius:4px"style="display:inline-flex; align-items:center; gap:3px"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg> Découverte</span>
+                  }
+                }
+              </div>
+
+              <div style="width:70px; text-align:center; font-size:12px; font-weight:700; color:#4F46E5">{{ student.xp }} XP</div>
+              <div style="width:90px; font-size:11px; color:var(--text-secondary)">{{ db.formatLastActive(student.lastActive) }}</div>
+              <div style="width:70px">
                 <span [class]="getStatusClass(student)">
                   {{ getStudentStatus(student) }}
                 </span>
               </div>
-              <div style="width:100px; text-align:right">
+              <div style="width:160px; text-align:right; display:flex; justify-content:flex-end; gap:6px">
+                <button class="btn-s" style="padding:4px 8px; font-size:11px; background:#EEF2FF; color:#4F46E5; border-color:#C7D2FE; font-weight:700; display:inline-flex; align-items:center; gap:4px" (click)="openAccessModal(student)" title="Débloquer ou modifier les accès">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg> Débloquer
+                </button>
                 <button class="btn-s" style="padding:4px 8px; font-size:11px" (click)="openProfile(student)">
-                  View Profile
+                  Profil
                 </button>
               </div>
             </div>
           }
+          </div>
         </div>
 
         <!-- ADD NEW STUDENT MODAL -->
@@ -159,7 +187,7 @@ import { DialogService } from '../../services/dialog.service';
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
                   {{ t('Créer un Compte Étudiant', 'Create Student Account') }}
                 </h3>
-                <button (click)="showAddStudentModal.set(false)" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:18px; line-height:1; display:flex; align-items:center; justify-content:center">
+                <button (click)="showAddStudentModal.set(false)" aria-label="Fermer" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:18px; line-height:1; display:flex; align-items:center; justify-content:center">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
               </div>
@@ -292,29 +320,83 @@ import { DialogService } from '../../services/dialog.service';
                     <span>Niveau demandé : <strong style="color:#4F46E5">{{ req.level }}</strong></span>
                     <span>· Date : {{ req.requestedAt }}</span>
                     @if (req.phone) {
-                      <span>· 📱 <strong>{{ req.phone }}</strong></span>
+                      <span>· <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> <strong>{{ req.phone }}</strong></span>
                     }
                   </div>
                 </div>
                 <div style="display:flex; gap:8px; align-items:center">
                   @if (req.phone) {
                     <a [href]="getWhatsAppUrl(req.phone, req.name)" target="_blank" class="btn-s" style="background:#25D366; color:white; border:none; font-size:11px; padding:6px 12px; display:inline-flex; align-items:center; gap:4px; font-weight:700; text-decoration:none">
-                      <i class="ti ti-brand-whatsapp"></i> WhatsApp
+                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg> WhatsApp
                     </a>
                   }
                   <button class="btn-p" style="background:#10B981; border-color:#10B981; font-size:11px; padding:6px 12px" (click)="approveRequest(req.id, req.name)">
-                    <i class="ti ti-check"></i> Valider
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Valider
                   </button>
                   <button class="btn-s" style="border-color:#EF4444; color:#EF4444; font-size:11px; padding:6px 12px" (click)="rejectRequest(req.id, req.name)">
-                    <i class="ti ti-x"></i> Rejeter
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Rejeter
                   </button>
                 </div>
               </div>
             } @empty {
-              <div style="text-align:center; padding:30px; font-size:12px; color:var(--text-muted); border:1px dashed var(--border-strong); border-radius:8px">
-                Aucune demande d'inscription en attente.
+              <div style="text-align:center; padding:24px; font-size:12px; color:var(--text-muted); border:1px dashed var(--border-strong); border-radius:8px">
+                Toutes les inscriptions directes sont automatiquement activées. Aucune demande bloquée en attente.
               </div>
             }
+          </div>
+
+          <!-- Recent Students Fast Unlock Section -->
+          <div style="margin-top:28px; border-top:1.5px dashed var(--border-weak); padding-top:20px">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px">
+              <div>
+                <h4 style="margin:0; font-size:14px; font-weight:800; color:#1E1B4B; display:flex; align-items:center; gap:6px">
+                  <span><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span> <span>Nouveaux Inscrits & Déblocage Rapide des Accès</span>
+                </h4>
+                <p style="margin:2px 0 0 0; font-size:11.5px; color:var(--text-muted)">
+                  Attribuez en un clic les accès aux cours, live classes, et mode examen pour vos derniers inscrits.
+                </p>
+              </div>
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:8px">
+              @for (st of students().slice(0, 6); track st.id) {
+                <div style="background:var(--surface-1); border:1px solid var(--border-weak); padding:12px 16px; border-radius:10px; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap">
+                  <div style="display:flex; align-items:center; gap:10px">
+                    <div class="avatar" style="width:32px; height:32px; font-size:11px; font-weight:700">
+                      {{ st.avatar || st.name.slice(0,2).toUpperCase() }}
+                    </div>
+                    <div>
+                      <div style="display:flex; align-items:center; gap:6px">
+                        <span style="font-size:13px; font-weight:700; color:var(--text-primary)">{{ st.name }}</span>
+                        <span style="font-size:10px; font-weight:700; background:#EEF2FF; color:#4F46E5; padding:1px 5px; border-radius:4px">{{ st.level }}</span>
+                      </div>
+                      <div style="font-size:10.5px; color:var(--text-muted); margin-top:2px; display:flex; gap:8px; align-items:center">
+                        @if (st.phone) { <span style="display:inline-flex; align-items:center; gap:3px"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> {{ st.phone }}</span> } 
+                        <span>· Inscription : {{ st.registeredAt ? db.formatLastActive(st.registeredAt) : 'Récemment' }}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style="display:flex; align-items:center; gap:6px">
+                    @if (st.isPaid) {
+                      <span style="font-size:9.5px; font-weight:800; background:#E6F4EA; color:#137333; padding:3px 8px; border-radius:6px"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> VIP Actif</span>
+                    } @else {
+                      <button class="btn-p" style="background:#10B981; border-color:#10B981; font-size:11px; font-weight:800; padding:6px 12px; border-radius:6px; display:inline-flex; align-items:center; gap:4px" (click)="unlockAllStudentAccess(st)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Tout Débloquer (VIP)
+                      </button>
+                    }
+                    <button class="btn-s" style="font-size:11px; padding:6px 10px; border-radius:6px; background:#EEF2FF; color:#4F46E5; border-color:#C7D2FE; font-weight:700" (click)="openAccessModal(st)">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg> Choisir les Accès
+                    </button>
+                    @if (st.phone) {
+                      <a [href]="getWhatsAppUrl(st.phone, st.name)" target="_blank" class="btn-s" style="background:#25D366; color:white; border:none; font-size:11px; padding:6px 10px; border-radius:6px; display:inline-flex; align-items:center; gap:4px; font-weight:700; text-decoration:none">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                      </a>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
           </div>
         </div>
       }
@@ -325,7 +407,7 @@ import { DialogService } from '../../services/dialog.service';
           <!-- Student Selector Dropdown inside Profile tab -->
           <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px; background:var(--surface-2); padding:12px; border-radius:var(--radius)">
             <label for="studentSelect" style="font-weight:600; font-size:12px; color:var(--text-primary)">Select Student:</label>
-            <select id="studentSelect" [ngModel]="selectedStudent()?.id" (ngModelChange)="onStudentSelect($event)" style="flex:1; max-width:240px; background:#FFF; border:1px solid var(--border-weak); padding:6px; border-radius:var(--radius); font-size:12px">
+            <select id="studentSelect" [ngModel]="selectedStudent()?.id" (ngModelChange)="onStudentSelect($event)" style="flex:1; max-width:320px; width:100%; min-height:38px; background:#FFF; border:1px solid var(--border-weak); padding:6px 10px; border-radius:var(--radius); font-size:13px">
               <option [value]="null" disabled selected>-- Choose a student --</option>
               @for (s of students(); track s.id) {
                 <option [value]="s.id">{{ s.name }}</option>
@@ -343,7 +425,7 @@ import { DialogService } from '../../services/dialog.service';
                 <button class="btn-s" style="padding:4px 8px; font-size:11px" (click)="activeTab.set('all')">Back to list</button>
               </div>
 
-              <div class="grid3" style="gap:12px; margin-bottom:16px">
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:12px; margin-bottom:16px">
                 <div style="background:var(--surface-2); padding:10px; border-radius:var(--radius)">
                   <div style="font-size:10px; text-transform:uppercase; color:var(--text-muted); font-weight:600">Total Experience Points</div>
                   <div style="font-size:18px; font-weight:800; color:#4F46E5; margin-top:4px">{{ student.xp }} XP</div>
@@ -391,40 +473,144 @@ import { DialogService } from '../../services/dialog.service';
                 </div>
               </div>
 
-              <!-- Billing & Permission Settings -->
-              <div class="card" style="margin-top:0; margin-bottom:16px; border: 1px dashed var(--border-weak); background:var(--surface-1); padding:16px; border-radius:8px">
-                <h4 style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:12px; display:flex; align-items:center; gap:6px; margin-top:0">
-                  <i class="ti ti-credit-card" style="color:#4F46E5"></i>
-                  <span>Billing & Permission Settings</span>
-                </h4>
-                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:12px">
+              <!-- ACCÈS DÉBLOQUÉS & AUTORISATIONS -->
+              <div class="card" style="margin-top:0; margin-bottom:16px; border: 1.5px solid #C7D2FE; background:linear-gradient(180deg, #F8FAFC 0%, #FFFFFF 100%); padding:20px; border-radius:12px; box-shadow:0 4px 6px -1px rgba(0,0,0,0.05)">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px; border-bottom:1px solid var(--border-weak); padding-bottom:12px">
+                  <div>
+                    <h4 style="font-size:14px; font-weight:800; color:#1E1B4B; display:flex; align-items:center; gap:6px; margin:0">
+                      <span><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg></span>
+                      <span>Gestion des Accès Débloqués</span>
+                    </h4>
+                    <p style="font-size:11px; color:var(--text-muted); margin:2px 0 0 0">
+                      Débloquez ou verrouillez les accès spécifiques pour cet élève en temps réel.
+                    </p>
+                  </div>
+                  <div style="display:flex; gap:8px">
+                    <button class="btn-p" style="background:#10B981; border-color:#10B981; font-size:11px; font-weight:800; padding:6px 14px; border-radius:6px; display:inline-flex; align-items:center; gap:4px; box-shadow:0 2px 8px rgba(16,185,129,0.3)" (click)="unlockAllStudentAccess(student)">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Tout Débloquer (Pass VIP)
+                    </button>
+                    <button class="btn-s" style="font-size:11px; padding:6px 10px; border-radius:6px" (click)="resetStudentToFreeTier(student)">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg> Remettre en Découverte
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Granular Access Cards -->
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:12px; margin-bottom:16px">
+                  
+                  <!-- 1. Full Course & Ebooks -->
+                  <div style="background:white; border:1px solid var(--border-weak); border-radius:8px; padding:12px; display:flex; justify-content:space-between; align-items:center">
+                    <div>
+                      <div style="font-size:12px; font-weight:700; color:var(--text-primary); display:flex; align-items:center; gap:6px">
+                        <span><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5v-15z"/></svg></span> <span>Cours & Ebooks</span>
+                      </div>
+                      <div style="font-size:10px; color:var(--text-muted)">Leçons, supports & docs</div>
+                    </div>
+                    <label style="position:relative; display:inline-block; width:38px; height:20px; cursor:pointer">
+                      <input type="checkbox" [checked]="student.hasFullAccess || student.isPaid" (change)="toggleStudentAccessField(student, 'hasFullAccess')" aria-label="Débloquer Cours et Ebooks" style="opacity:0; width:0; height:0" />
+                      <span style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; transition:.3s; border-radius:20px" [style.background-color]="(student.hasFullAccess || student.isPaid) ? '#4F46E5' : '#CBD5E1'">
+                        <span style="position:absolute; content:''; height:14px; width:14px; left:3px; bottom:3px; background-color:white; transition:.3s; border-radius:50%" [style.transform]="(student.hasFullAccess || student.isPaid) ? 'translateX(18px)' : 'translateX(0)'"></span>
+                      </span>
+                    </label>
+                  </div>
+
+                  <!-- 2. Live Classes -->
+                  <div style="background:white; border:1px solid var(--border-weak); border-radius:8px; padding:12px; display:flex; justify-content:space-between; align-items:center">
+                    <div>
+                      <div style="font-size:12px; font-weight:700; color:var(--text-primary); display:flex; align-items:center; gap:6px">
+                        <span><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg></span> <span>Classes en Direct</span>
+                      </div>
+                      <div style="font-size:10px; color:var(--text-muted)">Live Meet & Ice Breaker</div>
+                    </div>
+                    <label style="position:relative; display:inline-block; width:38px; height:20px; cursor:pointer">
+                      <input type="checkbox" [checked]="student.hasLiveAccess || student.isPaid" (change)="toggleStudentAccessField(student, 'hasLiveAccess')" aria-label="Débloquer Classes en direct" style="opacity:0; width:0; height:0" />
+                      <span style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; transition:.3s; border-radius:20px" [style.background-color]="(student.hasLiveAccess || student.isPaid) ? '#4F46E5' : '#CBD5E1'">
+                        <span style="position:absolute; content:''; height:14px; width:14px; left:3px; bottom:3px; background-color:white; transition:.3s; border-radius:50%" [style.transform]="(student.hasLiveAccess || student.isPaid) ? 'translateX(18px)' : 'translateX(0)'"></span>
+                      </span>
+                    </label>
+                  </div>
+
+                  <!-- 3. Tests & Certifications DET -->
+                  <div style="background:white; border:1px solid var(--border-weak); border-radius:8px; padding:12px; display:flex; justify-content:space-between; align-items:center">
+                    <div>
+                      <div style="font-size:12px; font-weight:700; color:var(--text-primary); display:flex; align-items:center; gap:6px">
+                        <span><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg></span> <span>Examens & Tests DET</span>
+                      </div>
+                      <div style="font-size:10px; color:var(--text-muted)">Score 10-160 & Certificats</div>
+                    </div>
+                    <label style="position:relative; display:inline-block; width:38px; height:20px; cursor:pointer">
+                      <input type="checkbox" [checked]="student.hasExamAccess || student.isPaid" (change)="toggleStudentAccessField(student, 'hasExamAccess')" aria-label="Débloquer Examens et Tests" style="opacity:0; width:0; height:0" />
+                      <span style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; transition:.3s; border-radius:20px" [style.background-color]="(student.hasExamAccess || student.isPaid) ? '#4F46E5' : '#CBD5E1'">
+                        <span style="position:absolute; content:''; height:14px; width:14px; left:3px; bottom:3px; background-color:white; transition:.3s; border-radius:50%" [style.transform]="(student.hasExamAccess || student.isPaid) ? 'translateX(18px)' : 'translateX(0)'"></span>
+                      </span>
+                    </label>
+                  </div>
+
+                  <!-- 4. Voice Chat Messaging -->
+                  <div style="background:white; border:1px solid var(--border-weak); border-radius:8px; padding:12px; display:flex; justify-content:space-between; align-items:center">
+                    <div>
+                      <div style="font-size:12px; font-weight:700; color:var(--text-primary); display:flex; align-items:center; gap:6px">
+                        <span><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg></span> <span>Messages Vocaux</span>
+                      </div>
+                      <div style="font-size:10px; color:var(--text-muted)">Vocaux autorisés dans chat</div>
+                    </div>
+                    <label style="position:relative; display:inline-block; width:38px; height:20px; cursor:pointer">
+                      <input type="checkbox" [checked]="student.voiceChatAllowed || student.isPaid" (change)="toggleStudentAccessField(student, 'voiceChatAllowed')" aria-label="Débloquer Messages Vocaux" style="opacity:0; width:0; height:0" />
+                      <span style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; transition:.3s; border-radius:20px" [style.background-color]="(student.voiceChatAllowed || student.isPaid) ? '#4F46E5' : '#CBD5E1'">
+                        <span style="position:absolute; content:''; height:14px; width:14px; left:3px; bottom:3px; background-color:white; transition:.3s; border-radius:50%" [style.transform]="(student.voiceChatAllowed || student.isPaid) ? 'translateX(18px)' : 'translateX(0)'"></span>
+                      </span>
+                    </label>
+                  </div>
+
+                  <!-- 5. Private VIP Coaching -->
+                  <div style="background:white; border:1px solid var(--border-weak); border-radius:8px; padding:12px; display:flex; justify-content:space-between; align-items:center">
+                    <div>
+                      <div style="font-size:12px; font-weight:700; color:var(--text-primary); display:flex; align-items:center; gap:6px">
+                        <span><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg></span> <span>Coaching Privé VIP</span>
+                      </div>
+                      <div style="font-size:10px; color:var(--text-muted)">Feuille de route 1-on-1</div>
+                    </div>
+                    <label style="position:relative; display:inline-block; width:38px; height:20px; cursor:pointer">
+                      <input type="checkbox" [checked]="student.isPrivateCoaching || student.isPaid" (change)="toggleStudentAccessField(student, 'isPrivateCoaching')" aria-label="Débloquer Coaching VIP" style="opacity:0; width:0; height:0" />
+                      <span style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; transition:.3s; border-radius:20px" [style.background-color]="(student.isPrivateCoaching || student.isPaid) ? '#4F46E5' : '#CBD5E1'">
+                        <span style="position:absolute; content:''; height:14px; width:14px; left:3px; bottom:3px; background-color:white; transition:.3s; border-radius:50%" [style.transform]="(student.isPrivateCoaching || student.isPaid) ? 'translateX(18px)' : 'translateX(0)'"></span>
+                      </span>
+                    </label>
+                  </div>
+
+                  <!-- 6. Payment status -->
+                  <div style="background:#F0FDF4; border:1px solid #BBF7D0; border-radius:8px; padding:12px; display:flex; justify-content:space-between; align-items:center">
+                    <div>
+                      <div style="font-size:12px; font-weight:700; color:#15803D; display:flex; align-items:center; gap:6px">
+                        <span><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span> <span>Compte en Règle</span>
+                      </div>
+                      <div style="font-size:10px; color:#166534">Frais acquittés (VIP)</div>
+                    </div>
+                    <label style="position:relative; display:inline-block; width:38px; height:20px; cursor:pointer">
+                      <input type="checkbox" [checked]="student.isPaid ?? false" (change)="toggleStudentPayment(student)" aria-label="Marquer Compte en règle" style="opacity:0; width:0; height:0" />
+                      <span style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; transition:.3s; border-radius:20px" [style.background-color]="student.isPaid ? '#10B981' : '#CBD5E1'">
+                        <span style="position:absolute; content:''; height:14px; width:14px; left:3px; bottom:3px; background-color:white; transition:.3s; border-radius:50%" [style.transform]="student.isPaid ? 'translateX(18px)' : 'translateX(0)'"></span>
+                      </span>
+                    </label>
+                  </div>
+
+                </div>
+
+                <!-- Billing Settings Inputs -->
+                <div style="background:var(--surface-1); border-top:1px dashed var(--border-weak); padding-top:12px; display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:12px">
                   <div class="input-row" style="margin-bottom:0">
-                    <label style="font-weight:600; font-size:11px">Registration Fee</label>
+                    <label style="font-weight:600; font-size:11px">Frais d'inscription</label>
                     <select [value]="student.registrationFee ?? 10000" (change)="updateStudentFee(student.id, 'registrationFee', $event)" style="background:#FFF; padding:6px; font-size:11px">
-                      <option [value]="10000">10,000 CFA (Regular)</option>
-                      <option [value]="0">0 CFA (Waived / Promo)</option>
+                      <option [value]="10000">10,000 CFA (Standard)</option>
+                      <option [value]="0">0 CFA (Offert / Promo)</option>
                     </select>
                   </div>
                   <div class="input-row" style="margin-bottom:0">
-                    <label style="font-weight:600; font-size:11px">Monthly Tuition</label>
+                    <label style="font-weight:600; font-size:11px">Scolarité Mensuelle</label>
                     <select [value]="student.monthlyFee ?? 7000" (change)="updateStudentFee(student.id, 'monthlyFee', $event)" style="background:#FFF; padding:6px; font-size:11px">
-                      <option [value]="7000">7,000 CFA (Regular)</option>
+                      <option [value]="7000">7,000 CFA (Standard)</option>
                       <option [value]="5000">5,000 CFA (Promo)</option>
                     </select>
-                  </div>
-                  <div class="input-row" style="margin-bottom:0; display:flex; flex-direction:column; justify-content:center">
-                    <label style="font-weight:600; font-size:11px; margin-bottom:6px">Chat Messaging</label>
-                    <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:11px; font-weight:600; color:#0D9488">
-                      <input type="checkbox" [checked]="student.voiceChatAllowed ?? false" (change)="updateStudentPermission(student.id, 'voiceChatAllowed', $event)" style="cursor:pointer" />
-                      <span>Allow Voice Messages</span>
-                    </label>
-                  </div>
-                  <div class="input-row" style="margin-bottom:0; display:flex; flex-direction:column; justify-content:center">
-                    <label style="font-weight:600; font-size:11px; margin-bottom:6px">Statut de Paiement</label>
-                    <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:11px; font-weight:700; color:#10B981">
-                      <input type="checkbox" [checked]="student.isPaid ?? false" (change)="toggleStudentPayment(student)" style="cursor:pointer" />
-                      <span>💳 En règle (A payé)</span>
-                    </label>
                   </div>
                   <div class="input-row" style="margin-bottom:0; display:flex; flex-direction:column; justify-content:center">
                     <label style="font-weight:600; font-size:11px; margin-bottom:6px">Rappels de Paiement</label>
@@ -439,7 +625,7 @@ import { DialogService } from '../../services/dialog.service';
               <!-- XP & Progress Management -->
               <div class="card" style="margin-top:0; margin-bottom:16px; border: 1px dashed var(--border-weak); background:var(--surface-1); padding:16px; border-radius:8px">
                 <h4 style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:12px; display:flex; align-items:center; gap:6px; margin-top:0">
-                  <i class="ti ti-crown" style="color:#D97706"></i>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg>
                   <span>XP & Progress Management</span>
                 </h4>
                 
@@ -450,7 +636,7 @@ import { DialogService } from '../../services/dialog.service';
                   </div>
                   
                   <button class="btn-s" (click)="resetStudentXP(student)" style="background:#FEF2F2; border-color:#FCA5A5; color:#DC2626; font-weight:700; height:32px; font-size:11px; padding:0 12px; display:flex; align-items:center; gap:4px">
-                    <i class="ti ti-trash"></i> Reset XP to 0
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Reset XP to 0
                   </button>
                 </div>
               </div>
@@ -458,7 +644,7 @@ import { DialogService } from '../../services/dialog.service';
               <!-- Account Security & Guest Credentials -->
               <div class="card" style="margin-top:16px; margin-bottom:16px; border: 1px dashed var(--border-weak); background:var(--surface-1); padding:16px; border-radius:8px">
                 <h4 style="font-size:12px; font-weight:700; color:var(--text-primary); margin-bottom:12px; display:flex; align-items:center; gap:6px; margin-top:0">
-                  <i class="ti ti-shield-lock" style="color:#EF4444"></i>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                   <span>Sécurité du compte & Identifiants</span>
                 </h4>
                 
@@ -495,10 +681,10 @@ import { DialogService } from '../../services/dialog.service';
                     @if (student.username && student.password) {
                       <div style="margin-top:12px; display:flex; gap:8px">
                         <button class="btn-s" style="padding:6px 12px; font-size:11px; flex:1; display:flex; align-items:center; justify-content:center; gap:6px" (click)="copyLoginCredentials(student)">
-                          <i class="ti ti-copy"></i> Copier les identifiants
+                          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copier les identifiants
                         </button>
                         <button class="btn-p" style="padding:6px 12px; font-size:11px; flex:1; display:flex; align-items:center; justify-content:center; gap:6px; background:#4F46E5" (click)="copyLoginLink(student)">
-                          <i class="ti ti-link"></i> Copier le lien d'accès direct
+                          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> Copier le lien d'accès direct
                         </button>
                       </div>
                     } @else {
@@ -516,12 +702,12 @@ import { DialogService } from '../../services/dialog.service';
               </div>
 
               <button class="btn-p" style="margin-top:8px" (click)="saveNotes()">
-                <i class="ti ti-device-floppy"></i> Save Student Notes
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save Student Notes
               </button>
             </div>
           } @else {
             <div style="text-align:center; padding:32px; color:var(--text-muted)">
-              <i class="ti ti-user-search" style="font-size:36px; display:block; margin-bottom:12px; color:var(--text-muted)"></i>
+              <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:block; margin:0 auto 12px auto"><circle cx="10" cy="10" r="7"/><line x1="21" y1="21" x2="15" y2="15"/></svg>
               <p style="font-size:13px">Please select a student from the dropdown above to view their academic profile and notes.</p>
             </div>
           }
@@ -656,6 +842,172 @@ import { DialogService } from '../../services/dialog.service';
       }
 
 
+      <!-- DEDICATED QUICK ACCESS MODAL -->
+      @if (selectedStudentForAccess(); as student) {
+        <div class="ts-modal-overlay" (click)="closeAccessModal()" style="z-index:99999">
+          <div class="ts-modal-card" style="max-width:540px; border-radius:16px; padding:24px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25)" (click)="$event.stopPropagation()">
+            
+            <!-- Header -->
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid var(--border-weak); padding-bottom:14px; margin-bottom:16px">
+              <div style="display:flex; align-items:center; gap:12px">
+                <div class="avatar" style="width:42px; height:42px; font-size:15px; background:#EEF2FF; color:#4F46E5; border:2px solid #C7D2FE; font-weight:800">
+                  {{ student.avatar || student.name.slice(0,2).toUpperCase() }}
+                </div>
+                <div>
+                  <h3 style="margin:0; font-size:16px; font-weight:800; color:#1E1B4B; display:flex; align-items:center; gap:6px">
+                    <span>{{ student.name }}</span>
+                    <span style="font-size:10px; font-weight:700; background:#EEF2FF; color:#4F46E5; padding:2px 6px; border-radius:4px">{{ student.level }}</span>
+                  </h3>
+                  <p style="margin:2px 0 0 0; font-size:11.5px; color:var(--text-muted)">
+                    Débloquez ou verrouillez les accès spécifiques pour cet élève
+                  </p>
+                </div>
+              </div>
+              <button (click)="closeAccessModal()" aria-label="Fermer le panneau d'accès" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:16px; line-height:1; display:flex; align-items:center; justify-content:center">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+
+            <!-- Fast 1-click VIP Unlock vs Reset -->
+            <div style="background:linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%); border:1px solid #E2E8F0; border-radius:12px; padding:12px 14px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; gap:10px">
+              <div>
+                <span style="font-size:12px; font-weight:800; color:#0F172A; display:inline-flex; align-items:center; gap:4px">Action Rapide <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>
+                <span style="font-size:10.5px; color:#64748B">Activer tous les modules en 1 clic</span>
+              </div>
+              <div style="display:flex; gap:6px">
+                <button class="btn-p" style="background:#10B981; border-color:#10B981; font-size:11px; font-weight:800; padding:6px 12px; border-radius:6px; display:inline-flex; align-items:center; gap:4px; box-shadow:0 2px 8px rgba(16,185,129,0.3)" (click)="unlockAllStudentAccess(student)">
+                  🌟 Tout Débloquer (VIP)
+                </button>
+                <button class="btn-s" style="font-size:11px; padding:6px 10px; border-radius:6px" (click)="resetStudentToFreeTier(student)">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg> Découverte
+                </button>
+              </div>
+            </div>
+
+            <!-- Granular Toggle Switches -->
+            <div style="display:flex; flex-direction:column; gap:10px; max-height:360px; overflow-y:auto; padding-right:4px">
+              
+              <!-- 1. Full Course & Ebooks -->
+              <div style="background:white; border:1px solid var(--border-weak); border-radius:10px; padding:12px 14px; display:flex; justify-content:space-between; align-items:center">
+                <div style="display:flex; align-items:center; gap:10px">
+                  <div style="width:36px; height:36px; border-radius:8px; background:#EEF2FF; color:#4F46E5; display:flex; align-items:center; justify-content:center; flex-shrink:0"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5v-15z"/></svg></div>
+                  <div>
+                    <div style="font-size:12.5px; font-weight:700; color:var(--text-primary)">Cours Complets & Bibliothèque Ebooks</div>
+                    <div style="font-size:10.5px; color:var(--text-muted)">Accès à toutes les leçons, documents et fiches</div>
+                  </div>
+                </div>
+                <label style="position:relative; display:inline-block; width:48px; height:26px; cursor:pointer; flex-shrink:0; touch-action:manipulation">
+                  <input type="checkbox" [checked]="student.hasFullAccess || student.isPaid" (change)="toggleStudentAccessField(student, 'hasFullAccess')" style="opacity:0; width:0; height:0" />
+                  <span style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; transition:.3s; border-radius:24px" [style.background-color]="(student.hasFullAccess || student.isPaid) ? '#4F46E5' : '#CBD5E1'">
+                    <span style="position:absolute; content:''; height:20px; width:20px; left:3px; bottom:3px; background-color:white; transition:.3s; border-radius:50%" [style.transform]="(student.hasFullAccess || student.isPaid) ? 'translateX(20px)' : 'translateX(0)'"></span>
+                  </span>
+                </label>
+              </div>
+
+              <!-- 2. Live Classes -->
+              <div style="background:white; border:1px solid var(--border-weak); border-radius:10px; padding:12px 14px; display:flex; justify-content:space-between; align-items:center">
+                <div style="display:flex; align-items:center; gap:10px">
+                  <div style="width:36px; height:36px; border-radius:8px; background:#EEF2FF; color:#4F46E5; display:flex; align-items:center; justify-content:center; flex-shrink:0"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg></div>
+                  <div>
+                    <div style="font-size:12.5px; font-weight:700; color:var(--text-primary)">Classes en Direct & Live Meet</div>
+                    <div style="font-size:10.5px; color:var(--text-muted)">Participation aux cours en visioconférence & Ice Breaker</div>
+                  </div>
+                </div>
+                <label style="position:relative; display:inline-block; width:48px; height:26px; cursor:pointer; flex-shrink:0; touch-action:manipulation">
+                  <input type="checkbox" [checked]="student.hasLiveAccess || student.isPaid" (change)="toggleStudentAccessField(student, 'hasLiveAccess')" style="opacity:0; width:0; height:0" />
+                  <span style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; transition:.3s; border-radius:24px" [style.background-color]="(student.hasLiveAccess || student.isPaid) ? '#4F46E5' : '#CBD5E1'">
+                    <span style="position:absolute; content:''; height:20px; width:20px; left:3px; bottom:3px; background-color:white; transition:.3s; border-radius:50%" [style.transform]="(student.hasLiveAccess || student.isPaid) ? 'translateX(20px)' : 'translateX(0)'"></span>
+                  </span>
+                </label>
+              </div>
+
+              <!-- 3. Tests DET -->
+              <div style="background:white; border:1px solid var(--border-weak); border-radius:10px; padding:12px 14px; display:flex; justify-content:space-between; align-items:center">
+                <div style="display:flex; align-items:center; gap:10px">
+                  <div style="width:36px; height:36px; border-radius:8px; background:#FEF3C7; color:#B45309; display:flex; align-items:center; justify-content:center; flex-shrink:0"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg></div>
+                  <div>
+                    <div style="font-size:12.5px; font-weight:700; color:var(--text-primary)">Tests d'Anglais & Certifications DET</div>
+                    <div style="font-size:10.5px; color:var(--text-muted)">Passation d'examens certifiants & score 10-160</div>
+                  </div>
+                </div>
+                <label style="position:relative; display:inline-block; width:48px; height:26px; cursor:pointer; flex-shrink:0; touch-action:manipulation">
+                  <input type="checkbox" [checked]="student.hasExamAccess || student.isPaid" (change)="toggleStudentAccessField(student, 'hasExamAccess')" style="opacity:0; width:0; height:0" />
+                  <span style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; transition:.3s; border-radius:24px" [style.background-color]="(student.hasExamAccess || student.isPaid) ? '#4F46E5' : '#CBD5E1'">
+                    <span style="position:absolute; content:''; height:20px; width:20px; left:3px; bottom:3px; background-color:white; transition:.3s; border-radius:50%" [style.transform]="(student.hasExamAccess || student.isPaid) ? 'translateX(20px)' : 'translateX(0)'"></span>
+                  </span>
+                </label>
+              </div>
+
+              <!-- 4. Voice Chat Messaging -->
+              <div style="background:white; border:1px solid var(--border-weak); border-radius:10px; padding:12px 14px; display:flex; justify-content:space-between; align-items:center">
+                <div style="display:flex; align-items:center; gap:10px">
+                  <div style="width:36px; height:36px; border-radius:8px; background:#CCFBF1; color:#0F766E; display:flex; align-items:center; justify-content:center; flex-shrink:0"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg></div>
+                  <div>
+                    <div style="font-size:12.5px; font-weight:700; color:var(--text-primary)">Messages Vocaux dans le Chat</div>
+                    <div style="font-size:10.5px; color:var(--text-muted)">Autorise l'envoi de messages vocaux audio</div>
+                  </div>
+                </div>
+                <label style="position:relative; display:inline-block; width:48px; height:26px; cursor:pointer; flex-shrink:0; touch-action:manipulation">
+                  <input type="checkbox" [checked]="student.voiceChatAllowed || student.isPaid" (change)="toggleStudentAccessField(student, 'voiceChatAllowed')" style="opacity:0; width:0; height:0" />
+                  <span style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; transition:.3s; border-radius:24px" [style.background-color]="(student.voiceChatAllowed || student.isPaid) ? '#4F46E5' : '#CBD5E1'">
+                    <span style="position:absolute; content:''; height:20px; width:20px; left:3px; bottom:3px; background-color:white; transition:.3s; border-radius:50%" [style.transform]="(student.voiceChatAllowed || student.isPaid) ? 'translateX(20px)' : 'translateX(0)'"></span>
+                  </span>
+                </label>
+              </div>
+
+              <!-- 5. Private VIP Coaching -->
+              <div style="background:white; border:1px solid var(--border-weak); border-radius:10px; padding:12px 14px; display:flex; justify-content:space-between; align-items:center">
+                <div style="display:flex; align-items:center; gap:10px">
+                  <div style="width:36px; height:36px; border-radius:8px; background:#FCE7F3; color:#9D174D; display:flex; align-items:center; justify-content:center; flex-shrink:0"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></svg></div>
+                  <div>
+                    <div style="font-size:12.5px; font-weight:700; color:var(--text-primary)">Coaching Privé VIP (Suivi 1-on-1)</div>
+                    <div style="font-size:10.5px; color:var(--text-muted)">Feuille de route sur-mesure et plan d'action</div>
+                  </div>
+                </div>
+                <label style="position:relative; display:inline-block; width:48px; height:26px; cursor:pointer; flex-shrink:0; touch-action:manipulation">
+                  <input type="checkbox" [checked]="student.isPrivateCoaching || student.isPaid" (change)="toggleStudentAccessField(student, 'isPrivateCoaching')" style="opacity:0; width:0; height:0" />
+                  <span style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; transition:.3s; border-radius:24px" [style.background-color]="(student.isPrivateCoaching || student.isPaid) ? '#4F46E5' : '#CBD5E1'">
+                    <span style="position:absolute; content:''; height:20px; width:20px; left:3px; bottom:3px; background-color:white; transition:.3s; border-radius:50%" [style.transform]="(student.isPrivateCoaching || student.isPaid) ? 'translateX(20px)' : 'translateX(0)'"></span>
+                  </span>
+                </label>
+              </div>
+
+              <!-- 6. Statut de paiement -->
+              <div style="background:#F0FDF4; border:1px solid #BBF7D0; border-radius:10px; padding:12px 14px; display:flex; justify-content:space-between; align-items:center">
+                <div style="display:flex; align-items:center; gap:10px">
+                  <div style="width:36px; height:36px; border-radius:8px; background:#DCFCE7; color:#15803D; display:flex; align-items:center; justify-content:center; flex-shrink:0"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
+                  <div>
+                    <div style="font-size:12.5px; font-weight:700; color:#15803D">Compte en Règle (Scolarité Acquittée)</div>
+                    <div style="font-size:10.5px; color:#166534">Valide les frais et active le statut VIP global</div>
+                  </div>
+                </div>
+                <label style="position:relative; display:inline-block; width:48px; height:26px; cursor:pointer; flex-shrink:0; touch-action:manipulation">
+                  <input type="checkbox" [checked]="student.isPaid ?? false" (change)="toggleStudentPayment(student)" style="opacity:0; width:0; height:0" />
+                  <span style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; transition:.3s; border-radius:24px" [style.background-color]="student.isPaid ? '#10B981' : '#CBD5E1'">
+                    <span style="position:absolute; content:''; height:20px; width:20px; left:3px; bottom:3px; background-color:white; transition:.3s; border-radius:50%" [style.transform]="student.isPaid ? 'translateX(20px)' : 'translateX(0)'"></span>
+                  </span>
+                </label>
+              </div>
+
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; border-top:1px solid var(--border-weak); padding-top:14px">
+              @if (student.phone) {
+                <a [href]="getWhatsAppUrl(student.phone, student.name)" target="_blank" class="btn-s" style="background:#25D366; color:white; border:none; font-size:11px; padding:6px 12px; display:inline-flex; align-items:center; gap:5px; font-weight:700; text-decoration:none">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg> Notifier sur WhatsApp
+                </a>
+              } @else {
+                <span></span>
+              }
+              <button class="btn-p" style="background:#4F46E5; border-color:#4F46E5; padding:6px 18px; font-size:12px; font-weight:700" (click)="closeAccessModal()">
+                Fermer
+              </button>
+            </div>
+
+          </div>
+        </div>
+      }
+
       <!-- FULL SCREEN PRINTABLE CERTIFICATE VIEW MODAL FOR TEACHER -->
       @if (selectedCertificate(); as lvl) {
         @if (selectedStudentCert(); as student) {
@@ -664,7 +1016,7 @@ import { DialogService } from '../../services/dialog.service';
               
               <div class="no-print" style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-weak); padding-bottom:12px; margin-bottom:16px">
                 <h3 style="margin:0; font-size:14px; font-weight:800; color:var(--text-primary)">{{ t("Aperçu du Certificat de l'élève", "Student Certificate Preview") }}</h3>
-                <button (click)="selectedCertificate.set(null); selectedStudentCert.set(null)" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:20px; line-height:1"><i class="ti ti-x"></i></button>
+                <button (click)="selectedCertificate.set(null); selectedStudentCert.set(null)" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:16px; line-height:1; display:flex; align-items:center; justify-content:center"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
               </div>
 
               <!-- THE PRINTABLE CERTIFICATE CARD -->
@@ -841,6 +1193,92 @@ export class TeacherStudentsComponent {
   private dialogService = inject(DialogService);
 
   showAddStudentModal = signal<boolean>(false);
+  selectedStudentForAccess = signal<UserProfile | null>(null);
+
+  openAccessModal(student: UserProfile) {
+    this.selectedStudentForAccess.set(student);
+  }
+
+  closeAccessModal() {
+    this.selectedStudentForAccess.set(null);
+  }
+
+  unlockAllStudentAccess(student: UserProfile) {
+    this.db.unlockAllAccessForStudent(student.id).then(() => {
+      this.dialogService.alert(
+        'Accès VIP Débloqués 🌟',
+        `Tous les accès (Cours, Live, Examen DET, Vocal, Coaching VIP) ont été débloqués pour ${student.name} !`,
+        'success'
+      );
+      const updated = {
+        ...student,
+        isPaid: true,
+        hasFullAccess: true,
+        hasLiveAccess: true,
+        hasExamAccess: true,
+        voiceChatAllowed: true,
+        isPrivateCoaching: true,
+        paymentRemindersActive: false
+      };
+      if (this.selectedStudent()?.id === student.id) {
+        this.selectedStudent.set(updated);
+      }
+      if (this.selectedStudentForAccess()?.id === student.id) {
+        this.selectedStudentForAccess.set(updated);
+      }
+    });
+  }
+
+  resetStudentToFreeTier(student: UserProfile) {
+    this.db.revokeAllAccessForStudent(student.id).then(() => {
+      this.dialogService.alert(
+        'Accès Réinitialisés 🌱',
+        `Les accès de ${student.name} ont été remis au niveau Découverte (gratuit).`,
+        'info'
+      );
+      const updated = {
+        ...student,
+        isPaid: false,
+        hasFullAccess: false,
+        hasLiveAccess: false,
+        hasExamAccess: false,
+        voiceChatAllowed: false,
+        isPrivateCoaching: false
+      };
+      if (this.selectedStudent()?.id === student.id) {
+        this.selectedStudent.set(updated);
+      }
+      if (this.selectedStudentForAccess()?.id === student.id) {
+        this.selectedStudentForAccess.set(updated);
+      }
+    });
+  }
+
+  toggleStudentAccessField(student: UserProfile, field: 'hasFullAccess' | 'hasLiveAccess' | 'hasExamAccess' | 'voiceChatAllowed' | 'isPrivateCoaching') {
+    const nextVal = !Boolean(student[field]);
+    const updates: Partial<UserProfile> = { [field]: nextVal };
+    this.db.updateUserProfile(student.id, updates).then(() => {
+      const fieldNames: Record<string, string> = {
+        hasFullAccess: 'Accès Cours & Ebooks',
+        hasLiveAccess: 'Classes en Direct (Live)',
+        hasExamAccess: 'Mode Examen & Tests DET',
+        voiceChatAllowed: 'Chat Vocal (Audio)',
+        isPrivateCoaching: 'Coaching Privé VIP'
+      };
+      this.dialogService.alert(
+        'Accès Modifié',
+        `${fieldNames[field] || field} ${nextVal ? 'débloqué ✅' : 'désactivé 🔒'} pour ${student.name}.`,
+        'success'
+      );
+      const updated = { ...student, [field]: nextVal };
+      if (this.selectedStudent()?.id === student.id) {
+        this.selectedStudent.set(updated);
+      }
+      if (this.selectedStudentForAccess()?.id === student.id) {
+        this.selectedStudentForAccess.set(updated);
+      }
+    });
+  }
   activeLang = this.db.activeLang;
 
   t(fr: string, en: string): string {

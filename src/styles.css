@@ -2189,7 +2189,7 @@ html {
 /* Fix iOS input zoom on focus - only for touch devices, only in mobile context */
 @media (pointer: coarse) and (max-width: 768px) {
   .input-row input, .input-row select, .input-row textarea,
-  .chat-textbox, .form-input, .form-select {
+  .chat-textbox, .form-input, .form-select, .warm-input, select.warm-input, .det-textarea {
     font-size: 16px !important;
   }
 }
@@ -3012,3 +3012,36 @@ body.theme-faith::after {
 
 
 
+
+/* Mobile Bottom-sheet & Touch Accessibility */
+@media (max-width: 600px) {
+  .modal-backdrop {
+    padding: 0 !important;
+    align-items: flex-end !important;
+  }
+  .modal-card {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    border-radius: 20px 20px 0 0 !important;
+    max-height: 93vh !important;
+  }
+  .modal-header {
+    padding: 16px 16px 12px !important;
+  }
+  .modal-body {
+    padding: 14px 16px !important;
+  }
+  .modal-footer {
+    padding: 12px 16px calc(16px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+  .warm-btn-primary, .warm-btn-google, .warm-btn-outline {
+    min-height: 48px !important;
+  }
+}
+
+/* Accessible focus visible rings */
+:focus-visible {
+  outline: 2px solid #4F46E5 !important;
+  outline-offset: 2px !important;
+}
