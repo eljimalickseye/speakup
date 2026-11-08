@@ -1251,10 +1251,14 @@ export interface DetQuestion {
                     </span>
                   </div>
 
-                  <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+                  <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
                     <button type="button" class="official-start-btn" (click)="openPreExamBriefing()">
                       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                      <span>Passer mon Examen Officiel</span>
+                      <span>{{ t('Passer mon Examen Officiel', 'Start Official Examination') }}</span>
+                    </button>
+                    <button type="button" class="btn-s" (click)="showStudentExamAnnouncementModal.set(true)" style="background:white; border:1.5px solid #C7D2FE; color:#4338CA; font-size:13px; font-weight:800; padding:12px 18px; border-radius:12px; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                      <span>{{ t('Consulter les Consignes & Modalités', 'View Announcement & Rules') }}</span>
                     </button>
                     <span style="font-size:12px; color:#64748B; font-weight:600; display:inline-flex; align-items:center; gap:5px;">
                       <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
@@ -2228,6 +2232,126 @@ export interface DetQuestion {
       <!-- ======================================================== -->
       <!-- PRE-EXAM BRIEFING MODAL (1-WEEK TIMELINE & MANDATORY FINISH) -->
       <!-- ======================================================== -->
+      <!-- ======================================================== -->
+      <!-- STUDENT OFFICIAL EXAM ANNOUNCEMENT MODAL                 -->
+      <!-- ======================================================== -->
+      @if (showStudentExamAnnouncementModal()) {
+        <div class="announcement-modal-overlay" (click)="closeAnnouncementModal()">
+          <div class="announcement-modal-card" (click)="$event.stopPropagation()">
+            
+            <!-- Modal Header -->
+            <div class="announcement-header">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+                <div class="announcement-tag">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  <span>{{ t("SESSION D'EXAMEN OFFICIELLE OUVERTE", "OFFICIAL EXAM SESSION NOW OPEN") }}</span>
+                </div>
+                <button type="button" (click)="closeAnnouncementModal()" class="announcement-close-btn" title="Fermer">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+
+              <div style="display:flex; align-items:center; gap:14px; margin-bottom:8px;">
+                <img src="logo.png" style="width:48px; height:48px; object-fit:contain; border-radius:12px; background:white; padding:4px; box-shadow:0 4px 12px rgba(0,0,0,0.15);" alt="SpeakUp Logo" />
+                <div>
+                  <h2 style="font-family:'Outfit', sans-serif; font-size:22px; font-weight:900; margin:0; line-height:1.2; color:white;">
+                    SpeakUp English Assessment (SET)
+                  </h2>
+                  <div style="font-size:12.5px; opacity:0.92; margin-top:3px; color:#E0E7FF;">
+                    {{ t("L'évaluation officielle de votre classe est maintenant lancée !", "Your class official evaluation is now live!") }}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Modal Content Body -->
+            <div class="announcement-body">
+              
+              <div style="background:#EEF2FF; border:1.5px solid #C7D2FE; border-radius:12px; padding:14px 16px; margin-bottom:18px; display:flex; align-items:center; gap:12px;">
+                <div style="width:40px; height:40px; border-radius:50%; background:#4F46E5; color:white; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
+                </div>
+                <div style="font-size:13px; color:#1E1B4B; line-height:1.45;">
+                  <strong>{{ t("Session officielle : 11/08/2026 au 18/08/2026", "Official Window: 11/08/2026 to 18/08/2026") }}</strong> (7 jours d'accès libre).<br/>
+                  <span style="font-size:12px; color:#4338CA;">{{ t("Vous pouvez débuter votre test au moment de votre choix dans cette période.", "You may start your exam at any convenient time during this week.") }}</span>
+                </div>
+              </div>
+
+              <!-- 4 Essential Rules Highlights -->
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;">
+                <div class="announcement-feature-card">
+                  <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                    <div class="announcement-mini-icon" style="background:#ECFDF5; color:#059669;">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    </div>
+                    <div style="font-size:12.5px; font-weight:800; color:#1E293B;">20 Épreuves (~60 min)</div>
+                  </div>
+                  <div style="font-size:11px; color:#64748B; line-height:1.4;">
+                    {{ t("Grammaire intensive, compréhension orale, vocaux et rédaction.", "Intensive grammar, listening, speaking recordings and essay.") }}
+                  </div>
+                </div>
+
+                <div class="announcement-feature-card">
+                  <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                    <div class="announcement-mini-icon" style="background:#FEF3C7; color:#D97706;">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    </div>
+                    <div style="font-size:12.5px; font-weight:800; color:#1E293B;">Une Seule Traite</div>
+                  </div>
+                  <div style="font-size:11px; color:#64748B; line-height:1.4;">
+                    {{ t("Une fois commencé, vous devez le terminer sans quitter le plein écran.", "Once started, you must complete the test in one single sitting.") }}
+                  </div>
+                </div>
+
+                <div class="announcement-feature-card">
+                  <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                    <div class="announcement-mini-icon" style="background:#FEE2E2; color:#DC2626;">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    </div>
+                    <div style="font-size:12.5px; font-weight:800; color:#1E293B;">Anti-Triche Actif</div>
+                  </div>
+                  <div style="font-size:11px; color:#64748B; line-height:1.4;">
+                    {{ t("Changement d'onglet et copier-coller strictement surveillés.", "Tab switching and copy-paste strictly monitored and recorded.") }}
+                  </div>
+                </div>
+
+                <div class="announcement-feature-card">
+                  <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                    <div class="announcement-mini-icon" style="background:#EFF6FF; color:#2563EB;">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
+                    </div>
+                    <div style="font-size:12.5px; font-weight:800; color:#1E293B;">Certificat Accordé</div>
+                  </div>
+                  <div style="font-size:11px; color:#64748B; line-height:1.4;">
+                    {{ t("Notation personnalisée par votre professeur avec score /160 et CEFR.", "Graded by your instructor with official score /160 and CEFR level.") }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Action Buttons -->
+              <div style="display:flex; flex-direction:column; gap:10px;">
+                <button
+                  type="button"
+                  (click)="startOfficialFromAnnouncement()"
+                  class="announcement-primary-cta">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  <span>{{ t("⚡ Accéder & Passer mon Examen Maintenant", "⚡ Quick Access • Start Official Exam Now") }}</span>
+                </button>
+
+                <button
+                  type="button"
+                  (click)="closeAnnouncementModal()"
+                  class="announcement-secondary-cta">
+                  <span>{{ t("Compris, je le passerai plus tard dans la semaine", "Got it, I will take it later this week") }}</span>
+                </button>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+      }
+
       @if (showPreExamBriefingModal()) {
         <div class="briefing-modal-overlay" (click)="closePreExamBriefing()">
           <div class="briefing-modal-card" (click)="$event.stopPropagation()">
@@ -2357,10 +2481,9 @@ export interface DetQuestion {
               <button
                 type="button"
                 class="btn-start-briefing"
-                [disabled]="!preExamAgreed()"
                 (click)="confirmAndStartOfficialExam()">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                <span>Démarrer l'Examen en Plein Écran</span>
+                <span>{{ t("Démarrer l'Examen en Plein Écran", "Start Exam in Fullscreen") }}</span>
               </button>
             </div>
 
@@ -2899,6 +3022,135 @@ export interface DetQuestion {
       padding: 20px 24px;
       min-width: 170px;
       box-shadow: 0 4px 14px rgba(79, 70, 229, 0.08);
+    }
+
+    /* ANNOUNCEMENT MODAL OVERLAY */
+    .announcement-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 99998;
+      padding: 20px;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .announcement-modal-card {
+      background: white;
+      border-radius: 22px;
+      max-width: 620px;
+      width: 100%;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
+      overflow: hidden;
+      border: 1.5px solid #C7D2FE;
+    }
+
+    .announcement-header {
+      background: linear-gradient(135deg, #1E1B4B 0%, #312E81 50%, #4338CA 100%);
+      padding: 24px 26px;
+      color: white;
+      position: relative;
+    }
+
+    .announcement-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.16);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: #FDE047;
+    }
+
+    .announcement-close-btn {
+      background: rgba(255, 255, 255, 0.15);
+      border: none;
+      color: white;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s ease;
+    }
+
+    .announcement-close-btn:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .announcement-body {
+      padding: 24px 26px;
+    }
+
+    .announcement-feature-card {
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: 12px;
+      padding: 12px 14px;
+    }
+
+    .announcement-mini-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .announcement-primary-cta {
+      width: 100%;
+      padding: 14px 20px;
+      border-radius: 12px;
+      border: none;
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      color: white;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 6px 18px rgba(5, 150, 105, 0.4);
+      transition: all 0.15s ease;
+    }
+
+    .announcement-primary-cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(5, 150, 105, 0.5);
+    }
+
+    .announcement-secondary-cta {
+      width: 100%;
+      padding: 11px 20px;
+      border-radius: 12px;
+      border: 1.5px solid #CBD5E1;
+      background: white;
+      color: #475569;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .announcement-secondary-cta:hover {
+      background: #F1F5F9;
     }
 
     /* PRE-EXAM BRIEFING MODAL */
@@ -3701,7 +3953,8 @@ export class StudentExamComponent implements OnDestroy {
 
   // Official Exam Session & Anti-Cheat Signals
   showPreExamBriefingModal = signal<boolean>(false);
-  preExamAgreed = signal<boolean>(false);
+  showStudentExamAnnouncementModal = signal<boolean>(false);
+  preExamAgreed = signal<boolean>(true);
   isOfficialExam = signal<boolean>(false);
   tabSwitchViolations = signal<number>(0);
   showAntiCheatWarningModal = signal<boolean>(false);
@@ -3931,7 +4184,10 @@ export class StudentExamComponent implements OnDestroy {
   private startTime = 0;
 
   constructor() {
-    this.db.observeCurrentUser().subscribe(u => this.currentUser.set(u));
+    this.db.observeCurrentUser().subscribe(u => {
+      this.currentUser.set(u);
+      this.checkAndTriggerAnnouncementModal();
+    });
     this.db.observeQuizzes().subscribe(list => this.quizzes.set(list.filter(q => q.status !== 'draft')));
     this.db.observeExamAttempts().subscribe(list => {
       const user = this.currentUser();
@@ -3949,11 +4205,15 @@ export class StudentExamComponent implements OnDestroy {
         const corrected = mySubs.find(s => s.status === 'corrected');
         this.currentStudentPendingSubmission.set(pending || null);
         this.currentStudentCorrectedSubmission.set(corrected || null);
+        this.checkAndTriggerAnnouncementModal();
       }
     });
 
     this.db.observeAssessmentSessionConfig().subscribe(cfg => {
-      if (cfg) this.assessmentSessionConfig.set(cfg);
+      if (cfg) {
+        this.assessmentSessionConfig.set(cfg);
+        this.checkAndTriggerAnnouncementModal();
+      }
     });
 
     this.db.observeLessons().subscribe(list => {
@@ -3970,6 +4230,7 @@ export class StudentExamComponent implements OnDestroy {
       this.officialAssessmentQuestions.set(qList);
       if (qList && qList.length > 0) {
         this.isOfficialSaved.set(true);
+        this.checkAndTriggerAnnouncementModal();
       }
     });
 
@@ -4089,8 +4350,37 @@ export class StudentExamComponent implements OnDestroy {
   }
 
   // STARTING TESTS (LESSON-BASED ASSESSMENT A2-B2)
+  checkAndTriggerAnnouncementModal() {
+    const user = this.currentUser();
+    if (!user || user.role === 'teacher' || user.role === 'admin') return;
+    if (this.currentStudentPendingSubmission() || this.currentStudentCorrectedSubmission()) return;
+
+    try {
+      if (sessionStorage.getItem('speakup_exam_announcement_dismissed') === 'true') {
+        return;
+      }
+    } catch (e) {}
+
+    const hasOfficial = this.officialAssessmentQuestions().length > 0 || this.isOfficialSaved() || this.assessmentSessionConfig()?.isActive;
+    if (hasOfficial) {
+      this.showStudentExamAnnouncementModal.set(true);
+    }
+  }
+
+  startOfficialFromAnnouncement() {
+    this.showStudentExamAnnouncementModal.set(false);
+    this.openPreExamBriefing();
+  }
+
+  closeAnnouncementModal() {
+    this.showStudentExamAnnouncementModal.set(false);
+    try {
+      sessionStorage.setItem('speakup_exam_announcement_dismissed', 'true');
+    } catch (e) {}
+  }
+
   openPreExamBriefing() {
-    this.preExamAgreed.set(false);
+    this.preExamAgreed.set(true);
     this.showPreExamBriefingModal.set(true);
   }
 
@@ -4099,8 +4389,9 @@ export class StudentExamComponent implements OnDestroy {
   }
 
   confirmAndStartOfficialExam() {
-    if (!this.preExamAgreed()) return;
+    this.preExamAgreed.set(true);
     this.showPreExamBriefingModal.set(false);
+    this.showStudentExamAnnouncementModal.set(false);
     this.isOfficialExam.set(true);
     this.tabSwitchViolations.set(0);
 

@@ -538,6 +538,9 @@ export interface AssessmentSessionConfig {
   title: string;
   durationMinutes: number;
   antiCheatEnabled: boolean;
+  isActive?: boolean;
+  publishedAt?: string;
+  totalQuestions?: number;
 }
 
 export interface AssessmentSubmission {
@@ -5403,6 +5406,17 @@ export class DatabaseService {
 
     this.quizzes$.next(updatedQuizzes);
     this.saveLocal('speak_quizzes', updatedQuizzes);
+
+    await this.saveAssessmentSessionConfig({
+      startDate: '2026-08-11T00:00:00Z',
+      endDate: '2026-08-18T23:59:59Z',
+      title: 'SpeakUp English Assessment (SET)',
+      durationMinutes: 60,
+      antiCheatEnabled: true,
+      isActive: true,
+      publishedAt: new Date().toISOString(),
+      totalQuestions: questions.length
+    });
 
     if (this.useFirebase) {
       try {
