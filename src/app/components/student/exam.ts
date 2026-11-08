@@ -86,7 +86,7 @@ export interface DetQuestion {
                   <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                     <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
                   </svg>
-                  <span>⚡ Générateur depuis les Leçons (A2–B2)</span>
+                  <span>Générateur depuis les Leçons (A2–B2)</span>
                   @if (officialAssessmentQuestions().length > 0) {
                     <span style="background:#10B981; color:white; font-size:9.5px; font-weight:800; padding:1px 5px; border-radius:10px;">Actif</span>
                   }
@@ -176,7 +176,7 @@ export interface DetQuestion {
                         style="border:none; outline:none; background:transparent; padding:10px 0; font-size:13px; color:var(--text-primary); width:100%;"
                       />
                       @if (folderSearchQuery()) {
-                        <button type="button" (click)="folderSearchQuery.set('')" style="border:none; background:transparent; color:var(--text-muted); cursor:pointer;">✕</button>
+                        <button type="button" (click)="folderSearchQuery.set('')" style="border:none; background:transparent; color:var(--text-muted); cursor:pointer; display:flex; align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
                       }
                     </div>
 
@@ -203,7 +203,7 @@ export interface DetQuestion {
                         [class.active-pill]="folderFilterStatus() === 'corrected'"
                         class="filter-pill"
                         style="color:#047857;">
-                        ✓ Corrigés ({{ correctedSubmissionsCount() }})
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:middle; margin-right:3px;"><polyline points="20 6 9 17 4 12"/></svg><span>Corrigés ({{ correctedSubmissionsCount() }})</span>
                       </button>
                     </div>
                   </div>
@@ -249,8 +249,9 @@ export interface DetQuestion {
                                 En attente
                               </span>
                             } @else {
-                              <span class="badge" style="background:#ECFDF5; color:#047857; border:1px solid #A7F3D0; font-size:10.5px; font-weight:800; padding:4px 9px; border-radius:20px;">
-                                ✓ Corrigé
+                              <span class="badge" style="background:#ECFDF5; color:#047857; border:1px solid #A7F3D0; font-size:10.5px; font-weight:800; padding:4px 9px; border-radius:20px; display:inline-flex; align-items:center; gap:4px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                                Corrigé
                               </span>
                             }
                           </div>
@@ -304,7 +305,13 @@ export interface DetQuestion {
                               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
                               </svg>
-                              <span>{{ sub.status === 'pending' ? 'Corriger le dossier ✏️' : 'Consulter / Modifier 📂' }}</span>
+                              @if (sub.status === 'pending') {
+                              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+                              <span>Corriger le dossier</span>
+                            } @else {
+                              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                              <span>Consulter / Modifier</span>
+                            }
                             </button>
 
                             <button
@@ -358,7 +365,7 @@ export interface DetQuestion {
                         </span>
                       } @else {
                         <span class="badge" style="background:#ECFDF5; color:#047857; border:1px solid #A7F3D0; font-size:12px; font-weight:800; padding:5px 12px; border-radius:20px;">
-                          ✓ Corrigé • Score: {{ curSub.overallScore }}/160 ({{ curSub.cefrLevel }})
+                          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:middle; margin-right:4px;"><polyline points="20 6 9 17 4 12"/></svg><span>Corrigé • Score: {{ curSub.overallScore }}/160 ({{ curSub.cefrLevel }})</span>
                         </span>
                       }
                     </div>
@@ -397,7 +404,10 @@ export interface DetQuestion {
                               <div style="font-weight:600; line-height:1.4;">{{ q.prompt }}</div>
                             }
                             @if (q.audioPromptText && !q.prompt) {
-                              <div style="font-weight:600; color:#0369A1;">🎧 Énoncé audio : « {{ q.audioPromptText }} »</div>
+                              <div style="font-weight:600; color:#0369A1; display:flex; align-items:center; gap:6px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+                                <span>Énoncé audio : « {{ q.audioPromptText }} »</span>
+                              </div>
                             }
                           </div>
 
@@ -590,7 +600,7 @@ export interface DetQuestion {
                             (click)="finalizeAssessmentCorrection()"
                             style="width:100%; padding:12px; border:none; border-radius:10px; background:linear-gradient(135deg, #4F46E5 0%, #4338CA 100%); color:white; font-size:13.5px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 12px rgba(79,70,229,0.35);">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                            <span>Valider & Délivrer le Certificat 🎓</span>
+                            <span>Valider & Délivrer le Certificat</span>
                           </button>
 
                           <button
@@ -598,7 +608,7 @@ export interface DetQuestion {
                             (click)="saveAssessmentDraft()"
                             style="width:100%; padding:10px; border:1.5px solid #CBD5E1; border-radius:10px; background:white; color:#334155; font-size:12.5px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                            <span>Sauvegarder en brouillon 💾</span>
+                            <span>Sauvegarder en brouillon</span>
                           </button>
                         </div>
 
@@ -632,17 +642,17 @@ export interface DetQuestion {
                     <!-- Quick Stats Chips -->
                     <div style="display:flex; flex-wrap:wrap; gap:10px;">
                       <div style="background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); padding:6px 14px; border-radius:10px; font-size:12px; font-weight:700;">
-                        📚 {{ lessons().length }} leçons actives
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" style="vertical-align:middle; margin-right:4px;"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>{{ lessons().length }} leçons actives
                       </div>
                       <div style="background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); padding:6px 14px; border-radius:10px; font-size:12px; font-weight:700;">
-                        🎯 Calibration : A2 • B1 • B2
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" style="vertical-align:middle; margin-right:4px;"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>Calibration : A2 • B1 • B2
                       </div>
                       <div style="background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.2); padding:6px 14px; border-radius:10px; font-size:12px; font-weight:700;">
-                        ⏱️ Format officiel : 7 épreuves (~15 min)
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" style="vertical-align:middle; margin-right:4px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Format officiel : 7 épreuves (~15 min)
                       </div>
                       @if (officialAssessmentQuestions().length > 0) {
                         <div style="background:#10B981; color:white; padding:6px 14px; border-radius:10px; font-size:12px; font-weight:800; display:flex; align-items:center; gap:6px;">
-                          ✓ Examen Officiel Actif en Classe
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg><span>Examen Officiel Actif en Classe</span>
                         </div>
                       }
                     </div>
@@ -667,7 +677,7 @@ export interface DetQuestion {
                     <div style="display:flex; flex-direction:column; gap:8px;">
                       <!-- A2-B2 Global -->
                       <label
-                        (click)="targetGeneratorLevel.set('A2-B2')"
+                        (click)="setGeneratorLevel('A2-B2')"
                         [style.border-color]="targetGeneratorLevel() === 'A2-B2' ? '#4F46E5' : 'var(--border)'"
                         [style.background]="targetGeneratorLevel() === 'A2-B2' ? '#EEF2FF' : 'transparent'"
                         style="display:flex; align-items:flex-start; gap:10px; padding:12px 14px; border-radius:12px; border:1.5px solid; cursor:pointer; transition:all 0.15s ease;">
@@ -685,7 +695,7 @@ export interface DetQuestion {
 
                       <!-- A2 -->
                       <label
-                        (click)="targetGeneratorLevel.set('A2')"
+                        (click)="setGeneratorLevel('A2')"
                         [style.border-color]="targetGeneratorLevel() === 'A2' ? '#4F46E5' : 'var(--border)'"
                         [style.background]="targetGeneratorLevel() === 'A2' ? '#EEF2FF' : 'transparent'"
                         style="display:flex; align-items:flex-start; gap:10px; padding:12px 14px; border-radius:12px; border:1.5px solid; cursor:pointer; transition:all 0.15s ease;">
@@ -700,7 +710,7 @@ export interface DetQuestion {
 
                       <!-- B1 -->
                       <label
-                        (click)="targetGeneratorLevel.set('B1')"
+                        (click)="setGeneratorLevel('B1')"
                         [style.border-color]="targetGeneratorLevel() === 'B1' ? '#4F46E5' : 'var(--border)'"
                         [style.background]="targetGeneratorLevel() === 'B1' ? '#EEF2FF' : 'transparent'"
                         style="display:flex; align-items:flex-start; gap:10px; padding:12px 14px; border-radius:12px; border:1.5px solid; cursor:pointer; transition:all 0.15s ease;">
@@ -715,7 +725,7 @@ export interface DetQuestion {
 
                       <!-- B2 -->
                       <label
-                        (click)="targetGeneratorLevel.set('B2')"
+                        (click)="setGeneratorLevel('B2')"
                         [style.border-color]="targetGeneratorLevel() === 'B2' ? '#4F46E5' : 'var(--border)'"
                         [style.background]="targetGeneratorLevel() === 'B2' ? '#EEF2FF' : 'transparent'"
                         style="display:flex; align-items:flex-start; gap:10px; padding:12px 14px; border-radius:12px; border:1.5px solid; cursor:pointer; transition:all 0.15s ease;">
@@ -728,6 +738,47 @@ export interface DetQuestion {
                         </div>
                       </label>
                     </div>
+
+                    <!-- Dynamic Subscores Competency Balance -->
+                    <div style="background:white; border:1px solid var(--border); border-radius:12px; padding:14px; margin-top:16px;">
+                      <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; font-weight:800; color:#1E1B4B; margin-bottom:4px;">
+                        <span style="display:flex; align-items:center; gap:6px;">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.3"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+                          Équilibre des compétences évaluées
+                        </span>
+                        <span style="color:#4F46E5; font-size:11px; font-weight:800;">100% Calibré</span>
+                      </div>
+                      <div class="subscore-bar-track">
+                        <div class="subscore-bar-fill" [style.width]="generatorSubscoresBalance().literacy + '%'" style="background:#3B82F6;" [title]="'Literacy ' + generatorSubscoresBalance().literacy + '%'"></div>
+                        <div class="subscore-bar-fill" [style.width]="generatorSubscoresBalance().comprehension + '%'" style="background:#8B5CF6;" [title]="'Comprehension ' + generatorSubscoresBalance().comprehension + '%'"></div>
+                        <div class="subscore-bar-fill" [style.width]="generatorSubscoresBalance().production + '%'" style="background:#F59E0B;" [title]="'Production ' + generatorSubscoresBalance().production + '%'"></div>
+                        <div class="subscore-bar-fill" [style.width]="generatorSubscoresBalance().conversation + '%'" style="background:#10B981;" [title]="'Conversation ' + generatorSubscoresBalance().conversation + '%'"></div>
+                      </div>
+                      <div style="display:flex; justify-content:space-between; margin-top:8px; font-size:10.5px; font-weight:700; color:var(--text-muted); flex-wrap:wrap; gap:4px;">
+                        <span style="color:#2563EB;">● Écrit: {{ generatorSubscoresBalance().literacy }}%</span>
+                        <span style="color:#7C3AED;">● Écoute: {{ generatorSubscoresBalance().comprehension }}%</span>
+                        <span style="color:#D97706;">● Rédaction: {{ generatorSubscoresBalance().production }}%</span>
+                        <span style="color:#059669;">● Oral: {{ generatorSubscoresBalance().conversation }}%</span>
+                      </div>
+                    </div>
+
+                    <!-- Dynamic Vocabulary Cloud Extracted from Lessons -->
+                    @if (extractedVocabWords().length > 0) {
+                      <div style="margin-top:14px; background:#F8FAFC; border:1px solid var(--border); border-radius:12px; padding:12px;">
+                        <div style="font-size:11px; font-weight:800; color:#475569; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" stroke-width="2.3"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                          <span>Mots clés extraits des leçons ({{ extractedVocabWords().length }}) :</span>
+                        </div>
+                        <div style="display:flex; flex-wrap:wrap; gap:5px;">
+                          @for (w of extractedVocabWords(); track w) {
+                            <span style="background:white; color:#4338CA; border:1px solid #C7D2FE; font-size:11px; font-weight:700; padding:3px 8px; border-radius:6px; box-shadow:0 1px 2px rgba(0,0,0,0.03);">
+                              {{ w }}
+                            </span>
+                          }
+                        </div>
+                      </div>
+                    }
+
                   </div>
 
                   <!-- Column 2: Lessons Selection -->
@@ -779,7 +830,7 @@ export interface DetQuestion {
                         (click)="triggerGenerateAssessment()"
                         style="width:100%; padding:12px 18px; border:none; border-radius:12px; background:linear-gradient(135deg, #4F46E5 0%, #4338CA 100%); color:white; font-size:14px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 14px rgba(79,70,229,0.35); transition:all 0.15s ease;">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                        <span>⚡ Générer l'Évaluation depuis ces Leçons</span>
+                        <span>Générer l'Évaluation depuis ces Leçons</span>
                       </button>
                     </div>
 
@@ -794,7 +845,7 @@ export interface DetQuestion {
                       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                       <span>{{ saveSuccessNotification() }}</span>
                     </div>
-                    <button type="button" (click)="saveSuccessNotification.set(null)" style="border:none; background:transparent; color:#065F46; font-size:16px; cursor:pointer;">✕</button>
+                    <button type="button" (click)="saveSuccessNotification.set(null)" style="border:none; background:transparent; color:#065F46; cursor:pointer; display:flex; align-items:center;"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
                   </div>
                 }
 
@@ -822,13 +873,22 @@ export interface DetQuestion {
                       </div>
 
                       <!-- Action Buttons on Generated Test -->
-                      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                        <button
+                          type="button"
+                          (click)="triggerGenerateAssessment(true)"
+                          [disabled]="isGenerating()"
+                          style="padding:10px 16px; border:1.5px solid #CBD5E1; border-radius:10px; background:white; color:#334155; font-size:13px; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:6px; transition:all 0.15s ease;">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" [class.spin-icon]="isGenerating()"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                          <span>{{ isGenerating() ? 'Génération...' : 'Nouvelles Variantes' }}</span>
+                        </button>
+
                         <button
                           type="button"
                           (click)="saveGeneratedAsOfficial()"
                           style="padding:10px 18px; border:none; border-radius:10px; background:#10B981; color:white; font-size:13px; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:6px; box-shadow:0 3px 10px rgba(16,185,129,0.3);">
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                          <span>🌟 Définir comme Évaluation Officielle de la Classe</span>
+                          <span>Définir comme Évaluation Officielle de la Classe</span>
                         </button>
 
                         <button
@@ -870,6 +930,14 @@ export interface DetQuestion {
                               <span style="background:#FEF3C7; color:#B45309; font-size:11px; font-weight:800; padding:3px 8px; border-radius:6px;">
                                 {{ q.targetLevel }}
                               </span>
+                              <button
+                                type="button"
+                                (click)="startSingleModulePractice(q)"
+                                title="Tester cette épreuve seule dans le simulateur"
+                                style="border:none; background:rgba(79,70,229,0.08); color:#4F46E5; padding:4px 10px; border-radius:6px; font-size:11.5px; font-weight:800; cursor:pointer; display:inline-flex; align-items:center; gap:5px; transition:all 0.15s ease;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                                <span>Tester</span>
+                              </button>
                             </div>
                           </div>
 
@@ -893,7 +961,7 @@ export interface DetQuestion {
                             <div style="margin-top:8px; display:flex; flex-wrap:wrap; gap:6px;">
                               @for (w of q.wordsList; track w.word) {
                                 <span [style.background]="w.isReal ? '#ECFDF5' : '#FEF2F2'" [style.color]="w.isReal ? '#065F46' : '#991B1B'" [style.border-color]="w.isReal ? '#A7F3D0' : '#FECACA'" style="font-size:11.5px; font-weight:700; padding:4px 9px; border-radius:6px; border:1px solid;">
-                                  {{ w.word }} {{ w.isReal ? '✓ (vrai)' : '✗ (piège)' }}
+                                  {{ w.word }} <span style="font-size:10px; opacity:0.85;">({{ w.isReal ? 'vrai' : 'piège' }})</span>
                                 </span>
                               }
                             </div>
@@ -979,7 +1047,7 @@ export interface DetQuestion {
                 </div>
               </div>
               <button type="button" (click)="view.set('det-pending')" class="btn-p" style="background:#EA580C; border-color:#EA580C; font-size:12.5px; padding:8px 16px;">
-                Consulter mon statut ⏳
+                Consulter mon statut
               </button>
             </div>
           }
@@ -991,12 +1059,12 @@ export interface DetQuestion {
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
                 </div>
                 <div>
-                  <div style="font-size:14.5px; font-weight:800; color:#065F46;">Votre Certificat Officiel SpeakUp est prêt ! 🎓</div>
+                  <div style="font-size:14.5px; font-weight:800; color:#065F46;">Votre Certificat Officiel SpeakUp est prêt !</div>
                   <div style="font-size:12px; color:#047857;">Score validé : {{ myCorrected.overallScore }}/160 • Niveau {{ myCorrected.cefrLevel }} • Corrigé par votre professeur.</div>
                 </div>
               </div>
               <button type="button" (click)="viewMyCorrectedCertificate(myCorrected)" class="btn-p" style="background:#059669; border-color:#059669; font-size:12.5px; padding:8px 16px;">
-                Voir mon Certificat 📜
+                Voir mon Certificat
               </button>
             </div>
           }
@@ -1226,7 +1294,7 @@ export interface DetQuestion {
                         {{ Math.round(10 + (att.percentage / 100) * 150) }} <span style="font-size:11px; font-weight:600; color:#64748B;">/ 160</span>
                       </div>
                       <span class="pill" [class]="att.passed ? 'g' : 'r'" style="font-size:9.5px; padding:2px 8px; font-weight:700;">
-                        {{ att.passed ? t('✓ Réussi', '✓ Passed') : t('✗ Échoué', '✗ Failed') }}
+                        {{ att.passed ? t('Réussi', 'Passed') : t('Échoué', 'Failed') }}
                       </span>
                     </div>
 
@@ -1268,7 +1336,7 @@ export interface DetQuestion {
                 </div>
               }
 
-              <!-- Close Button '✕' -->
+              <!-- Close Button -->
               <button class="det-close-btn" (click)="confirmExitTest()" [title]="t('Quitter le test', 'Exit test')">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
@@ -1334,7 +1402,7 @@ export interface DetQuestion {
                 <div class="det-response-column" style="display:flex; flex-direction:column; justify-content:center; align-items:center; background:#F8FAFC; border:1.5px dashed #CBD5E1; border-radius:12px; padding:24px; text-align:center;">
                   
                   <div style="font-size:13px; font-weight:700; color:#1E293B; margin-bottom:12px;">
-                    {{ isRecording() ? t("Enregistrement en cours...", "Recording your voice...") : (recordedAudioUrl ? t("Enregistrement validé ✓", "Voice recorded successfully ✓") : t("Cliquez sur le micro et commencez à parler", "Click the mic and speak in English")) }}
+                    {{ isRecording() ? t("Enregistrement en cours...", "Recording your voice...") : (recordedAudioUrl ? t("Enregistrement validé", "Voice recorded successfully") : t("Cliquez sur le micro et commencez à parler", "Click the mic and speak in English")) }}
                   </div>
 
                   <!-- Waveform visualizer bars -->
@@ -1521,7 +1589,7 @@ export interface DetQuestion {
                 </div>
 
                 <div style="font-size:12.5px; font-weight:700; color:#475569;">
-                  {{ isRecording() ? (recordedSeconds() + 's / 90s') : (recordedAudioUrl ? t("Enregistrement validé ✓", "Voice recorded ✓") : t("Appuyez pour répondre oralement", "Press to speak your response")) }}
+                  {{ isRecording() ? (recordedSeconds() + 's / 90s') : (recordedAudioUrl ? t("Enregistrement validé", "Voice recorded") : t("Appuyez pour répondre oralement", "Press to speak your response")) }}
                 </div>
               </div>
             }
@@ -1573,7 +1641,7 @@ export interface DetQuestion {
               <div style="display:flex; justify-content:space-between; position:relative; max-width:550px; margin:0 auto;">
                 <!-- Step 1 -->
                 <div style="text-align:center; position:relative; z-index:2;">
-                  <div style="width:36px; height:36px; border-radius:50%; background:#10B981; color:white; display:flex; align-items:center; justify-content:center; margin:0 auto 6px auto; font-weight:800;">✓</div>
+                  <div style="width:36px; height:36px; border-radius:50%; background:#10B981; color:white; display:flex; align-items:center; justify-content:center; margin:0 auto 6px auto;"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"><polyline points="20 6 9 17 4 12"/></svg></div>
                   <div style="font-size:12px; font-weight:800; color:#1E293B;">Épreuve passée</div>
                   <div style="font-size:10.5px; color:#64748B;">7 questions</div>
                 </div>
@@ -1587,7 +1655,7 @@ export interface DetQuestion {
 
                 <!-- Step 3 -->
                 <div style="text-align:center; position:relative; z-index:2;">
-                  <div style="width:36px; height:36px; border-radius:50%; background:#E2E8F0; color:#94A3B8; display:flex; align-items:center; justify-content:center; margin:0 auto 6px auto; font-weight:800;">🎓</div>
+                  <div style="width:36px; height:36px; border-radius:50%; background:#E2E8F0; color:#94A3B8; display:flex; align-items:center; justify-content:center; margin:0 auto 6px auto;"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg></div>
                   <div style="font-size:12px; font-weight:800; color:#64748B;">Certificat délivré</div>
                   <div style="font-size:10.5px; color:#94A3B8;">10–160 SET</div>
                 </div>
@@ -1605,11 +1673,11 @@ export interface DetQuestion {
                   </div>
                   <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:12px;">
                     <div style="font-size:11px; font-weight:700; color:#64748B; text-transform:uppercase;">Enregistrements oraux</div>
-                    <div style="font-size:14px; font-weight:800; color:#4F46E5; margin-top:2px;">🎙️ {{ getAudioQuestionsCount(mySub) }} enregistrements</div>
+                    <div style="font-size:14px; font-weight:800; color:#4F46E5; margin-top:2px; display:flex; align-items:center; gap:6px;"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg><span>{{ getAudioQuestionsCount(mySub) }} enregistrements</span></div>
                   </div>
                   <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:10px; padding:12px;">
                     <div style="font-size:11px; font-weight:700; color:#64748B; text-transform:uppercase;">Écrits & Rédactions</div>
-                    <div style="font-size:14px; font-weight:800; color:#059669; margin-top:2px;">✍️ {{ getWrittenQuestionsCount(mySub) }} rédactions</div>
+                    <div style="font-size:14px; font-weight:800; color:#059669; margin-top:2px; display:flex; align-items:center; gap:6px;"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg><span>{{ getWrittenQuestionsCount(mySub) }} rédactions</span></div>
                   </div>
                 </div>
 
@@ -1628,7 +1696,7 @@ export interface DetQuestion {
                 ← Retour au centre de tests
               </button>
               <button class="btn-p" style="background:#4F46E5; border-color:#4F46E5;" (click)="startFullDetSampleTest()">
-                S'entraîner sur un test blanc 🚀
+                S'entraîner sur un test blanc
               </button>
             </div>
 
@@ -1651,7 +1719,7 @@ export interface DetQuestion {
                 </div>
               </div>
               <span class="badge" style="background:#ECFDF5; color:#065F46; font-size:11px; padding:4px 10px; border-radius:20px; font-weight:800;">
-                ✓ {{ t("Évaluation Complétée", "Evaluation Completed") }}
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5" style="vertical-align:middle; margin-right:4px;"><polyline points="20 6 9 17 4 12"/></svg>{{ t("Évaluation Complétée", "Evaluation Completed") }}
               </span>
             </div>
 
@@ -2629,6 +2697,42 @@ export class StudentExamComponent implements OnDestroy {
   selectedLessonIds = signal<string[]>([]);
   genAssessment = signal<GeneratedAssessmentMetadata | null>(null);
   saveSuccessNotification = signal<string | null>(null);
+  isGenerating = signal<boolean>(false);
+  isPlayingAudio = signal<boolean>(false);
+
+  // Dynamic extracted vocabulary preview from selected lessons
+  extractedVocabWords = computed(() => {
+    const activeLessons = this.lessons().filter(l => this.isLessonSelected(l.id));
+    const words: string[] = [];
+    activeLessons.forEach(l => {
+      if (Array.isArray(l.vocabulary)) {
+        l.vocabulary.forEach(w => {
+          const clean = w.trim().toLowerCase();
+          if (clean && !words.includes(clean)) words.push(clean);
+        });
+      }
+    });
+    return words.slice(0, 16);
+  });
+
+  // Dynamic balance calculation of question types / subscores
+  generatorSubscoresBalance = computed(() => {
+    const ga = this.genAssessment();
+    if (!ga || !ga.questions || ga.questions.length === 0) {
+      return { literacy: 29, comprehension: 14, production: 29, conversation: 28 };
+    }
+    const total = ga.questions.length;
+    const lit = ga.questions.filter(q => q.subscore === 'literacy').length;
+    const comp = ga.questions.filter(q => q.subscore === 'comprehension').length;
+    const prod = ga.questions.filter(q => q.subscore === 'production').length;
+    const conv = ga.questions.filter(q => q.subscore === 'conversation').length;
+    return {
+      literacy: Math.round((lit / total) * 100),
+      comprehension: Math.round((comp / total) * 100),
+      production: Math.round((prod / total) * 100),
+      conversation: Math.round((conv / total) * 100)
+    };
+  });
   currentStudentPendingSubmission = signal<AssessmentSubmission | null>(null);
   currentStudentCorrectedSubmission = signal<AssessmentSubmission | null>(null);
   recordedAudioBase64: string | null = null;
@@ -2960,13 +3064,18 @@ export class StudentExamComponent implements OnDestroy {
     this.view.set('det-test');
   }
 
-  // --- GENERATOR CONTROLS ---
+  // --- GENERATOR CONTROLS (DYNAMIC & REACTIVE) ---
   openGeneratorTab() {
     this.teacherModeTab.set('generator');
     this.closeSubmissionFolder();
     if (!this.genAssessment()) {
-      this.triggerGenerateAssessment();
+      this.triggerGenerateAssessment(false);
     }
+  }
+
+  setGeneratorLevel(lvl: 'A2' | 'B1' | 'B2' | 'A2-B2') {
+    this.targetGeneratorLevel.set(lvl);
+    this.triggerGenerateAssessment(true);
   }
 
   isLessonSelected(id: string): boolean {
@@ -2980,6 +3089,7 @@ export class StudentExamComponent implements OnDestroy {
     } else {
       this.selectedLessonIds.set([...current, id]);
     }
+    this.triggerGenerateAssessment(false);
   }
 
   toggleSelectAllLessons() {
@@ -2988,15 +3098,29 @@ export class StudentExamComponent implements OnDestroy {
     } else {
       this.selectedLessonIds.set(this.lessons().map(l => l.id));
     }
+    this.triggerGenerateAssessment(false);
   }
 
-  triggerGenerateAssessment() {
-    const meta = this.assessmentGenerator.generateAssessmentFromLessons(
-      this.lessons(),
-      this.targetGeneratorLevel(),
-      this.selectedLessonIds().length > 0 ? this.selectedLessonIds() : undefined
-    );
-    this.genAssessment.set(meta);
+  triggerGenerateAssessment(showAnimation: boolean = false) {
+    if (showAnimation) {
+      this.isGenerating.set(true);
+      setTimeout(() => {
+        const meta = this.assessmentGenerator.generateAssessmentFromLessons(
+          this.lessons(),
+          this.targetGeneratorLevel(),
+          this.selectedLessonIds().length > 0 ? this.selectedLessonIds() : undefined
+        );
+        this.genAssessment.set(meta);
+        this.isGenerating.set(false);
+      }, 350);
+    } else {
+      const meta = this.assessmentGenerator.generateAssessmentFromLessons(
+        this.lessons(),
+        this.targetGeneratorLevel(),
+        this.selectedLessonIds().length > 0 ? this.selectedLessonIds() : undefined
+      );
+      this.genAssessment.set(meta);
+    }
   }
 
   async saveGeneratedAsOfficial() {
@@ -3465,7 +3589,7 @@ export class StudentExamComponent implements OnDestroy {
         subscores: sub.subscores,
         teacherGlobalComment: sub.teacherGlobalComment
       });
-      this.dialogService.alert('Brouillon enregistré 💾', 'Toutes vos corrections ont été sauvegardées. Le dossier reste en attente jusqu\'à validation finale.', 'info');
+      this.dialogService.alert('Brouillon enregistré', 'Toutes vos corrections ont été sauvegardées. Le dossier reste en attente jusqu\'à validation finale.', 'info');
     } catch (e) {
       console.error(e);
       this.dialogService.alert('Erreur', 'Impossible de sauvegarder le brouillon.', 'info');
@@ -3491,7 +3615,7 @@ export class StudentExamComponent implements OnDestroy {
       });
 
       this.dialogService.alert(
-        'Correction Validée & Certificat Délivré ! 🎓',
+        'Correction Validée & Certificat Délivré !',
         `Le dossier de ${sub.studentName} a été validé avec succès (Score: ${sub.overallScore}/160 • ${sub.cefrLevel}). L'élève a reçu son certificat et une notification.`,
         'info'
       );
@@ -3717,7 +3841,7 @@ export class StudentExamComponent implements OnDestroy {
         <p><strong>Examen :</strong> ${att.quizTitle}</p>
         <p><strong>Date :</strong> ${new Date(att.completedAt).toLocaleString('fr-FR')}</p>
         <p><strong>Score :</strong> ${att.score}/${att.answers.length} questions (${att.percentage}%)</p>
-        <p><strong>Résultat :</strong> <span style="color:${att.passed ? '#059669' : '#DC2626'}; font-weight:bold">${att.passed ? '✓ RÉUSSI' : '✗ ÉCHOUÉ'}</span></p>
+        <p><strong>Résultat :</strong> <span style="color:${att.passed ? '#059669' : '#DC2626'}; font-weight:bold">${att.passed ? 'RÉUSSI' : 'ÉCHOUÉ'}</span></p>
       </body></html>
     `);
     win.document.close();
