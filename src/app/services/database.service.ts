@@ -522,6 +522,22 @@ export interface AssessmentQuestionAnswer {
   teacherComment?: string;
 }
 
+export interface AntiCheatReport {
+  tabSwitches: number;
+  fullscreenExits: number;
+  pasteAttempts: number;
+  integrityScore: number;
+  completedInSingleSession: boolean;
+}
+
+export interface AssessmentSessionConfig {
+  startDate: string;
+  endDate: string;
+  title: string;
+  durationMinutes: number;
+  antiCheatEnabled: boolean;
+}
+
 export interface AssessmentSubmission {
   id: string;
   studentId: string;
@@ -544,6 +560,7 @@ export interface AssessmentSubmission {
   teacherGlobalComment?: string;
   gradedBy?: string;
   gradedAt?: string;
+  antiCheatReport?: AntiCheatReport;
 }
 
 export interface Payment {
@@ -634,6 +651,13 @@ export class DatabaseService {
   private examAttempts$ = new BehaviorSubject<ExamAttempt[]>([]);
   private assessmentSubmissions$ = new BehaviorSubject<AssessmentSubmission[]>([]);
   private officialAssessmentQuestions$ = new BehaviorSubject<DetQuestion[]>([]);
+  private assessmentSessionConfig$ = new BehaviorSubject<AssessmentSessionConfig>({
+    startDate: '2026-11-08T00:00:00',
+    endDate: '2026-11-15T23:59:59',
+    title: 'Session Officielle SpeakUp Assessment (Novembre 2026)',
+    durationMinutes: 20,
+    antiCheatEnabled: true
+  });
   private vocabGameAttempts$ = new BehaviorSubject<VocabGameAttempt[]>([]);
   private wordOfTheDay$ = new BehaviorSubject<WordOfTheDay>({
     word: 'Kitchen',
@@ -928,6 +952,15 @@ export class DatabaseService {
     const savedAssessmentQuestions = getLocal('speak_official_assessment_questions', []);
     if (savedAssessmentQuestions && Array.isArray(savedAssessmentQuestions) && savedAssessmentQuestions.length > 0) {
       this.officialAssessmentQuestions$.next(savedAssessmentQuestions);
+    const defaultSessionConfig: AssessmentSessionConfig = {
+      startDate: '2026-11-08T00:00:00',
+      endDate: '2026-11-15T23:59:59',
+      title: 'Session Officielle SpeakUp Assessment (Novembre 2026)',
+      durationMinutes: 20,
+      antiCheatEnabled: true
+    };
+    const savedSessionConfig = getLocal('speak_assessment_session_config', defaultSessionConfig);
+    this.assessmentSessionConfig$.next(savedSessionConfig);
     }
     const quizzes = getLocal('speak_quizzes', defaultQuizzes);
     // Pre-initialize Level Placement Tests for each category
@@ -5276,6 +5309,27 @@ export class DatabaseService {
   // --- OFFICIAL SPEAKUP ASSESSMENT FROM LESSONS ---
   observeOfficialAssessmentQuestions(): Observable<DetQuestion[]> {
     return this.officialAssessmentQuestions$.asObservable();
+  }
+
+  observeAssessmentSessionConfig(): Observable<AssessmentSessionConfig> {
+    return this.assessmentSessionConfig$.asObservable();
+  }
+
+  getAssessmentSessionConfig(): AssessmentSessionConfig {
+    return this.assessmentSessionConfig$.value;
+  }
+
+  async saveAssessmentSessionConfig(config: AssessmentSessionConfig): Promise<void> {
+    this.assessmentSessionConfig$.next(config);
+    this.saveLocal('speak_assessment_session_config', config);
+    if (this.useFirebase) {
+      try {
+        const { setDoc, doc } = await import('firebase/firestore');
+        await setDoc(doc(this.firestore, 'settings', 'assessment_session'), config);
+      } catch (e) {
+        console.warn('Firebase session config sync error:', e);
+      }
+    }
   }
 
   getOfficialAssessmentQuestions(): DetQuestion[] {

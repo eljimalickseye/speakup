@@ -2,7 +2,7 @@ import { Component, inject, signal, computed, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { DatabaseService, Quiz, UserProfile, ExamAttempt, AssessmentSubmission, AssessmentQuestionAnswer, Lesson } from '../../services/database.service';
+import { DatabaseService, Quiz, UserProfile, ExamAttempt, AssessmentSubmission, AssessmentQuestionAnswer, Lesson, AssessmentSessionConfig } from '../../services/database.service';
 import { AssessmentGeneratorService, GeneratedAssessmentMetadata } from '../../services/assessment-generator.service';
 import { DialogService } from '../../services/dialog.service';
 
@@ -290,24 +290,41 @@ export interface DetQuestion {
 
                           <!-- Column 4: Statut & Note -->
                           <div class="dossier-col-status">
-                            @if (sub.status === 'pending') {
-                              <span class="badge-status-pending">
-                                <span style="width:7px; height:7px; border-radius:50%; background:#EA580C; animation: pulse-live 1.5s infinite"></span>
-                                <span>En attente</span>
-                              </span>
-                            } @else {
-                              <div style="display:flex; align-items:center; gap:8px;">
-                                <span class="badge-status-corrected">
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                                  <span>Corrigé</span>
+                            <div style="display:flex; flex-direction:column; gap:4px;">
+                              @if (sub.status === 'pending') {
+                                <span class="badge-status-pending">
+                                  <span style="width:7px; height:7px; border-radius:50%; background:#EA580C; animation: pulse-live 1.5s infinite"></span>
+                                  <span>En attente</span>
                                 </span>
-                                @if (sub.overallScore) {
-                                  <span class="score-badge">
-                                    {{ sub.overallScore }}/160 • {{ sub.cefrLevel || 'B2' }}
+                              } @else {
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                  <span class="badge-status-corrected">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                                    <span>Corrigé</span>
+                                  </span>
+                                  @if (sub.overallScore) {
+                                    <span class="score-badge">
+                                      {{ sub.overallScore }}/160 • {{ sub.cefrLevel || 'B2' }}
+                                    </span>
+                                  }
+                                </div>
+                              }
+
+                              <!-- Anti-Cheat Integrity Pill in Row -->
+                              @if (sub.antiCheatReport) {
+                                @if (sub.antiCheatReport.tabSwitches === 0) {
+                                  <span class="dossier-chip-sm" style="background:#ECFDF5; color:#047857; border:1px solid #A7F3D0; font-size:10px; padding:2px 6px; width:fit-content;" title="Anti-triche : Intégrité 100% (Aucun changement d'onglet)">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                                    <span>Intégrité 100%</span>
+                                  </span>
+                                } @else {
+                                  <span class="dossier-chip-sm" style="background:#FEF2F2; color:#B91C1C; border:1px solid #FECACA; font-size:10px; padding:2px 6px; width:fit-content;" title="Sorties d'écran détectées pendant l'épreuve">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                    <span>{{ sub.antiCheatReport.tabSwitches }} sortie(s) écran</span>
                                   </span>
                                 }
-                              </div>
-                            }
+                              }
+                            </div>
                           </div>
 
                           <!-- Column 5: Actions (Single SVG icon per button) -->
@@ -849,7 +866,13 @@ export interface DetQuestion {
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" [class.spin-icon]="isGenerating()">
                           <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
                         </svg>
-                        <span>{{ isGenerating() ? 'Génération en cours...' : 'Générer l\'Évaluation depuis ces Leçons' }}</span>
+                        <span>
+  @if (isGenerating()) {
+    Génération en cours...
+  } @else {
+    Générer l'Évaluation depuis ces Leçons
+  }
+</span>
                       </button>
 
                       <button
@@ -1100,6 +1123,72 @@ export interface DetQuestion {
 
         <!-- PRACTICE MODULES & TEST SIMULATOR (VISIBLE FOR STUDENTS, AND FOR TEACHERS IN PREVIEW MODE) -->
         @if ((currentUser()?.role !== 'teacher' && currentUser()?.role !== 'admin') || teacherModeTab() === 'preview') {
+
+          <!-- OFFICIAL EXAM SESSION HERO CARD (1 WEEK AVAILABILITY WINDOW: 11/08/2026 - 18/08/2026) -->
+          @if (!currentStudentPendingSubmission() && !currentStudentCorrectedSubmission()) {
+            <div class="official-session-card">
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:20px;">
+                <div style="max-width:580px;">
+                  <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap;">
+                    <span class="official-badge-pulse">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                      SESSION OFFICIELLE (1 SEMAINE)
+                    </span>
+                    <span style="font-size:12px; font-weight:800; color:#4338CA; background:#EEF2FF; padding:3px 10px; border-radius:20px; border:1px solid #C7D2FE; display:inline-flex; align-items:center; gap:5px;">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                      Période : 11/08/2026 – 18/08/2026
+                    </span>
+                  </div>
+
+                  <h2 style="font-size:24px; font-weight:900; color:#1E1B4B; margin:0 0 10px 0; line-height:1.25;">
+                    Examen Officiel SpeakUp English Assessment (SET)
+                  </h2>
+                  <p style="font-size:13.5px; color:#334155; margin:0 0 16px 0; line-height:1.6;">
+                    La session d'examen officielle est ouverte pour une durée d'<strong>une semaine</strong> (accès libre 24h/24). Vous pouvez débuter votre test au moment de votre choix. 
+                    <strong style="color:#C2410C;">Important :</strong> une fois commencé, vous êtes <strong>obligé(e) de le terminer d'une seule traite</strong> (~15 à 20 minutes) sous surveillance anti-triche active.
+                  </p>
+
+                  <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:20px;">
+                    <span class="session-chip">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                      Durée : ~15 min (7 épreuves)
+                    </span>
+                    <span class="session-chip">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                      Mode Anti-Triche Plein Écran
+                    </span>
+                    <span class="session-chip">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
+                      Correction & Certificat Officiel CEFR
+                    </span>
+                  </div>
+
+                  <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+                    <button type="button" class="official-start-btn" (click)="openPreExamBriefing()">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                      <span>Passer mon Examen Officiel</span>
+                    </button>
+                    <span style="font-size:12px; color:#64748B; font-weight:600; display:inline-flex; align-items:center; gap:5px;">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                      Accès libre 24h/24 pendant 7 jours
+                    </span>
+                  </div>
+                </div>
+
+                <div class="official-session-badge-box">
+                  <div style="width:70px; height:70px; border-radius:50%; background:linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%); color:white; display:flex; align-items:center; justify-content:center; margin:0 auto 12px auto; box-shadow:0 8px 20px rgba(79,70,229,0.3);">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                  </div>
+                  <div style="font-size:13px; font-weight:900; color:#1E1B4B; text-align:center;">SESSION CERTIFIANTE</div>
+                  <div style="font-size:11px; color:#4F46E5; font-weight:800; text-align:center; margin-top:2px;">7 jours pour participer</div>
+                  <div style="font-size:10.5px; color:#64748B; text-align:center; margin-top:6px; line-height:1.4;">
+                    11/08/2026 au 18/08/2026
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+
           <!-- Hero Practice Banner (Image 2 Top) -->
           <div class="det-hero-card">
             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:20px;">
@@ -1359,8 +1448,17 @@ export interface DetQuestion {
 
               <!-- Question Counter in Full Test mode -->
               @if (isFullTestMode()) {
-                <div style="font-size:11.5px; font-weight:700; color:#6B7280; letter-spacing:0.3px;">
-                  Question {{ currentDetIndex() + 1 }} / {{ detTestSequence().length }}
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <div style="font-size:11.5px; font-weight:700; color:#6B7280; letter-spacing:0.3px;">
+                    Question {{ currentDetIndex() + 1 }} / {{ detTestSequence().length }}
+                  </div>
+                  @if (isOfficialExam()) {
+                    <div style="display:inline-flex; align-items:center; gap:5px; background:#FEF2F2; color:#991B1B; border:1px solid #FECACA; padding:2px 8px; border-radius:12px; font-size:10.5px; font-weight:800;">
+                      <span style="width:6px; height:6px; border-radius:50%; background:#DC2626; animation:pulse-live 1.2s infinite;"></span>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                      <span>Surveillance Anti-Triche Active</span>
+                    </div>
+                  }
                 </div>
               }
 
@@ -1931,6 +2029,166 @@ export interface DetQuestion {
         </div>
       }
 
+      <!-- ======================================================== -->
+      <!-- PRE-EXAM BRIEFING MODAL (1-WEEK TIMELINE & MANDATORY FINISH) -->
+      <!-- ======================================================== -->
+      @if (showPreExamBriefingModal()) {
+        <div class="briefing-modal-overlay" (click)="closePreExamBriefing()">
+          <div class="briefing-modal-card" (click)="$event.stopPropagation()">
+            
+            <!-- Modal Header -->
+            <div class="briefing-header">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+                <div style="display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.18); backdrop-filter:blur(6px); padding:4px 12px; border-radius:20px; font-size:11px; font-weight:800; letter-spacing:0.5px; text-transform:uppercase; border:1px solid rgba(255,255,255,0.3);">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  Consignes & Modalités Officielles
+                </div>
+                <button type="button" (click)="closePreExamBriefing()" style="border:none; background:rgba(255,255,255,0.15); color:white; width:30px; height:30px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+
+              <h2 style="font-family:'Outfit', sans-serif; font-size:22px; font-weight:900; margin:0 0 6px 0; line-height:1.2;">
+                SpeakUp English Assessment (SET)
+              </h2>
+              <div style="font-size:12.5px; opacity:0.92; line-height:1.4;">
+                Session officielle ouverte du <strong>11/08/2026 au 18/08/2026</strong> • Vous disposez d'une semaine pour participer au moment de votre choix.
+              </div>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="briefing-body">
+              
+              <!-- Crucial Alert: Obligation to finish in one sitting -->
+              <div class="briefing-alert">
+                <div style="width:36px; height:36px; min-width:36px; border-radius:50%; background:#FEF3C7; color:#D97706; display:flex; align-items:center; justify-content:center;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                </div>
+                <div>
+                  <div style="font-size:13.5px; font-weight:800; color:#92400E; margin-bottom:2px;">
+                    Obligation de Finalisation Immédiate
+                  </div>
+                  <div style="font-size:12px; color:#B45309; line-height:1.5;">
+                    Une fois que vous appuyez sur « Démarrer », <strong>vous êtes obligé(e) de terminer le test d'une seule traite</strong> (~15 à 20 minutes). Aucune mise en pause, fermeture de fenêtre ou redémarrage ne sera possible.
+                  </div>
+                </div>
+              </div>
+
+              <!-- 4 Grid Info Cards -->
+              <div class="briefing-grid">
+                <!-- Card 1: Anti-Cheat -->
+                <div class="briefing-card">
+                  <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                    <div class="briefing-icon-box" style="background:#FEE2E2; color:#DC2626;">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    </div>
+                    <h4 style="font-size:13px; font-weight:800; color:#1E293B; margin:0;">Surveillance Anti-Triche</h4>
+                  </div>
+                  <ul style="margin:0; padding-left:16px; font-size:11.5px; color:#475569; line-height:1.5;">
+                    <li><strong>Plein écran obligatoire</strong> pendant toute la durée du test.</li>
+                    <li><strong>Détection de changement d'onglet</strong> : interdiction de quitter la fenêtre. Tout écart est consigné dans votre dossier.</li>
+                    <li><strong>Copier-coller désactivé</strong> pour garantir un test équitable.</li>
+                  </ul>
+                </div>
+
+                <!-- Card 2: Micro & Audio -->
+                <div class="briefing-card">
+                  <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                    <div class="briefing-icon-box" style="background:#EFF6FF; color:#2563EB;">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/></svg>
+                    </div>
+                    <h4 style="font-size:13px; font-weight:800; color:#1E293B; margin:0;">Microphone Requis</h4>
+                  </div>
+                  <p style="margin:0; font-size:11.5px; color:#475569; line-height:1.5;">
+                    Vérifiez que votre microphone fonctionne et installez-vous dans un endroit silencieux. Vous aurez des épreuves orales enregistrées (lecture à voix haute, description d'image et entretien oral).
+                  </p>
+                </div>
+
+                <!-- Card 3: 7 Questions & Timer -->
+                <div class="briefing-card">
+                  <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                    <div class="briefing-icon-box" style="background:#F3E8FF; color:#7C3AED;">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    </div>
+                    <h4 style="font-size:13px; font-weight:800; color:#1E293B; margin:0;">7 Épreuves Chronométrées</h4>
+                  </div>
+                  <p style="margin:0; font-size:11.5px; color:#475569; line-height:1.5;">
+                    Chaque question dispose d'un temps imparti strict (de 25s à 5 min). Si le chronomètre arrive à 0, votre réponse est validée automatiquement et vous passez à la question suivante.
+                  </p>
+                </div>
+
+                <!-- Card 4: Teacher Correction & Certificate -->
+                <div class="briefing-card">
+                  <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+                    <div class="briefing-icon-box" style="background:#ECFDF5; color:#059669;">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                    <h4 style="font-size:13px; font-weight:800; color:#1E293B; margin:0;">Correction Pédagogique</h4>
+                  </div>
+                  <p style="margin:0; font-size:11.5px; color:#475569; line-height:1.5;">
+                    Vos vocaux et rédactions seront transmis sous forme de dossier à votre professeur qui écoutera chaque réponse, attribuera vos points et délivrera votre Certificat Officiel CEFR (A2 à B2).
+                  </p>
+                </div>
+              </div>
+
+              <!-- Solemn Commitment Checkbox -->
+              <label class="briefing-checkbox-label" (click)="preExamAgreed.set(!preExamAgreed())">
+                <input type="checkbox" [checked]="preExamAgreed()" style="margin-top:2px; accent-color:#4F46E5; pointer-events:none;" />
+                <span style="font-size:12px; font-weight:700; color:#1E1B4B; line-height:1.5;">
+                  J'ai lu attentivement toutes les consignes. Je confirme être dans un environnement calme avec un microphone prêt, et je m'engage à compléter mon examen en une seule traite en respectant scrupuleusement les règles d'intégrité académique.
+                </span>
+              </label>
+
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="briefing-footer">
+              <button type="button" class="btn-cancel-briefing" (click)="closePreExamBriefing()">
+                Revenir plus tard
+              </button>
+              <button
+                type="button"
+                class="btn-start-briefing"
+                [disabled]="!preExamAgreed()"
+                (click)="confirmAndStartOfficialExam()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                <span>Démarrer l'Examen en Plein Écran</span>
+              </button>
+            </div>
+
+          </div>
+        </div>
+      }
+
+      <!-- ======================================================== -->
+      <!-- ANTI-CHEAT WARNING MODAL (TAB SWITCH / BLUR DETECTED)     -->
+      <!-- ======================================================== -->
+      @if (showAntiCheatWarningModal()) {
+        <div class="anti-cheat-alert-overlay">
+          <div class="anti-cheat-alert-card">
+            <div style="width:64px; height:64px; border-radius:50%; background:#FEE2E2; color:#DC2626; display:flex; align-items:center; justify-content:center; margin:0 auto 16px auto; animation:pulse-live 1.2s infinite;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </div>
+            <h3 style="font-size:18px; font-weight:900; color:#991B1B; margin:0 0 8px 0; display:flex; align-items:center; justify-content:center; gap:8px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              AVERTISSEMENT ANTI-TRICHE
+            </h3>
+            <div style="font-size:13.5px; font-weight:800; color:#1F2937; margin-bottom:8px;">
+              Changement de fenêtre ou d'onglet détecté !
+            </div>
+            <p style="font-size:12.5px; color:#4B5563; margin:0 0 18px 0; line-height:1.5;">
+              Vous avez quitté la fenêtre officielle de l'examen SpeakUp. Cet incident a été horodaté et consigné dans votre dossier d'évaluation transmis au professeur (<strong>Avertissement {{ tabSwitchViolations() }}/3</strong>).
+              <br/>
+              Veuillez rester concentré(e) sur votre épreuve sous peine d'annulation définitive de votre test.
+            </p>
+            <button type="button" class="btn-return-exam" (click)="dismissAntiCheatWarning()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>Retourner immédiatement à mon épreuve</span>
+            </button>
+          </div>
+        </div>
+      }
+
     </div>
   `,
   styles: [`
@@ -2366,6 +2624,263 @@ export interface DetQuestion {
     .subscore-tag.subscore-production { background: #FEF3C7; color: #B45309; }
 
     /* SpeakUp Assessment Hub & Card Styles */
+    .official-session-card {
+      background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 50%, #C7D2FE 100%);
+      border: 2px solid #818CF8;
+      border-radius: 20px;
+      padding: 26px 28px;
+      margin-bottom: 24px;
+      box-shadow: 0 10px 25px rgba(79, 70, 229, 0.12);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .official-badge-pulse {
+      background: #4F46E5;
+      color: white;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 4px 12px;
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 8px rgba(79, 70, 229, 0.35);
+    }
+
+    .session-chip {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(4px);
+      border: 1px solid #C7D2FE;
+      color: #312E81;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 11.5px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .official-start-btn {
+      padding: 13px 26px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #4F46E5 0%, #4338CA 100%);
+      color: white;
+      font-size: 14.5px;
+      font-weight: 800;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 16px rgba(79, 70, 229, 0.4);
+      transition: all 0.2s ease;
+    }
+
+    .official-start-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(79, 70, 229, 0.5);
+    }
+
+    .official-session-badge-box {
+      background: white;
+      border: 1.5px solid #C7D2FE;
+      border-radius: 16px;
+      padding: 20px 24px;
+      min-width: 170px;
+      box-shadow: 0 4px 14px rgba(79, 70, 229, 0.08);
+    }
+
+    /* PRE-EXAM BRIEFING MODAL */
+    .briefing-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 99999;
+      padding: 16px;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .briefing-modal-card {
+      background: white;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 660px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .briefing-header {
+      background: linear-gradient(135deg, #1E1B4B 0%, #312E81 50%, #4338CA 100%);
+      color: white;
+      padding: 24px 26px;
+    }
+
+    .briefing-body {
+      padding: 22px 26px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .briefing-alert {
+      background: #FFFBEB;
+      border: 1.5px solid #FCD34D;
+      border-radius: 14px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .briefing-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 600px) {
+      .briefing-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .briefing-card {
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: 12px;
+      padding: 14px;
+    }
+
+    .briefing-icon-box {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .briefing-checkbox-label {
+      background: #EEF2FF;
+      border: 1.5px solid #C7D2FE;
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .briefing-checkbox-label:hover {
+      background: #E0E7FF;
+      border-color: #818CF8;
+    }
+
+    .briefing-footer {
+      padding: 16px 26px 22px 26px;
+      border-top: 1px solid #E2E8F0;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-cancel-briefing {
+      padding: 10px 18px;
+      border-radius: 10px;
+      border: 1px solid #CBD5E1;
+      background: white;
+      color: #475569;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-start-briefing {
+      padding: 12px 22px;
+      border-radius: 10px;
+      border: none;
+      background: linear-gradient(135deg, #4F46E5 0%, #4338CA 100%);
+      color: white;
+      font-size: 13.5px;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
+      transition: all 0.15s ease;
+    }
+
+    .btn-start-briefing:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    /* ANTI-CHEAT ALERT OVERLAY */
+    .anti-cheat-alert-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(153, 27, 27, 0.85);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999999;
+      padding: 20px;
+      animation: fadeIn 0.15s ease;
+    }
+
+    .anti-cheat-alert-card {
+      background: white;
+      border: 3px solid #DC2626;
+      border-radius: 20px;
+      padding: 28px 24px;
+      max-width: 460px;
+      text-align: center;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    .btn-return-exam {
+      width: 100%;
+      padding: 13px 20px;
+      border-radius: 12px;
+      border: none;
+      background: #DC2626;
+      color: white;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(220, 38, 38, 0.4);
+      transition: all 0.15s ease;
+    }
+
+    .btn-return-exam:hover {
+      background: #B91C1C;
+    }
+
     .det-hero-card {
       background: linear-gradient(135deg, #EEF2FF 0%, #E0E7FF 50%, #FAF5FF 100%);
       border: 1.5px solid #C7D2FE;
@@ -2975,6 +3490,24 @@ export class StudentExamComponent implements OnDestroy {
   lessons = signal<Lesson[]>([]);
   officialAssessmentQuestions = signal<DetQuestion[]>([]);
   targetGeneratorLevel = signal<'A2' | 'B1' | 'B2' | 'A2-B2'>('A2-B2');
+
+  // Official Exam Session & Anti-Cheat Signals
+  showPreExamBriefingModal = signal<boolean>(false);
+  preExamAgreed = signal<boolean>(false);
+  isOfficialExam = signal<boolean>(false);
+  tabSwitchViolations = signal<number>(0);
+  showAntiCheatWarningModal = signal<boolean>(false);
+  assessmentSessionConfig = signal<AssessmentSessionConfig>({
+    startDate: '2026-11-08T00:00:00',
+    endDate: '2026-11-15T23:59:59',
+    title: 'Session Officielle SpeakUp Assessment (Novembre 2026)',
+    durationMinutes: 20,
+    antiCheatEnabled: true
+  });
+  private boundVisibilityHandler: any = null;
+  private boundBlurHandler: any = null;
+  private boundBeforeUnloadHandler: any = null;
+  private boundBlockHandler: any = null;
   selectedLessonIds = signal<string[]>([]);
   genAssessment = signal<GeneratedAssessmentMetadata | null>(null);
   saveSuccessNotification = signal<string | null>(null);
@@ -3199,6 +3732,10 @@ export class StudentExamComponent implements OnDestroy {
       }
     });
 
+    this.db.observeAssessmentSessionConfig().subscribe(cfg => {
+      if (cfg) this.assessmentSessionConfig.set(cfg);
+    });
+
     this.db.observeLessons().subscribe(list => {
       this.lessons.set(list);
       if (this.selectedLessonIds().length === 0 && list.length > 0) {
@@ -3329,6 +3866,117 @@ export class StudentExamComponent implements OnDestroy {
   }
 
   // STARTING TESTS (LESSON-BASED ASSESSMENT A2-B2)
+  openPreExamBriefing() {
+    this.preExamAgreed.set(false);
+    this.showPreExamBriefingModal.set(true);
+  }
+
+  closePreExamBriefing() {
+    this.showPreExamBriefingModal.set(false);
+  }
+
+  confirmAndStartOfficialExam() {
+    if (!this.preExamAgreed()) return;
+    this.showPreExamBriefingModal.set(false);
+    this.isOfficialExam.set(true);
+    this.tabSwitchViolations.set(0);
+
+    // Request Fullscreen
+    try {
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+    } catch (e) {}
+
+    // Start Anti-Cheat Monitoring
+    this.startAntiCheatMonitoring();
+
+    // Start Test Sequence
+    this.startFullDetSampleTest();
+  }
+
+  startAntiCheatMonitoring() {
+    this.stopAntiCheatMonitoring();
+
+    this.boundVisibilityHandler = () => {
+      if (document.hidden || document.visibilityState === 'hidden') {
+        this.registerAntiCheatViolation('Changement d\'onglet ou minimisation de la fenêtre');
+      }
+    };
+
+    this.boundBlurHandler = () => {
+      if (this.view() === 'det-test' && this.isOfficialExam()) {
+        this.registerAntiCheatViolation('Perte de focus fenêtre');
+      }
+    };
+
+    this.boundBeforeUnloadHandler = (e: BeforeUnloadEvent) => {
+      if (this.view() === 'det-test' && this.isOfficialExam()) {
+        e.preventDefault();
+        e.returnValue = 'Votre examen officiel SpeakUp est en cours. Si vous quittez, vos réponses incomplètes seront soumises.';
+      }
+    };
+
+    this.boundBlockHandler = (e: Event) => {
+      if (this.view() === 'det-test' && this.isOfficialExam()) {
+        e.preventDefault();
+      }
+    };
+
+    document.addEventListener('visibilitychange', this.boundVisibilityHandler);
+    window.addEventListener('blur', this.boundBlurHandler);
+    window.addEventListener('beforeunload', this.boundBeforeUnloadHandler);
+    document.addEventListener('copy', this.boundBlockHandler);
+    document.addEventListener('paste', this.boundBlockHandler);
+    document.addEventListener('cut', this.boundBlockHandler);
+    document.addEventListener('contextmenu', this.boundBlockHandler);
+  }
+
+  stopAntiCheatMonitoring() {
+    if (this.boundVisibilityHandler) {
+      document.removeEventListener('visibilitychange', this.boundVisibilityHandler);
+      this.boundVisibilityHandler = null;
+    }
+    if (this.boundBlurHandler) {
+      window.removeEventListener('blur', this.boundBlurHandler);
+      this.boundBlurHandler = null;
+    }
+    if (this.boundBeforeUnloadHandler) {
+      window.removeEventListener('beforeunload', this.boundBeforeUnloadHandler);
+      this.boundBeforeUnloadHandler = null;
+    }
+    if (this.boundBlockHandler) {
+      document.removeEventListener('copy', this.boundBlockHandler);
+      document.removeEventListener('paste', this.boundBlockHandler);
+      document.removeEventListener('cut', this.boundBlockHandler);
+      document.removeEventListener('contextmenu', this.boundBlockHandler);
+      this.boundBlockHandler = null;
+    }
+
+    try {
+      if (document.fullscreenElement && document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      }
+    } catch (e) {}
+  }
+
+  registerAntiCheatViolation(reason: string) {
+    if (this.view() !== 'det-test' || !this.isOfficialExam()) return;
+    const current = this.tabSwitchViolations() + 1;
+    this.tabSwitchViolations.set(current);
+    this.showAntiCheatWarningModal.set(true);
+  }
+
+  dismissAntiCheatWarning() {
+    this.showAntiCheatWarningModal.set(false);
+    // Re-request fullscreen if lost
+    try {
+      if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+    } catch (e) {}
+  }
+
   startFullDetSampleTest() {
     this.isFullTestMode.set(true);
     // If official lesson-based assessment is defined by teacher, load it!
@@ -3766,6 +4414,7 @@ export class StudentExamComponent implements OnDestroy {
           };
         });
 
+        this.stopAntiCheatMonitoring();
         const newSub = await this.db.submitAssessment({
           studentId: user.id,
           studentName: user.name,
@@ -3775,8 +4424,16 @@ export class StudentExamComponent implements OnDestroy {
           submittedAt: new Date().toISOString(),
           durationSeconds: 900,
           status: 'pending',
-          questions: questionsData
+          questions: questionsData,
+          antiCheatReport: {
+            tabSwitches: this.tabSwitchViolations(),
+            fullscreenExits: this.tabSwitchViolations(),
+            pasteAttempts: 0,
+            integrityScore: Math.max(0, 100 - this.tabSwitchViolations() * 25),
+            completedInSingleSession: true
+          }
         });
+        this.isOfficialExam.set(false);
 
         this.currentStudentPendingSubmission.set(newSub);
         this.view.set('det-pending');
@@ -3992,15 +4649,31 @@ export class StudentExamComponent implements OnDestroy {
 
 
   confirmExitTest() {
-    this.dialogService.confirm(
-      this.t("Quitter le test ?", "Quit Test?"),
-      this.t("Voulez-vous vraiment quitter ce test d'anglais ? Vos réponses en cours ne seront pas sauvegardées.", "Are you sure you want to leave this English test? Your progress will not be saved."),
-      () => {
-        this.clearDetTimer();
-        this.stopAudioRecording();
-        this.view.set('hub');
-      }
-    );
+    if (this.isOfficialExam()) {
+      this.dialogService.confirm(
+        'Attention : Quitter l\'Examen Officiel ?',
+        'Attention : Vous êtes en train de passer votre session officielle SpeakUp (11/08/2026 – 18/08/2026). Vous devez terminer votre examen en une seule traite. Si vous quittez maintenant, vos réponses partielles seront soumises telles quelles et vous ne pourrez plus recommencer.',
+        () => {
+          this.stopAntiCheatMonitoring();
+          this.clearDetTimer();
+          this.stopAudioRecording();
+          this.submitCurrentDetQuestion();
+          this.isOfficialExam.set(false);
+          this.view.set('hub');
+        }
+      );
+    } else {
+      this.dialogService.confirm(
+        this.t("Quitter le test ?", "Quit Test?"),
+        this.t("Voulez-vous vraiment quitter ce test d'anglais ? Vos réponses en cours ne seront pas sauvegardées.", "Are you sure you want to leave this English test? Your progress will not be saved."),
+        () => {
+          this.stopAntiCheatMonitoring();
+          this.clearDetTimer();
+          this.stopAudioRecording();
+          this.view.set('hub');
+        }
+      );
+    }
   }
 
   printDetResult(res: any) {
@@ -4205,6 +4878,7 @@ export class StudentExamComponent implements OnDestroy {
   }
 
   ngOnDestroy() {
+    this.stopAntiCheatMonitoring();
     this.clearDetTimer();
     this.clearTeacherTimer();
     this.stopAudioRecording();
