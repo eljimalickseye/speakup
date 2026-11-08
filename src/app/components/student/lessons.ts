@@ -113,10 +113,10 @@ import { DialogService } from '../../services/dialog.service';
                       [style.background]="lessonViewMode() === 'grid' ? 'white' : 'transparent'"
                       [style.color]="lessonViewMode() === 'grid' ? '#4F46E5' : 'var(--text-muted)'"
                       [style.box-shadow]="lessonViewMode() === 'grid' ? '0 2px 5px rgba(0,0,0,0.08)' : 'none'"
-                      title="Mode Grille Compacte (5 par ligne)"
+                      title="Mode Grille (4 par ligne)"
                       style="border:none; padding:4px 10px; border-radius:7px; font-size:11px; font-weight:800; cursor:pointer; display:flex; align-items:center; gap:4px; transition:all 0.15s">
                 <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
-                <span>{{ t('Grille (5/ligne)', 'Grid (5/row)') }}</span>
+                <span>{{ t('Grille (4/ligne)', 'Grid (4/row)') }}</span>
               </button>
             </div>
 
@@ -240,7 +240,7 @@ import { DialogService } from '../../services/dialog.service';
             }
           </div>
         } @else {
-          <!-- COMPACT GRID VIEW (Equitable 5 per row) -->
+          <!-- GRID VIEW (4 per row) -->
           <div class="lessons-equitable-grid">
             @for (lesson of filteredLessons(); track lesson.id) {
               <div class="card" (click)="selectLesson(lesson)" 
@@ -250,7 +250,7 @@ import { DialogService } from '../../services/dialog.service';
                 
                 <!-- COMPACT COVER BANNER -->
                 <div [style.background]="(lesson.coverImage || getYouTubeThumbnail(lesson.youtubeUrl)) ? 'none' : getGradient(lesson.colorTheme)"
-                     style="height:88px; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center">
+                     style="height:102px; position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center">
                   @if (lesson.coverImage || getYouTubeThumbnail(lesson.youtubeUrl)) {
                     <img [src]="lesson.coverImage || getYouTubeThumbnail(lesson.youtubeUrl)!" style="width:100%; height:100%; object-fit:cover" />
                     @if (lesson.youtubeUrl) {
