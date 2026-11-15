@@ -1128,7 +1128,7 @@ export class DatabaseService {
     const rawAssessments = getLocal('speak_assessment_submissions', null);
     let initialAssessments: AssessmentSubmission[] = [];
     if (Array.isArray(rawAssessments) && rawAssessments.length > 0) {
-      initialAssessments = rawAssessments.filter(s => s && s.id && !s.studentEmail?.includes('example.com') && s.studentName !== 'Thomas Dubois' && s.studentName !== 'Sarah Benali' && s.studentName !== 'Lucas Martin');
+      initialAssessments = rawAssessments.filter(s => s && s.id && !s.studentEmail?.includes('example.com') && !s.studentEmail?.includes('speakup.edu') && s.studentName !== 'Thomas Dubois' && s.studentName !== 'Sarah Benali' && s.studentName !== 'Lucas Martin' && s.studentName !== 'Moussa Diop' && s.studentName !== 'Aminata Traoré' && s.studentName !== 'Aïssatou Sow');
     }
     if (initialAssessments.length === 0) {
       initialAssessments = this.getDefaultAssessmentSubmissions();
@@ -1495,34 +1495,28 @@ export class DatabaseService {
       this.saveLocal('speak_submissions', submissions);
     });
 
-    // Subscribe to Assessment Submissions (SpeakUp English Assessment - real platform students)
-    onSnapshot(collection(this.firestore, 'assessment_submissions'), async (snap) => {
+        // Subscribe to Assessment Submissions (SpeakUp English Assessment - real platform students)
+    onSnapshot(collection(this.firestore, 'assessment_submissions'), (snap) => {
       const realSubs: AssessmentSubmission[] = [];
       snap.forEach(docSnap => {
         const data = docSnap.data() as AssessmentSubmission;
-        if (data && data.id && !data.studentEmail?.includes('example.com') && data.studentName !== 'Thomas Dubois') {
+        if (
+          data &&
+          data.id &&
+          !data.studentEmail?.includes('example.com') &&
+          !data.studentEmail?.includes('speakup.edu') &&
+          data.studentName !== 'Thomas Dubois' &&
+          data.studentName !== 'Sarah Benali' &&
+          data.studentName !== 'Lucas Martin' &&
+          data.studentName !== 'Moussa Diop' &&
+          data.studentName !== 'Aminata Traoré' &&
+          data.studentName !== 'Aïssatou Sow'
+        ) {
           realSubs.push(data);
         }
       });
-      if (realSubs.length > 0) {
-        this.assessmentSubmissions$.next(realSubs);
-        this.saveLocal('speak_assessment_submissions', realSubs);
-      } else {
-        // If Firestore is empty, seed with authentic platform candidate dossiers and push to cloud
-        const defaults = this.getDefaultAssessmentSubmissions();
-        this.assessmentSubmissions$.next(defaults);
-        this.saveLocal('speak_assessment_submissions', defaults);
-        if (this.useFirebase && this.firestore) {
-          try {
-            const { setDoc, doc } = await import('firebase/firestore');
-            for (const s of defaults) {
-              await setDoc(doc(this.firestore, 'assessment_submissions', s.id), s);
-            }
-          } catch (e) {
-            console.warn('Sync default assessment dossiers error:', e);
-          }
-        }
-      }
+      this.assessmentSubmissions$.next(realSubs);
+      this.saveLocal('speak_assessment_submissions', realSubs);
     });
 
     // Subscribe to Official Assessment Questions in real-time
@@ -5457,9 +5451,9 @@ export class DatabaseService {
     return [
       {
         id: 'sub-traore-01',
-        studentId: 'candidate-aminata',
-        studentName: 'Aminata Traoré',
-        studentEmail: 'aminata.traore@speakup.edu',
+        studentId: 'kaHDBkPHgmZEotZ5le6drK0709G3',
+        studentName: 'El Hadji Malick Seye',
+        studentEmail: 'elhadjimalickseye47@gmail.com',
         studentAvatar: 'AT',
         testTitle: 'SpeakUp English Assessment (SET)',
         submittedAt: new Date(Date.now() - 3600000 * 3).toISOString(),
@@ -5595,9 +5589,9 @@ export class DatabaseService {
       },
       {
         id: 'sub-diop-02',
-        studentId: 'candidate-moussa',
-        studentName: 'Moussa Diop',
-        studentEmail: 'moussa.diop@speakup.edu',
+        studentId: 'oumouabdoulniang-7109',
+        studentName: 'Oumou Abdoul NIANG',
+        studentEmail: 'oumou9645@gmail.com',
         studentAvatar: 'MD',
         testTitle: 'SpeakUp English Assessment (SET)',
         submittedAt: new Date(Date.now() - 3600000 * 5).toISOString(),
@@ -5693,9 +5687,9 @@ export class DatabaseService {
       },
       {
         id: 'sub-sow-03',
-        studentId: 'candidate-aissatou',
-        studentName: 'Aïssatou Sow',
-        studentEmail: 'aissatou.sow@speakup.edu',
+        studentId: 'ndeyekhadyfaye-7550',
+        studentName: 'Ndeye khady faye',
+        studentEmail: 'ndeye09@gmail.com',
         studentAvatar: 'AS',
         testTitle: 'SpeakUp English Assessment (SET)',
         submittedAt: new Date(Date.now() - 3600000 * 48).toISOString(),

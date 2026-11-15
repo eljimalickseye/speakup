@@ -215,6 +215,15 @@ export interface DetQuestion {
                         <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:middle; margin-right:4px;"><polyline points="20 6 9 17 4 12"/></svg>
                         <span>Corrigés ({{ correctedSubmissionsCount() }})</span>
                       </button>
+                      <button
+                        type="button"
+                        (click)="refreshRealAssessmentDossiers()"
+                        class="filter-pill"
+                        title="Actualiser les dossiers des vrais élèves"
+                        style="color:#4F46E5; border-color:#C7D2FE;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" style="vertical-align:middle; margin-right:4px;"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+                        <span>Actualiser</span>
+                      </button>
                     </div>
                   </div>
 
@@ -4909,6 +4918,12 @@ export class StudentExamComponent implements OnDestroy {
   }
 
   // --- GENERATOR CONTROLS (DYNAMIC & REACTIVE) ---
+  refreshRealAssessmentDossiers() {
+    const list = this.db.getAssessmentSubmissions();
+    this.assessmentSubmissions.set(list);
+    this.dialogService.alert('Dossiers actualisés', `${list.length} dossier(s) d'élèves réels chargés depuis la plateforme.`, 'success');
+  }
+
   openGeneratorTab() {
     this.teacherModeTab.set('generator');
     this.closeSubmissionFolder();
