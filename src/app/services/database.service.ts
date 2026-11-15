@@ -67,6 +67,7 @@ export interface JourneyMission {
 
 export interface UserProfile {
   id: string;
+  email?: string;
   name: string;
   role: 'student' | 'teacher' | 'guest' | 'admin';
   level: string;
@@ -306,6 +307,7 @@ export interface Submission {
   xpReward?: number;
   graded: boolean;
   submittedAt: string;
+  audioUrl?: string;
 }
 
 export interface CoachingMessage {
@@ -5830,22 +5832,50 @@ export class DatabaseService {
   async gradeAssessmentSubmission(id: string, updates: Partial<AssessmentSubmission>): Promise<AssessmentSubmission> {
     const currentList = this.assessmentSubmissions$.value;
     const index = currentList.findIndex(s => s.id === id);
-    if (index === -1) throw new Error('Submission not found: ' + id);
+    let updated: AssessmentSubmission;
+    let updatedList: AssessmentSubmission[];
 
-    const updated: AssessmentSubmission = {
-      ...currentList[index],
-      ...updates
-    };
+    if (index === -1) {
+      updated = {
+        id,
+        studentId: updates.studentId || id,
+        studentName: updates.studentName || 'Élève',
+        studentEmail: updates.studentEmail || '',
+        studentAvatar: updates.studentAvatar || 'ST',
+        testTitle: 'SpeakUp English Assessment (SET)',
+        submittedAt: new Date().toISOString(),
+        durationSeconds: 900,
+        status: 'pending',
+        questions: [],
+        antiCheatReport: { tabSwitches: 0, fullscreenExits: 0, pasteAttempts: 0, integrityScore: 100, completedInSingleSession: true },
+        ...updates
+      };
+      updatedList = [updated, ...currentList];
+    } else {
+      updated = {
+        ...currentList[index],
+        ...updates
+      };
+      updatedList = [...currentList];
+      updatedList[index] = updated;
+    }
 
-    const updatedList = [...currentList];
-    updatedList[index] = updated;
     this.assessmentSubmissions$.next(updatedList);
     this.saveLocal('speak_assessment_submissions', updatedList);
 
     if (this.useFirebase) {
       try {
         const { setDoc, doc } = await import('firebase/firestore');
-        await setDoc(doc(this.firestore, 'assessment_submissions', updated.id), updated);
+        const payloadToSave: any = JSON.parse(JSON.stringify(updated));
+        // Strip large base64 data URIs to avoid exceeding Firestore 1MB document limit
+        if (payloadToSave.questions && Array.isArray(payloadToSave.questions)) {
+          payloadToSave.questions.forEach((q: any) => {
+            if (q.studentAudioUrl && q.studentAudioUrl.startsWith('data:audio')) {
+              delete q.studentAudioUrl;
+            }
+          });
+        }
+        await setDoc(doc(this.firestore, 'assessment_submissions', updated.id), payloadToSave);
       } catch (e) {
         console.warn('Firebase assessment update error:', e);
       }

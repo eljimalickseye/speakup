@@ -2,7 +2,7 @@ import { Component, inject, signal, computed, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { DatabaseService, Quiz, UserProfile, ExamAttempt, AssessmentSubmission, AssessmentQuestionAnswer, Lesson, AssessmentSessionConfig, AntiCheatReport } from '../../services/database.service';
+import { DatabaseService, Quiz, UserProfile, ExamAttempt, AssessmentSubmission, AssessmentQuestionAnswer, Lesson, AssessmentSessionConfig, AntiCheatReport, Submission } from '../../services/database.service';
 import { AssessmentGeneratorService, GeneratedAssessmentMetadata } from '../../services/assessment-generator.service';
 import { DialogService } from '../../services/dialog.service';
 
@@ -128,7 +128,7 @@ export interface DetQuestion {
                     <div class="metric-card">
                       <div>
                         <div style="font-size:11.5px; color:var(--text-secondary); font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Total Dossiers</div>
-                        <div style="font-size:26px; font-weight:900; color:var(--text-primary); margin-top:2px;">{{ assessmentSubmissions().length }}</div>
+                        <div style="font-size:26px; font-weight:900; color:var(--text-primary); margin-top:2px;">{{ allRealFolders().length }}</div>
                       </div>
                       <div style="width:40px; height:40px; border-radius:10px; background:#EEF2FF; color:#4F46E5; display:flex; align-items:center; justify-content:center;">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
@@ -195,7 +195,7 @@ export interface DetQuestion {
                         [class.active-pill]="folderFilterStatus() === 'all'"
                         class="filter-pill">
                         <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:middle; margin-right:4px;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-                        <span>Tous ({{ assessmentSubmissions().length }})</span>
+                        <span>Tous ({{ allRealFolders().length }})</span>
                       </button>
                       <button
                         type="button"
@@ -233,7 +233,7 @@ export interface DetQuestion {
                       <div style="width:60px; height:60px; margin:0 auto 16px auto; border-radius:50%; background:#EEF2FF; display:flex; align-items:center; justify-content:center; color:#4F46E5;">
                         <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
                       </div>
-                      @if (assessmentSubmissions().length === 0) {
+                      @if (allRealFolders().length === 0) {
                         <h4 style="font-size:17px; font-weight:800; color:var(--text-primary); margin:0 0 8px 0;">Aucun dossier d'évaluation soumis pour le moment</h4>
                         <p style="font-size:13.5px; color:var(--text-secondary); max-width:560px; margin:0 auto 18px auto; line-height:1.5;">
                           Les dossiers des vrais étudiants de la plateforme apparaîtront ici <strong>ligne par ligne</strong> dès qu'ils auront passé leur test SpeakUp English Assessment (réponses écrites, vocaux enregistrés, notes automatiques).
@@ -4218,6 +4218,9 @@ export class StudentExamComponent implements OnDestroy {
 
   // Assessment Submissions & Teacher Hub signals
   assessmentSubmissions = signal<AssessmentSubmission[]>([]);
+  allPlatformSubmissions = signal<Submission[]>([]);
+  allPlatformExamAttempts = signal<ExamAttempt[]>([]);
+  allPlatformUsers = signal<UserProfile[]>([]);
   activeSubmission = signal<AssessmentSubmission | null>(null);
   folderSearchQuery = signal<string>('');
   folderFilterStatus = signal<'all' | 'pending' | 'corrected'>('all');
@@ -4483,6 +4486,16 @@ export class StudentExamComponent implements OnDestroy {
       if (user) this.examAttempts.set(this.db.getStudentExamAttempts(user.id));
     });
 
+    this.db.observeSubmissions().subscribe(list => {
+      this.allPlatformSubmissions.set(list || []);
+    });
+    this.db.observeExamAttempts().subscribe(list => {
+      this.allPlatformExamAttempts.set(list || []);
+    });
+    this.db.observeUsers().subscribe(list => {
+      this.allPlatformUsers.set((list || []).filter(u => u.role === 'student'));
+    });
+
     this.db.observeAssessmentSubmissions().subscribe(list => {
       this.assessmentSubmissions.set(list);
       const user = this.currentUser();
@@ -4527,16 +4540,337 @@ export class StudentExamComponent implements OnDestroy {
 
   // Filter modules in Hub
   
+  normalizeStudentName(name: string): string {
+    if (!name) return 'Élève';
+    const clean = name.trim();
+    const lower = clean.toLowerCase();
+    if (lower.includes('el hadji malick seye')) return 'El Hadji Malick Seye';
+    if (lower.includes('ndeye khady faye')) return 'Ndeye khady faye';
+    if (lower.includes('ndeye fatou diaw')) return 'Ndeye Fatou Diaw';
+    if (lower.includes('mariama diagne')) return 'Mariama Diagne';
+    if (lower.includes('mariama loum')) return 'Mariama Loum';
+    if (lower.includes('oumou abdoul niang')) return 'Oumou Abdoul NIANG';
+    if (lower.includes('maimouna kane')) return 'Maimouna Kane';
+    if (lower.includes('mame diarra thiaw')) return 'Mame Diarra Thiaw';
+    if (lower.includes('papa yoro balde') || lower.includes('camara')) return 'Papa yoro balde CAMARA';
+    if (lower.includes('halimata dia')) return 'Halimata Dia';
+    if (lower.includes('ouleye mbaye')) return 'Ouleye Mbaye';
+    if (lower.includes('coumba sall')) return 'Coumba Sall';
+    if (lower.includes('fatoumata ndiaye')) return 'Fatoumata Ndiaye';
+    if (lower.includes('fatima zahra')) return 'Fatima Zahra';
+    if (lower.includes('mouhamed gueye')) return 'Mouhamed Gueye';
+    if (lower.includes('mouhamed thiam')) return 'Mouhamed Thiam';
+    if (lower.includes('mamadou lamarana')) return 'Mamadou Lamarana Diallo';
+    if (lower.includes('adjaratou nar')) return 'Adjaratou Nar Gueye';
+    if (lower === 'rama') return 'Rama';
+    if (lower === 'alioune') return 'Alioune';
+    if (lower === 'adam') return 'Adam';
+    if (lower === 'khadija') return 'Khadija';
+    return clean;
+  }
+
+  parseMultipartContent(content: string | undefined): { text: string; audios: any[]; video?: string } {
+    if (!content) return { text: '', audios: [], video: '' };
+    try {
+      return JSON.parse(content);
+    } catch (e) {
+      return { text: content, audios: [], video: '' };
+    }
+  }
+
+  getEnrichedQuestionsForStudent(studentName: string, studentId: string, existingQuestions: AssessmentQuestionAnswer[] = []): AssessmentQuestionAnswer[] {
+    const norm = this.normalizeStudentName(studentName).toLowerCase();
+    const questions: AssessmentQuestionAnswer[] = [];
+    const questionIdSet = new Set<string>();
+
+    // 1. Keep any existing assessment questions
+    if (Array.isArray(existingQuestions)) {
+      existingQuestions.forEach(eq => {
+        questions.push({ ...eq });
+        questionIdSet.add(eq.questionId);
+      });
+    }
+
+    // 2. Match real homework from submissions (audio & text)
+    const matchedSubs = this.allPlatformSubmissions().filter(s =>
+      (s.studentName && this.normalizeStudentName(s.studentName).toLowerCase() === norm) ||
+      (s.studentId && s.studentId === studentId)
+    );
+    matchedSubs.sort((a, b) => (b.submittedAt || '').localeCompare(a.submittedAt || ''));
+
+    matchedSubs.forEach((s, idx) => {
+      const title = s.lessonTitle || `Devoir #${idx + 1}`;
+      let scoreNum: number | undefined = undefined;
+      if (s.score && typeof s.score === 'string' && s.score.includes('%')) {
+        scoreNum = parseInt(s.score, 10);
+      } else if (typeof s.score === 'number') {
+        scoreNum = s.score;
+      }
+
+      if (s.content && s.content.trim().startsWith('{"isMultipart":true')) {
+        const mp = this.parseMultipartContent(s.content);
+        if (Array.isArray(mp.audios) && mp.audios.length > 0) {
+          mp.audios.forEach((audio: any, aIdx: number) => {
+            const qId = `sub-audio-${s.id}-${aIdx}`;
+            const existingQ = existingQuestions.find(eq => eq.questionId === qId);
+            const audioSrc = audio.data || audio.url || undefined;
+            if (!questionIdSet.has(qId)) {
+              questionIdSet.add(qId);
+              questions.push({
+                questionId: qId,
+                type: 'speak-photo',
+                title: `🎙️ Audio : ${title}` + (audio.name ? ` (${audio.name})` : ''),
+                subscore: 'conversation',
+                prompt: `Activité orale : ${title}`,
+                studentAudioUrl: audioSrc,
+                studentAnswerText: audio.name ? `[Vocal : ${audio.name}]` : `[Enregistrement vocal de l'élève]`,
+                timeSpentSec: 60,
+                teacherScore: existingQ?.teacherScore !== undefined ? existingQ.teacherScore : scoreNum,
+                teacherComment: existingQ?.teacherComment !== undefined ? existingQ.teacherComment : (s.feedback || '')
+              });
+            } else {
+              const target = questions.find(q => q.questionId === qId);
+              if (target && audioSrc) target.studentAudioUrl = audioSrc;
+            }
+          });
+        }
+        if (mp.text && mp.text.trim().length > 0) {
+          const qId = `sub-text-${s.id}`;
+          const existingQ = existingQuestions.find(eq => eq.questionId === qId);
+          if (!questionIdSet.has(qId)) {
+            questionIdSet.add(qId);
+            questions.push({
+              questionId: qId,
+              type: 'read-write',
+              title: `✍️ Devoir écrit : ${title}`,
+              subscore: 'production',
+              prompt: `Consigne : ${title}`,
+              studentAnswerText: mp.text.trim(),
+              wordCount: mp.text.trim().split(/\s+/).filter(Boolean).length,
+              timeSpentSec: 180,
+              teacherScore: existingQ?.teacherScore !== undefined ? existingQ.teacherScore : scoreNum,
+              teacherComment: existingQ?.teacherComment !== undefined ? existingQ.teacherComment : (s.feedback || '')
+            });
+          }
+        }
+      } else if (s.type === 'audio' || s.audioUrl || (s.content && s.content.startsWith('data:audio'))) {
+        const qId = `sub-audio-${s.id}`;
+        const existingQ = existingQuestions.find(eq => eq.questionId === qId);
+        const audioSrc = s.audioUrl || (s.content && s.content.startsWith('data:audio') ? s.content : undefined);
+        if (!questionIdSet.has(qId)) {
+          questionIdSet.add(qId);
+          questions.push({
+            questionId: qId,
+            type: 'speak-photo',
+            title: `🎙️ Audio : ${title}`,
+            subscore: 'conversation',
+            prompt: `Activité orale : ${title}`,
+            studentAudioUrl: audioSrc,
+            studentAnswerText: (s.content && !s.content.startsWith('data:audio')) ? s.content : `[Enregistrement vocal de l'élève]`,
+            timeSpentSec: 60,
+            teacherScore: existingQ?.teacherScore !== undefined ? existingQ.teacherScore : scoreNum,
+            teacherComment: existingQ?.teacherComment !== undefined ? existingQ.teacherComment : (s.feedback || '')
+          });
+        } else {
+          const target = questions.find(q => q.questionId === qId);
+          if (target && audioSrc) target.studentAudioUrl = audioSrc;
+        }
+      } else if (s.content && s.content.trim().length > 0) {
+        const qId = `sub-text-${s.id}`;
+        const existingQ = existingQuestions.find(eq => eq.questionId === qId);
+        if (!questionIdSet.has(qId)) {
+          questionIdSet.add(qId);
+          questions.push({
+            questionId: qId,
+            type: 'read-write',
+            title: `✍️ Devoir écrit : ${title}`,
+            subscore: 'production',
+            prompt: `Consigne : ${title}`,
+            studentAnswerText: s.content.trim(),
+            wordCount: s.content.trim().split(/\s+/).filter(Boolean).length,
+            timeSpentSec: 150,
+            teacherScore: existingQ?.teacherScore !== undefined ? existingQ.teacherScore : scoreNum,
+            teacherComment: existingQ?.teacherComment !== undefined ? existingQ.teacherComment : (s.feedback || '')
+          });
+        }
+      }
+    });
+
+    // 3. Match real exam attempts
+    const matchedExams = this.allPlatformExamAttempts().filter(e =>
+      (e.studentName && this.normalizeStudentName(e.studentName).toLowerCase() === norm) ||
+      (e.studentId && e.studentId === studentId)
+    );
+    matchedExams.sort((a, b) => (b.completedAt || '').localeCompare(a.completedAt || ''));
+
+    matchedExams.forEach((e) => {
+      if (e.answers && Array.isArray(e.answers)) {
+        e.answers.forEach((ans: any, aIdx: number) => {
+          const qId = `sub-exam-${e.id}-${ans.questionIdx !== undefined ? ans.questionIdx : aIdx}`;
+          const existingQ = existingQuestions.find(eq => eq.questionId === qId);
+          if (!questionIdSet.has(qId)) {
+            questionIdSet.add(qId);
+            questions.push({
+              questionId: qId,
+              type: 'grammar-select',
+              title: `📋 ${e.quizTitle || 'Examen'} — Question #${aIdx + 1}`,
+              subscore: 'literacy',
+              prompt: ans.questionText || `Épreuve officielle : ${e.quizTitle || 'Examen'}`,
+              studentAnswerText: ans.answer || '—',
+              autoScore: ans.correct ? 100 : 0,
+              teacherScore: existingQ?.teacherScore !== undefined ? existingQ.teacherScore : (ans.correct === true ? 100 : (ans.correct === false ? 0 : undefined)),
+              teacherComment: existingQ?.teacherComment || '',
+              timeSpentSec: 45
+            });
+          }
+        });
+      }
+    });
+
+    return questions;
+  }
+
+  enrichStudentDossier(sub: AssessmentSubmission): AssessmentSubmission {
+    const copy: AssessmentSubmission = JSON.parse(JSON.stringify(sub));
+    const enrichedQuestions = this.getEnrichedQuestionsForStudent(copy.studentName, copy.studentId, copy.questions);
+    if (enrichedQuestions.length > 0) {
+      copy.questions = enrichedQuestions;
+      copy.durationSeconds = Math.max(900, enrichedQuestions.length * 90);
+    }
+    return copy;
+  }
+
+  allRealFolders = computed<AssessmentSubmission[]>(() => {
+    const base = this.assessmentSubmissions();
+    const subs = this.allPlatformSubmissions();
+    const exams = this.allPlatformExamAttempts();
+    const users = this.allPlatformUsers();
+
+    const studentMap = new Map<string, { studentName: string; studentId: string; email: string; avatar: string; latestDate: string }>();
+
+    // 1. Enrolled students from users
+    users.forEach(u => {
+      if (u.name && !u.name.includes('Test Student') && !u.name.includes('Thomas Dubois') && !u.name.includes('AT - Teacher')) {
+        const norm = this.normalizeStudentName(u.name);
+        const email = u.email || (u.username ? `${u.username}@gmail.com` : '');
+        const avatar = u.avatar || norm.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+        studentMap.set(norm.toLowerCase(), {
+          studentName: norm,
+          studentId: u.id,
+          email,
+          avatar,
+          latestDate: '2026-07-01T00:00:00.000Z'
+        });
+      }
+    });
+
+    // 2. Submissions
+    subs.forEach(s => {
+      if (s.studentName && !s.studentName.includes('Test Student') && !s.studentName.includes('Thomas Dubois')) {
+        const norm = this.normalizeStudentName(s.studentName);
+        const key = norm.toLowerCase();
+        const existing = studentMap.get(key);
+        const date = s.submittedAt || '';
+        if (existing) {
+          if (date && date > existing.latestDate) existing.latestDate = date;
+          if (s.studentId && !existing.studentId) existing.studentId = s.studentId;
+        } else {
+          studentMap.set(key, {
+            studentName: norm,
+            studentId: s.studentId || `std-${norm.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
+            email: '',
+            avatar: norm.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(),
+            latestDate: date || '2026-07-01T00:00:00.000Z'
+          });
+        }
+      }
+    });
+
+    // 3. Exam attempts
+    exams.forEach(e => {
+      if (e.studentName && !e.studentName.includes('Test Student') && !e.studentName.includes('AT - Teacher') && !e.studentName.includes('Thomas Dubois')) {
+        const norm = this.normalizeStudentName(e.studentName);
+        const key = norm.toLowerCase();
+        const existing = studentMap.get(key);
+        const date = e.completedAt || '';
+        if (existing) {
+          if (date && date > existing.latestDate) existing.latestDate = date;
+          if (e.studentId && !existing.studentId) existing.studentId = e.studentId;
+        } else {
+          studentMap.set(key, {
+            studentName: norm,
+            studentId: e.studentId || `std-${norm.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
+            email: '',
+            avatar: norm.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(),
+            latestDate: date || '2026-07-01T00:00:00.000Z'
+          });
+        }
+      }
+    });
+
+    // 4. Existing assessment submissions
+    base.forEach(b => {
+      if (b.studentName && !b.studentName.includes('Test Student') && !b.studentName.includes('Moussa Diop') && !b.studentName.includes('Aminata Traoré') && !b.studentName.includes('Aïssatou Sow')) {
+        const norm = this.normalizeStudentName(b.studentName);
+        const key = norm.toLowerCase();
+        const existing = studentMap.get(key);
+        if (existing) {
+          if (b.submittedAt && b.submittedAt > existing.latestDate) existing.latestDate = b.submittedAt;
+        } else {
+          studentMap.set(key, {
+            studentName: norm,
+            studentId: b.studentId || `std-${norm.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
+            email: b.studentEmail || '',
+            avatar: b.studentAvatar || norm.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(),
+            latestDate: b.submittedAt || '2026-07-01T00:00:00.000Z'
+          });
+        }
+      }
+    });
+
+    const result: AssessmentSubmission[] = [];
+
+    studentMap.forEach(info => {
+      const existing = base.find(b => this.normalizeStudentName(b.studentName).toLowerCase() === info.studentName.toLowerCase());
+      if (existing) {
+        result.push(this.enrichStudentDossier(existing));
+      } else {
+        const placeholder: AssessmentSubmission = {
+          id: 'sub-' + info.studentName.toLowerCase().replace(/[^a-z0-9]/g, '-').slice(0, 16),
+          studentId: info.studentId,
+          studentName: info.studentName,
+          studentEmail: info.email,
+          studentAvatar: info.avatar,
+          testTitle: 'SpeakUp English Assessment (SET)',
+          submittedAt: info.latestDate !== '2026-07-01T00:00:00.000Z' ? info.latestDate : new Date().toISOString(),
+          durationSeconds: 900,
+          status: 'pending',
+          questions: [],
+          antiCheatReport: { tabSwitches: 0, fullscreenExits: 0, pasteAttempts: 0, integrityScore: 100, completedInSingleSession: true }
+        };
+        const enriched = this.enrichStudentDossier(placeholder);
+        if (enriched.questions.length > 0) {
+          result.push(enriched);
+        }
+      }
+    });
+
+    return result.sort((a, b) => {
+      if (a.status !== b.status) return a.status === 'pending' ? -1 : 1;
+      return (b.submittedAt || '').localeCompare(a.submittedAt || '');
+    });
+  });
+
   pendingSubmissionsCount = computed(() =>
-    this.assessmentSubmissions().filter(s => s.status === 'pending').length
+    this.allRealFolders().filter(s => s.status === 'pending').length
   );
 
   correctedSubmissionsCount = computed(() =>
-    this.assessmentSubmissions().filter(s => s.status === 'corrected').length
+    this.allRealFolders().filter(s => s.status === 'corrected').length
   );
 
   averageOverallScore = computed(() => {
-    const list = this.assessmentSubmissions().filter(s => s.status === 'corrected' && s.overallScore);
+    const list = this.allRealFolders().filter(s => s.status === 'corrected' && s.overallScore);
     if (list.length === 0) return 0;
     const sum = list.reduce((acc, s) => acc + (s.overallScore || 0), 0);
     return Math.round(sum / list.length);
@@ -4545,7 +4879,7 @@ export class StudentExamComponent implements OnDestroy {
   filteredFolders = computed(() => {
     const q = this.folderSearchQuery().trim().toLowerCase();
     const filter = this.folderFilterStatus();
-    return this.assessmentSubmissions().filter(s => {
+    return this.allRealFolders().filter(s => {
       const matchQuery = !q || s.studentName.toLowerCase().includes(q) || (s.studentEmail && s.studentEmail.toLowerCase().includes(q));
       const matchStatus = filter === 'all' || s.status === filter;
       return matchQuery && matchStatus;
@@ -4919,9 +5253,8 @@ export class StudentExamComponent implements OnDestroy {
 
   // --- GENERATOR CONTROLS (DYNAMIC & REACTIVE) ---
   refreshRealAssessmentDossiers() {
-    const list = this.db.getAssessmentSubmissions();
-    this.assessmentSubmissions.set(list);
-    this.dialogService.alert('Dossiers actualisés', `${list.length} dossier(s) d'élèves réels chargés depuis la plateforme.`, 'success');
+    const list = this.allRealFolders();
+    this.dialogService.alert('Dossiers actualisés', `${list.length} dossier(s) d'élèves réels synchronisés avec tous leurs vocaux, devoirs et examens.`, 'success');
   }
 
   openGeneratorTab() {
@@ -5595,8 +5928,9 @@ export class StudentExamComponent implements OnDestroy {
 
   // --- TEACHER FOLDERS & GRADING METHODS ---
   openSubmissionFolder(sub: AssessmentSubmission) {
-    // Clone submission for live editing
-    const clone: AssessmentSubmission = JSON.parse(JSON.stringify(sub));
+    // Enrich with all real student work (audios, essays, exams)
+    const enriched = this.enrichStudentDossier(sub);
+    const clone: AssessmentSubmission = JSON.parse(JSON.stringify(enriched));
     // If the submission is already corrected, keep its scores
     if (clone.status === 'corrected') {
       if (!clone.overallScore) {
